@@ -1,0 +1,6 @@
+{
+  "files.associations": {
+    "bun.lock": "text"
+  },
+  "typescript.preferences.importModuleSpecifier": "relative"
+}

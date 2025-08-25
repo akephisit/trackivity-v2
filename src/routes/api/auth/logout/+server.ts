@@ -1,7 +1,6 @@
 import { json } from '@sveltejs/kit';
-import type { RequestHandler } from './$types';
 
-export const POST: RequestHandler = async ({ cookies }) => {
+export const POST = async ({ cookies }: { cookies: any }) => {
   try {
     // Clear the session cookie
     cookies.delete('session_token', { path: '/' });

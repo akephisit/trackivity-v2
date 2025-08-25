@@ -1,5 +1,4 @@
 import { json } from '@sveltejs/kit';
-import type { RequestHandler } from './$types';
 import { db, users, adminRoles } from '$lib/server/db';
 import { eq } from 'drizzle-orm';
 import bcrypt from 'bcrypt';
@@ -8,7 +7,7 @@ import jwt from 'jsonwebtoken';
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 const JWT_EXPIRES_IN = '7d';
 
-export const POST: RequestHandler = async ({ request, cookies }) => {
+export const POST = async ({ request, cookies }: { request: any; cookies: any }) => {
   try {
     const { email, password, student_id, device_info } = await request.json();
 

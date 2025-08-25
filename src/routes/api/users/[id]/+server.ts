@@ -1,5 +1,4 @@
 import { json } from '@sveltejs/kit';
-import type { RequestHandler } from './$types';
 import { db, users, departments, faculties } from '$lib/server/db';
 import { eq } from 'drizzle-orm';
 import jwt from 'jsonwebtoken';
@@ -15,7 +14,7 @@ function verifyToken(token: string) {
   }
 }
 
-export const GET: RequestHandler = async ({ params, cookies }) => {
+export const GET = async ({ params, cookies }: { params: any; cookies: any }) => {
   try {
     const token = cookies.get('session_token');
     if (!token) {
@@ -84,7 +83,7 @@ export const GET: RequestHandler = async ({ params, cookies }) => {
   }
 };
 
-export const PUT: RequestHandler = async ({ params, request, cookies }) => {
+export const PUT = async ({ params, request, cookies }: { params: any; request: any; cookies: any }) => {
   try {
     const token = cookies.get('session_token');
     if (!token) {
@@ -163,7 +162,7 @@ export const PUT: RequestHandler = async ({ params, request, cookies }) => {
   }
 };
 
-export const DELETE: RequestHandler = async ({ params, cookies }) => {
+export const DELETE = async ({ params, cookies }: { params: any; cookies: any }) => {
   try {
     const token = cookies.get('session_token');
     if (!token) {

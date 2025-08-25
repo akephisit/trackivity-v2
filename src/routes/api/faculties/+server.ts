@@ -1,5 +1,4 @@
 import { json } from '@sveltejs/kit';
-import type { RequestHandler } from './$types';
 import { db, faculties } from '$lib/server/db';
 import { eq } from 'drizzle-orm';
 import jwt from 'jsonwebtoken';
@@ -14,7 +13,7 @@ function verifyToken(token: string) {
   }
 }
 
-export const GET: RequestHandler = async ({ cookies }) => {
+export const GET = async ({ cookies }: { cookies: any }) => {
   try {
     // Get all active faculties (no auth required for basic list)
     const facultiesList = await db.select({
@@ -44,7 +43,7 @@ export const GET: RequestHandler = async ({ cookies }) => {
   }
 };
 
-export const POST: RequestHandler = async ({ request, cookies }) => {
+export const POST = async ({ request, cookies }: { request: any; cookies: any }) => {
   try {
     const token = cookies.get('session_token');
     if (!token) {
