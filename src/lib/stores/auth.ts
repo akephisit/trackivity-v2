@@ -287,9 +287,24 @@ export const authStore = auth; // Legacy alias for backward compatibility
 
 // ===== DERIVED STORES =====
 export const currentUser = derived(auth, $auth => $auth.user);
+export const user = derived(auth, $auth => $auth.user); // Alias for compatibility
 export const isAuthenticated = derived(auth, $auth => $auth.isAuthenticated);
 export const isLoading = derived(auth, $auth => $auth.isLoading);
 export const authError = derived(auth, $auth => $auth.error);
+
+// Export auth service functions
+export const authService = auth;
+
+// Session info type
+export interface SessionInfo {
+  id: string;
+  deviceInfo?: any;
+  ipAddress?: string;
+  userAgent?: string;
+  createdAt: string;
+  lastAccessed: string;
+  isActive: boolean;
+}
 
 // ===== PERMISSION HELPERS =====
 export const permissions = derived(currentUser, $user => $user?.permissions || []);

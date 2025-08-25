@@ -1,10 +1,9 @@
 /**
- * Type-safe API client for communicating with Rust backend
- * รองรับ session-based authentication และ mobile app headers
+ * Type-safe API client for SvelteKit backend
+ * JWT-based authentication with HTTP-only cookies
  */
 
 import { browser } from '$app/environment';
-import { PUBLIC_API_URL as PUBLIC_API_URL_RAW } from '$env/static/public';
 import type {
   ApiResponse,
   PaginatedResponse,
@@ -25,10 +24,8 @@ import type {
 } from '$lib/types';
 
 // ===== CONFIGURATION =====
-// In the browser, use same-origin so Vite proxy (dev) or reverse-proxy (prod) can route /api.
-// On the server (SSR), fall back to PUBLIC_API_URL or localhost.
-const CLEAN_PUBLIC_API_URL = (PUBLIC_API_URL_RAW || '').trim().replace(/\/$/, '');
-const API_BASE_URL = browser ? '' : (CLEAN_PUBLIC_API_URL || process.env.PUBLIC_API_URL || 'http://localhost:3000');
+// SvelteKit fullstack - API routes are same origin, no external URL needed
+const API_BASE_URL = '';
 
 const DEFAULT_TIMEOUT = 30000; // 30 seconds
 

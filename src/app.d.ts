@@ -1,6 +1,5 @@
 // See https://svelte.dev/docs/kit/types#app.d.ts
 // for information about these interfaces
-import type { SessionUser, ApiError } from '$lib/types';
 
 declare global {
 	namespace App {
@@ -11,16 +10,24 @@ declare global {
 		}
 		
 		interface Locals {
-			user: SessionUser | null;
-			session_id: string | null;
+			user: {
+				id: string;
+				student_id: string;
+				email: string;
+				first_name: string;
+				last_name: string;
+				is_admin: boolean;
+				admin_level?: string;
+				faculty_id?: string;
+			} | null;
 		}
 		
 		interface PageData {
-			user?: SessionUser | null;
+			user?: App.Locals['user'];
 		}
 		
 		interface PageState {
-			user?: SessionUser | null;
+			user?: App.Locals['user'];
 		}
 		// interface Platform {}
 	}

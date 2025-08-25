@@ -62,10 +62,10 @@
 	// สถิติสรุป
 	const stats = $derived({
 		total: activities.length,
-		completed: activities.filter(a => a.status === 'เสร็จสิ้น').length,
-		inProgress: activities.filter(a => a.status === 'กำลังดำเนินการ').length,
-		pending: activities.filter(a => a.status === 'รอดำเนินการ').length,
-		totalParticipants: activities.reduce((sum, a) => sum + a.participantCount, 0)
+		completed: activities.filter(a => a.status === 'completed').length,
+		inProgress: activities.filter(a => a.status === 'ongoing').length,
+		pending: activities.filter(a => a.status === 'draft' || a.status === 'published').length,
+		totalParticipants: activities.reduce((sum, a) => sum + (a.participantCount || 0), 0)
 	});
 </script>
 

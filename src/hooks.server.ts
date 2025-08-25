@@ -1,7 +1,7 @@
 import { type Handle, type HandleServerError, redirect } from '@sveltejs/kit';
-import { PUBLIC_API_URL as PUBLIC_API_URL_RAW } from '$env/static/public';
-import type { SessionUser, Permission } from '$lib/types';
-import { apiClient } from '$lib/server/api-client';
+import jwt from 'jsonwebtoken';
+
+const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 
 // Determine if path is considered public (never forces login)
 function isPublicRoute(pathname: string): boolean {
@@ -29,50 +29,27 @@ function isAdminProtected(pathname: string): boolean {
   return pathname === ADMIN_PREFIX || pathname.startsWith(ADMIN_PREFIX + '/');
 }
 
-// Session validation function (student or admin)
-async function validateSession(
-  sessionId: string,
-  eventFetch: typeof fetch,
-  kind: 'student' | 'admin'
-): Promise<SessionUser | null> {
+// JWT validation function
+function validateJWT(token: string): any | null {
     try {
-        // Create a mock event object for the API client
-        const mockEvent = {
-            fetch: eventFetch,
-            cookies: { get: (name: string) => (name === 'session_id' ? sessionId : undefined) }
-        } as any;
-
-        const endpoint = kind === 'admin' ? '/api/admin/auth/me' : '/api/auth/me';
-        const response = await apiClient.get(mockEvent, endpoint);
-
-        if (response.success) {
-            // Try common shapes
-            const d: any = response.data;
-            const user = d?.user ?? d?.data ?? d?.session?.user ?? null;
-            return (user ?? null) as SessionUser | null;
-        }
+        const decoded = jwt.verify(token, JWT_SECRET) as any;
+        return decoded;
     } catch (error) {
-        console.error('Session validation failed:', error);
+        console.error('JWT validation failed:', error);
+        return null;
     }
-
-    return null;
 }
 // Permission helpers (for fine-grained admin pages)
-function hasPermission(user: SessionUser, permission: Permission): boolean {
-    return user.permissions.includes(permission);
+function isAdmin(decoded: any): boolean {
+    return decoded.is_admin === true;
 }
 
-function isAdmin(user: SessionUser): boolean {
-    return user.admin_role !== undefined;
+function isFacultyAdmin(decoded: any): boolean {
+    return decoded.admin_level === 'faculty_admin' || decoded.admin_level === 'super_admin';
 }
 
-function isFacultyAdmin(user: SessionUser): boolean {
-    return user.admin_role?.admin_level === 'FacultyAdmin' || 
-           user.admin_role?.admin_level === 'SuperAdmin';
-}
-
-function isSuperAdmin(user: SessionUser): boolean {
-    return user.admin_role?.admin_level === 'SuperAdmin';
+function isSuperAdmin(decoded: any): boolean {
+    return decoded.admin_level === 'super_admin';
 }
 
 // Main handle function
@@ -80,50 +57,49 @@ export const handle: Handle = async ({ event, resolve }) => {
     const { url, cookies } = event;
     const pathname = url.pathname;
 
-    // Initialize locals early
-    const sessionId = cookies.get('session_id');
+    // Initialize locals
     event.locals.user = null;
-    event.locals.session_id = sessionId || null;
-
-    // Skip auth enforcement for public routes entirely to avoid loops
+    
+    // Skip auth enforcement for public routes
     if (isPublicRoute(pathname)) {
         return resolve(event);
     }
 
-    // Validate session if present for protected pages
-    if (sessionId) {
-        const kind = isAdminProtected(pathname) ? 'admin' : 'student';
-        const user = await validateSession(sessionId, event.fetch, kind);
-        if (user) {
-            event.locals.user = user;
-        } else {
-            // Only clear cookie if we are about to enforce auth
-            cookies.delete('session_id', { path: '/' });
-            event.locals.session_id = null;
+    // Check JWT token
+    const token = cookies.get('session_token');
+    if (token) {
+        const decoded = validateJWT(token);
+        if (decoded) {
+            // Set user info in locals
+            event.locals.user = {
+                id: decoded.user_id,
+                student_id: decoded.student_id,
+                email: decoded.email,
+                first_name: decoded.first_name,
+                last_name: decoded.last_name,
+                is_admin: decoded.is_admin,
+                admin_level: decoded.admin_level,
+                faculty_id: decoded.faculty_id
+            };
         }
     }
 
-    // Enforce authentication/authorization
-    if (isStudentProtected(pathname) || isAdminProtected(pathname)) {
-        if (!event.locals.user) {
-            const returnUrl = encodeURIComponent(url.pathname + url.search);
-            // Admin sections redirect to admin login
-            if (isAdminProtected(pathname)) {
-                throw redirect(303, `/admin/login?redirectTo=${returnUrl}`);
-            }
-            // Student sections go to normal login
-            throw redirect(303, `/login?redirectTo=${returnUrl}`);
-        }
-
-        // Extra admin checks for admin area
+    // Enforce authentication for protected routes
+    const needsAuth = isStudentProtected(pathname) || isAdminProtected(pathname);
+    if (needsAuth && !event.locals.user) {
+        const returnUrl = encodeURIComponent(url.pathname + url.search);
+        // Admin sections redirect to admin login
         if (isAdminProtected(pathname)) {
-            if (!isAdmin(event.locals.user)) {
-                throw redirect(303, '/unauthorized');
-            }
-            // Example fine-grained checks
-            if (pathname.startsWith('/admin/sessions') && !hasPermission(event.locals.user, 'ViewAllSessions')) {
-                throw redirect(303, '/unauthorized');
-            }
+            throw redirect(303, `/admin/login?redirectTo=${returnUrl}`);
+        }
+        // Student sections go to normal login
+        throw redirect(303, `/login?redirectTo=${returnUrl}`);
+    }
+
+    // Extra admin checks for admin area
+    if (isAdminProtected(pathname) && event.locals.user) {
+        if (!event.locals.user.is_admin) {
+            throw redirect(303, '/unauthorized');
         }
     }
 
@@ -135,13 +111,9 @@ export const handle: Handle = async ({ event, resolve }) => {
     response.headers.set('X-Content-Type-Options', 'nosniff');
     response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
 
-    const apiUrl = (PUBLIC_API_URL_RAW || '').trim().replace(/\/$/, '');
-    const connectSrc = ["'self'", 'ws:', 'wss:'];
-    if (apiUrl) connectSrc.push(apiUrl);
-
     response.headers.set(
         'Content-Security-Policy',
-        `default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src ${connectSrc.join(' ')};`
+        `default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' ws: wss:;`
     );
 
     return response;
