@@ -158,7 +158,7 @@
 		{user.email}
 	</a>
 	{#if user.email_verified_at}
-		<IconUserCheck class="h-3 w-3 text-green-600 flex-shrink-0" title="อีเมลได้รับการยืนยัน" />
+		<IconUserCheck class="h-3 w-3 text-green-600 flex-shrink-0" />
 	{/if}
 </div>
 {/if}
@@ -231,9 +231,9 @@
 {#if emailVerifiedAt !== undefined}
 <div class="flex items-center justify-center">
 	{#if emailVerifiedAt}
-		<IconUserCheck class="h-4 w-4 text-green-600" title="ยืนยันแล้ว" />
+		<IconUserCheck class="h-4 w-4 text-green-600" />
 	{:else}
-		<IconUserX class="h-4 w-4 text-orange-500" title="ยังไม่ยืนยัน" />
+		<IconUserX class="h-4 w-4 text-orange-500" />
 	{/if}
 </div>
 {/if}
@@ -241,12 +241,11 @@
 <!-- User Actions Menu Component -->
 {#if user}
 <DropdownMenu.Root>
-	<DropdownMenu.Trigger asChild let:builder>
+	<DropdownMenu.Trigger>
 		<Button
 			variant="ghost"
 			size="icon"
 			class="h-8 w-8"
-			builders={[builder]}
 		>
 			<IconDots class="h-4 w-4" />
 			<span class="sr-only">เปิดเมนู</span>
@@ -255,19 +254,19 @@
 	
 	<DropdownMenu.Content align="end" class="w-56">
 		<!-- View User Details -->
-		<DropdownMenu.Item on:click={() => dispatch('viewUser', user)}>
+		<DropdownMenu.Item onclick={() => dispatch('viewUser', user)}>
 			<IconEye class="mr-2 h-4 w-4" />
 			ดูรายละเอียด
 		</DropdownMenu.Item>
 		
 		<!-- Edit User -->
-		<DropdownMenu.Item on:click={() => dispatch('editUser', user)}>
+		<DropdownMenu.Item onclick={() => dispatch('editUser', user)}>
 			<IconEdit class="mr-2 h-4 w-4" />
 			แก้ไขข้อมูล
 		</DropdownMenu.Item>
 		
 		<!-- Copy User ID -->
-		<DropdownMenu.Item on:click={() => navigator.clipboard.writeText(user.id)}>
+		<DropdownMenu.Item onclick={() => navigator.clipboard.writeText(user.id)}>
 			<IconCopy class="mr-2 h-4 w-4" />
 			คัดลอก ID
 		</DropdownMenu.Item>
@@ -282,19 +281,19 @@
 			</DropdownMenu.SubTrigger>
 			<DropdownMenu.SubContent>
 				{#if user.status !== 'active'}
-					<DropdownMenu.Item on:click={() => dispatch('updateStatus', { user, status: 'active' })}>
+					<DropdownMenu.Item onclick={() => dispatch('updateStatus', { user, status: 'active' })}>
 						<IconUserCheck class="mr-2 h-4 w-4 text-green-600" />
 						เปิดใช้งาน
 					</DropdownMenu.Item>
 				{/if}
 				{#if user.status !== 'inactive'}
-					<DropdownMenu.Item on:click={() => dispatch('updateStatus', { user, status: 'inactive' })}>
+					<DropdownMenu.Item onclick={() => dispatch('updateStatus', { user, status: 'inactive' })}>
 						<IconUserX class="mr-2 h-4 w-4 text-orange-500" />
 						ปิดใช้งาน
 					</DropdownMenu.Item>
 				{/if}
 				{#if user.status !== 'suspended'}
-					<DropdownMenu.Item on:click={() => dispatch('updateStatus', { user, status: 'suspended' })}>
+					<DropdownMenu.Item onclick={() => dispatch('updateStatus', { user, status: 'suspended' })}>
 						<IconUserPause class="mr-2 h-4 w-4 text-red-600" />
 						ระงับการใช้งาน
 					</DropdownMenu.Item>
@@ -310,22 +309,22 @@
 			</DropdownMenu.SubTrigger>
 			<DropdownMenu.SubContent>
 				{#if user.role !== 'student'}
-					<DropdownMenu.Item on:click={() => dispatch('updateRole', { user, role: 'student' })}>
+					<DropdownMenu.Item onclick={() => dispatch('updateRole', { user, role: 'student' })}>
 						นักศึกษา
 					</DropdownMenu.Item>
 				{/if}
 				{#if user.role !== 'faculty'}
-					<DropdownMenu.Item on:click={() => dispatch('updateRole', { user, role: 'faculty' })}>
+					<DropdownMenu.Item onclick={() => dispatch('updateRole', { user, role: 'faculty' })}>
 						อาจารย์
 					</DropdownMenu.Item>
 				{/if}
 				{#if user.role !== 'staff'}
-					<DropdownMenu.Item on:click={() => dispatch('updateRole', { user, role: 'staff' })}>
+					<DropdownMenu.Item onclick={() => dispatch('updateRole', { user, role: 'staff' })}>
 						เจ้าหน้าที่
 					</DropdownMenu.Item>
 				{/if}
 				{#if user.role !== 'admin'}
-					<DropdownMenu.Item on:click={() => dispatch('updateRole', { user, role: 'admin' })}>
+					<DropdownMenu.Item onclick={() => dispatch('updateRole', { user, role: 'admin' })}>
 						ผู้ดูแลระบบ
 					</DropdownMenu.Item>
 				{/if}
@@ -335,12 +334,12 @@
 		<DropdownMenu.Separator />
 		
 		<!-- Additional Actions -->
-		<DropdownMenu.Item on:click={() => dispatch('viewActivity', user)}>
+		<DropdownMenu.Item onclick={() => dispatch('viewActivity', user)}>
 			<IconCalendar class="mr-2 h-4 w-4" />
 			ดูกิจกรรม
 		</DropdownMenu.Item>
 		
-		<DropdownMenu.Item on:click={() => dispatch('transferUser', user)}>
+		<DropdownMenu.Item onclick={() => dispatch('transferUser', user)}>
 			<IconDownload class="mr-2 h-4 w-4" />
 			ย้ายคณะ/สาขา
 		</DropdownMenu.Item>
@@ -350,7 +349,7 @@
 		<!-- Dangerous Actions -->
 		<DropdownMenu.Item 
 			class="text-red-600 focus:text-red-600 focus:bg-red-50"
-			on:click={() => dispatch('deleteUser', user)}
+			onclick={() => dispatch('deleteUser', user)}
 		>
 			<IconTrash class="mr-2 h-4 w-4" />
 			ลบผู้ใช้

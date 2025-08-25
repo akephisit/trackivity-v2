@@ -18,6 +18,7 @@ import {
 import { sql } from 'drizzle-orm';
 
 // ===== ENUMS =====
+export const userStatus = pgEnum('user_status', ['active', 'inactive', 'suspended']);
 export const adminLevel = pgEnum('admin_level', ['super_admin', 'faculty_admin', 'regular_admin']);
 export const activityStatus = pgEnum('activity_status', ['draft', 'published', 'ongoing', 'completed', 'cancelled']);
 export const participationStatus = pgEnum('participation_status', ['registered', 'checked_in', 'checked_out', 'completed', 'no_show']);
@@ -68,6 +69,7 @@ export const users = pgTable('users', {
   firstName: varchar('first_name', { length: 100 }).notNull(),
   lastName: varchar('last_name', { length: 100 }).notNull(),
   qrSecret: varchar('qr_secret', { length: 255 }).notNull().unique(),
+  status: userStatus('status').notNull().default('active'),
   departmentId: uuid('department_id').references(() => departments.id, { onDelete: 'restrict' }),
   createdAt: timestamp('created_at', { withTimezone: true }).default(sql`NOW()`),
   updatedAt: timestamp('updated_at', { withTimezone: true }).default(sql`NOW()`)

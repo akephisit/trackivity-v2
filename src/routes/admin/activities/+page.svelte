@@ -37,7 +37,7 @@
 		goto('/admin/activities/create');
 	}
 
-	function formatDate(dateString: string): string {
+	function formatDate(dateString: string | undefined): string {
 		if (!dateString) return '-';
 		return new Date(dateString).toLocaleDateString('th-TH', {
 			year: 'numeric',
@@ -51,7 +51,8 @@
 		return timeString;
 	}
 
-	function getActivityTypeLabel(type: string): string {
+	function getActivityTypeLabel(type: string | undefined): string {
+		if (!type) return 'ไม่ระบุ';
 		const labels: Record<string, string> = {
 			'Academic': 'วิชาการ',
 			'Sports': 'กีฬา',
@@ -62,7 +63,8 @@
 		return labels[type] || type;
 	}
 
-	function getActivityTypeBadgeVariant(type: string): "default" | "secondary" | "destructive" | "outline" {
+	function getActivityTypeBadgeVariant(type: string | undefined): "default" | "secondary" | "destructive" | "outline" {
+		if (!type) return 'outline';
 		const variants: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
 			'Academic': 'default',
 			'Sports': 'secondary',

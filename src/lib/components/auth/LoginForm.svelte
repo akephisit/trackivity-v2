@@ -66,13 +66,13 @@
 
 			if (result.success) {
 				// Dispatch success event
-				dispatch('success', { message: result.message });
+				dispatch('success', { user: result.user });
 				
 				// Redirect to intended page
 				await goto(redirectUrl);
 			} else {
 				// Handle login failure
-				dispatch('error', { message: result.message });
+				dispatch('error', { message: result.error });
 			}
 		} catch (error) {
 			console.error('Login error:', error);

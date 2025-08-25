@@ -298,11 +298,13 @@ export const authService = auth;
 // Session info type
 export interface SessionInfo {
   id: string;
-  deviceInfo?: any;
-  ipAddress?: string;
-  userAgent?: string;
-  createdAt: string;
-  lastAccessed: string;
+  session_id: string;
+  device_info?: any;
+  ip_address?: string;
+  user_agent?: string;
+  created_at: string;
+  last_accessed: string;
+  expires_at: string;
   isActive: boolean;
 }
 

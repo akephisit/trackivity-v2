@@ -126,7 +126,7 @@ export const handleError: HandleServerError = async ({ error, event }) => {
     // Log error details for debugging
     if (event.locals.user) {
         console.error('User context:', {
-            user_id: event.locals.user.user_id,
+            user_id: event.locals.user.id,
             email: event.locals.user.email,
             url: event.url.pathname
         });

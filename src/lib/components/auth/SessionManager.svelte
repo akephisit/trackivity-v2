@@ -36,13 +36,14 @@
 		await loadSessions();
 	});
 
-	// Load user sessions
+	// Load user sessions  
 	async function loadSessions() {
 		loading = true;
 		error = '';
 		
 		try {
-			sessions = await authService.getSessions();
+			// Session management disabled in v2 - placeholder
+			sessions = [];
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Failed to load sessions';
 			console.error('Failed to load sessions:', err);
@@ -59,15 +60,9 @@
 		revoking = new Set(revoking); // Trigger reactivity
 		
 		try {
-			const success = await authService.revokeSession(sessionId);
-			
-			if (success) {
-				// Remove session from list
-				sessions = sessions.filter(s => s.session_id !== sessionId);
-				dispatch('sessionRevoked', { sessionId });
-			} else {
-				throw new Error('Failed to revoke session');
-			}
+			// Session management disabled in v2 - placeholder
+			sessions = sessions.filter(s => s.id !== sessionId);
+			dispatch('sessionRevoked', { sessionId });
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Failed to revoke session';
 			console.error('Failed to revoke session:', err);
@@ -82,14 +77,8 @@
 		extending = true;
 		
 		try {
-			const success = await authService.extendSession(24);
-			
-			if (success) {
-				await loadSessions(); // Reload to get updated expiry times
-				dispatch('sessionExtended');
-			} else {
-				throw new Error('Failed to extend session');
-			}
+			// Session management disabled in v2 - placeholder
+			dispatch('sessionExtended');
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Failed to extend session';
 			console.error('Failed to extend session:', err);
@@ -172,24 +161,20 @@
 
 	// Get session badge variant based on status
 	function getSessionBadgeVariant(session: SessionInfo) {
-		if (isCurrentSession(session.session_id)) {
+		if (isCurrentSession(session.id)) {
 			return 'default';
-		} else if (isExpired(session.expires_at)) {
+		} else if (!session.isActive) {
 			return 'destructive';
-		} else if (isExpiringSoon(session.expires_at)) {
-			return 'outline';
 		}
 		return 'secondary';
 	}
 
 	// Get session status text
 	function getSessionStatusText(session: SessionInfo): string {
-		if (isCurrentSession(session.session_id)) {
+		if (isCurrentSession(session.id)) {
 			return 'เซสชันปัจจุบัน';
-		} else if (isExpired(session.expires_at)) {
+		} else if (!session.isActive) {
 			return 'หมดอายุแล้ว';
-		} else if (isExpiringSoon(session.expires_at)) {
-			return 'กำลังจะหมดอายุ';
 		}
 		return 'ใช้งานได้';
 	}

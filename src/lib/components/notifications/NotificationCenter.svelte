@@ -75,13 +75,13 @@
 			clearTimeout(autoCloseTimeouts.get(index)!);
 			autoCloseTimeouts.delete(index);
 		}
-		sseService.removeNotification(index);
+		// SSE disabled in v2 - placeholder
 		dispatch('notificationRemoved', { index });
 	}
 
 	// Mark notification as read
 	function markAsRead(index: number) {
-		sseService.markAsRead(index);
+		// SSE disabled in v2 - placeholder
 		dispatch('notificationRead', { index });
 	}
 
@@ -89,7 +89,7 @@
 	function clearAllNotifications() {
 		autoCloseTimeouts.forEach(timeout => clearTimeout(timeout));
 		autoCloseTimeouts.clear();
-		sseService.clearNotifications();
+		// SSE disabled in v2 - placeholder
 		dispatch('allCleared');
 	}
 

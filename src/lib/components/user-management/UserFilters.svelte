@@ -171,8 +171,8 @@
 		searchValue = params.get('search') || '';
 		selectedFaculty = params.get('faculty_id') || 'all';
 		selectedDepartment = params.get('department_id') || 'all';
-		selectedStatus = params.get('status') || 'all';
-		selectedRole = params.get('role') || 'all';
+		selectedStatus = (params.get('status') as any) || 'all';
+		selectedRole = (params.get('role') as any) || 'all';
 		createdAfter = params.get('created_after') || '';
 		createdBefore = params.get('created_before') || '';
 	}
@@ -191,7 +191,7 @@
 				bind:value={searchValue}
 				placeholder="ค้นหาชื่อ, อีเมล, รหัสนักศึกษา..."
 				class="pl-10 pr-4"
-				on:keydown={handleSearchKeydown}
+				onkeydown={handleSearchKeydown}
 				disabled={loading}
 			/>
 		</div>
@@ -199,39 +199,39 @@
 		<!-- Quick Filter Buttons -->
 		<div class="flex gap-2">
 			<!-- Status Filter -->
-			<Select.Root bind:value={selectedStatus}>
+			<Select.Root type="single">
 				<Select.Trigger class="w-32">
 					{statusOptions.find(o => o.value === selectedStatus)?.label || 'สถานะ'}
 				</Select.Trigger>
 				<Select.Content>
 					{#each statusOptions as option}
-						<Select.Item value={option.value}>{option.label}</Select.Item>
+						<Select.Item value={option.value} onclick={() => selectedStatus = option.value as any}>{option.label}</Select.Item>
 					{/each}
 				</Select.Content>
 			</Select.Root>
 
 			<!-- Role Filter -->
-			<Select.Root bind:value={selectedRole}>
+			<Select.Root type="single">
 				<Select.Trigger class="w-32">
 					{roleOptions.find(o => o.value === selectedRole)?.label || 'บทบาท'}
 				</Select.Trigger>
 				<Select.Content>
 					{#each roleOptions as option}
-						<Select.Item value={option.value}>{option.label}</Select.Item>
+						<Select.Item value={option.value} onclick={() => selectedRole = option.value as any}>{option.label}</Select.Item>
 					{/each}
 				</Select.Content>
 			</Select.Root>
 
 			<!-- Faculty Filter (if enabled) -->
 			{#if showFacultyFilter && faculties.length > 0}
-				<Select.Root bind:value={selectedFaculty}>
+				<Select.Root type="single">
 					<Select.Trigger class="w-40">
 						{selectedFaculty === 'all' ? 'ทุกคณะ' : faculties.find(f => f.id === selectedFaculty)?.name || 'คณะ'}
 					</Select.Trigger>
 					<Select.Content>
-						<Select.Item value="all">ทุกคณะ</Select.Item>
+						<Select.Item value="all" onclick={() => selectedFaculty = 'all'}>ทุกคณะ</Select.Item>
 						{#each faculties as faculty}
-							<Select.Item value={faculty.id}>{faculty.name}</Select.Item>
+							<Select.Item value={faculty.id} onclick={() => selectedFaculty = faculty.id}>{faculty.name}</Select.Item>
 						{/each}
 					</Select.Content>
 				</Select.Root>
@@ -241,7 +241,7 @@
 			<Button
 				variant="outline"
 				size="sm"
-				on:click={() => showAdvancedFilters = !showAdvancedFilters}
+				onclick={() => showAdvancedFilters = !showAdvancedFilters}
 				class={showAdvancedFilters ? 'bg-muted' : ''}
 			>
 				<IconFilter class="h-4 w-4 mr-2" />
@@ -263,7 +263,7 @@
 				<Button
 					variant="ghost"
 					size="sm"
-					on:click={() => showAdvancedFilters = false}
+					onclick={() => showAdvancedFilters = false}
 				>
 					<IconX class="h-4 w-4" />
 				</Button>
@@ -274,14 +274,14 @@
 				{#if filteredDepartments.length > 0}
 					<div>
 						<label for="department-select" class="text-sm font-medium mb-2 block">สาขา/ภาควิชา</label>
-						<Select.Root bind:value={selectedDepartment}>
+						<Select.Root type="single">
 							<Select.Trigger id="department-select">
 								{selectedDepartment === 'all' ? 'ทุกสาขา' : filteredDepartments.find(d => d.id === selectedDepartment)?.name || 'เลือกสาขา'}
 							</Select.Trigger>
 							<Select.Content>
-								<Select.Item value="all">ทุกสาขา</Select.Item>
+								<Select.Item value="all" onclick={() => selectedDepartment = 'all'}>ทุกสาขา</Select.Item>
 								{#each filteredDepartments as department}
-									<Select.Item value={department.id}>{department.name}</Select.Item>
+									<Select.Item value={department.id} onclick={() => selectedDepartment = department.id}>{department.name}</Select.Item>
 								{/each}
 							</Select.Content>
 						</Select.Root>
@@ -291,48 +291,22 @@
 				<!-- Date Range Filters -->
 				<div>
 					<label for="created-after-select" class="text-sm font-medium mb-2 block">สมัครหลังจากวันที่</label>
-					<Popover.Root>
-						<Popover.Trigger asChild let:builder>
-							<Button
-								id="created-after-select"
-								variant="outline"
-								class="w-full justify-start text-left font-normal {!createdAfter ? 'text-muted-foreground' : ''}"
-								builders={[builder]}
-							>
-								<IconCalendar class="mr-2 h-4 w-4" />
-								{createdAfter ? new Date(createdAfter).toLocaleDateString('th-TH') : 'เลือกวันที่'}
-							</Button>
-						</Popover.Trigger>
-						<Popover.Content class="w-auto p-0" align="start">
-							<Calendar
-								bind:value={createdAfter}
-								initialFocus
-							/>
-						</Popover.Content>
-					</Popover.Root>
+					<input
+						id="created-after-select"
+						type="date"
+						bind:value={createdAfter}
+						class="w-full px-3 py-2 border border-gray-300 rounded-md"
+					/>
 				</div>
 
 				<div>
 					<label for="created-before-select" class="text-sm font-medium mb-2 block">สมัครก่อนวันที่</label>
-					<Popover.Root>
-						<Popover.Trigger asChild let:builder>
-							<Button
-								id="created-before-select"
-								variant="outline"
-								class="w-full justify-start text-left font-normal {!createdBefore ? 'text-muted-foreground' : ''}"
-								builders={[builder]}
-							>
-								<IconCalendar class="mr-2 h-4 w-4" />
-								{createdBefore ? new Date(createdBefore).toLocaleDateString('th-TH') : 'เลือกวันที่'}
-							</Button>
-						</Popover.Trigger>
-						<Popover.Content class="w-auto p-0" align="start">
-							<Calendar
-								bind:value={createdBefore}
-								initialFocus
-							/>
-						</Popover.Content>
-					</Popover.Root>
+					<input
+						id="created-before-select"
+						type="date"
+						bind:value={createdBefore}
+						class="w-full px-3 py-2 border border-gray-300 rounded-md"
+					/>
 				</div>
 			</div>
 		</div>
@@ -393,20 +367,20 @@
 	<!-- Action Buttons -->
 	<div class="flex items-center justify-between">
 		<div class="flex gap-2">
-			<Button on:click={applyFilters} disabled={loading}>
+			<Button onclick={applyFilters} disabled={loading}>
 				<IconRefresh class="h-4 w-4 mr-2" />
 				ปรับปรุงผลการค้นหา
 			</Button>
 
 			{#if activeFiltersCount > 0}
-				<Button variant="outline" on:click={clearFilters}>
+				<Button variant="outline" onclick={clearFilters}>
 					<IconX class="h-4 w-4 mr-2" />
 					ล้างตัวกรอง
 				</Button>
 			{/if}
 		</div>
 
-		<Button variant="outline" on:click={handleExport}>
+		<Button variant="outline" onclick={handleExport}>
 			<IconDownload class="h-4 w-4 mr-2" />
 			ส่งออกข้อมูล
 		</Button>

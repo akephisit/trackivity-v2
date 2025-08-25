@@ -90,8 +90,8 @@
 	// Stats
 	let stats = $derived({
 		total: data.faculties.length,
-		active: data.faculties.filter(f => f.status).length,
-		inactive: data.faculties.filter(f => !f.status).length
+		active: data.faculties.filter((f: any) => f.status).length,
+		inactive: data.faculties.filter((f: any) => !f.status).length
 	});
 
 	function openCreateDialog() {

@@ -207,7 +207,7 @@
 			first_name: admin.user?.first_name || '',
 			last_name: admin.user?.last_name || '',
 			email: admin.user?.email || '',
-			status: admin.user?.status || 'active',
+			status: (admin.user?.status as any) || 'active',
 			faculty_id: admin.faculty_id || '',
 			permissions: admin.permissions || []
 		};
