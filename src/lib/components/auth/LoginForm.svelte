@@ -241,13 +241,13 @@
 <style>
 	/* Custom styles for better UX */
 	:global(.login-form input:focus) {
-		ring-width: 2px;
-		ring-color: theme('colors.blue.500');
-		border-color: theme('colors.blue.500');
+		--tw-ring-width: 2px;
+		--tw-ring-color: rgb(59 130 246);
+		border-color: rgb(59 130 246);
 	}
 	
 	:global(.login-form input.error) {
-		border-color: theme('colors.red.500');
-		ring-color: theme('colors.red.500');
+		border-color: rgb(239 68 68);
+		--tw-ring-color: rgb(239 68 68);
 	}
 </style>
