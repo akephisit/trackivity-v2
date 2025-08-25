@@ -1,24 +1,24 @@
-import { json, redirect } from '@sveltejs/kit';
-import { logout } from '$lib/server/auth';
+import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 
-export const GET: RequestHandler = async (event) => {
-    try {
-        await logout(event);
-    } catch (error) {
-        console.error('Logout error (GET):', error);
-        event.cookies.delete('session_id', { path: '/' });
-    }
-    throw redirect(303, '/?logout=1');
-};
+export const POST: RequestHandler = async ({ cookies }) => {
+  try {
+    // Clear the session cookie
+    cookies.delete('session_token', { path: '/' });
 
-export const POST: RequestHandler = async (event) => {
-    try {
-        await logout(event);
-    } catch (error) {
-        console.error('Logout error (POST):', error);
-        event.cookies.delete('session_id', { path: '/' });
-    }
-    // For programmatic fetch-based logout, return JSON success
-    return json({ success: true });
+    return json({
+      success: true,
+      data: { message: 'Logged out successfully' }
+    });
+
+  } catch (error) {
+    console.error('Logout error:', error);
+    // Even if there's an error, we should clear the cookie
+    cookies.delete('session_token', { path: '/' });
+    
+    return json({
+      success: true,
+      data: { message: 'Logged out successfully' }
+    });
+  }
 };
