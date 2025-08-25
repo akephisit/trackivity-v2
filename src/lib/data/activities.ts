@@ -1,0 +1,62 @@
+import type { Activity } from '../types/activity.js';
+
+export const mockActivities: Activity[] = [
+	{
+		id: '1',
+		title: 'งานวันคุ้มครองผู้บริโภค',
+		description: 'กิจกรรมเพื่อสร้างความเข้าใจในการคุ้มครองผู้บริโภค',
+		location: 'หอประชุมใหญ่',
+		start_time: '2024-03-15T09:00:00.000Z',
+		end_time: '2024-03-15T17:00:00.000Z',
+		max_participants: 200,
+		current_participants: 150,
+		status: 'completed',
+		faculty_id: '1',
+		faculty_name: 'คณะเศรษฐศาสตร์',
+		created_by: 'user1',
+		created_by_name: 'อาจารย์สมชาย ใจดี',
+		created_at: '2024-01-15T10:00:00.000Z',
+		updated_at: '2024-01-20T16:30:00.000Z',
+		is_registered: false,
+		organizer: 'คณะเศรษฐศาสตร์',
+		organizerType: 'คณะ'
+	},
+	{
+		id: '2',
+		title: 'การประชุมสัมมนาวิชาการระดับชาติ',
+		description: 'งานสัมมนาวิชาการด้านวิศวกรรม',
+		location: 'ห้องประชุม A301',
+		start_time: '2024-04-01T09:00:00.000Z',
+		end_time: '2024-04-03T17:00:00.000Z',
+		max_participants: 300,
+		current_participants: 280,
+		status: 'ongoing',
+		faculty_id: '2',
+		faculty_name: 'คณะวิศวกรรมศาสตร์',
+		created_by: 'user2',
+		created_by_name: 'ผศ.ดร.สมหญิง วิชาการ',
+		created_at: '2024-02-01T09:00:00.000Z',
+		updated_at: '2024-02-15T14:20:00.000Z',
+		is_registered: true,
+		organizer: 'คณะวิศวกรรมศาสตร์',
+		organizerType: 'คณะ'
+	},
+	{
+		id: '3',
+		title: 'งานปฐมนิเทศนักศึกษาใหม่',
+		description: 'การต้อนรับและปฐมนิเทศนักศึกษาใหม่ปีการศึกษา 2567',
+		location: 'โดมอเนกประสงค์',
+		start_time: '2024-06-01T08:00:00.000Z',
+		end_time: '2024-06-03T17:00:00.000Z',
+		max_participants: 3000,
+		current_participants: 2500,
+		status: 'published',
+		created_by: 'admin1',
+		created_by_name: 'ผู้ดูแลระบบ',
+		created_at: '2024-02-20T08:30:00.000Z',
+		updated_at: '2024-02-22T11:45:00.000Z',
+		is_registered: false,
+		organizer: 'มหาวิทยาลัยเทคโนโลยีพระจอมเกล้าธนบุรี',
+		organizerType: 'มหาวิทยาลัย'
+	}
+];
