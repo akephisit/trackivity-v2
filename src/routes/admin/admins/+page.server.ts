@@ -10,7 +10,7 @@ import { db, users, adminRoles, faculties, departments } from '$lib/server/db';
 import { eq, and, desc, sql } from 'drizzle-orm';
 
 export const load: PageServerLoad = async (event) => {
-	const user = await requireSuperAdmin(event);
+	const user = requireSuperAdmin(event);
 
 	// Load faculties directly from database
 	let faculties: Faculty[] = [];

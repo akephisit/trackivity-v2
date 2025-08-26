@@ -34,7 +34,7 @@ export const load: PageServerLoad = async (event) => {
 	depends('app:page-data');
 	
 	// Ensure user is authenticated as admin
-	const user = await requireAdmin(event);
+	const user = requireAdmin(event);
 	const admin_role = user.admin_role;
 
 	// For SuperAdmin, show all departments; for FacultyAdmin, show only their faculty's departments
@@ -129,7 +129,7 @@ export const actions: Actions = {
     create: async (event) => {
         const { request } = event;
 
-		const user = await requireAdmin(event);
+		const user = requireAdmin(event);
 		const admin_role = user.admin_role;
 
 		// Only SuperAdmin and FacultyAdmin can create departments
@@ -184,7 +184,7 @@ export const actions: Actions = {
     update: async (event) => {
         const { request } = event;
 
-		const user = await requireAdmin(event);
+		const user = requireAdmin(event);
 		const admin_role = user.admin_role;
 
 		// Only SuperAdmin and FacultyAdmin can update departments
@@ -233,7 +233,7 @@ export const actions: Actions = {
 			throw redirect(302, '/admin/login');
 		}
 
-		const user = await requireAdmin(event);
+		const user = requireAdmin(event);
 		const admin_role = user.admin_role;
 
 		// Only SuperAdmin and FacultyAdmin can delete departments
@@ -266,7 +266,7 @@ export const actions: Actions = {
 			throw redirect(302, '/admin/login');
 		}
 
-		const user = await requireAdmin(event);
+		const user = requireAdmin(event);
 		const admin_role = user.admin_role;
 
 		// Only SuperAdmin and FacultyAdmin can toggle department status

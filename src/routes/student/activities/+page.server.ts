@@ -4,7 +4,7 @@ import { db, activities } from '$lib/server/db';
 import { desc } from 'drizzle-orm';
 
 export const load: PageServerLoad = async (event) => {
-  const user = await requireAuth(event);
+  const user = requireAuth(event);
   event.depends('student:activities');
 
   try {

@@ -183,7 +183,7 @@ function createAuthStore() {
             return user;
           }
         } catch (error) {
-          // Handle session validation errors
+          // Handle session validation errors silently for better UX
           if (isApiError(error)) {
             const code = error.code;
             if (['SESSION_EXPIRED', 'SESSION_INVALID', 'NO_SESSION', 'AUTH_ERROR'].includes(code)) {
@@ -340,15 +340,15 @@ export const facultyId = derived(
  */
 if (browser) {
   // Validate existing JWT session on app startup
-  console.log('[Auth] Validating JWT session...');
+  console.debug('[Auth] Validating JWT session...');
   auth.validateSession().then(user => {
     if (user) {
-      console.log('[Auth] Valid JWT session found');
+      console.debug('[Auth] Valid JWT session found');
     } else {
-      console.log('[Auth] No valid JWT session');
+      console.debug('[Auth] No valid JWT session');
     }
   }).catch(error => {
-    console.warn('[Auth] Session validation failed:', error);
+    console.debug('[Auth] Session validation failed:', error);
     auth.setInitialized(true);
   });
 

@@ -27,7 +27,7 @@ export const load: PageServerLoad = async (event) => {
 	depends('app:page-data');
 	
 	// Ensure user is authenticated as admin
-	const user = await requireAdmin(event);
+	const user = requireAdmin(event);
 
 	try {
 		// Fetch all faculties directly from database
@@ -69,7 +69,7 @@ export const actions: Actions = {
 	create: async (event) => {
 		const { request } = event;
 		// Ensure user is authenticated as admin
-		await requireAdmin(event);
+		requireAdmin(event);
 
 		const form = await superValidate(request, zod(facultyCreateSchema));
 
@@ -99,7 +99,7 @@ export const actions: Actions = {
 	update: async (event) => {
 		const { request } = event;
 		// Ensure user is authenticated as admin
-		await requireAdmin(event);
+		requireAdmin(event);
 
 		const formData = await request.formData();
 		const facultyId = formData.get('facultyId') as string;
@@ -136,7 +136,7 @@ export const actions: Actions = {
 	delete: async (event) => {
 		const { request } = event;
 		// Ensure user is authenticated as admin
-		await requireAdmin(event);
+		requireAdmin(event);
 
 		const formData = await request.formData();
 		const facultyId = formData.get('facultyId') as string;
@@ -157,7 +157,7 @@ export const actions: Actions = {
 	toggleStatus: async (event) => {
 		const { request } = event;
 		// Ensure user is authenticated as admin
-		await requireAdmin(event);
+		requireAdmin(event);
 
 		const formData = await request.formData();
 		const facultyId = formData.get('facultyId') as string;

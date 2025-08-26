@@ -6,7 +6,7 @@ import { AdminLevel } from '$lib/types/admin';
 import { error } from '@sveltejs/kit';
 
 export const load: PageServerLoad = async (event) => {
-  const user = await requireAdmin(event);
+  const user = requireAdmin(event);
   const adminLevel = user.admin_role?.admin_level;
 
   // เฉพาะ SuperAdmin เท่านั้นที่ดู Faculty Admins ได้

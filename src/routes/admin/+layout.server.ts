@@ -8,7 +8,7 @@ export const load: LayoutServerLoad = async (event) => {
 	}
 	
 	// ตรวจสอบว่าผู้ใช้เป็นแอดมิน
-	const user = await requireAdmin(event);
+	const user = requireAdmin(event);
 
 	return {
 		user,

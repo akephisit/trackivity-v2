@@ -5,7 +5,7 @@ import { db, users, activities, participations, adminRoles } from '$lib/server/d
 import { eq, and, count, desc, sql } from 'drizzle-orm';
 
 export const load: PageServerLoad = async (event) => {
-	const user = await requireAdmin(event);
+	const user = requireAdmin(event);
 
 	// โหลดสถิติแดชบอร์ด
 	let stats: AdminDashboardStats = {

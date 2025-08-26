@@ -5,7 +5,7 @@ import { eq } from 'drizzle-orm';
 import { error } from '@sveltejs/kit';
 
 export const load: PageServerLoad = async (event) => {
-  const user = await requireAdmin(event);
+  const user = requireAdmin(event);
   const { params } = event;
 
   try {
