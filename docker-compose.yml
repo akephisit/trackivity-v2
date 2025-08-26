@@ -5,9 +5,9 @@ services:
     ports:
       - 5433:5432
     environment:
-      POSTGRES_USER: root
+      POSTGRES_USER: postgres
       POSTGRES_PASSWORD: Phlslt2571Ake
-      POSTGRES_DB: local
+      POSTGRES_DB: trackivity
     volumes:
       - pgdata:/var/lib/postgresql/data
 volumes:
