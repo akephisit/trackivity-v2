@@ -13,9 +13,9 @@ export const load: PageServerLoad = async (event) => {
 	const user = requireSuperAdmin(event);
 
 	// Load faculties directly from database
-	let faculties: Faculty[] = [];
+	let facultiesList: Faculty[] = [];
 	try {
-		faculties = await db
+		const facRows = await db
 			.select({
 				id: faculties.id,
 				name: faculties.name,
@@ -28,104 +28,79 @@ export const load: PageServerLoad = async (event) => {
 			.from(faculties)
 			.where(eq(faculties.status, true))
 			.orderBy(faculties.name);
+
+		facultiesList = facRows.map((f) => ({
+			...f,
+			description: f.description || undefined,
+			created_at: f.created_at?.toISOString() || new Date().toISOString(),
+			updated_at: f.updated_at?.toISOString() || new Date().toISOString()
+		}));
 	} catch (error) {
 		console.error('Failed to load faculties:', error);
 	}
 
-	// โหลดรายการแอดมิน - ใช้ system-admins endpoint เพื่อให้ได้ข้อมูล is_active
+	// โหลดรายการแอดมินจากฐานข้อมูลโดยตรง (รวมข้อมูล user)
 	let admins: AdminRole[] = [];
 	try {
-    const response = await api.get(event, '/api/admin/system-admins');
+		const rows = await db
+			.select({
+				id: adminRoles.id,
+				user_id: users.id,
+				admin_level: adminRoles.adminLevel,
+				faculty_id: adminRoles.facultyId,
+				permissions: adminRoles.permissions,
+				is_enabled: adminRoles.isEnabled,
+				created_at: adminRoles.createdAt,
+				updated_at: adminRoles.updatedAt,
+				user_email: users.email,
+				first_name: users.firstName,
+				last_name: users.lastName,
+				student_id: users.studentId,
+				department_id: users.departmentId,
+				user_created_at: users.createdAt,
+				user_updated_at: users.updatedAt,
+			})
+			.from(adminRoles)
+			.innerJoin(users, eq(adminRoles.userId, users.id))
+			.orderBy(desc(adminRoles.createdAt));
 
-    if (response.success) {
-        const result = response.data;
-			console.log('=== SYSTEM ADMINS API RESPONSE ===');
-			console.log('result type:', typeof result);
-			if (result) {
-				console.log('super_admins count:', result.super_admins?.length || 0);
-				console.log('faculty_groups count:', result.faculty_groups?.length || 0);
+		const mapAdminLevel = (lvl: string): AdminLevel => {
+			switch (lvl) {
+				case 'super_admin':
+					return AdminLevel.SuperAdmin;
+				case 'faculty_admin':
+					return AdminLevel.FacultyAdmin;
+				case 'regular_admin':
+				default:
+					return AdminLevel.RegularAdmin;
 			}
-			console.log('================================');
-			if (result) {
-				// API ส่งข้อมูลในรูปแบบ { super_admins: [], faculty_groups: [...] }
-				let adminUsers: any[] = [];
-				
-				// รวม super_admins เข้าด้วย
-				if (result.super_admins && Array.isArray(result.super_admins)) {
-					adminUsers = [...result.super_admins];
-				}
-				
-				// รวม admins จาก faculty_groups
-				if (result.faculty_groups && Array.isArray(result.faculty_groups)) {
-					result.faculty_groups.forEach((group: any) => {
-						if (group.admins && Array.isArray(group.admins)) {
-							adminUsers = [...adminUsers, ...group.admins];
-						}
-					});
-				}
-				
-				// Ensure adminUsers is an array to prevent .filter() error
-				if (!Array.isArray(adminUsers)) {
-					console.warn('adminUsers is not an array:', typeof adminUsers, adminUsers);
-					throw new Error('Invalid data format received from server');
-				}
-				
-				// Helper function to convert API AdminLevel to Frontend AdminLevel
-				const mapAdminLevel = (apiLevel: string): AdminLevel => {
-					switch (apiLevel) {
-						case 'SuperAdmin':
-						case 'super_admin':
-							return AdminLevel.SuperAdmin;
-						case 'FacultyAdmin':
-						case 'faculty_admin':
-							return AdminLevel.FacultyAdmin;
-						case 'RegularAdmin':
-						case 'regular_admin':
-							return AdminLevel.RegularAdmin;
-						default:
-							return AdminLevel.RegularAdmin;
-					}
-				};
+		};
 
-				// แปลงข้อมูลจาก system-admins API response ให้เป็น AdminRole format ที่ frontend ใช้
-				// API response structure: { id, email, first_name, ..., admin_role: {...}, is_active, last_login }
-				admins = adminUsers
-					.filter((admin: any) => admin.admin_role) // เฉพาะ admin ที่มี admin_role
-					.map((admin: any) => ({
-						id: admin.admin_role.id,
-						user_id: admin.id,
-						admin_level: mapAdminLevel(admin.admin_role.admin_level),
-						faculty_id: admin.admin_role.faculty_id,
-						permissions: admin.admin_role.permissions || [],
-						created_at: admin.admin_role.created_at,
-						updated_at: admin.admin_role.updated_at,
-						// เพิ่มข้อมูล user เข้าไปด้วยเพื่อให้ UI แสดงได้
-						user: {
-							id: admin.id,
-							student_id: admin.student_id,
-							email: admin.email,
-							first_name: admin.first_name,
-							last_name: admin.last_name,
-							department_id: admin.department_id,
-							faculty_id: admin.faculty_id,
-							status: admin.status || 'active',
-							role: admin.role || 'admin',
-							phone: admin.phone,
-							avatar: admin.avatar,
-							last_login: admin.last_login,
-							email_verified_at: admin.email_verified_at,
-							created_at: admin.created_at,
-							updated_at: admin.updated_at
-						},
-						// เพิ่ม faculty ข้อมูลถ้ามี
-						faculty: admin.admin_role.faculty_id ? 
-							faculties.find(f => f.id === admin.admin_role.faculty_id) : undefined,
-						// เพิ่ม is_active (login session) และ is_enabled (account enabled) ข้อมูลจาก backend
-						is_active: admin.is_active !== undefined ? admin.is_active : false,
-						is_enabled: admin.is_enabled !== undefined ? admin.is_enabled : true
-					}));
-			}
-		}
+		admins = rows.map((r) => ({
+			id: r.id,
+			user_id: r.user_id,
+			admin_level: mapAdminLevel(r.admin_level as unknown as string),
+			faculty_id: r.faculty_id || undefined,
+			permissions: r.permissions || [],
+			created_at: r.created_at?.toISOString() || new Date().toISOString(),
+			updated_at: r.updated_at?.toISOString() || new Date().toISOString(),
+			user: {
+				id: r.user_id,
+				student_id: r.student_id,
+				email: r.user_email,
+				first_name: r.first_name,
+				last_name: r.last_name,
+				department_id: r.department_id || undefined,
+				faculty_id: r.faculty_id || undefined,
+				status: 'active',
+				role: 'admin',
+				created_at: r.user_created_at?.toISOString() || new Date().toISOString(),
+				updated_at: r.user_updated_at?.toISOString() || new Date().toISOString()
+			},
+			faculty: r.faculty_id ? facultiesList.find((f) => f.id === r.faculty_id) : undefined,
+			is_active: false,
+			is_enabled: r.is_enabled ?? true
+		}));
 	} catch (error) {
 		console.error('Failed to load admins:', error);
 	}
@@ -135,9 +110,29 @@ export const load: PageServerLoad = async (event) => {
 	return {
 		user,
 		admins,
-		faculties,
+		faculties: facultiesList,
 		form
 	};
+};
+
+// Minimal server-side API wrapper using event.fetch to preserve cookies
+const api = {
+	get: async (event: any, url: string) => {
+		const res = await event.fetch(url);
+		return res.json();
+	},
+	post: async (event: any, url: string, body?: any) => {
+		const res = await event.fetch(url, { method: 'POST', body: JSON.stringify(body), headers: { 'Content-Type': 'application/json' } });
+		return res.json();
+	},
+	put: async (event: any, url: string, body?: any) => {
+		const res = await event.fetch(url, { method: 'PUT', body: JSON.stringify(body), headers: { 'Content-Type': 'application/json' } });
+		return res.json();
+	},
+	delete: async (event: any, url: string) => {
+		const res = await event.fetch(url, { method: 'DELETE' });
+		return res.json();
+	}
 };
 
 export const actions: Actions = {

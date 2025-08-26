@@ -44,10 +44,10 @@ export const load: PageServerLoad = async (event) => {
 	}
 
     try {
-        // Fetch departments directly from database
+        // Fetch departments directly from database and map to typed Department
         let departmentsData: Department[];
         if (admin_role?.admin_level === 'FacultyAdmin' && admin_role.faculty_id) {
-            departmentsData = await db
+            const rows = await db
                 .select({
                     id: departments.id,
                     name: departments.name,
@@ -61,9 +61,16 @@ export const load: PageServerLoad = async (event) => {
                 .from(departments)
                 .where(eq(departments.facultyId, admin_role.faculty_id))
                 .orderBy(desc(departments.createdAt));
+
+            departmentsData = rows.map((d) => ({
+                ...d,
+                description: d.description || undefined,
+                created_at: d.created_at?.toISOString() || new Date().toISOString(),
+                updated_at: d.updated_at?.toISOString() || new Date().toISOString()
+            }));
         } else {
             // SuperAdmin - get all departments with faculty info
-            departmentsData = await db
+            const rows = await db
                 .select({
                     id: departments.id,
                     name: departments.name,
@@ -78,26 +85,66 @@ export const load: PageServerLoad = async (event) => {
                 .from(departments)
                 .leftJoin(faculties, eq(departments.facultyId, faculties.id))
                 .orderBy(desc(departments.createdAt));
+
+            departmentsData = rows.map((d) => ({
+                ...d,
+                description: d.description || undefined,
+                created_at: d.created_at?.toISOString() || new Date().toISOString(),
+                updated_at: d.updated_at?.toISOString() || new Date().toISOString()
+            }));
         }
 
 		// For FacultyAdmin, get their faculty info
 		let currentFaculty: Faculty | null = null;
         if (admin_role?.admin_level === 'FacultyAdmin' && admin_role.faculty_id) {
-            const facultyResponse = await api.get(event, `/api/faculties/${admin_role.faculty_id}`);
-            if (facultyResponse.success) {
-                const facultyData = facultyResponse.data as any;
-                currentFaculty = facultyData.faculty || facultyData;
+            const facRows = await db
+                .select({
+                    id: faculties.id,
+                    name: faculties.name,
+                    code: faculties.code,
+                    description: faculties.description,
+                    status: faculties.status,
+                    created_at: faculties.createdAt,
+                    updated_at: faculties.updatedAt
+                })
+                .from(faculties)
+                .where(eq(faculties.id, admin_role.faculty_id))
+                .limit(1);
+
+            if (facRows.length > 0) {
+                const f = facRows[0];
+                currentFaculty = {
+                    ...f,
+                    description: f.description || undefined,
+                    created_at: f.created_at?.toISOString() || new Date().toISOString(),
+                    updated_at: f.updated_at?.toISOString() || new Date().toISOString()
+                };
             }
         }
 
 		// If SuperAdmin, load faculties list for selection
-		let faculties: Faculty[] | null = null;
+		let facultiesList: Faculty[] | null = null;
         if (admin_role?.admin_level === 'SuperAdmin') {
-            const facRes = await api.get(event, `/api/admin/faculties`);
-            if (facRes.success) {
-                const facData = facRes.data as any;
-                faculties = facData.faculties || facData || [];
-            }
+            const facRows = await db
+                .select({
+                    id: faculties.id,
+                    name: faculties.name,
+                    code: faculties.code,
+                    description: faculties.description,
+                    status: faculties.status,
+                    created_at: faculties.createdAt,
+                    updated_at: faculties.updatedAt
+                })
+                .from(faculties)
+                .where(eq(faculties.status, true))
+                .orderBy(faculties.name);
+
+            facultiesList = facRows.map((f) => ({
+                ...f,
+                description: f.description || undefined,
+                created_at: f.created_at?.toISOString() || new Date().toISOString(),
+                updated_at: f.updated_at?.toISOString() || new Date().toISOString()
+            }));
         }
 
 		// Create forms
@@ -105,12 +152,12 @@ export const load: PageServerLoad = async (event) => {
 		const updateForm = await superValidate(zod(departmentUpdateSchema));
 
 		return {
-			departments,
+			departments: departmentsData,
 			currentFaculty,
 			createForm,
 			updateForm,
 			userRole: admin_role?.admin_level || 'RegularAdmin',
-			faculties
+			faculties: facultiesList
 		};
 	} catch (error) {
 		console.error('Failed to load departments data:', error);

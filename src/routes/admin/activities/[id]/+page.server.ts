@@ -41,12 +41,13 @@ export const load: PageServerLoad = async (event) => {
         first_name: users.firstName,
         last_name: users.lastName,
         student_id: users.studentId,
-        participated_at: participations.createdAt
+        // participations doesn't have createdAt; use registeredAt
+        participated_at: participations.registeredAt
       })
       .from(participations)
       .innerJoin(users, eq(participations.userId, users.id))
       .where(eq(participations.activityId, params.id))
-      .orderBy(participations.createdAt);
+      .orderBy(participations.registeredAt);
 
     return { 
       user,

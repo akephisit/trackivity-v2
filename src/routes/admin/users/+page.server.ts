@@ -36,7 +36,8 @@ async function getUsersFromDb(adminLevel: string, facultyId: string | null | und
         .from(users)
         .leftJoin(departments, eq(users.departmentId, departments.id))
         .leftJoin(faculties, eq(departments.facultyId, faculties.id))
-        .leftJoin(adminRoles, eq(users.id, adminRoles.userId));
+        .leftJoin(adminRoles, eq(users.id, adminRoles.userId))
+        .$dynamic();
 
     const conditions = [];
 
@@ -93,7 +94,8 @@ async function getUsersFromDb(adminLevel: string, facultyId: string | null | und
 
     // Get total count for pagination
     let countQuery = db.select({ count: count() }).from(users)
-        .leftJoin(departments, eq(users.departmentId, departments.id));
+        .leftJoin(departments, eq(users.departmentId, departments.id))
+        .$dynamic();
     
     if (conditions.length > 0) {
         countQuery = countQuery.where(and(...conditions));
@@ -118,22 +120,22 @@ async function getUserStatsFromDb(adminLevel: string, facultyId: string | null |
     const [totalUsers, activeUsers, recentRegistrations] = await Promise.all([
         // Total users
         (() => {
-            let query = db.select({ count: count() }).from(users);
+            let q = db.select({ count: count() }).from(users).$dynamic();
             if (baseConditions.length > 0) {
-                query = query.leftJoin(departments, eq(users.departmentId, departments.id))
-                    .where(and(...baseConditions));
+                q = q.leftJoin(departments, eq(users.departmentId, departments.id));
+                return q.where(and(...baseConditions));
             }
-            return query;
+            return q;
         })(),
         
         // Active users (users with status 'active')
         (() => {
-            let query = db.select({ count: count() }).from(users);
+            let q = db.select({ count: count() }).from(users).$dynamic();
             const activeConditions = [eq(users.status, 'active'), ...baseConditions];
             if (baseConditions.length > 0) {
-                query = query.leftJoin(departments, eq(users.departmentId, departments.id));
+                q = q.leftJoin(departments, eq(users.departmentId, departments.id));
             }
-            return query.where(and(...activeConditions));
+            return q.where(and(...activeConditions));
         })(),
         
         // Recent registrations (last 30 days)
@@ -141,16 +143,16 @@ async function getUserStatsFromDb(adminLevel: string, facultyId: string | null |
             const thirtyDaysAgo = new Date();
             thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
             
-            let query = db.select({ count: count() }).from(users);
+            let q = db.select({ count: count() }).from(users).$dynamic();
             const recentConditions = [
                 sql`${users.createdAt} >= ${thirtyDaysAgo}`,
                 ...baseConditions
             ];
             
             if (baseConditions.length > 0) {
-                query = query.leftJoin(departments, eq(users.departmentId, departments.id));
+                q = q.leftJoin(departments, eq(users.departmentId, departments.id));
             }
-            return query.where(and(...recentConditions));
+            return q.where(and(...recentConditions));
         })()
     ]);
 

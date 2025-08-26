@@ -37,7 +37,8 @@ async function getUsersFromDb(facultyId: string | null | undefined, filters: Use
         .from(users)
         .leftJoin(departments, eq(users.departmentId, departments.id))
         .leftJoin(faculties, eq(departments.facultyId, faculties.id))
-        .leftJoin(adminRoles, eq(users.id, adminRoles.userId));
+        .leftJoin(adminRoles, eq(users.id, adminRoles.userId))
+        .$dynamic();
 
     const conditions = [];
 
@@ -90,7 +91,8 @@ async function getUsersFromDb(facultyId: string | null | undefined, filters: Use
 
     // Get total count for pagination
     let countQuery = db.select({ count: count() }).from(users)
-        .leftJoin(departments, eq(users.departmentId, departments.id));
+        .leftJoin(departments, eq(users.departmentId, departments.id))
+        .$dynamic();
     
     if (conditions.length > 0) {
         countQuery = countQuery.where(and(...conditions));
@@ -111,14 +113,21 @@ async function getUserStatsFromDb(facultyId: string | null | undefined): Promise
     
     const [totalUsers, activeUsers, recentRegistrations] = await Promise.all([
         // Total users in faculty
-        db.select({ count: count() }).from(users)
-            .leftJoin(departments, eq(users.departmentId, departments.id))
-            .where(baseConditions.length > 0 ? and(...baseConditions) : undefined),
+        (() => {
+            let q = db.select({ count: count() }).from(users)
+                .leftJoin(departments, eq(users.departmentId, departments.id))
+                .$dynamic();
+            return baseConditions.length > 0 ? q.where(and(...baseConditions)) : q;
+        })(),
         
         // Active users in faculty
-        db.select({ count: count() }).from(users)
-            .leftJoin(departments, eq(users.departmentId, departments.id))
-            .where(and(eq(users.status, 'active'), ...(baseConditions.length > 0 ? baseConditions : []))),
+        (() => {
+            let q = db.select({ count: count() }).from(users)
+                .leftJoin(departments, eq(users.departmentId, departments.id))
+                .$dynamic();
+            const conds = [eq(users.status, 'active'), ...(baseConditions.length > 0 ? baseConditions : [])];
+            return q.where(and(...conds));
+        })(),
         
         // Recent registrations (last 30 days) in faculty
         (() => {
@@ -130,9 +139,10 @@ async function getUserStatsFromDb(facultyId: string | null | undefined): Promise
                 ...baseConditions
             ];
             
-            return db.select({ count: count() }).from(users)
+            let q = db.select({ count: count() }).from(users)
                 .leftJoin(departments, eq(users.departmentId, departments.id))
-                .where(and(...recentConditions));
+                .$dynamic();
+            return q.where(and(...recentConditions));
         })()
     ]);
 
