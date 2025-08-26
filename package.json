@@ -16,7 +16,8 @@
 		"db:push": "drizzle-kit push",
 		"db:generate": "drizzle-kit generate",
 		"db:migrate": "drizzle-kit migrate",
-		"db:studio": "drizzle-kit studio"
+		"db:studio": "drizzle-kit studio",
+		"create-super-admin": "tsx scripts/create-super-admin.ts"
 	},
 	"devDependencies": {
 		"@dnd-kit-svelte/core": "^0.0.8",
@@ -62,6 +63,7 @@
 		"tailwind-variants": "^3.0.0",
 		"tailwindcss": "^4.0.0",
 		"tw-animate-css": "^1.3.7",
+		"tsx": "^4.7.1",
 		"typescript": "^5.0.0",
 		"typescript-eslint": "^8.20.0",
 		"vaul-svelte": "^1.0.0-next.7",
