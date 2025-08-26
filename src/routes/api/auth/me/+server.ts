@@ -30,13 +30,14 @@ export const GET: RequestHandler = async ({ cookies }) => {
     const token = cookies.get('session_token');
 
     if (!token) {
+      // Return 200 to avoid noisy console error on first load
       return json({
         success: false,
         error: {
           code: 'NO_SESSION',
           message: 'No active session found'
         }
-      }, { status: 401 });
+      });
     }
 
     // Verify and decode JWT
@@ -45,13 +46,14 @@ export const GET: RequestHandler = async ({ cookies }) => {
       
       // Check token expiration
       if (decoded.exp && Date.now() >= decoded.exp * 1000) {
+        // Return 200 to avoid console error; client handles gracefully
         return json({
           success: false,
           error: {
             code: 'SESSION_EXPIRED',
             message: 'Session has expired'
           }
-        }, { status: 401 });
+        });
       }
 
       // Build permissions array based on admin status
@@ -107,13 +109,14 @@ export const GET: RequestHandler = async ({ cookies }) => {
 
     } catch (jwtError) {
       console.debug('[Auth] JWT validation failed:', jwtError);
+      // Return 200 with error payload; client handles silently
       return json({
         success: false,
         error: {
           code: 'SESSION_INVALID',
           message: 'Invalid or corrupted session'
         }
-      }, { status: 401 });
+      });
     }
 
   } catch (error) {
