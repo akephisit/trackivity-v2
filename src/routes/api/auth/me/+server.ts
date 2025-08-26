@@ -1,9 +1,31 @@
-import { json } from '@sveltejs/kit';
+import { json, type RequestHandler } from '@sveltejs/kit';
 import jwt from 'jsonwebtoken';
+import type { SessionUser, Permission } from '$lib/types';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 
-export const GET = async ({ cookies }: { cookies: any }) => {
+/**
+ * JWT payload interface matching login endpoint
+ */
+interface JWTPayload {
+  user_id: string;
+  student_id: string;
+  email: string;
+  first_name: string;
+  last_name: string;
+  department_id?: string;
+  is_admin: boolean;
+  admin_level?: string;
+  faculty_id?: string;
+  iat?: number;
+  exp?: number;
+}
+
+/**
+ * Get current user session information
+ * Validates JWT token and returns user data in consistent format
+ */
+export const GET: RequestHandler = async ({ cookies }) => {
   try {
     const token = cookies.get('session_token');
 
@@ -12,44 +34,90 @@ export const GET = async ({ cookies }: { cookies: any }) => {
         success: false,
         error: {
           code: 'NO_SESSION',
-          message: 'No active session'
+          message: 'No active session found'
         }
       }, { status: 401 });
     }
 
-    // Verify JWT
+    // Verify and decode JWT
     try {
-      const decoded = jwt.verify(token, JWT_SECRET) as any;
+      const decoded = jwt.verify(token, JWT_SECRET) as JWTPayload;
+      
+      // Check token expiration
+      if (decoded.exp && Date.now() >= decoded.exp * 1000) {
+        return json({
+          success: false,
+          error: {
+            code: 'SESSION_EXPIRED',
+            message: 'Session has expired'
+          }
+        }, { status: 401 });
+      }
+
+      // Build permissions array based on admin status
+      const permissions: Permission[] = [];
+      if (decoded.is_admin) {
+        if (decoded.admin_level === 'SuperAdmin') {
+          permissions.push(
+            'ViewAllUsers', 'CreateUsers', 'UpdateUsers', 'DeleteUsers',
+            'ViewAllFaculties', 'CreateFaculties', 'UpdateFaculties', 'DeleteFaculties',
+            'ViewAllSessions', 'ManageAllSessions', 'ViewSystemAnalytics'
+          );
+        } else if (decoded.admin_level === 'FacultyAdmin') {
+          permissions.push(
+            'ViewFacultyUsers', 'CreateFacultyUsers', 'UpdateFacultyUsers',
+            'ViewFacultyAnalytics', 'ManageFacultyActivities',
+            'ViewFacultySessions', 'ManageFacultySessions'
+          );
+        } else {
+          permissions.push(
+            'ViewAssignedActivities', 'ScanQRCodes', 'ViewPersonalSessions'
+          );
+        }
+      } else {
+        permissions.push('ViewPersonalQR', 'ViewPersonalHistory');
+      }
+
+      // Build consistent SessionUser response
+      const sessionUser: SessionUser = {
+        user_id: decoded.user_id,
+        student_id: decoded.student_id,
+        email: decoded.email,
+        first_name: decoded.first_name,
+        last_name: decoded.last_name,
+        department_id: decoded.department_id,
+        faculty_id: decoded.faculty_id,
+        session_id: token.slice(0, 16), // Use first 16 chars as session ID
+        permissions,
+        expires_at: decoded.exp ? new Date(decoded.exp * 1000).toISOString() : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+        admin_role: decoded.is_admin ? {
+          id: `admin_${decoded.user_id}`,
+          admin_level: (decoded.admin_level as any) || 'RegularAdmin',
+          faculty_id: decoded.faculty_id,
+          permissions,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        } : undefined
+      };
       
       return json({
         success: true,
-        data: {
-          user: {
-            id: decoded.user_id,
-            student_id: decoded.student_id,
-            email: decoded.email,
-            first_name: decoded.first_name,
-            last_name: decoded.last_name,
-            department_id: decoded.department_id
-          },
-          is_admin: decoded.is_admin || false,
-          admin_level: decoded.admin_level || null,
-          faculty_id: decoded.faculty_id || null
-        }
+        data: sessionUser
       });
 
     } catch (jwtError) {
+      console.debug('[Auth] JWT validation failed:', jwtError);
       return json({
         success: false,
         error: {
           code: 'SESSION_INVALID',
-          message: 'Invalid session'
+          message: 'Invalid or corrupted session'
         }
       }, { status: 401 });
     }
 
   } catch (error) {
-    console.error('Me endpoint error:', error);
+    console.error('[Auth] Me endpoint error:', error);
     return json({
       success: false,
       error: {

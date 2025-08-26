@@ -1,18 +1,36 @@
 import type { PageServerLoad } from './$types';
-import { api } from '$lib/server/api-client';
+import { requireAuth } from '$lib/server/auth-utils';
+import { db, activities } from '$lib/server/db';
+import { eq, desc } from 'drizzle-orm';
 
 export const load: PageServerLoad = async (event) => {
+  const user = await requireAuth(event);
   const { depends } = event;
   depends('student:dashboard');
 
-  // Recent activities for dashboard
+  // Recent activities for dashboard - โหลดจากฐานข้อมูลโดยตรง
   let recentActivities: any[] = [];
   try {
-    const res = await api.get(event, `/api/activities`, { per_page: '5', active_only: 'true' });
-    if (res.success) {
-      recentActivities = res.data ?? [];
-    }
-  } catch (_) {}
+    const result = await db
+      .select({
+        id: activities.id,
+        title: activities.title,
+        description: activities.description,
+        start_date: activities.startDate,
+        end_date: activities.endDate,
+        activity_type: activities.activityType,
+        status: activities.status,
+        created_at: activities.createdAt
+      })
+      .from(activities)
+      .where(eq(activities.status, 'ongoing'))
+      .orderBy(desc(activities.createdAt))
+      .limit(5);
+
+    recentActivities = result;
+  } catch (error) {
+    console.warn('Failed to load recent activities:', error);
+  }
 
   // Placeholder until real endpoints exist
   const participationHistory: any[] = [];
@@ -23,6 +41,7 @@ export const load: PageServerLoad = async (event) => {
   };
 
   return {
+    user,
     recentActivities,
     participationHistory,
     stats

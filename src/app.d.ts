@@ -9,6 +9,10 @@ declare global {
 			details?: Record<string, any>;
 		}
 		
+		/**
+		 * User data available in server-side locals
+		 * Set by authentication middleware in hooks.server.ts
+		 */
 		interface Locals {
 			user: {
 				id: string;
@@ -22,14 +26,19 @@ declare global {
 			} | null;
 		}
 		
+		/**
+		 * Data passed from server to client pages
+		 */
 		interface PageData {
 			user?: App.Locals['user'];
 		}
 		
+		/**
+		 * Client-side page state
+		 */
 		interface PageState {
 			user?: App.Locals['user'];
 		}
-		// interface Platform {}
 	}
 }
 

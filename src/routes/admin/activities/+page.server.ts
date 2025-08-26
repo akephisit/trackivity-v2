@@ -1,9 +1,10 @@
-import { requireFacultyAdmin } from '$lib/server/auth';
+import { requireFacultyAdmin } from '$lib/server/auth-utils';
 import { error, fail } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 import type { Activity } from '$lib/types/activity';
 import { AdminLevel } from '$lib/types/admin';
-import { api } from '$lib/server/api-client';
+import { db, activities, faculties, users, participations } from '$lib/server/db';
+import { eq, and, desc, count, sql } from 'drizzle-orm';
 
 export const load: PageServerLoad = async (event) => {
 	// ตรวจสอบสิทธิ์ - เฉพาะ FacultyAdmin หรือ SuperAdmin
@@ -30,45 +31,63 @@ export const load: PageServerLoad = async (event) => {
 			throw error(403, 'ไม่มีสิทธิ์เข้าถึงข้อมูลกิจกรรม');
 		}
 
-		// เรียก API เพื่อดึงข้อมูลกิจกรรม
-		const response = await api.get(event, apiEndpoint, Object.keys(params).length > 0 ? params : undefined);
+		// Query activities directly from database
+		let query = db
+			.select({
+				id: activities.id,
+				title: activities.title,
+				description: activities.description,
+				start_date: activities.startDate,
+				end_date: activities.endDate,
+				start_time: activities.startTimeOnly,
+				end_time: activities.endTimeOnly,
+				activity_type: activities.activityType,
+				location: activities.location,
+				max_participants: activities.maxParticipants,
+				hours: activities.hours,
+				status: activities.status,
+				faculty_id: activities.facultyId,
+				created_by: activities.createdBy,
+				created_at: activities.createdAt,
+				updated_at: activities.updatedAt,
+				organizer: activities.organizer
+			})
+			.from(activities);
 
-		let activities: Activity[] = [];
+		// Apply faculty filtering for FacultyAdmin
+		if (adminLevel === AdminLevel.FacultyAdmin && facultyId) {
+			query = query.where(eq(activities.facultyId, facultyId));
+		}
+
+		const rawActivities = await query.orderBy(desc(activities.createdAt));
 		
-    if (response.success) {
-        const rawActivities = response.data?.activities || response.data || [];
-			
-			activities = rawActivities.map((activity: any) => ({
+		activitiesData = rawActivities.map((activity: any) => ({
 				id: activity.id,
-				activity_name: activity.activity_name || activity.name || activity.title,
+				activity_name: activity.title,
 				description: activity.description,
 				start_date: activity.start_date,
 				end_date: activity.end_date,
-				start_time: activity.start_time_only || activity.start_time,
-				end_time: activity.end_time_only || activity.end_time,
+				start_time: activity.start_time,
+				end_time: activity.end_time,
 				activity_type: activity.activity_type,
 				location: activity.location,
 				max_participants: activity.max_participants,
 				hours: activity.hours,
-				require_score: activity.require_score,
+				require_score: false, // Not in current schema
 				faculty_id: activity.faculty_id,
 				created_by: activity.created_by,
 				created_at: activity.created_at,
 				updated_at: activity.updated_at,
 				// Legacy fields for compatibility
-				name: activity.activity_name || activity.name || activity.title,
+				name: activity.title,
 				organizer: activity.organizer || 'ระบบ',
-				organizerType: activity.organizerType || 'คณะ',
-				participantCount: activity.participant_count || 0,
+				organizerType: 'คณะ',
+				participantCount: 0, // TODO: Count from participations table
 				status: activity.status || 'รอดำเนินการ'
 			}));
-		} else {
-			console.error('Failed to load activities:', response.error);
-			// ไม่ throw error แต่ให้ส่งค่า array ว่างไป
-		}
 
 		return {
-			activities,
+			activities: activitiesData,
 			user,
 			adminLevel,
 			facultyId,
@@ -106,11 +125,8 @@ export const actions: Actions = {
                 return fail(400, { error: 'ไม่พบรหัสกิจกรรม' });
             }
 
-            const response = await api.delete(event, `/api/activities/${activityId}`);
-
-            if (!response.success) {
-                return fail(500, { error: response.error || 'ลบกิจกรรมไม่สำเร็จ' });
-            }
+            // Delete activity directly from database
+            await db.delete(activities).where(eq(activities.id, activityId));
 
             // Success
             return { success: true };

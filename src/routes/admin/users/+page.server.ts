@@ -1,4 +1,4 @@
-import { requireAdmin } from '$lib/server/auth';
+import { requireAdmin } from '$lib/server/auth-utils';
 import { error } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import type { 
@@ -8,7 +8,178 @@ import type {
     Faculty
 } from '$lib/types/admin';
 import { AdminLevel } from '$lib/types/admin';
-import { api } from '$lib/server/api-client';
+import { db, users, adminRoles, faculties, departments } from '$lib/server/db';
+import { eq, and, or, like, desc, count, exists, sql } from 'drizzle-orm';
+
+/**
+ * Get users from database with filters and pagination
+ */
+async function getUsersFromDb(adminLevel: string, facultyId: string | null | undefined, filters: UserFilter, offset: number, limit: number) {
+    let query = db
+        .select({
+            id: users.id,
+            email: users.email,
+            first_name: users.firstName,
+            last_name: users.lastName,
+            student_id: users.studentId,
+            department_id: users.departmentId,
+            status: users.status,
+            created_at: users.createdAt,
+            updated_at: users.updatedAt,
+            department_name: departments.name,
+            faculty_id: departments.facultyId,
+            faculty_name: faculties.name,
+            admin_level: adminRoles.adminLevel,
+            admin_faculty_id: adminRoles.facultyId,
+            is_admin: sql<boolean>`${adminRoles.id} IS NOT NULL`,
+        })
+        .from(users)
+        .leftJoin(departments, eq(users.departmentId, departments.id))
+        .leftJoin(faculties, eq(departments.facultyId, faculties.id))
+        .leftJoin(adminRoles, eq(users.id, adminRoles.userId));
+
+    const conditions = [];
+
+    // Faculty filtering for FacultyAdmin
+    if (adminLevel === AdminLevel.FacultyAdmin && facultyId) {
+        conditions.push(eq(departments.facultyId, facultyId));
+    }
+
+    // Apply filters
+    if (filters.search) {
+        const searchTerm = `%${filters.search}%`;
+        conditions.push(or(
+            like(users.firstName, searchTerm),
+            like(users.lastName, searchTerm),
+            like(users.email, searchTerm),
+            like(users.studentId, searchTerm)
+        ));
+    }
+
+    if (filters.faculty_id) {
+        conditions.push(eq(departments.facultyId, filters.faculty_id));
+    }
+
+    if (filters.department_id) {
+        conditions.push(eq(users.departmentId, filters.department_id));
+    }
+
+    if (filters.status && filters.status !== 'all') {
+        conditions.push(eq(users.status, filters.status));
+    }
+
+    if (conditions.length > 0) {
+        query = query.where(and(...conditions));
+    }
+
+    query = query.orderBy(desc(users.createdAt)).offset(offset).limit(limit);
+
+    const result = await query;
+
+    // Get total count for pagination
+    let countQuery = db.select({ count: count() }).from(users);
+    
+    if (adminLevel === AdminLevel.FacultyAdmin && facultyId) {
+        countQuery = countQuery
+            .leftJoin(departments, eq(users.departmentId, departments.id))
+            .where(eq(departments.facultyId, facultyId));
+    }
+
+    if (conditions.length > 0) {
+        countQuery = countQuery
+            .leftJoin(departments, eq(users.departmentId, departments.id))
+            .leftJoin(faculties, eq(departments.facultyId, faculties.id))
+            .where(and(...conditions));
+    }
+
+    const totalResult = await countQuery;
+    const totalCount = totalResult[0]?.count || 0;
+
+    return { users: result, totalCount };
+}
+
+/**
+ * Get user statistics from database
+ */
+async function getUserStatsFromDb(adminLevel: string, facultyId: string | null | undefined): Promise<UserStats> {
+    let baseQuery = db.select({ count: count() }).from(users);
+    
+    if (adminLevel === AdminLevel.FacultyAdmin && facultyId) {
+        baseQuery = baseQuery
+            .leftJoin(departments, eq(users.departmentId, departments.id))
+            .where(eq(departments.facultyId, facultyId));
+    }
+
+    const [totalUsers, activeUsers, recentRegistrations] = await Promise.all([
+        // Total users
+        baseQuery,
+        
+        // Active users (users with status 'active')
+        (() => {
+            let activeQuery = db.select({ count: count() }).from(users).where(eq(users.status, 'active'));
+            if (adminLevel === AdminLevel.FacultyAdmin && facultyId) {
+                activeQuery = activeQuery
+                    .leftJoin(departments, eq(users.departmentId, departments.id))
+                    .where(and(eq(users.status, 'active'), eq(departments.facultyId, facultyId)));
+            }
+            return activeQuery;
+        })(),
+        
+        // Recent registrations (last 30 days)
+        (() => {
+            const thirtyDaysAgo = new Date();
+            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+            
+            let recentQuery = db.select({ count: count() }).from(users)
+                .where(sql`${users.createdAt} >= ${thirtyDaysAgo}`);
+                
+            if (adminLevel === AdminLevel.FacultyAdmin && facultyId) {
+                recentQuery = recentQuery
+                    .leftJoin(departments, eq(users.departmentId, departments.id))
+                    .where(and(
+                        sql`${users.createdAt} >= ${thirtyDaysAgo}`,
+                        eq(departments.facultyId, facultyId)
+                    ));
+            }
+            return recentQuery;
+        })()
+    ]);
+
+    const total = totalUsers[0]?.count || 0;
+    const active = activeUsers[0]?.count || 0;
+    const recent = recentRegistrations[0]?.count || 0;
+
+    return {
+        total_users: total,
+        active_users: active,
+        inactive_users: Math.max(0, total - active),
+        students: total, // Assuming most users are students
+        faculty: 0,
+        staff: 0,
+        recent_registrations: recent
+    };
+}
+
+/**
+ * Get faculties from database
+ */
+async function getFacultiesFromDb(): Promise<Faculty[]> {
+    const result = await db
+        .select({
+            id: faculties.id,
+            name: faculties.name,
+            code: faculties.code,
+            description: faculties.description,
+            status: faculties.status,
+            created_at: faculties.createdAt,
+            updated_at: faculties.updatedAt
+        })
+        .from(faculties)
+        .where(eq(faculties.status, true))
+        .orderBy(faculties.name);
+
+    return result;
+}
 
 /**
  * Server Load Function for General User Management
@@ -41,131 +212,82 @@ export const load: PageServerLoad = async (event) => {
     const offset = (page - 1) * limit;
 
     try {
-        // Determine API endpoint based on admin level
-        let apiEndpoint: string;
-        let statsEndpoint: string;
+        // Validate admin access
+        if (adminLevel === AdminLevel.FacultyAdmin && !facultyId) {
+            throw error(403, 'Faculty admin must be associated with a faculty');
+        }
 
-        if (adminLevel === AdminLevel.SuperAdmin) {
-            // SuperAdmin can view all users via local proxy
-            apiEndpoint = `/api/admin/system-users`;
-            statsEndpoint = `/api/admin/user-statistics`;
-        } else if (adminLevel === AdminLevel.FacultyAdmin) {
-            // FacultyAdmin can only view users within their faculty
-            if (!facultyId) {
-                throw error(403, 'Faculty admin must be associated with a faculty');
-            }
-            apiEndpoint = `/api/faculties/${facultyId}/users`;
-            statsEndpoint = `/api/faculties/${facultyId}/users/stats`;
-        } else {
+        if (adminLevel !== AdminLevel.SuperAdmin && adminLevel !== AdminLevel.FacultyAdmin) {
             throw error(403, 'Insufficient permissions to view user data');
         }
 
-        // Build query parameters object for API client
-        const queryParams: Record<string, string> = {
-            limit: limit.toString(),
-            offset: offset.toString()
-        };
-        if (filters.search) queryParams.search = filters.search;
-        if (filters.faculty_id) queryParams.faculty_id = filters.faculty_id;
-        if (filters.department_id) queryParams.department_id = filters.department_id;
-        if (filters.status && filters.status !== 'all') queryParams.status = filters.status;
-        if (filters.role && filters.role !== 'all') queryParams.role = filters.role;
-        if (filters.created_after) queryParams.created_after = filters.created_after;
-        if (filters.created_before) queryParams.created_before = filters.created_before;
-
-        // Make API requests
-        const [usersResponse, statsResponse, facultiesResponse] = await Promise.all([
-            api.get(event, apiEndpoint, queryParams),
-            api.get(event, statsEndpoint),
+        // Direct database queries instead of API calls
+        const [usersData, statsData, facultiesData] = await Promise.all([
+            getUsersFromDb(adminLevel, facultyId, filters, offset, limit),
+            getUserStatsFromDb(adminLevel, facultyId),
             // Load faculties for filtering (only for SuperAdmin)
-            adminLevel === AdminLevel.SuperAdmin ? api.get(event, '/api/faculties') : Promise.resolve(null)
+            adminLevel === AdminLevel.SuperAdmin ? getFacultiesFromDb() : Promise.resolve([])
         ]);
 
-        // Process faculties response first (for SuperAdmin only)
-        let faculties: Faculty[] = [];
-        if (facultiesResponse && facultiesResponse.success) {
-            const rawFaculties = facultiesResponse.data;
-            faculties = rawFaculties?.faculties || rawFaculties || [];
-        }
+        // Process faculties data
+        const faculties: Faculty[] = facultiesData;
 
         // Create a faculty lookup map for better performance
         const facultyMap = new Map();
         faculties.forEach(f => facultyMap.set(f.id, f));
 
-        // Process users response
+        // Process users data
+        const { users: rawUsers, totalCount } = usersData;
         let users: User[] = [];
-        let pagination = { page: page, total_pages: 1, total_count: 0, limit: limit } as any;
-
-        if (usersResponse.success) {
-            const src = usersResponse.data as any;
-            const rawUsers: any[] = src.users || src.data?.users || [];
-            const totalCount: number = src.total_count ?? src.pagination?.total ?? rawUsers.length;
+        let pagination = { page: page, total_pages: Math.max(1, Math.ceil(totalCount / limit)), total_count: totalCount, limit: limit } as any;
 
             users = rawUsers.map((u: any) => {
-                // Determine user status similar to admin/admins page
-                const isEnabled = u.is_enabled !== undefined ? Boolean(u.is_enabled) : true;
-                const isActive = u.is_active !== undefined && u.is_active !== null ? Boolean(u.is_active) : false;
-                
+                // Map database status to User status
                 let status: User['status'];
-                if (!isEnabled) {
-                    status = 'disabled';
-                } else if (isActive) {
-                    status = 'online';
-                } else {
-                    status = 'offline';
+                switch (u.status) {
+                    case 'active':
+                        status = 'online';
+                        break;
+                    case 'inactive':
+                        status = 'offline';
+                        break;
+                    case 'suspended':
+                        status = 'disabled';
+                        break;
+                    default:
+                        status = 'offline';
                 }
-                const lastLogin = u.last_login ? new Date(u.last_login).toISOString() : undefined;
-                const department = u.department_name ? { id: u.department_id, name: u.department_name } : u.department;
-                // Handle faculty data - check multiple possible sources
-                let faculty = null;
+
+                const department = u.department_name ? { id: u.department_id, name: u.department_name } : undefined;
                 
-                // For admin users, prioritize faculty_id from admin_role
-                if (u.admin_role && u.admin_role.faculty_id) {
-                    // Get faculty from admin_role first
-                    if (u.admin_role.faculty && u.admin_role.faculty.name) {
-                        faculty = u.admin_role.faculty;
-                    } else {
-                        // Look up faculty from faculties list
-                        const facultyFromMap = facultyMap.get(u.admin_role.faculty_id);
-                        if (facultyFromMap) {
-                            faculty = facultyFromMap;
-                        } else {
-                            faculty = { 
-                                id: u.admin_role.faculty_id, 
-                                name: u.admin_role.faculty_name || 'Unknown Faculty' 
-                            };
-                        }
-                    }
-                }
-                // For non-admin users or if admin doesn't have faculty_id
-                else if (u.faculty_name && u.faculty_id) {
+                // Handle faculty data
+                let faculty = null;
+                if (u.is_admin && u.admin_faculty_id) {
+                    // For admin users, use admin's faculty
+                    const facultyFromMap = facultyMap.get(u.admin_faculty_id);
+                    faculty = facultyFromMap || { id: u.admin_faculty_id, name: 'Unknown Faculty' };
+                } else if (u.faculty_name && u.faculty_id) {
+                    // For regular users, use department's faculty
                     faculty = { id: u.faculty_id, name: u.faculty_name };
-                } else if (u.faculty) {
-                    faculty = u.faculty;
-                } else if (u.faculty_id) {
-                    faculty = facultyMap.get(u.faculty_id) || { id: u.faculty_id, name: 'Unknown Faculty' };
                 }
-                // Determine user role based on admin_role and user data
+
+                // Determine user role based on admin_level
                 let role: User['role'] = 'student'; // default
                 
-                if (u.admin_role) {
-                    // If user has admin role, determine the specific admin type
-                    const adminLevel = u.admin_role.admin_level;
-                    switch (adminLevel) {
-                        case 'SuperAdmin':
+                if (u.is_admin && u.admin_level) {
+                    switch (u.admin_level) {
+                        case 'super_admin':
                             role = 'super_admin';
                             break;
-                        case 'FacultyAdmin':
+                        case 'faculty_admin':
                             role = 'faculty_admin';
                             break;
-                        case 'RegularAdmin':
+                        case 'regular_admin':
                             role = 'regular_admin';
                             break;
                         default:
                             role = 'admin';
                     }
-                } else {
-                    role = u.role || 'student';
                 }
                 return {
                     id: u.id,
@@ -173,15 +295,15 @@ export const load: PageServerLoad = async (event) => {
                     first_name: u.first_name,
                     last_name: u.last_name,
                     student_id: u.student_id,
-                    employee_id: u.employee_id,
+                    employee_id: undefined, // Not in database schema yet
                     department_id: u.department_id,
                     faculty_id: u.faculty_id,
                     status,
                     role,
-                    phone: u.phone,
-                    avatar: u.avatar,
-                    last_login: lastLogin,
-                    email_verified_at: u.email_verified_at,
+                    phone: undefined, // Not in database schema yet
+                    avatar: undefined, // Not in database schema yet
+                    last_login: undefined, // TODO: Add last login tracking
+                    email_verified_at: undefined, // Not in database schema yet
                     created_at: u.created_at ? new Date(u.created_at).toISOString() : new Date().toISOString(),
                     updated_at: u.updated_at ? new Date(u.updated_at).toISOString() : new Date().toISOString(),
                     department,
@@ -189,46 +311,8 @@ export const load: PageServerLoad = async (event) => {
                 } as User;
             });
 
-            pagination = {
-                page,
-                limit,
-                total_count: totalCount,
-                total_pages: Math.max(1, Math.ceil(totalCount / limit))
-            };
-        } else {
-            console.error('Failed to load users:', usersResponse.error);
-        }
-
-        // Process stats response
-        let stats: UserStats = {
-            total_users: 0,
-            active_users: 0,
-            inactive_users: 0,
-            students: 0,
-            faculty: 0,
-            staff: 0,
-            recent_registrations: 0
-        };
-
-        if (statsResponse.success) {
-            const rawStats = statsResponse.data;
-            // Support both system-wide and faculty-scoped shapes
-            if (rawStats.system_stats) {
-                stats = {
-                    total_users: rawStats.system_stats.total_users || 0,
-                    active_users: rawStats.system_stats.active_users_30_days || 0,
-                    inactive_users: Math.max(0, (rawStats.system_stats.total_users || 0) - (rawStats.system_stats.active_users_30_days || 0)),
-                    students: rawStats.system_stats.total_users || 0,
-                    faculty: 0,
-                    staff: 0,
-                    recent_registrations: rawStats.system_stats.new_users_30_days || 0,
-                } as UserStats;
-            } else if (rawStats.total_users !== undefined) {
-                stats = rawStats as UserStats;
-            }
-        } else {
-            console.error('Failed to load user stats:', statsResponse.error);
-        }
+        // Process stats data
+        const stats: UserStats = statsData;
 
 
         return {

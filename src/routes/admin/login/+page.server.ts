@@ -2,123 +2,94 @@ import { fail, redirect } from '@sveltejs/kit';
 import { superValidate } from 'sveltekit-superforms';
 import { zod } from 'sveltekit-superforms/adapters';
 import { adminLoginSchema } from '$lib/schemas/auth';
-import { api } from '$lib/server/api-client';
+import { getOptionalAuthUser } from '$lib/server/auth-utils';
 import type { Actions, PageServerLoad } from './$types';
 
+/**
+ * Admin login page loader
+ * Redirects to admin dashboard if admin is already authenticated
+ */
 export const load: PageServerLoad = async (event) => {
-	// Check if admin already logged in
-	const sessionId = event.cookies.get('session_id');
-	
-	if (sessionId) {
-		try {
-        const response = await api.get(event, '/api/admin/auth/me');
-        
-        if (response.success) {
-            throw redirect(303, '/admin');
-        }
-		} catch (error) {
-			// If redirect, throw it
-			if (error instanceof Response) {
-				throw error;
-			}
-			
-			// If other error, clear invalid session
-			event.cookies.delete('session_id', { path: '/' });
-		}
-	}
+  const { url } = event;
+  
+  // Check if user is already authenticated and is an admin
+  const user = getOptionalAuthUser(event);
+  if (user && user.admin_role) {
+    // Admin is already logged in, redirect to admin dashboard
+    const redirectTo = url.searchParams.get('redirectTo') || '/admin';
+    throw redirect(303, redirectTo);
+  }
 
-	const form = await superValidate(zod(adminLoginSchema));
-	
-	return {
-		form,
-		isDevelopment: process.env.NODE_ENV === 'development'
-	};
+  // Initialize admin login form
+  const form = await superValidate(zod(adminLoginSchema));
+  
+  return {
+    form,
+    redirectTo: url.searchParams.get('redirectTo') || null,
+    isDevelopment: process.env.NODE_ENV === 'development'
+  };
 };
 
+/**
+ * Admin login form actions
+ * Handles admin authentication via JWT API
+ */
 export const actions: Actions = {
-	default: async (event) => {
-		const form = await superValidate(event.request, zod(adminLoginSchema));
+  default: async (event) => {
+    const { request, url, fetch } = event;
+    const form = await superValidate(request, zod(adminLoginSchema));
 
-		if (!form.valid) {
-			return fail(400, { form });
-		}
+    if (!form.valid) {
+      return fail(400, { form });
+    }
 
-		try {
-			console.log('=== ADMIN LOGIN DEBUG START ===');
-			console.log('Form data:', { 
-				email: form.data.email,
-				has_password: !!form.data.password,
-				remember_me: form.data.remember_me 
-			});
-			
-			const response = await api.post(event, '/api/admin/auth/login', {
-				email: form.data.email,
-				password: form.data.password,
-				remember_me: form.data.remember_me
-			});
+    try {
+      // Call our JWT login API endpoint with admin credentials
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          email: form.data.email,
+          password: form.data.password,
+          remember_me: form.data.remember_me,
+          device_info: {
+            device_type: 'web'
+          }
+        })
+      });
 
-			console.log('API Response:', {
-				success: response.success,
-				has_data: !!response.data,
-				has_error: !!response.error,
-				data_keys: response.data ? Object.keys(response.data) : null,
-				response_sample: response.success ? 'SUCCESS' : response.error
-			});
+      const result = await response.json();
 
-            if (!response.success) {
-				console.log('Response failed:', response.error);
-                form.errors._errors = [response.error || 'การเข้าสู่ระบบไม่สำเร็จ'];
-                return fail(400, { form });
-            }
+      if (!response.ok || !result.success) {
+        const errorMessage = result.error?.message || 'Invalid admin credentials';
+        form.errors._errors = [errorMessage];
+        return fail(400, { form });
+      }
 
-			// Backend returns { success: true, session: {...} } directly in response.data
-			if (response.success && response.data?.session) {
-				console.log('Login successful, setting cookie');
-				// Set session cookie
-				event.cookies.set('session_id', response.data.session.session_id, {
-					path: '/',
-					httpOnly: true,
-					secure: process.env.NODE_ENV === 'production',
-					sameSite: 'lax',
-					maxAge: form.data.remember_me ? 30 * 24 * 60 * 60 : 24 * 60 * 60 // 30 days or 1 day
-				});
+      // Verify the user is actually an admin
+      const user = result.data?.user;
+      if (!user || !user.admin_role) {
+        form.errors._errors = ['Access denied. Admin privileges required.'];
+        return fail(403, { form });
+      }
 
-				throw redirect(303, '/admin');
-			} else {
-				console.log('Login failed - no session in response');
-				form.errors._errors = [response.data?.message || response.error || 'การเข้าสู่ระบบไม่สำเร็จ'];
-				return fail(400, { form });
-			}
-		} catch (error) {
-			console.log('=== CAUGHT ERROR ===');
-			console.log('Error type:', typeof error);
-			console.log('Error details:', error);
-			console.log('Is Response?', error instanceof Response);
-			console.log('Has status?', error && typeof error === 'object' && 'status' in error);
-			console.log('Has location?', error && typeof error === 'object' && 'location' in error);
-			
-			// Check if this is a SvelteKit redirect (success case)
-			if (error && typeof error === 'object' && 'status' in error && 'location' in error) {
-				console.log('Throwing SvelteKit redirect');
-				throw error;
-			}
-			
-			// If redirect, throw it (this is success case)
-			if (error instanceof Response) {
-				console.log('Throwing Response redirect');
-				throw error;
-			}
-			
-			// Only set actual error messages for real errors
-			if (error && typeof error === 'object' && 'message' in error && typeof error.message === 'string') {
-				console.log('Setting error message from error object:', error.message);
-				form.errors._errors = [error.message];
-			} else {
-				console.log('Setting generic connection error');
-				form.errors._errors = ['เกิดข้อผิดพลาดในการเชื่อมต่อ'];
-			}
-			console.log('=== ERROR DEBUG END ===');
-			return fail(400, { form });
-		}
-	}
+      // Login successful - JWT cookie is already set by the API
+      // Redirect to admin dashboard or return URL
+      const redirectTo = url.searchParams.get('redirectTo') || '/admin';
+      throw redirect(303, redirectTo);
+
+    } catch (error) {
+      // Handle redirect errors (normal flow)
+      if (error && typeof error === 'object' && 'status' in (error as any) && 'location' in (error as any)) {
+        throw error;
+      }
+      
+      // Handle other errors
+      console.error('[Auth] Admin login form error:', error);
+      form.errors._errors = ['Connection error. Please try again.'];
+      return fail(500, { form });
+    }
+  }
 };

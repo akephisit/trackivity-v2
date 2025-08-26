@@ -1,7 +1,7 @@
 import type { PageServerLoad, Actions } from './$types';
 import { error, redirect } from '@sveltejs/kit';
 import type { Activity, ActivityUpdateData, ActivityStatus } from '$lib/types/activity';
-import { requireFacultyAdmin } from '$lib/server/auth';
+import { requireFacultyAdmin } from '$lib/server/auth-utils';
 import { convertStatusForBackend, convertStatusFromBackend } from '$lib/utils/activity';
 
 export const load: PageServerLoad = async (event) => {

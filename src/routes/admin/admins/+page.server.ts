@@ -1,4 +1,4 @@
-import { requireSuperAdmin } from '$lib/server/auth';
+import { requireSuperAdmin } from '$lib/server/auth-utils';
 import { fail } from '@sveltejs/kit';
 import { superValidate } from 'sveltekit-superforms';
 import { zod } from 'sveltekit-superforms/adapters';
@@ -6,18 +6,28 @@ import { adminCreateSchema } from '$lib/schemas/auth';
 import type { PageServerLoad, Actions } from './$types';
 import type { AdminRole, Faculty } from '$lib/types/admin';
 import { AdminLevel } from '$lib/types/admin';
-import { api } from '$lib/server/api-client';
+import { db, users, adminRoles, faculties, departments } from '$lib/server/db';
+import { eq, and, desc, sql } from 'drizzle-orm';
 
 export const load: PageServerLoad = async (event) => {
 	const user = await requireSuperAdmin(event);
 
-	// โหลดรายการคณะก่อน
+	// Load faculties directly from database
 	let faculties: Faculty[] = [];
 	try {
-    const response = await api.get(event, '/api/faculties');
-    if (response.success) {
-        faculties = response.data?.faculties || response.data || [];
-    }
+		faculties = await db
+			.select({
+				id: faculties.id,
+				name: faculties.name,
+				code: faculties.code,
+				description: faculties.description,
+				status: faculties.status,
+				created_at: faculties.createdAt,
+				updated_at: faculties.updatedAt
+			})
+			.from(faculties)
+			.where(eq(faculties.status, true))
+			.orderBy(faculties.name);
 	} catch (error) {
 		console.error('Failed to load faculties:', error);
 	}

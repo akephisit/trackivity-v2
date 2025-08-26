@@ -4,8 +4,9 @@ import { zod } from 'sveltekit-superforms/adapters';
 import { z } from 'zod';
 import type { PageServerLoad, Actions } from './$types';
 import type { Department, Faculty } from '$lib/types/admin';
-import { requireAdmin } from '$lib/server/auth';
-import { api } from '$lib/server/api-client';
+import { requireAdmin } from '$lib/server/auth-utils';
+import { db, faculties, departments } from '$lib/server/db';
+import { eq, and, desc } from 'drizzle-orm';
 
 // Department schemas
 const departmentCreateSchema = z.object({
@@ -32,13 +33,9 @@ export const load: PageServerLoad = async (event) => {
     const { cookies, depends, parent } = event;
 	depends('app:page-data');
 	
-	const sessionId = cookies.get('session_id');
-	if (!sessionId) {
-		throw redirect(302, '/admin/login');
-	}
-
-	// Get parent data for user context
-	const { admin_role } = await parent();
+	// Ensure user is authenticated as admin
+	const user = await requireAdmin(event);
+	const admin_role = user.admin_role;
 
 	// For SuperAdmin, show all departments; for FacultyAdmin, show only their faculty's departments
 	let apiEndpoint = `/api/departments`;
@@ -47,13 +44,40 @@ export const load: PageServerLoad = async (event) => {
 	}
 
     try {
-        // Fetch departments
-        const departmentsResponse = await api.get(event, apiEndpoint);
-
-        let departments: Department[] = [];
-        if (departmentsResponse.success) {
-            const departmentsData = departmentsResponse.data as any;
-            departments = departmentsData.departments || departmentsData || [];
+        // Fetch departments directly from database
+        let departmentsData: Department[];
+        if (admin_role?.admin_level === 'FacultyAdmin' && admin_role.faculty_id) {
+            departmentsData = await db
+                .select({
+                    id: departments.id,
+                    name: departments.name,
+                    code: departments.code,
+                    faculty_id: departments.facultyId,
+                    description: departments.description,
+                    status: departments.status,
+                    created_at: departments.createdAt,
+                    updated_at: departments.updatedAt
+                })
+                .from(departments)
+                .where(eq(departments.facultyId, admin_role.faculty_id))
+                .orderBy(desc(departments.createdAt));
+        } else {
+            // SuperAdmin - get all departments with faculty info
+            departmentsData = await db
+                .select({
+                    id: departments.id,
+                    name: departments.name,
+                    code: departments.code,
+                    faculty_id: departments.facultyId,
+                    description: departments.description,
+                    status: departments.status,
+                    created_at: departments.createdAt,
+                    updated_at: departments.updatedAt,
+                    faculty_name: faculties.name
+                })
+                .from(departments)
+                .leftJoin(faculties, eq(departments.facultyId, faculties.id))
+                .orderBy(desc(departments.createdAt));
         }
 
 		// For FacultyAdmin, get their faculty info
@@ -138,13 +162,15 @@ export const actions: Actions = {
         const apiEndpoint = `/api/faculties/${targetFacultyId}/departments`;
 
 		try {
-            const response = await api.post(event, apiEndpoint, form.data);
-            if (!response.success) {
-                return fail(400, { 
-                    form,
-                    error: response.error || 'เกิดข้อผิดพลาดในการสร้างภาควิชา'
-                });
-            }
+            // Insert department directly into database
+            await db.insert(departments).values({
+                name: form.data.name,
+                code: form.data.code,
+                facultyId: targetFacultyId,
+                description: form.data.description || null,
+                status: form.data.status
+            });
+            
             return { form, success: true };
 		} catch (error) {
 			console.error('Failed to create department:', error);
@@ -179,13 +205,16 @@ export const actions: Actions = {
 		}
 
 		try {
-            const response = await api.put(event, `/api/departments/${departmentId}`, form.data);
-            if (!response.success) {
-                return fail(400, { 
-                    form,
-                    error: response.error || 'เกิดข้อผิดพลาดในการแก้ไขภาควิชา'
-                });
-            }
+            // Update department directly in database
+            await db.update(departments)
+                .set({
+                    ...(form.data.name && { name: form.data.name }),
+                    ...(form.data.code && { code: form.data.code }),
+                    ...(form.data.description !== undefined && { description: form.data.description }),
+                    ...(form.data.status !== undefined && { status: form.data.status }),
+                    updatedAt: new Date()
+                })
+                .where(eq(departments.id, departmentId));
 
 			return { form, success: true };
 		} catch (error) {
@@ -218,12 +247,8 @@ export const actions: Actions = {
 		const departmentId = formData.get('departmentId') as string;
 
         try {
-            const response = await api.delete(event, `/api/departments/${departmentId}`);
-            if (!response.success) {
-                return fail(400, { 
-                    error: response.error || 'เกิดข้อผิดพลาดในการลบภาควิชา'
-                });
-            }
+            // Delete department directly from database
+            await db.delete(departments).where(eq(departments.id, departmentId));
 
 			return { success: true };
 		} catch (error) {
@@ -255,12 +280,23 @@ export const actions: Actions = {
 		const departmentId = formData.get('departmentId') as string;
 
         try {
-            const response = await api.put(event, `/api/departments/${departmentId}/toggle-status`);
-            if (!response.success) {
-                return fail(400, { 
-                    error: response.error || 'เกิดข้อผิดพลาดในการเปลี่ยนสถานะภาควิชา'
-                });
+            // Get current status first
+            const [currentDepartment] = await db
+                .select({ status: departments.status })
+                .from(departments)
+                .where(eq(departments.id, departmentId));
+
+            if (!currentDepartment) {
+                return fail(404, { error: 'ไม่พบภาควิชาที่ต้องการ' });
             }
+
+            // Toggle status
+            await db.update(departments)
+                .set({ 
+                    status: !currentDepartment.status,
+                    updatedAt: new Date()
+                })
+                .where(eq(departments.id, departmentId));
 
 			return { success: true };
 		} catch (error) {

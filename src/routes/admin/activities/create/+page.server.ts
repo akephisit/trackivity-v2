@@ -1,4 +1,4 @@
-import { requireFacultyAdmin } from '$lib/server/auth';
+import { requireFacultyAdmin } from '$lib/server/auth-utils';
 import { fail, redirect } from '@sveltejs/kit';
 import { superValidate } from 'sveltekit-superforms';
 import { zod } from 'sveltekit-superforms/adapters';

@@ -1,4 +1,4 @@
-import { requireAdmin } from '$lib/server/auth';
+import { requireAdmin } from '$lib/server/auth-utils';
 import { error } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import type { 
@@ -10,7 +10,201 @@ import type {
     Department
 } from '$lib/types/admin';
 import { AdminLevel } from '$lib/types/admin';
-import { api } from '$lib/server/api-client';
+import { db, users, adminRoles, faculties, departments } from '$lib/server/db';
+import { eq, and, or, like, desc, count, sql } from 'drizzle-orm';
+
+/**
+ * Get faculty users from database with filters and pagination
+ */
+async function getFacultyUsersFromDb(adminLevel: string, facultyId: string | null | undefined, filters: UserFilter, offset: number, limit: number) {
+    let query = db
+        .select({
+            id: users.id,
+            email: users.email,
+            first_name: users.firstName,
+            last_name: users.lastName,
+            student_id: users.studentId,
+            department_id: users.departmentId,
+            status: users.status,
+            created_at: users.createdAt,
+            updated_at: users.updatedAt,
+            department_name: departments.name,
+            department_code: departments.code,
+            faculty_id: departments.facultyId,
+            faculty_name: faculties.name,
+            faculty_code: faculties.code,
+            admin_level: adminRoles.adminLevel,
+            admin_faculty_id: adminRoles.facultyId,
+            is_admin: sql<boolean>`${adminRoles.id} IS NOT NULL`,
+        })
+        .from(users)
+        .leftJoin(departments, eq(users.departmentId, departments.id))
+        .leftJoin(faculties, eq(departments.facultyId, faculties.id))
+        .leftJoin(adminRoles, eq(users.id, adminRoles.userId));
+
+    const conditions = [];
+
+    // Faculty filtering
+    if (facultyId) {
+        conditions.push(eq(departments.facultyId, facultyId));
+    }
+
+    // Apply other filters
+    if (filters.search) {
+        const searchTerm = `%${filters.search}%`;
+        conditions.push(or(
+            like(users.firstName, searchTerm),
+            like(users.lastName, searchTerm),
+            like(users.email, searchTerm),
+            like(users.studentId, searchTerm)
+        ));
+    }
+
+    if (filters.department_id) {
+        conditions.push(eq(users.departmentId, filters.department_id));
+    }
+
+    if (filters.status && filters.status !== 'all') {
+        conditions.push(eq(users.status, filters.status));
+    }
+
+    if (conditions.length > 0) {
+        query = query.where(and(...conditions));
+    }
+
+    query = query.orderBy(desc(users.createdAt)).offset(offset).limit(limit);
+
+    const result = await query;
+
+    // Get total count for pagination
+    let countQuery = db.select({ count: count() }).from(users)
+        .leftJoin(departments, eq(users.departmentId, departments.id));
+    
+    const countConditions = [...conditions];
+    if (facultyId) {
+        countConditions.push(eq(departments.facultyId, facultyId));
+    }
+
+    if (countConditions.length > 0) {
+        countQuery = countQuery.where(and(...countConditions));
+    }
+
+    const totalResult = await countQuery;
+    const totalCount = totalResult[0]?.count || 0;
+
+    return { users: result, totalCount };
+}
+
+/**
+ * Get faculty user statistics from database
+ */
+async function getFacultyUserStatsFromDb(adminLevel: string, facultyId: string | null | undefined): Promise<UserStats> {
+    let baseQuery = db.select({ count: count() }).from(users)
+        .leftJoin(departments, eq(users.departmentId, departments.id));
+    
+    const conditions = [];
+    if (facultyId) {
+        conditions.push(eq(departments.facultyId, facultyId));
+    }
+
+    if (conditions.length > 0) {
+        baseQuery = baseQuery.where(and(...conditions));
+    }
+
+    const [totalUsers, activeUsers, recentRegistrations] = await Promise.all([
+        // Total users
+        baseQuery,
+        
+        // Active users
+        (() => {
+            let activeQuery = db.select({ count: count() }).from(users)
+                .leftJoin(departments, eq(users.departmentId, departments.id))
+                .where(eq(users.status, 'active'));
+            if (facultyId) {
+                activeQuery = activeQuery.where(and(
+                    eq(users.status, 'active'), 
+                    eq(departments.facultyId, facultyId)
+                ));
+            }
+            return activeQuery;
+        })(),
+        
+        // Recent registrations (last 30 days)
+        (() => {
+            const thirtyDaysAgo = new Date();
+            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+            
+            let recentQuery = db.select({ count: count() }).from(users)
+                .leftJoin(departments, eq(users.departmentId, departments.id))
+                .where(sql`${users.createdAt} >= ${thirtyDaysAgo}`);
+                
+            if (facultyId) {
+                recentQuery = recentQuery.where(and(
+                    sql`${users.createdAt} >= ${thirtyDaysAgo}`,
+                    eq(departments.facultyId, facultyId)
+                ));
+            }
+            return recentQuery;
+        })()
+    ]);
+
+    const total = totalUsers[0]?.count || 0;
+    const active = activeUsers[0]?.count || 0;
+    const recent = recentRegistrations[0]?.count || 0;
+
+    return {
+        total_users: total,
+        active_users: active,
+        inactive_users: Math.max(0, total - active),
+        students: total,
+        faculty: 0,
+        staff: 0,
+        recent_registrations: recent
+    };
+}
+
+/**
+ * Get faculties from database
+ */
+async function getFacultiesFromDb(): Promise<Faculty[]> {
+    const result = await db
+        .select({
+            id: faculties.id,
+            name: faculties.name,
+            code: faculties.code,
+            description: faculties.description,
+            status: faculties.status,
+            created_at: faculties.createdAt,
+            updated_at: faculties.updatedAt
+        })
+        .from(faculties)
+        .where(eq(faculties.status, true))
+        .orderBy(faculties.name);
+
+    return result;
+}
+
+/**
+ * Get departments by faculty from database
+ */
+async function getDepartmentsByFacultyFromDb(facultyId: string): Promise<Department[]> {
+    const result = await db
+        .select({
+            id: departments.id,
+            name: departments.name,
+            code: departments.code,
+            faculty_id: departments.facultyId,
+            description: departments.description,
+            status: departments.status,
+            created_at: departments.createdAt,
+            updated_at: departments.updatedAt
+        })
+        .from(departments)
+        .where(and(eq(departments.facultyId, facultyId), eq(departments.status, true)))
+        .orderBy(departments.name);
+
+    return result;
+}
 
 /**
  * Server Load Function for Faculty-Scoped User Management
@@ -88,75 +282,47 @@ export const load: PageServerLoad = async (event) => {
             paramsObj[key] = value;
         });
 
-        // Parallel fetch of users and statistics
-        const [usersResponse, statsResponse, facultiesResponse, departmentsResponse] = await Promise.all([
+        // Direct database queries instead of API calls
+        const targetFacultyId = facultyId || filters.faculty_id;
+        
+        const [usersData, statsData, facultiesData, departmentsData] = await Promise.all([
             // Fetch users
-            api.get(event, apiEndpoint, paramsObj, { throwOnHttpError: false }),
+            getFacultyUsersFromDb(adminLevel, targetFacultyId, filters, offset, limit),
             
             // Fetch statistics
-            api.get(event, statsPath, statsParams, { throwOnHttpError: false }),
+            getFacultyUserStatsFromDb(adminLevel, targetFacultyId),
 
             // Fetch faculties for SuperAdmin filtering
-            adminLevel === AdminLevel.SuperAdmin ? 
-                api.get(event, '/api/faculties', undefined, { throwOnHttpError: false }) : Promise.resolve(null),
+            adminLevel === AdminLevel.SuperAdmin ? getFacultiesFromDb() : Promise.resolve([]),
 
             // Fetch departments for the relevant faculty
-            (facultyId || filters.faculty_id)
-                ? api.get(event, `/api/faculties/${facultyId || filters.faculty_id}/departments`, undefined, { throwOnHttpError: false })
-                : Promise.resolve(null)
+            targetFacultyId ? getDepartmentsByFacultyFromDb(targetFacultyId) : Promise.resolve([])
         ]);
 
-        // Process users response
-        if (!usersResponse || !usersResponse.success) {
-            console.error('Failed to fetch users:', usersResponse.error);
-            error(500, usersResponse.error || 'Failed to fetch users');
-        }
-
-        const usersData = usersResponse.data;
-        // Check for missing data
-        if (!usersData && !usersData?.users) {
-            error(500, 'Failed to fetch users');
-        }
-
-        // Process statistics response
-        let statsData = statsResponse?.data;
-        if (!statsResponse?.success) {
-            console.warn('Failed to fetch user statistics:', statsResponse?.error);
-            statsData = undefined;
-        }
-
-        // Process faculties response (for SuperAdmin)
-        let faculties: Faculty[] = [];
-        if (facultiesResponse && facultiesResponse.success) {
-            faculties = facultiesResponse.data || [];
-        }
-
-        // Process departments response
-        let departments: Department[] = [];
-        if (departmentsResponse && departmentsResponse.success) {
-            departments = departmentsResponse.data || [];
-        }
+        // Process database results
+        const { users: rawUsers, totalCount } = usersData;
+        const stats = statsData;
+        const faculties = facultiesData;
+        const departments = departmentsData;
 
         // Normalize users into a consistent shape expected by the table
-        const src = (usersData.data || usersData) as any;
-        const rawUsers: any[] = src.users || src.data?.users || [];
-        const totalCount: number = src.total_count ?? src.pagination?.total ?? rawUsers.length;
-
         const normalizedUsers: User[] = rawUsers.map((u) => {
-            // Some endpoints return flat fields (faculty_name/department_name) and session info
-            const lastLogin = u.last_login ? new Date(u.last_login).toISOString() : undefined;
-            const isActive = typeof u.is_active === 'boolean' ? u.is_active : false;
-            // Compose nested department/faculty for display (name used in cells)
+            // Map database status to display status
+            const status: User['status'] = u.status === 'active' ? 'online' : 
+                                         u.status === 'suspended' ? 'disabled' : 'offline';
+            
+            // Compose nested department/faculty for display
             const department: any = u.department_name
                 ? { id: u.department_id, name: u.department_name, code: u.department_code }
-                : u.department || undefined;
+                : undefined;
             const faculty: any = u.faculty_name
                 ? { id: u.faculty_id, name: u.faculty_name, code: u.faculty_code }
-                : u.faculty || undefined;
+                : undefined;
 
-            const role: User['role'] = u.admin_role ? 'admin' : (u.role || 'student');
-            // Use admin-like semantics for status display
-            const status: User['status'] = isActive ? 'online' : 'offline';
+            const role: User['role'] = u.is_admin ? 
+                (u.admin_level === 'super_admin' ? 'super_admin' :
+                 u.admin_level === 'faculty_admin' ? 'faculty_admin' :
+                 u.admin_level === 'regular_admin' ? 'regular_admin' : 'admin') : 'student';
 
             return {
                 id: u.id,
@@ -164,15 +330,15 @@ export const load: PageServerLoad = async (event) => {
                 first_name: u.first_name,
                 last_name: u.last_name,
                 student_id: u.student_id,
-                employee_id: u.employee_id,
+                employee_id: undefined, // Not in current schema
                 department_id: u.department_id,
                 faculty_id: u.faculty_id,
                 status,
                 role,
-                phone: u.phone,
-                avatar: u.avatar,
-                last_login: lastLogin,
-                email_verified_at: u.email_verified_at,
+                phone: undefined, // Not in current schema
+                avatar: undefined, // Not in current schema
+                last_login: undefined, // TODO: Add login tracking
+                email_verified_at: undefined, // Not in current schema
                 created_at: u.created_at ? new Date(u.created_at).toISOString() : new Date().toISOString(),
                 updated_at: u.updated_at ? new Date(u.updated_at).toISOString() : new Date().toISOString(),
                 department,
@@ -180,29 +346,8 @@ export const load: PageServerLoad = async (event) => {
             } as User;
         });
 
-        // Normalize stats for SuperAdmin (system-wide) vs Faculty-scoped
-        const rawStats = (statsData && ((statsData as any).data || statsData)) as any;
-        let normalizedStats: UserStats | undefined;
-        if (rawStats && rawStats.system_stats) {
-            normalizedStats = {
-                total_users: rawStats.system_stats.total_users || 0,
-                active_users: rawStats.system_stats.active_users_30_days || 0,
-                inactive_users: Math.max(0, (rawStats.system_stats.total_users || 0) - (rawStats.system_stats.active_users_30_days || 0)),
-                students: rawStats.system_stats.total_users || 0,
-                faculty: 0,
-                staff: 0,
-                recent_registrations: rawStats.system_stats.new_users_30_days || 0,
-                faculty_breakdown: Array.isArray(rawStats.faculty_stats)
-                    ? rawStats.faculty_stats.map((f: any) => ({
-                          faculty_id: f.faculty_id,
-                          faculty_name: f.faculty_name,
-                          user_count: f.total_users,
-                      }))
-                    : [],
-            } as UserStats;
-        } else if (rawStats) {
-            normalizedStats = rawStats as UserStats;
-        }
+        // Use stats data directly from database query
+        const normalizedStats: UserStats = stats;
 
         // Return data to the page component in unified format
         return {

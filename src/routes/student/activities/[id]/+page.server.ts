@@ -1,49 +1,44 @@
 import type { PageServerLoad } from './$types';
+import { requireAuth } from '$lib/server/auth-utils';
+import { db, activities } from '$lib/server/db';
+import { eq } from 'drizzle-orm';
 import { error } from '@sveltejs/kit';
-import type { Activity, Participation } from '$lib/types/activity';
-
-import { api } from '$lib/server/api-client';
 
 export const load: PageServerLoad = async (event) => {
-  const { params, depends } = event;
-  depends('student:activity-details');
-
-  const { id } = params;
-
-  if (!id) {
-    throw error(404, 'Activity ID is required');
-  }
+  const user = await requireAuth(event);
+  const { params } = event;
 
   try {
-    // Fetch activity details
-    const activityRes = await api.get(event, `/api/activities/${id}`);
-    if (!activityRes.success || !activityRes.data) {
-      throw error(500, 'ข้อมูลกิจกรรมไม่ถูกต้อง');
-    }
-    const activity: Activity = activityRes.data as any;
+    // โหลดกิจกรรมจากฐานข้อมูลโดยตรง
+    const result = await db
+      .select({
+        id: activities.id,
+        title: activities.title,
+        description: activities.description,
+        start_date: activities.startDate,
+        end_date: activities.endDate,
+        activity_type: activities.activityType,
+        status: activities.status,
+        location: activities.location,
+        max_participants: activities.maxParticipants,
+        created_at: activities.createdAt
+      })
+      .from(activities)
+      .where(eq(activities.id, params.id))
+      .limit(1);
 
-    // Fetch activity participations (only if user has permission)
-    let participations: Participation[] = [];
-    try {
-      const participationsRes = await api.get(event, `/api/activities/${id}/participations`);
-      if (participationsRes.success && participationsRes.data?.participations) {
-        participations = participationsRes.data.participations;
-      }
-    } catch (e) {
-      // Ignore participation fetch errors - user might not have permission
-      console.warn('Could not fetch participations:', e);
+    if (result.length === 0) {
+      throw error(404, 'ไม่พบกิจกรรมที่ระบุ');
     }
 
-    return {
-      activity,
-      participations
+    const activity = result[0];
+
+    return { 
+      user,
+      activity 
     };
   } catch (e) {
-    if (e instanceof Error && 'status' in e) {
-      throw e; // Re-throw SvelteKit errors
-    }
-    
-    console.error('Error loading activity details:', e);
-    throw error(500, 'เกิดข้อผิดพลาดในการโหลดข้อมูล');
+    console.error('Error loading activity from database:', e);
+    throw error(500, 'ไม่สามารถโหลดข้อมูลกิจกรรมได้');
   }
 };

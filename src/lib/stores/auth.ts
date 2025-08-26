@@ -7,42 +7,52 @@ import type {
   LoginRequest, 
   RegisterRequest, 
   Permission, 
-  AdminLevel,
-  UserSession
+  AdminLevel
 } from '$lib/types';
 
-// ===== AUTH STATE INTERFACE =====
+/**
+ * Authentication state interface
+ * Clean JWT-based session management with httpOnly cookies
+ */
 interface AuthState {
   user: SessionUser | null;
-  sessions: UserSession[];
   isLoading: boolean;
   isAuthenticated: boolean;
   error: string | null;
+  isInitialized: boolean;
 }
 
-// ===== INITIAL STATE =====
+/**
+ * Initial authentication state
+ */
 const initialState: AuthState = {
   user: null,
-  sessions: [],
   isLoading: false,
   isAuthenticated: false,
-  error: null
+  error: null,
+  isInitialized: false
 };
 
-// ===== AUTH STORE =====
+/**
+ * Create authentication store
+ * Manages JWT-based authentication state with proper TypeScript types
+ */
 function createAuthStore() {
   const { subscribe, set, update } = writable<AuthState>(initialState);
 
-  // Deduplicate concurrent refreshUser() calls and avoid rapid repeats
-  let inflightMe: Promise<SessionUser | null> | null = null;
-  let lastProbeAt = 0;
+  // Prevent concurrent session validation requests
+  let sessionValidationPromise: Promise<SessionUser | null> | null = null;
+  let lastSessionCheck = 0;
 
   return {
     subscribe,
     set,
     update,
 
-    // ===== AUTHENTICATION ACTIONS =====
+    /**
+     * Authenticate user with email/password
+     * Sets httpOnly JWT cookie and updates auth state
+     */
     async login(credentials: LoginRequest) {
       update(state => ({ ...state, isLoading: true, error: null }));
 
@@ -52,16 +62,15 @@ function createAuthStore() {
         if (isApiSuccess(response)) {
           const { user } = response.data;
 
-          // Update auth state
+          // Update auth state with successful login
           update(state => ({
             ...state,
             user,
             isLoading: false,
             isAuthenticated: true,
-            error: null
+            error: null,
+            isInitialized: true
           }));
-
-          // SSE disabled
 
           return { success: true, user };
         }
@@ -72,7 +81,8 @@ function createAuthStore() {
           user: null,
           isLoading: false,
           isAuthenticated: false,
-          error: errorMessage
+          error: errorMessage,
+          isInitialized: true
         }));
         return { success: false, error: errorMessage };
       }
@@ -80,6 +90,10 @@ function createAuthStore() {
       return { success: false, error: 'Login failed' };
     },
 
+    /**
+     * Register new user account
+     * Does not automatically log in - user must login after registration
+     */
     async register(userData: RegisterRequest) {
       update(state => ({ ...state, isLoading: true, error: null }));
 
@@ -108,40 +122,52 @@ function createAuthStore() {
       return { success: false, error: 'Registration failed' };
     },
 
+    /**
+     * Log out user and clear session
+     * Clears httpOnly JWT cookie and resets auth state
+     */
     async logout(redirectTo = '/login') {
       update(state => ({ ...state, isLoading: true }));
 
       try {
-        // Use short-timeout logout; do not block UI if it fails
+        // Clear server-side session (httpOnly cookie)
         await apiClient.logout().catch((err) => {
-          console.error('Logout request failed (ignored):', err);
+          console.warn('Server logout failed (continuing with client cleanup):', err);
         });
       } catch (error) {
-        console.error('Logout error:', error);
+        console.warn('Logout API call failed:', error);
       }
 
-      // Clear local state
-      update(() => ({ ...initialState }));
+      // Clear local auth state
+      update(() => ({ 
+        ...initialState, 
+        isInitialized: true 
+      }));
       
-      // SSE disabled
+      // Reset session validation cache
+      sessionValidationPromise = null;
+      lastSessionCheck = 0;
 
-      // No client-side session storage to clear
-
-      // Redirect to login
+      // Redirect to login page
       if (browser) {
         goto(redirectTo);
       }
     },
 
-    async refreshUser() {
+    /**
+     * Validate current JWT session and refresh user data
+     * Uses httpOnly cookie for security - prevents concurrent calls
+     */
+    async validateSession() {
       const now = Date.now();
-      if (inflightMe && now - lastProbeAt < 300) {
-        // Return the in-flight probe to avoid request storms
-        return inflightMe;
+      
+      // Prevent concurrent validation calls within 500ms
+      if (sessionValidationPromise && now - lastSessionCheck < 500) {
+        return sessionValidationPromise;
       }
 
-      lastProbeAt = now;
-      inflightMe = (async () => {
+      lastSessionCheck = now;
+      sessionValidationPromise = (async () => {
         try {
           const response = await apiClient.me();
           if (isApiSuccess(response)) {
@@ -150,165 +176,122 @@ function createAuthStore() {
               ...state,
               user,
               isAuthenticated: true,
-              error: null
+              error: null,
+              isInitialized: true
             }));
 
-            // SSE disabled
             return user;
           }
         } catch (error) {
-          // Normalize known session/auth issues
+          // Handle session validation errors
           if (isApiError(error)) {
             const code = error.code;
-            if (['SESSION_EXPIRED', 'SESSION_REVOKED', 'SESSION_INVALID', 'NO_SESSION', 'AUTH_ERROR'].includes(code)) {
-              console.debug('[Auth] Session not active or invalid; clearing auth state');
+            if (['SESSION_EXPIRED', 'SESSION_INVALID', 'NO_SESSION', 'AUTH_ERROR'].includes(code)) {
+              console.debug('[Auth] No valid session found');
               update(state => ({
                 ...state,
                 user: null,
                 isAuthenticated: false,
-                error: null
+                error: null,
+                isInitialized: true
               }));
-              // SSE disabled
             } else {
-              console.error('[Auth] Unexpected API error during refresh:', error);
+              console.error('[Auth] Session validation error:', error);
+              update(state => ({
+                ...state,
+                error: error.message,
+                isInitialized: true
+              }));
             }
           } else {
-            console.error('[Auth] Unexpected error during refresh:', error);
+            console.error('[Auth] Network error during session validation:', error);
           }
         }
         return null;
       })();
 
       try {
-        return await inflightMe;
+        return await sessionValidationPromise;
       } finally {
-        // Allow a new probe on next tick
-        setTimeout(() => { inflightMe = null; }, 0);
+        // Reset validation promise after 100ms to allow new calls
+        setTimeout(() => { sessionValidationPromise = null; }, 100);
       }
     },
 
+    /**
+     * Refresh JWT token if supported by backend
+     * Currently using simple JWT validation - extend if token refresh needed
+     */
     async refreshSession() {
-      try {
-        const response = await apiClient.refreshSession();
-        
-        if (isApiSuccess(response)) {
-          const { user } = response.data;
-
-          update(state => ({
-            ...state,
-            user,
-            isAuthenticated: true,
-            error: null
-          }));
-
-          return user;
-        }
-      } catch (error) {
-        console.error('Session refresh failed:', error);
-        this.logout();
-      }
-      return null;
+      return this.validateSession();
     },
 
-    // ===== SESSION MANAGEMENT =====
-    async loadUserSessions() {
-      try {
-        const response = await apiClient.getUserSessions();
-        
-        if (isApiSuccess(response)) {
-          update(state => ({
-            ...state,
-            sessions: response.data
-          }));
-        }
-      } catch (error) {
-        console.error('Failed to load user sessions:', error);
-      }
-    },
-
-    async terminateSession(sessionId: string) {
-      try {
-        const response = await apiClient.terminateSession(sessionId);
-        
-        if (isApiSuccess(response)) {
-          update(state => ({
-            ...state,
-            sessions: state.sessions.filter(s => s.session_id !== sessionId)
-          }));
-          return true;
-        }
-      } catch (error) {
-        console.error('Failed to terminate session:', error);
-      }
-      return false;
-    },
-
-    async terminateAllOtherSessions() {
-      try {
-        const response = await apiClient.terminateAllSessions();
-        
-        if (isApiSuccess(response)) {
-          // Reload sessions to get current state
-          await this.loadUserSessions();
-          return true;
-        }
-      } catch (error) {
-        console.error('Failed to terminate sessions:', error);
-      }
-      return false;
-    },
-
-    // ===== STATE MANAGEMENT =====
+    /**
+     * Set user data directly (used by middleware/SSR)
+     */
     setUser(user: SessionUser | null) {
       update(state => ({
         ...state,
         user,
-        isAuthenticated: !!user
+        isAuthenticated: !!user,
+        isInitialized: true
       }));
     },
 
+    /**
+     * Set authentication error
+     */
     setError(error: string | null) {
       update(state => ({ ...state, error }));
     },
 
+    /**
+     * Clear current error
+     */
     clearError() {
       update(state => ({ ...state, error: null }));
     },
 
+    /**
+     * Set loading state
+     */
     setLoading(isLoading: boolean) {
       update(state => ({ ...state, isLoading }));
+    },
+
+    /**
+     * Mark auth as initialized (used to prevent flickering)
+     */
+    setInitialized(initialized = true) {
+      update(state => ({ ...state, isInitialized: initialized }));
     }
   };
 }
 
-// ===== STORE INSTANCE =====
+/**
+ * Main authentication store instance
+ * JWT-based authentication with httpOnly cookies
+ */
 export const auth = createAuthStore();
-export const authStore = auth; // Legacy alias for backward compatibility
 
-// ===== DERIVED STORES =====
+/**
+ * Derived stores for easy access to auth state
+ */
 export const currentUser = derived(auth, $auth => $auth.user);
-export const user = derived(auth, $auth => $auth.user); // Alias for compatibility
 export const isAuthenticated = derived(auth, $auth => $auth.isAuthenticated);
 export const isLoading = derived(auth, $auth => $auth.isLoading);
 export const authError = derived(auth, $auth => $auth.error);
+export const isAuthInitialized = derived(auth, $auth => $auth.isInitialized);
 
-// Export auth service functions
+/**
+ * Auth service alias for backward compatibility
+ */
 export const authService = auth;
 
-// Session info type
-export interface SessionInfo {
-  id: string;
-  session_id: string;
-  device_info?: any;
-  ip_address?: string;
-  user_agent?: string;
-  created_at: string;
-  last_accessed: string;
-  expires_at: string;
-  isActive: boolean;
-}
-
-// ===== PERMISSION HELPERS =====
+/**
+ * Permission and role-based derived stores
+ * Clean, type-safe access to user permissions and roles
+ */
 export const permissions = derived(currentUser, $user => $user?.permissions || []);
 
 export const adminLevel = derived(currentUser, $user => $user?.admin_role?.admin_level);
@@ -351,31 +334,43 @@ export const facultyId = derived(
   $user => $user?.faculty_id || $user?.admin_role?.faculty_id
 );
 
-// ===== INITIALIZATION =====
+/**
+ * Initialize authentication on browser startup
+ * Validates JWT session and sets up periodic session checks
+ */
 if (browser) {
-  // Always probe server for an existing httpOnly session
-  console.log('[Auth] Probing server session...');
-  auth.refreshUser().then(user => {
+  // Validate existing JWT session on app startup
+  console.log('[Auth] Validating JWT session...');
+  auth.validateSession().then(user => {
     if (user) {
-      console.log('[Auth] User authenticated');
+      console.log('[Auth] Valid JWT session found');
     } else {
-      console.log('[Auth] No active session on server');
+      console.log('[Auth] No valid JWT session');
     }
+  }).catch(error => {
+    console.warn('[Auth] Session validation failed:', error);
+    auth.setInitialized(true);
   });
 
-  // Session heartbeat - refresh every 15 minutes
+  // Periodic session validation (every 15 minutes)
   setInterval(() => {
     const currentState = { isAuthenticated: false };
     auth.subscribe(state => Object.assign(currentState, state))();
     
     if (currentState.isAuthenticated) {
-      auth.refreshUser();
+      auth.validateSession();
     }
   }, 15 * 60 * 1000);
 }
 
-// ===== UTILITY FUNCTIONS =====
+/**
+ * Authentication utility functions
+ * Type-safe helpers for checking auth requirements
+ */
 
+/**
+ * Require authenticated user - throws if not authenticated
+ */
 export function requireAuth(): SessionUser {
   let user: SessionUser | null = null;
   currentUser.subscribe(u => user = u)();
@@ -387,6 +382,9 @@ export function requireAuth(): SessionUser {
   return user;
 }
 
+/**
+ * Require specific permission - throws if not authorized
+ */
 export function requirePermission(permission: Permission): SessionUser {
   const user = requireAuth();
   
@@ -397,6 +395,9 @@ export function requirePermission(permission: Permission): SessionUser {
   return user;
 }
 
+/**
+ * Require minimum admin level - throws if insufficient privileges
+ */
 export function requireAdminLevel(level: AdminLevel): SessionUser {
   const user = requireAuth();
   
