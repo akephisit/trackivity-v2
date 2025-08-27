@@ -274,11 +274,7 @@ export const actions: Actions = {
 	},
 
 	delete: async (event) => {
-		const { request, cookies } = event;
-		const sessionId = cookies.get('session_id');
-		if (!sessionId) {
-			throw redirect(302, '/admin/login');
-		}
+		const { request } = event;
 
 		const user = requireAdmin(event);
 		const admin_role = user.admin_role;
@@ -306,12 +302,8 @@ export const actions: Actions = {
 		}
 	},
 
-	toggleStatus: async (event) => {
-		const { request, cookies } = event;
-		const sessionId = cookies.get('session_id');
-		if (!sessionId) {
-			throw redirect(302, '/admin/login');
-		}
+		toggleStatus: async (event) => {
+		const { request } = event;
 
 		const user = requireAdmin(event);
 		const admin_role = user.admin_role;
