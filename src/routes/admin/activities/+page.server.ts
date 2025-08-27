@@ -1,10 +1,9 @@
 import { requireFacultyAdmin } from '$lib/server/auth-utils';
 import { error, fail } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
-import type { Activity } from '$lib/types/activity';
 import { AdminLevel } from '$lib/types/admin';
-import { db, activities, faculties, users, participations } from '$lib/server/db';
-import { eq, and, desc, count, sql } from 'drizzle-orm';
+import { db, activities } from '$lib/server/db';
+import { eq, desc } from 'drizzle-orm';
 
 export const load: PageServerLoad = async (event) => {
 	// ตรวจสอบสิทธิ์ - เฉพาะ FacultyAdmin หรือ SuperAdmin
@@ -13,55 +12,45 @@ export const load: PageServerLoad = async (event) => {
 	const facultyId = user.admin_role?.faculty_id;
 
 	try {
-		// กำหนด API endpoint ตามระดับแอดมิน
-		let apiEndpoint: string;
-		let params: Record<string, string> = {};
-		
-		if (adminLevel === AdminLevel.SuperAdmin) {
-			// SuperAdmin ดูกิจกรรมทั้งหมด
-			apiEndpoint = `/api/admin/activities`;
-		} else if (adminLevel === AdminLevel.FacultyAdmin) {
-			// FacultyAdmin ดูเฉพาะกิจกรรมในคณะของตัวเอง
-			if (!facultyId) {
-				throw error(403, 'Faculty admin ต้องมี faculty_id');
-			}
-			apiEndpoint = `/api/admin/activities`;
-			params.faculty_id = facultyId;
-		} else {
+		// ตรวจสอบสิทธิ์: SuperAdmin ดูทั้งหมด / FacultyAdmin ต้องมี faculty_id
+		if (adminLevel !== AdminLevel.SuperAdmin && adminLevel !== AdminLevel.FacultyAdmin) {
 			throw error(403, 'ไม่มีสิทธิ์เข้าถึงข้อมูลกิจกรรม');
 		}
-
-		// Query activities directly from database
-		let query = db
-			.select({
-				id: activities.id,
-				title: activities.title,
-				description: activities.description,
-				start_date: activities.startDate,
-				end_date: activities.endDate,
-				start_time: activities.startTimeOnly,
-				end_time: activities.endTimeOnly,
-				activity_type: activities.activityType,
-				location: activities.location,
-				max_participants: activities.maxParticipants,
-				hours: activities.hours,
-				status: activities.status,
-				faculty_id: activities.facultyId,
-				created_by: activities.createdBy,
-				created_at: activities.createdAt,
-				updated_at: activities.updatedAt,
-				organizer: activities.organizer
-			})
-			.from(activities);
-
-		// Apply faculty filtering for FacultyAdmin
-		if (adminLevel === AdminLevel.FacultyAdmin && facultyId) {
-			query = query.where(eq(activities.facultyId, facultyId));
+		if (adminLevel === AdminLevel.FacultyAdmin && !facultyId) {
+			throw error(403, 'Faculty admin ต้องมี faculty_id');
 		}
 
-		const rawActivities = await query.orderBy(desc(activities.createdAt));
+			// Query activities directly from database
+			const baseQuery = db
+				.select({
+					id: activities.id,
+					title: activities.title,
+					description: activities.description,
+					start_date: activities.startDate,
+					end_date: activities.endDate,
+					start_time: activities.startTimeOnly,
+					end_time: activities.endTimeOnly,
+					activity_type: activities.activityType,
+					location: activities.location,
+					max_participants: activities.maxParticipants,
+					hours: activities.hours,
+					status: activities.status,
+					faculty_id: activities.facultyId,
+					created_by: activities.createdBy,
+					created_at: activities.createdAt,
+					updated_at: activities.updatedAt,
+					organizer: activities.organizer
+				})
+				.from(activities);
+
+			// Apply faculty filtering for FacultyAdmin
+			const filteredQuery = (adminLevel === AdminLevel.FacultyAdmin && facultyId)
+				? baseQuery.where(eq(activities.facultyId, facultyId))
+				: baseQuery;
+
+			const rawActivities = await filteredQuery.orderBy(desc(activities.createdAt));
 		
-		activitiesData = rawActivities.map((activity: any) => ({
+		const activitiesData = rawActivities.map((activity: any) => ({
 				id: activity.id,
 				activity_name: activity.title,
 				description: activity.description,
