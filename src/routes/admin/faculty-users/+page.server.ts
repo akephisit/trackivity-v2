@@ -10,7 +10,7 @@ import type {
 } from '$lib/types/admin';
 import { AdminLevel } from '$lib/types/admin';
 import { db, users, adminRoles, faculties, departments } from '$lib/server/db';
-import { eq, and, or, like, desc, count, sql } from 'drizzle-orm';
+import { eq, and, or, like, desc, count, sql, gte } from 'drizzle-orm';
 
 /**
  * Get users from database with filters and pagination (Faculty-scoped)
@@ -135,7 +135,7 @@ async function getUserStatsFromDb(facultyId: string | null | undefined): Promise
             thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
             
             const recentConditions = [
-                sql`${users.createdAt} >= ${thirtyDaysAgo}`,
+                gte(users.createdAt, thirtyDaysAgo),
                 ...baseConditions
             ];
             
