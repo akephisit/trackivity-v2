@@ -36,7 +36,7 @@
         (async () => {
             // Ensure we probe server first so store reflects real session
             const { auth } = await import('$lib/stores/auth');
-            await auth.refreshUser();
+            await auth.validateSession();
 
             unsubscribe = isAuthenticated.subscribe((authenticated) => {
                 if (!authenticated) {
