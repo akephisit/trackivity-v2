@@ -48,7 +48,8 @@ export const actions: Actions = {
       const { user, token } = await authenticateAndIssueToken({
         email: form.data.student_id.includes('@') ? form.data.student_id : undefined,
         student_id: !form.data.student_id.includes('@') ? form.data.student_id : undefined,
-        password: form.data.password
+        password: form.data.password,
+        remember_me: form.data.remember_me
       });
 
       if (!user) {
@@ -60,7 +61,9 @@ export const actions: Actions = {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
-        maxAge: 7 * 24 * 60 * 60,
+        ...(form.data.remember_me
+          ? { maxAge: 30 * 24 * 60 * 60 }
+          : {}),
         path: '/'
       });
 

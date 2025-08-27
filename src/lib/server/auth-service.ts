@@ -11,6 +11,7 @@ export interface AuthInput {
   email?: string;
   student_id?: string;
   password: string;
+  remember_me?: boolean;
 }
 
 export interface AuthResult {
@@ -20,7 +21,7 @@ export interface AuthResult {
 }
 
 export async function authenticateAndIssueToken(input: AuthInput): Promise<AuthResult> {
-  const { email, student_id, password } = input;
+  const { email, student_id, password, remember_me } = input;
 
   if (!password || (!email && !student_id)) {
     const err: any = new Error('Email or Student ID and password are required');
@@ -103,8 +104,10 @@ export async function authenticateAndIssueToken(input: AuthInput): Promise<AuthR
     faculty_id: isAdmin ? adminRoleRes[0].facultyId : null
   };
 
-  const token = jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
-  const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+  // Expiration: 30 days if remember_me, otherwise default 7 days
+  const expiresInSeconds = (remember_me ? 30 : 7) * 24 * 60 * 60;
+  const token = jwt.sign(payload, JWT_SECRET, { expiresIn: expiresInSeconds });
+  const expiresAt = new Date(Date.now() + expiresInSeconds * 1000);
 
   const sessionUser: SessionUser = {
     user_id: foundUser.id,
@@ -131,4 +134,3 @@ export async function authenticateAndIssueToken(input: AuthInput): Promise<AuthR
 
   return { user: sessionUser, token, expiresAt };
 }
-

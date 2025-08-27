@@ -8,17 +8,17 @@ import { authenticateAndIssueToken } from '$lib/server/auth-service';
  */
 export const POST: RequestHandler = async ({ request, cookies }) => {
   try {
-    const body: LoginRequest & { student_id?: string; device_info?: any } = await request.json();
-    const { email, password, student_id } = body;
+    const body: LoginRequest & { student_id?: string; device_info?: any; remember_me?: boolean } = await request.json();
+    const { email, password, student_id, remember_me } = body;
 
-    const { user, token, expiresAt } = await authenticateAndIssueToken({ email, student_id, password });
+    const { user, token, expiresAt } = await authenticateAndIssueToken({ email, student_id, password, remember_me });
 
     // Set secure HTTP-only cookie
     cookies.set('session_token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge: 7 * 24 * 60 * 60, // 7 days in seconds
+      ...(remember_me ? { maxAge: 30 * 24 * 60 * 60 } : {}),
       path: '/'
     });
 

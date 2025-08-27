@@ -14,6 +14,7 @@
 	} from '$lib/components/ui/card';
 	import { Alert, AlertDescription } from '$lib/components/ui/alert';
 	import * as Form from '$lib/components/ui/form';
+	import { Checkbox } from '$lib/components/ui/checkbox';
 	import {
 		IconLoader,
 		IconEye,
@@ -117,6 +118,22 @@
 											<IconEye class="h-4 w-4 text-gray-400" />
 										{/if}
 									</button>
+								</div>
+							{/snippet}
+						</Form.Control>
+						<Form.FieldErrors />
+					</Form.Field>
+
+					<Form.Field {form} name="remember_me">
+						<Form.Control>
+							{#snippet children({ props })}
+								<div class="flex items-center space-x-2">
+									<Checkbox
+										{...props}
+										bind:checked={$formData.remember_me}
+										disabled={$submitting}
+									/>
+									<Label for={props.id} class="text-sm">จดจำการเข้าสู่ระบบ (30 วัน)</Label>
 								</div>
 							{/snippet}
 						</Form.Control>

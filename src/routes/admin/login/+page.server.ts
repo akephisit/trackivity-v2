@@ -48,7 +48,8 @@ export const actions: Actions = {
       const { authenticateAndIssueToken } = await import('$lib/server/auth-service');
       const { user, token } = await authenticateAndIssueToken({
         email: form.data.email,
-        password: form.data.password
+        password: form.data.password,
+        remember_me: form.data.remember_me
       });
 
       if (!user || !user.admin_role) {
@@ -60,7 +61,10 @@ export const actions: Actions = {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
-        maxAge: 7 * 24 * 60 * 60,
+        // Session cookie when not remember_me (no maxAge)
+        ...(form.data.remember_me
+          ? { maxAge: 30 * 24 * 60 * 60 }
+          : {}),
         path: '/'
       });
 
