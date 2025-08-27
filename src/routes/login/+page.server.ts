@@ -35,7 +35,7 @@ export const load: PageServerLoad = async (event) => {
  */
 export const actions: Actions = {
   default: async (event) => {
-    const { request, url, fetch } = event;
+    const { request, url, cookies } = event;
     const form = await superValidate(request, zod(loginSchema));
 
     if (!form.valid) {
@@ -43,42 +43,30 @@ export const actions: Actions = {
     }
 
     try {
-      // Call our JWT login API endpoint
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          email: form.data.student_id.includes('@') ? form.data.student_id : undefined,
-          student_id: !form.data.student_id.includes('@') ? form.data.student_id : undefined,
-          password: form.data.password,
-          remember_me: form.data.remember_me,
-          device_info: {
-            device_type: 'web'
-          }
-        })
+      // Authenticate directly via server-side service, then set cookie
+      const { authenticateAndIssueToken } = await import('$lib/server/auth-service');
+      const { user, token } = await authenticateAndIssueToken({
+        email: form.data.student_id.includes('@') ? form.data.student_id : undefined,
+        student_id: !form.data.student_id.includes('@') ? form.data.student_id : undefined,
+        password: form.data.password
       });
 
-      const result = await response.json();
-
-      if (!response.ok || !result.success) {
-        const errorMessage = result.error?.message || 'Invalid credentials';
-        form.errors.student_id = [errorMessage];
+      if (!user) {
+        form.errors.student_id = ['Invalid credentials'];
         return fail(400, { form });
       }
 
-      // Login successful - JWT cookie is already set by the API
-      const user = result.data?.user;
-      if (user) {
-        // Redirect to appropriate dashboard or return URL
-        const redirectTo = url.searchParams.get('redirectTo') || 
-          (user.admin_role ? '/admin' : '/student');
-        throw redirect(303, redirectTo);
-      } else {
-        form.errors.student_id = ['Login successful but user data not found'];
-        return fail(400, { form });
-      }
+      cookies.set('session_token', token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 7 * 24 * 60 * 60,
+        path: '/'
+      });
+
+      const redirectTo = url.searchParams.get('redirectTo') ||
+        (user.admin_role ? '/admin' : '/student');
+      throw redirect(303, redirectTo);
 
     } catch (error) {
       // Handle redirect errors (normal flow)
@@ -88,8 +76,10 @@ export const actions: Actions = {
       
       // Handle other errors
       console.error('[Auth] Login form error:', error);
-      form.errors.student_id = ['Connection error. Please try again.'];
-      return fail(500, { form });
+      const message = (error as any)?.message || 'Connection error. Please try again.';
+      form.errors.student_id = [message];
+      const status = (error as any)?.code === 'AUTH_ERROR' ? 401 : ((error as any)?.code === 'VALIDATION_ERROR' ? 400 : 500);
+      return fail(status, { form });
     }
   }
 };

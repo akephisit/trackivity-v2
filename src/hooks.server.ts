@@ -52,9 +52,16 @@ const ROUTE_CONFIG = {
  * Check if route is public (no auth required)
  */
 function isPublicRoute(pathname: string): boolean {
-  return ROUTE_CONFIG.PUBLIC.some(route => 
-    pathname === route || pathname.startsWith(route + (route.endsWith('/') ? '' : '/'))
-  );
+  return ROUTE_CONFIG.PUBLIC.some((route) => {
+    // Special-case root: only exact match should be public
+    if (route === '/') {
+      return pathname === '/';
+    }
+    return (
+      pathname === route ||
+      pathname.startsWith(route + (route.endsWith('/') ? '' : '/'))
+    );
+  });
 }
 
 /**
@@ -123,15 +130,9 @@ export const handle: Handle = async ({ event, resolve }) => {
   const pathname = url.pathname;
   const searchParams = url.search;
 
-  // Initialize user in locals
+  // Initialize user in locals and try to populate from cookie
   event.locals.user = null;
-  
-  // Skip authentication for public routes
-  if (isPublicRoute(pathname)) {
-    return resolve(event);
-  }
-
-  // Check for JWT session token (httpOnly cookie)
+  // Check for JWT session token (httpOnly cookie) for all routes
   const sessionToken = cookies.get('session_token');
   let isAuthenticated = false;
   let isAdmin = false;
@@ -157,6 +158,11 @@ export const handle: Handle = async ({ event, resolve }) => {
       // Invalid or expired token - clear cookie
       cookies.delete('session_token', { path: '/' });
     }
+  }
+
+  // Skip authentication enforcement for public routes, but keep locals.user populated
+  if (isPublicRoute(pathname)) {
+    return resolve(event);
   }
 
   // Enforce authentication for protected routes

@@ -36,7 +36,7 @@ export const load: PageServerLoad = async (event) => {
  */
 export const actions: Actions = {
   default: async (event) => {
-    const { request, url, fetch } = event;
+    const { request, url, fetch, cookies } = event;
     const form = await superValidate(request, zod(adminLoginSchema));
 
     if (!form.valid) {
@@ -44,39 +44,26 @@ export const actions: Actions = {
     }
 
     try {
-      // Call our JWT login API endpoint with admin credentials
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          email: form.data.email,
-          password: form.data.password,
-          remember_me: form.data.remember_me,
-          device_info: {
-            device_type: 'web'
-          }
-        })
+      // Authenticate directly via server-side service, then set cookie
+      const { authenticateAndIssueToken } = await import('$lib/server/auth-service');
+      const { user, token } = await authenticateAndIssueToken({
+        email: form.data.email,
+        password: form.data.password
       });
 
-      const result = await response.json();
-
-      if (!response.ok || !result.success) {
-        const errorMessage = result.error?.message || 'Invalid admin credentials';
-        form.errors._errors = [errorMessage];
-        return fail(400, { form });
-      }
-
-      // Verify the user is actually an admin
-      const user = result.data?.user;
       if (!user || !user.admin_role) {
         form.errors._errors = ['Access denied. Admin privileges required.'];
         return fail(403, { form });
       }
 
-      // Login successful - JWT cookie is already set by the API
-      // Redirect to admin dashboard or return URL
+      cookies.set('session_token', token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 7 * 24 * 60 * 60,
+        path: '/'
+      });
+
       const redirectTo = url.searchParams.get('redirectTo') || '/admin';
       throw redirect(303, redirectTo);
 
