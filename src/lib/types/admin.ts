@@ -310,6 +310,19 @@ export interface FacultyAdminDashboardStats extends AdminDashboardStats {
 		date: string;
 		login_count: number;
 	}>;
+
+	// Additional fields used in UI (optional)
+	total_admins?: number;
+	active_admins?: number;
+	inactive_admins?: number;
+	recent_logins?: number;
+	total_faculties?: number;
+	faculty_breakdown?: Array<{
+		faculty_id: string;
+		faculty_name: string;
+		admin_count: number;
+		active_count: number;
+	}>;
 }
 
 // Permission definitions

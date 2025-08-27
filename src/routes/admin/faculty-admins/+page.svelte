@@ -445,7 +445,7 @@
 	// Get page title based on user role
 	let pageTitle = $derived(
 		!data.isSuperAdmin && data.currentFaculty 
-			? `จัดการแอดมินคณะ - ${data.currentFaculty.name}`
+			? `จัดการแอดมินคณะ - ${(data.currentFaculty as any)?.name}`
 			: 'จัดการแอดมินคณะ'
 	)
 </script>
@@ -507,12 +507,12 @@
 				<IconUserCheck class="h-4 w-4 text-green-500" />
 			</CardHeader>
 			<CardContent>
-				<div class="text-2xl font-bold text-green-600">
-					{stats.active_admins}
-				</div>
-				<p class="text-xs text-muted-foreground">
-					{((stats.active_admins / stats.total_admins) * 100).toFixed(0)}% ของทั้งหมด
-				</p>
+					<div class="text-2xl font-bold text-green-600">
+						{(stats?.active_admins ?? 0)}
+					</div>
+					<p class="text-xs text-muted-foreground">
+						{(((stats?.active_admins ?? 0) / ((stats?.total_admins ?? 0) || 1)) * 100).toFixed(0)}% ของทั้งหมด
+					</p>
 			</CardContent>
 		</Card>
 
@@ -522,10 +522,10 @@
 				<IconUsers class="h-4 w-4 text-red-500" />
 			</CardHeader>
 			<CardContent>
-				<div class="text-2xl font-bold text-red-600">
-					{stats.inactive_admins}
-				</div>
-				{#if stats.inactive_admins > 0}
+					<div class="text-2xl font-bold text-red-600">
+						{(stats?.inactive_admins ?? 0)}
+					</div>
+					{#if (stats?.inactive_admins ?? 0) > 0}
 					<p class="text-xs text-muted-foreground">
 						ต้องการการตรวจสอบ
 					</p>
@@ -611,16 +611,16 @@
 				</div>
 			</div>
 			
-			{#if data.isSuperAdmin && data.faculties.length > 1}
+				{#if data.isSuperAdmin && (data.faculties?.length || 0) > 1}
 				<div>
 					<Label class="text-sm font-medium">กรองตามคณะ</Label>
 					<Select.Root type="single" bind:value={facultyFilter}>
 						<Select.Trigger class="mt-1 w-[180px]">
-							{facultyFilter === 'all' ? 'ทุกคณะ' : data.faculties.find(f => f.id === facultyFilter)?.name || 'เลือกคณะ'}
+							{facultyFilter === 'all' ? 'ทุกคณะ' : (data.faculties as any[])?.find((f: any) => f.id === facultyFilter)?.name || 'เลือกคณะ'}
 						</Select.Trigger>
 						<Select.Content>
 							<Select.Item value="all">ทุกคณะ</Select.Item>
-							{#each data.faculties as faculty}
+							{#each (data.faculties || []) as faculty}
 								<Select.Item value={faculty.id}>{faculty.name}</Select.Item>
 							{/each}
 						</Select.Content>
