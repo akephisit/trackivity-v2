@@ -498,10 +498,19 @@
 				<Form.FieldErrors />
 			</Form.Field>
 
-			<div class="flex items-center space-x-2">
-				<Switch bind:checked={$createFormData.status} disabled={$createSubmitting} />
-				<Label>เปิดใช้งานทันทีหลังสร้าง</Label>
-			</div>
+			<Form.Field form={createForm} name="status">
+				<Form.Control>
+					{#snippet children({ props })}
+						<div class="flex items-center space-x-2">
+							<!-- Real input for superforms serialization -->
+							<input type="checkbox" class="sr-only" {...props} bind:checked={$createFormData.status} />
+							<Switch bind:checked={$createFormData.status} disabled={$createSubmitting} />
+							<Label for={props.id}>เปิดใช้งานทันทีหลังสร้าง</Label>
+						</div>
+					{/snippet}
+				</Form.Control>
+				<Form.FieldErrors />
+			</Form.Field>
 
 			<Dialog.Footer>
 				<Button type="button" variant="outline" onclick={() => createDialogOpen = false}>

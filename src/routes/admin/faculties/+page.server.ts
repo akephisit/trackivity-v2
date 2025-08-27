@@ -79,12 +79,12 @@ export const actions: Actions = {
 
 		try {
 			// Insert directly into database
-			await db.insert(faculties).values({
-				name: form.data.name,
-				code: form.data.code,
-				description: form.data.description || null,
-				status: form.data.status
-			});
+            await db.insert(faculties).values({
+                name: form.data.name,
+                code: form.data.code,
+                description: form.data.description || null,
+                status: form.data.status ?? true
+            });
 
 			return { form, success: true };
 		} catch (error) {
