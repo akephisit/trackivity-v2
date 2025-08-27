@@ -26,11 +26,39 @@
 
   import type { PageData } from './$types';
 
-  export let data: PageData;
+  // Extend PageData with fields returned by this page's load
+  type QRScannerPageData = PageData & {
+    admin?: {
+      first_name: string;
+      last_name: string;
+      admin_level: string;
+      faculty_id?: string;
+      faculty_name?: string;
+    };
+    activities?: Array<{
+      id: string;
+      title: string;
+      description?: string;
+      start_date?: string;
+      end_date?: string;
+      start_time?: string;
+      end_time?: string;
+      activity_type?: string;
+      location?: string;
+      max_participants?: number;
+      hours?: number;
+      status?: string;
+      faculty_id?: string;
+      organizer?: string;
+    }>;
+    selectedActivityId?: string;
+  };
+
+  export let data: QRScannerPageData;
 
   // Component state
   let selectedActivity: any = null;
-  let selectedActivityId = data.selectedActivityId;
+  let selectedActivityId = data.selectedActivityId || '';
   let scannerActive = false;
   let scannerStatus: 'idle' | 'requesting' | 'active' | 'error' = 'idle';
   let totalScanned = 0;
@@ -43,7 +71,7 @@
   // Reactive statements
   $: {
     if (selectedActivityId) {
-      selectedActivity = data.activities.find((a: any) => a.id === selectedActivityId);
+      selectedActivity = data.activities?.find((a: any) => a.id === selectedActivityId) || null;
       // Update URL when activity changes  
       const url = new URL(window.location.href);
       if (url.searchParams.get('activity_id') !== selectedActivityId) {
@@ -56,11 +84,11 @@
   }
 
   onMount(() => {
-    if (data.selectedActivityId && data.activities.length > 0) {
+    if (data.selectedActivityId && (data.activities?.length || 0) > 0) {
       selectedActivityId = data.selectedActivityId;
-    } else if (data.activities.length === 1) {
+    } else if ((data.activities?.length || 0) === 1) {
       // Auto-select if only one activity
-      selectedActivityId = data.activities[0].id;
+      selectedActivityId = data.activities![0].id;
     }
   });
 
@@ -182,15 +210,15 @@
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
           <p class="text-sm text-muted-foreground">ชื่อ</p>
-          <p class="font-medium">{data.admin.first_name} {data.admin.last_name}</p>
+          <p class="font-medium">{data.admin?.first_name} {data.admin?.last_name}</p>
         </div>
         <div>
           <p class="text-sm text-muted-foreground">ระดับสิทธิ์</p>
-          <Badge variant="outline">{data.admin.admin_level}</Badge>
+          <Badge variant="outline">{data.admin?.admin_level}</Badge>
         </div>
         <div>
           <p class="text-sm text-muted-foreground">คณะ</p>
-          <p class="font-medium">{data.admin.faculty_name || 'ทั้งหมด'}</p>
+          <p class="font-medium">{data.admin?.faculty_name || 'ทั้งหมด'}</p>
         </div>
       </div>
     </CardContent>
@@ -205,7 +233,7 @@
       </CardTitle>
     </CardHeader>
     <CardContent class="space-y-4">
-      {#if data.activities.length === 0}
+      {#if (data.activities?.length || 0) === 0}
         <Alert>
           <IconX class="h-4 w-4" />
           <AlertDescription>
@@ -221,7 +249,7 @@
             class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
           >
             <option value="">เลือกกิจกรรม...</option>
-            {#each data.activities as activity}
+            {#each data.activities || [] as activity}
               <option value={activity.id}>{activity.title}</option>
             {/each}
           </select>

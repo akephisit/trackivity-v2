@@ -231,8 +231,10 @@
 		}
 	}
 
-	function formatDateTime(dateString: string) {
-		return new Date(dateString).toLocaleDateString('th-TH', {
+	function formatDateTime(dateInput: string | Date | null | undefined) {
+		if (!dateInput) return '-';
+		const d = typeof dateInput === 'string' ? new Date(dateInput) : dateInput;
+		return d.toLocaleDateString('th-TH', {
 			year: 'numeric',
 			month: 'short',
 			day: 'numeric',
