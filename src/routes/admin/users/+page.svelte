@@ -90,6 +90,17 @@
 			day: 'numeric'
 		});
 	}
+    function getPrefixLabel(value?: string) {
+        if (!value) return '';
+        const found = PrefixOptions.find(o => o.value === value);
+        return found ? found.label : '';
+    }
+    function formatFullName(user: any) {
+        const prefix = getPrefixLabel(user?.prefix);
+        const first = user?.first_name || '';
+        const last = user?.last_name || '';
+        return `${prefix ? prefix + ' ' : ''}${first} ${last}`.trim() || 'ไม่ระบุชื่อ';
+    }
 </script>
 
 <svelte:head>
@@ -210,7 +221,7 @@
 						<Table.Row>
 							<Table.Cell class="font-medium">
 								<div class="flex flex-col">
-									<span>{user.first_name} {user.last_name}</span>
+                            <span>{formatFullName(user)}</span>
 									{#if user.student_id}
 									<span class="text-sm text-muted-foreground">{user.student_id}</span>
 									{/if}
@@ -283,6 +294,7 @@
 					<div class="flex items-center space-x-2">
 						<Button variant="outline" size="sm" disabled={pagination.page === 1}>
 							ก่อนหน้า
+    import { PrefixOptions } from '$lib/schemas/auth';
 						</Button>
 						<Button variant="outline" size="sm" disabled={pagination.page === pagination.total_pages}>
 							ถัดไป

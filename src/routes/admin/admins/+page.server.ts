@@ -292,9 +292,9 @@ export const actions: Actions = {
 		}
 
 		try {
-			// ตรวจสอบว่ามีข้อมูลที่จำเป็นครบถ้วน
-			const requiredFields = ['first_name', 'last_name', 'email'];
-			const missingFields = requiredFields.filter(field => !updateData[field]);
+            // ตรวจสอบว่ามีข้อมูลที่จำเป็นครบถ้วน
+            const requiredFields = ['first_name', 'last_name', 'email'];
+            const missingFields = requiredFields.filter(field => !updateData[field]);
 			
 			if (missingFields.length > 0) {
 				return fail(400, { 
@@ -302,12 +302,15 @@ export const actions: Actions = {
 				});
 			}
 
-			const setObj: any = {
-				firstName: updateData.first_name,
-				lastName: updateData.last_name,
-				email: updateData.email,
-				updatedAt: new Date()
-			};
+            const setObj: any = {
+                firstName: updateData.first_name,
+                lastName: updateData.last_name,
+                email: updateData.email,
+                updatedAt: new Date()
+            };
+            if (updateData.prefix !== undefined) {
+                setObj.prefix = updateData.prefix || 'Generic';
+            }
 			if (updateData.department_id !== undefined) {
 				setObj.departmentId = updateData.department_id || null;
 			}

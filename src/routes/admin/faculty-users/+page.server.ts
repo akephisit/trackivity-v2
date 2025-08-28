@@ -20,6 +20,7 @@ async function getUsersFromDb(facultyId: string | null | undefined, filters: Use
         .select({
             id: users.id,
             email: users.email,
+            prefix: users.prefix,
             first_name: users.firstName,
             last_name: users.lastName,
             student_id: users.studentId,

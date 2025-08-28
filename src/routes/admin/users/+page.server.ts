@@ -19,6 +19,7 @@ async function getUsersFromDb(adminLevel: string, facultyId: string | null | und
         .select({
             id: users.id,
             email: users.email,
+            prefix: users.prefix,
             first_name: users.firstName,
             last_name: users.lastName,
             student_id: users.studentId,
@@ -308,6 +309,7 @@ export const load: PageServerLoad = async (event) => {
             return {
                 id: u.id,
                 email: u.email,
+                prefix: u.prefix || 'Generic',
                 first_name: u.first_name,
                 last_name: u.last_name,
                 student_id: u.student_id,

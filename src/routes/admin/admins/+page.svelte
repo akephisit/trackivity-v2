@@ -59,6 +59,7 @@
 	let editingAdmin = $state<AdminRole | null>(null);
 	let editSelectedAdminLevel = $state<AdminLevel | undefined>(undefined);
 	let editSelectedFaculty = $state<string | undefined>(undefined);
+	let editSelectedPrefix = $state<string | undefined>(undefined);
 
 	// State for delete confirmation
 	let deleteDialogOpen = $state(false);
@@ -214,25 +215,27 @@
 	}
 
 	function openEditDialog(admin: AdminRole) {
-		editingAdmin = admin;
-		editSelectedAdminLevel = admin.admin_level;
-		editSelectedFaculty = admin.faculty_id; // already string (UUID)
-		editDialogOpen = true;
-	}
+			editingAdmin = admin;
+			editSelectedAdminLevel = admin.admin_level;
+			editSelectedFaculty = admin.faculty_id; // already string (UUID)
+			editSelectedPrefix = admin.user?.prefix;
+			editDialogOpen = true;
+		}
 
-	async function handleUpdate(adminId: string, userId: string, updateData: {
-		first_name: string;
-		last_name: string;
-		email: string;
-		admin_level: AdminLevel;
-		faculty_id?: string;
-		permissions: string[];
-	}) {
+		async function handleUpdate(adminId: string, userId: string, updateData: {
+			first_name: string;
+			last_name: string;
+			email: string;
+			prefix?: string;
+			admin_level: AdminLevel;
+			faculty_id?: string;
+			permissions: string[];
+		}) {
 		try {
 			const formData = new FormData();
 			formData.append('adminId', adminId); // เก็บ admin role id 
 			formData.append('userId', userId); // ส่ง user id เพื่อใช้กับ /api/users endpoint
-			formData.append('updateData', JSON.stringify(updateData));
+				formData.append('updateData', JSON.stringify(updateData));
 
 			const response = await fetch('?/update', {
 				method: 'POST',
@@ -1073,9 +1076,9 @@
 	</Dialog.Content>
 </Dialog.Root>
 
-<!-- Edit Admin Dialog -->
-<Dialog.Root bind:open={editDialogOpen}>
-	<Dialog.Content class="sm:max-w-md">
+	<!-- Edit Admin Dialog -->
+	<Dialog.Root bind:open={editDialogOpen}>
+		<Dialog.Content class="sm:max-w-md">
 		<Dialog.Header>
 			<Dialog.Title>แก้ไขแอดมิน</Dialog.Title>
 			<Dialog.Description>
@@ -1085,13 +1088,29 @@
 
 		{#if editingAdmin && editingAdmin.user}
 			<div class="space-y-4">
-				<div class="space-y-2">
-					<Label>ชื่อ-นามสกุล</Label>
-					<Input
-						bind:value={editingAdmin.user.first_name}
-						placeholder="ชื่อ"
-						class="mb-2"
-					/>
+					<div class="space-y-2">
+						<Label>คำนำหน้า</Label>
+						<Select.Root type="single" bind:value={editSelectedPrefix}>
+							<Select.Trigger>
+								{PrefixOptions.find(opt => opt.value === editSelectedPrefix)?.label ?? "เลือกคำนำหน้า"}
+							</Select.Trigger>
+							<Select.Content>
+								{#each PrefixOptions as option}
+									<Select.Item value={option.value}>
+										{option.label}
+									</Select.Item>
+								{/each}
+							</Select.Content>
+						</Select.Root>
+					</div>
+
+					<div class="space-y-2">
+						<Label>ชื่อ-นามสกุล</Label>
+						<Input
+							bind:value={editingAdmin.user.first_name}
+							placeholder="ชื่อ"
+							class="mb-2"
+						/>
 					<Input
 						bind:value={editingAdmin.user.last_name}
 						placeholder="นามสกุล"
@@ -1145,21 +1164,22 @@
 					<Button type="button" variant="outline" onclick={() => editDialogOpen = false}>
 						ยกเลิก
 					</Button>
-					<Button 
-						type="button" 
-						onclick={() => {
-							if (editingAdmin && editingAdmin.user && editSelectedAdminLevel) {
-								handleUpdate(editingAdmin.id, editingAdmin.user_id || editingAdmin.user.id, {
-									first_name: editingAdmin.user.first_name,
-									last_name: editingAdmin.user.last_name,
-									email: editingAdmin.user.email,
-									admin_level: editSelectedAdminLevel,
-									faculty_id: editSelectedFaculty,
-									permissions: editingAdmin.permissions || []
-								});
-							}
-						}}
-					>
+						<Button 
+							type="button" 
+							onclick={() => {
+								if (editingAdmin && editingAdmin.user && editSelectedAdminLevel) {
+									handleUpdate(editingAdmin.id, editingAdmin.user_id || editingAdmin.user.id, {
+										prefix: editSelectedPrefix,
+										first_name: editingAdmin.user.first_name,
+										last_name: editingAdmin.user.last_name,
+										email: editingAdmin.user.email,
+										admin_level: editSelectedAdminLevel,
+										faculty_id: editSelectedFaculty,
+										permissions: editingAdmin.permissions || []
+									});
+								}
+							}}
+						>
 						บันทึกการแก้ไข
 					</Button>
 				</Dialog.Footer>

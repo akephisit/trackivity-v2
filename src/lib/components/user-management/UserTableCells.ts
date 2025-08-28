@@ -1,6 +1,23 @@
 import { createRawSnippet } from 'svelte';
 import type { User } from '$lib/types/admin';
 
+// Local mapping for prefix -> Thai label
+const PREFIX_LABELS: Record<string, string> = {
+    Mr: 'นาย',
+    Mrs: 'นาง',
+    Miss: 'นางสาว',
+    Dr: 'ดร.',
+    Professor: 'ศาสตราจารย์',
+    AssociateProfessor: 'รองศาสตราจารย์',
+    AssistantProfessor: 'ผู้ช่วยศาสตราจารย์',
+    Lecturer: 'อาจารย์',
+    Generic: 'คุณ'
+};
+function prefixLabel(prefix?: string): string {
+    if (!prefix) return '';
+    return PREFIX_LABELS[prefix] || '';
+}
+
 // Helper functions for display formatting
 function getInitials(firstName: string, lastName: string): string {
 	return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
@@ -80,23 +97,23 @@ function getStatusVariant(status: string): "default" | "secondary" | "destructiv
 // User Profile Cell Snippet
 export const UserProfileCell = createRawSnippet<[{ user: User }]>((getProps) => {
 	const { user } = getProps();
-	return {
-		render: () => `
-			<div class="flex items-center gap-3 min-w-0">
-				<div class="h-8 w-8 flex-shrink-0 rounded-full bg-gray-200 flex items-center justify-center text-sm font-medium">
-					${getInitials(user.first_name, user.last_name)}
-				</div>
-				<div class="min-w-0 flex-1">
-					<div class="font-medium text-sm truncate">
-						${user.first_name} ${user.last_name}
-					</div>
-					<div class="text-xs text-gray-500 truncate">
-						${user.email}
-					</div>
-				</div>
-			</div>
-		`
-	};
+    return {
+        render: () => `
+            <div class="flex items-center gap-3 min-w-0">
+                <div class="h-8 w-8 flex-shrink-0 rounded-full bg-gray-200 flex items-center justify-center text-sm font-medium">
+                    ${getInitials(user.first_name, user.last_name)}
+                </div>
+                <div class="min-w-0 flex-1">
+                    <div class="font-medium text-sm truncate">
+                        ${`${prefixLabel((user as any).prefix) ? prefixLabel((user as any).prefix) + ' ' : ''}${user.first_name} ${user.last_name}`.trim()}
+                    </div>
+                    <div class="text-xs text-gray-500 truncate">
+                        ${user.email}
+                    </div>
+                </div>
+            </div>
+        `
+    };
 });
 
 // Email Cell Snippet

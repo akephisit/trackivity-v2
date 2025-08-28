@@ -19,6 +19,7 @@ export const load: PageServerLoad = async (event) => {
         role_id: adminRoles.id,
         user_id: users.id,
         email: users.email,
+        prefix: users.prefix,
         first_name: users.firstName,
         last_name: users.lastName,
         student_id: users.studentId,
@@ -45,6 +46,21 @@ export const load: PageServerLoad = async (event) => {
       ))
       .orderBy(faculties.name, users.firstName);
 
+    const prefixLabel = (p?: string | null) => {
+      const map: Record<string, string> = {
+        Mr: 'นาย',
+        Mrs: 'นาง',
+        Miss: 'นางสาว',
+        Dr: 'ดร.',
+        Professor: 'ศาสตราจารย์',
+        AssociateProfessor: 'รองศาสตราจารย์',
+        AssistantProfessor: 'ผู้ช่วยศาสตราจารย์',
+        Lecturer: 'อาจารย์',
+        Generic: 'คุณ'
+      };
+      return p ? (map[p] || '') : '';
+    };
+
     const facultyAdmins: ExtendedAdminRole[] = rows.map((r) => ({
       id: r.role_id,
       user_id: r.user_id,
@@ -57,6 +73,7 @@ export const load: PageServerLoad = async (event) => {
       user: {
         id: r.user_id,
         email: r.email,
+        prefix: r.prefix || 'Generic',
         first_name: r.first_name,
         last_name: r.last_name,
         student_id: r.student_id || undefined,
@@ -75,7 +92,7 @@ export const load: PageServerLoad = async (event) => {
       } as Faculty : undefined,
       // Extended fields for UI
       is_active: false,
-      full_name: `${r.first_name} ${r.last_name}`.trim(),
+      full_name: `${prefixLabel(r.prefix) ? prefixLabel(r.prefix) + ' ' : ''}${r.first_name} ${r.last_name}`.trim(),
       created_at_formatted: r.created_at ? new Date(r.created_at).toLocaleString('th-TH') : new Date().toLocaleString('th-TH'),
       permission_count: (r.permissions || []).length,
       days_since_last_login: undefined,
