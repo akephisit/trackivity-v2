@@ -44,22 +44,23 @@ export const load: PageServerLoad = async (event) => {
 	// โหลดรายการแอดมินจากฐานข้อมูลโดยตรง (รวมข้อมูล user)
 	let admins: AdminRole[] = [];
 	try {
-		const rows = await db
-			.select({
-				id: adminRoles.id,
-				user_id: users.id,
-				admin_level: adminRoles.adminLevel,
-				faculty_id: adminRoles.facultyId,
-				permissions: adminRoles.permissions,
-				is_enabled: adminRoles.isEnabled,
-				created_at: adminRoles.createdAt,
-				updated_at: adminRoles.updatedAt,
-				user_email: users.email,
-				first_name: users.firstName,
-				last_name: users.lastName,
-				student_id: users.studentId,
-				department_id: users.departmentId,
-				user_created_at: users.createdAt,
+            const rows = await db
+                .select({
+                    id: adminRoles.id,
+                    user_id: users.id,
+                    admin_level: adminRoles.adminLevel,
+                    faculty_id: adminRoles.facultyId,
+                    permissions: adminRoles.permissions,
+                    is_enabled: adminRoles.isEnabled,
+                    created_at: adminRoles.createdAt,
+                    updated_at: adminRoles.updatedAt,
+                    user_email: users.email,
+                    user_prefix: users.prefix,
+                    first_name: users.firstName,
+                    last_name: users.lastName,
+                    student_id: users.studentId,
+                    department_id: users.departmentId,
+                    user_created_at: users.createdAt,
 				user_updated_at: users.updatedAt,
 			})
 			.from(adminRoles)
@@ -86,15 +87,16 @@ export const load: PageServerLoad = async (event) => {
 			permissions: r.permissions || [],
 			created_at: r.created_at?.toISOString() || new Date().toISOString(),
 			updated_at: r.updated_at?.toISOString() || new Date().toISOString(),
-			user: {
-				id: r.user_id,
-				student_id: r.student_id,
-				email: r.user_email,
-				first_name: r.first_name,
-				last_name: r.last_name,
-				department_id: r.department_id || undefined,
-				faculty_id: r.faculty_id || undefined,
-				status: 'active',
+                user: {
+                    id: r.user_id,
+                    student_id: r.student_id,
+                    email: r.user_email,
+                    prefix: r.user_prefix || 'Generic',
+                    first_name: r.first_name,
+                    last_name: r.last_name,
+                    department_id: r.department_id || undefined,
+                    faculty_id: r.faculty_id || undefined,
+                    status: 'active',
 				role: 'admin',
 				created_at: r.user_created_at?.toISOString() || new Date().toISOString(),
 				updated_at: r.user_updated_at?.toISOString() || new Date().toISOString()
@@ -174,15 +176,16 @@ export const actions: Actions = {
 			}
 
 			// Insert user
-			const [newUser] = await db.insert(users).values({
-				studentId,
-				email: form.data.email,
-				passwordHash,
-				firstName: form.data.first_name,
-				lastName: form.data.last_name,
-				qrSecret,
-				status: 'active'
-			}).returning({ id: users.id });
+                const [newUser] = await db.insert(users).values({
+                    studentId,
+                    email: form.data.email,
+                    passwordHash,
+                    prefix: form.data.prefix,
+                    firstName: form.data.first_name,
+                    lastName: form.data.last_name,
+                    qrSecret,
+                    status: 'active'
+                }).returning({ id: users.id });
 
 			// Insert admin role
 			const perms = form.data.permissions?.length ? form.data.permissions : getDefaultPermissions(form.data.admin_level);

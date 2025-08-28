@@ -134,6 +134,21 @@
 		}
 	}
 
+	function getPrefixLabel(value: string | undefined): string {
+		if (!value) return '';
+		const found = PrefixOptions.find((o) => o.value === value);
+		return found ? found.label : '';
+	}
+
+	function formatFullName(user: { prefix?: string; first_name?: string; last_name?: string } | undefined): string {
+		if (!user) return 'ไม่ระบุชื่อ';
+		const first = user.first_name || '';
+		const last = user.last_name || '';
+		const prefixLabel = getPrefixLabel(user.prefix);
+		const full = `${prefixLabel ? prefixLabel + ' ' : ''}${first} ${last}`.trim();
+		return full || 'ไม่ระบุชื่อ';
+	}
+
 	function openDeleteDialog(adminId: string, userId: string, adminName: string) {
 		adminToDelete = { id: adminId, userId: userId, name: adminName };
 		deleteDialogOpen = true;
@@ -552,7 +567,7 @@
 															<IconShield class="h-4 w-4 text-red-600 dark:text-red-400" aria-hidden="true" />
 														</div>
 														<span class="text-gray-900 dark:text-gray-100">
-															{admin.user?.first_name ? `${admin.user.first_name} ${admin.user.last_name || ''}`.trim() : 'ไม่ระบุชื่อ'}
+															{formatFullName(admin.user)}
 														</span>
 													</div>
 												</Table.Cell>
@@ -583,14 +598,14 @@
 													</div>
 												</Table.Cell>
 												<Table.Cell class="text-right py-4">
-													<div class="flex items-center gap-1 justify-end" role="group" aria-label="การดำเนินการสำหรับ {admin.user?.first_name || 'ไม่ระบุชื่อ'}">
+															<div class="flex items-center gap-1 justify-end" role="group" aria-label={`การดำเนินการสำหรับ ${formatFullName(admin.user)}`}>
 														<Button 
 															variant="ghost" 
 															size="sm" 
 															onclick={() => handleToggleStatus(admin.id, admin.user_id || admin.user?.id || '', getAdminEnabledStatus(admin))}
 															disabled={toggleLoading[admin.id] || false}
 															class="{getAdminEnabledStatus(admin) ? 'text-orange-600 hover:text-orange-700 hover:bg-orange-50' : 'text-green-600 hover:text-green-700 hover:bg-green-50'} transition-colors"
-															aria-label="{getAdminEnabledStatus(admin) ? 'ปิดการใช้งานบัญชี' : 'เปิดการใช้งานบัญชี'} {admin.user?.first_name || 'แอดมิน'}"
+																aria-label={`${getAdminEnabledStatus(admin) ? 'ปิดการใช้งานบัญชี' : 'เปิดการใช้งานบัญชี'} ${formatFullName(admin.user)}`}
 															title="{getAdminEnabledStatus(admin) ? 'ปิดการใช้งานบัญชี' : 'เปิดการใช้งานบัญชี'}แอดมิน"
 														>
 															{#if toggleLoading[admin.id]}
@@ -606,7 +621,7 @@
 															size="sm" 
 															onclick={() => openEditDialog(admin)}
 															class="text-blue-600 hover:text-blue-700 hover:bg-blue-50 transition-colors"
-															aria-label="แก้ไข {admin.user?.first_name || 'แอดมิน'}"
+																aria-label={`แก้ไข ${formatFullName(admin.user)}`}
 															title="แก้ไขแอดมิน"
 														>
 															<IconEdit class="h-4 w-4" aria-hidden="true" />
@@ -614,9 +629,9 @@
 														<Button
 															variant="ghost"
 															size="sm"
-															onclick={() => openDeleteDialog(admin.id, admin.user_id || admin.user?.id || '', admin.user?.first_name ? `${admin.user.first_name} ${admin.user.last_name || ''}`.trim() : 'ไม่ระบุชื่อ')}
+																onclick={() => openDeleteDialog(admin.id, admin.user_id || admin.user?.id || '', formatFullName(admin.user))}
 															class="text-red-600 hover:text-red-700 hover:bg-red-50 transition-colors"
-															aria-label="ลบ {admin.user?.first_name || 'แอดมิน'}"
+																aria-label={`ลบ ${formatFullName(admin.user)}`}
 															title="ลบแอดมิน"
 														>
 															<IconTrash class="h-4 w-4" aria-hidden="true" />
@@ -710,7 +725,7 @@
 																		<IconUsers class="h-4 w-4 text-blue-600 dark:text-blue-400" aria-hidden="true" />
 																	</div>
 																	<span class="text-gray-900 dark:text-gray-100">
-																		{admin.user?.first_name ? `${admin.user.first_name} ${admin.user.last_name || ''}`.trim() : 'ไม่ระบุชื่อ'}
+																		{formatFullName(admin.user)}
 																	</span>
 																</div>
 															</Table.Cell>
@@ -772,7 +787,7 @@
 																	<Button
 																		variant="ghost"
 																		size="sm"
-																		onclick={() => openDeleteDialog(admin.id, admin.user_id || admin.user?.id || '', admin.user?.first_name ? `${admin.user.first_name} ${admin.user.last_name || ''}`.trim() : 'ไม่ระบุชื่อ')}
+																		onclick={() => openDeleteDialog(admin.id, admin.user_id || admin.user?.id || '', formatFullName(admin.user))}
 																		class="text-red-600 hover:text-red-700 hover:bg-red-50 transition-colors"
 																		aria-label="ลบ {admin.user?.first_name || 'แอดมิน'}"
 																		title="ลบแอดมิน"

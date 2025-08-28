@@ -8,11 +8,12 @@ export enum AdminLevel {
 export type AdminLevelAPI = 'super_admin' | 'faculty_admin' | 'regular_admin';
 
 export interface User {
-	id: string; // UUID string
-	email: string;
-	first_name: string;
-	last_name: string;
-	student_id?: string;
+    id: string; // UUID string
+    email: string;
+    prefix?: string; // Title prefix (Mr/Mrs/Miss/Dr/etc.)
+    first_name: string;
+    last_name: string;
+    student_id?: string;
 	employee_id?: string;
 	department_id?: string;
 	faculty_id?: string;

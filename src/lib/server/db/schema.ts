@@ -66,6 +66,8 @@ export const users = pgTable('users', {
   studentId: varchar('student_id', { length: 20 }).notNull().unique(),
   email: varchar('email', { length: 255 }).notNull().unique(),
   passwordHash: varchar('password_hash', { length: 255 }).notNull(),
+  // Title prefix (e.g., Mr, Mrs, Miss, Dr, etc.)
+  prefix: varchar('prefix', { length: 50 }).notNull().default('Generic'),
   firstName: varchar('first_name', { length: 100 }).notNull(),
   lastName: varchar('last_name', { length: 100 }).notNull(),
   qrSecret: varchar('qr_secret', { length: 255 }).notNull().unique(),
