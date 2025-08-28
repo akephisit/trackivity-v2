@@ -427,17 +427,17 @@ export class ApiClient {
     return this.delete<void>(`/api/users/${userId}`);
   }
 
-  // ===== FACULTY & DEPARTMENT =====
+  // ===== ORGANIZATION (Faculty) & DEPARTMENT =====
   async getFaculties(): Promise<ApiResponse<Faculty[]>> {
-    return this.get<Faculty[]>('/api/faculties');
+    return this.get<Faculty[]>('/api/organizations');
   }
 
   async getFaculty(facultyId: string): Promise<ApiResponse<Faculty>> {
-    return this.get<Faculty>(`/api/faculties/${facultyId}`);
+    return this.get<Faculty>(`/api/organizations/${facultyId}`);
   }
 
   async getFacultyDepartments(facultyId: string): Promise<ApiResponse<Department[]>> {
-    return this.get<Department[]>(`/api/faculties/${facultyId}/departments`);
+    return this.get<Department[]>(`/api/organizations/${facultyId}/departments`);
   }
 
   async getDepartments(): Promise<ApiResponse<Department[]>> {

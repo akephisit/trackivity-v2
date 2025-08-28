@@ -362,7 +362,7 @@
 			<CardContent class="space-y-4">
 				{#if data.admin_role?.admin_level === AdminLevel.SuperAdmin}
 					<div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-						<Button variant="outline" class="justify-start h-auto py-3 hover:bg-blue-50 dark:hover:bg-blue-950" onclick={() => window.location.href = '/admin/faculty-users'}>
+						<Button variant="outline" class="justify-start h-auto py-3 hover:bg-blue-50 dark:hover:bg-blue-950" onclick={() => window.location.href = '/admin/organization-users'}>
 							<IconUsers class="h-4 w-4 mr-2" />
 							<div class="text-left">
 								<div class="font-medium">จัดการผู้ใช้</div>
@@ -376,7 +376,7 @@
 								<div class="text-xs text-gray-500">กำหนดสิทธิ์ผู้ดูแล</div>
 							</div>
 						</Button>
-						<Button variant="outline" class="justify-start h-auto py-3 hover:bg-purple-50 dark:hover:bg-purple-950" onclick={() => window.location.href = '/admin/faculties'}>
+						<Button variant="outline" class="justify-start h-auto py-3 hover:bg-purple-50 dark:hover:bg-purple-950" onclick={() => window.location.href = '/admin/organizations'}>
 							<IconBuilding class="h-4 w-4 mr-2" />
 							<div class="text-left">
 								<div class="font-medium">จัดการหน่วยงาน</div>
@@ -393,7 +393,7 @@
 					</div>
 				{:else if data.admin_role?.admin_level === AdminLevel.FacultyAdmin}
 					<div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-						<Button variant="outline" class="justify-start h-auto py-3 hover:bg-blue-50 dark:hover:bg-blue-950" onclick={() => window.location.href = '/admin/faculty-users'}>
+						<Button variant="outline" class="justify-start h-auto py-3 hover:bg-blue-50 dark:hover:bg-blue-950" onclick={() => window.location.href = '/admin/organization-users'}>
 							<IconUsers class="h-4 w-4 mr-2" />
 							<div class="text-left">
 								<div class="font-medium">จัดการผู้ใช้หน่วยงาน</div>

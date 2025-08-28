@@ -82,9 +82,9 @@
 				},
 				{
 					title: 'จัดการหน่วยงาน',
-					href: '/admin/faculties',
+					href: '/admin/organizations',
 					icon: IconBuilding,
-					active: page.url.pathname.startsWith('/admin/faculties'),
+					active: page.url.pathname.startsWith('/admin/organizations'),
 					description: 'จัดการข้อมูลหน่วยงานต่างๆ'
 				},
 				{
@@ -106,16 +106,16 @@
 				},
 				{
 					title: 'จัดการผู้ใช้หน่วยงาน',
-					href: '/admin/faculty-users',
+					href: '/admin/organization-users',
 					icon: IconUsers,
-					active: page.url.pathname.startsWith('/admin/faculty-users'),
+					active: page.url.pathname.startsWith('/admin/organization-users'),
 					description: 'จัดการผู้ใช้ในหน่วยงาน'
 				},
 				{
 					title: 'จัดการแอดมินหน่วยงาน',
-					href: '/admin/faculty-admins',
+					href: '/admin/organization-admins',
 					icon: IconUserCog,
-					active: page.url.pathname.startsWith('/admin/faculty-admins'),
+					active: page.url.pathname.startsWith('/admin/organization-admins'),
 					description: 'จัดการผู้ดูแลหน่วยงาน'
 				}
 			);

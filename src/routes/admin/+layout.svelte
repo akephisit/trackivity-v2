@@ -26,16 +26,16 @@
 								แดชบอร์ด
 							{:else if page.url.pathname.startsWith('/admin/activities')}
 								จัดการกิจกรรม
-							{:else if page.url.pathname.startsWith('/admin/faculties')}
-							จัดการหน่วยงาน
+            {:else if page.url.pathname.startsWith('/admin/organizations')}
+              จัดการหน่วยงาน
 							{:else if page.url.pathname.startsWith('/admin/admins')}
 								จัดการแอดมิน
 							{:else if page.url.pathname.startsWith('/admin/departments')}
 								จัดการภาควิชา
-							{:else if page.url.pathname.startsWith('/admin/faculty-users')}
-							จัดการผู้ใช้หน่วยงาน
-							{:else if page.url.pathname.startsWith('/admin/faculty-admins')}
-							จัดการแอดมินหน่วยงาน
+            {:else if page.url.pathname.startsWith('/admin/organization-users')}
+            จัดการผู้ใช้หน่วยงาน
+            {:else if page.url.pathname.startsWith('/admin/organization-admins')}
+            จัดการแอดมินหน่วยงาน
 							{:else if page.url.pathname.startsWith('/admin/settings')}
 								ตั้งค่า
 							{:else}

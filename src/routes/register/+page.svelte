@@ -93,7 +93,7 @@
 
 		loadingDepartments = true;
 		try {
-			const response = await fetch(`/api/faculties/${facultyId}/departments/public`);
+			const response = await fetch(`/api/organizations/${facultyId}/departments/public`);
 			if (response.ok) {
 				const result = await response.json();
 				departments = result.data || [];

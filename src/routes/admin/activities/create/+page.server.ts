@@ -85,7 +85,7 @@ export const load: PageServerLoad = async (event) => {
 // ดึงข้อมูลหน่วยงานจากฐานข้อมูล
 	let faculties: any[] = [];
 	try {
-		const response = await event.fetch('/api/faculties');
+		const response = await event.fetch('/api/organizations');
 		if (response.ok) {
 			const apiData = await response.json();
 			

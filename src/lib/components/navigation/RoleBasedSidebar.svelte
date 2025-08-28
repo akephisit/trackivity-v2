@@ -176,7 +176,7 @@
             <SidebarGroupLabel>จัดการหน่วยงาน</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
-                {#each navigationItems.filter(item => item.url?.includes('/admin/faculty')) as item}
+                {#each navigationItems.filter(item => item.url?.includes('/admin/organization')) as item}
                   <SidebarMenuItem>
                     <SidebarMenuButton 
                       isActive={isActiveRoute(item.url || '')}
@@ -200,7 +200,7 @@
           <SidebarGroupLabel>เครื่องมือ</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {#each navigationItems.filter(item => item.url?.includes('/admin') && !item.url?.includes('/system') && !item.url?.includes('/faculty')) as item}
+              {#each navigationItems.filter(item => item.url?.includes('/admin') && !item.url?.includes('/system') && !item.url?.includes('/organization')) as item}
                 <SidebarMenuItem>
                   <SidebarMenuButton 
                     isActive={isActiveRoute(item.url || '')}

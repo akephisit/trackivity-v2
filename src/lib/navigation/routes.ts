@@ -86,44 +86,44 @@ export const ROUTES: RouteConfig[] = [
     icon: 'devices'
   },
 
-  // Faculty Admin Routes
+  // Organization Admin Routes (formerly Faculty)
   {
-    path: '/admin/faculty',
+    path: '/admin/organization',
     title: 'จัดการหน่วยงาน',
     permissions: ['ViewFacultyUsers', 'ManageFacultyActivities'],
     admin_levels: ['FacultyAdmin', 'SuperAdmin'],
     icon: 'school',
     children: [
       {
-        path: '/admin/faculty/dashboard',
+        path: '/admin/organization/dashboard',
         title: 'แดชบอร์ดหน่วยงาน',
         permissions: ['ViewFacultyAnalytics'],
         admin_levels: ['FacultyAdmin', 'SuperAdmin'],
         icon: 'analytics'
       },
       {
-        path: '/admin/faculty/students',
+        path: '/admin/organization/students',
         title: 'จัดการนักศึกษา',
         permissions: ['ViewFacultyUsers', 'CreateFacultyUsers'],
         admin_levels: ['FacultyAdmin', 'SuperAdmin'],
         icon: 'group'
       },
       {
-        path: '/admin/faculty/activities',
+        path: '/admin/organization/activities',
         title: 'จัดการกิจกรรม',
         permissions: ['ManageFacultyActivities'],
         admin_levels: ['FacultyAdmin', 'SuperAdmin'],
         icon: 'event'
       },
       {
-        path: '/admin/faculty/reports',
+        path: '/admin/organization/reports',
         title: 'รายงาน',
         permissions: ['ViewFacultyAnalytics'],
         admin_levels: ['FacultyAdmin', 'SuperAdmin'],
         icon: 'assessment'
       },
       {
-        path: '/admin/faculty/sessions',
+        path: '/admin/organization/sessions',
         title: 'จัดการเซสชัน',
         permissions: ['ViewFacultySessions', 'ManageFacultySessions'],
         admin_levels: ['FacultyAdmin', 'SuperAdmin'],
@@ -148,7 +148,7 @@ export const ROUTES: RouteConfig[] = [
         icon: 'analytics'
       },
       {
-        path: '/admin/system/faculties',
+        path: '/admin/system/organizations',
         title: 'จัดการหน่วยงาน',
         permissions: ['ViewAllFaculties', 'CreateFaculties'],
         admin_levels: ['SuperAdmin'],
@@ -335,7 +335,7 @@ export class PermissionRouter {
     if (this.adminLevel === 'SuperAdmin') {
       return '/admin/system/dashboard';
     } else if (this.adminLevel === 'FacultyAdmin') {
-      return '/admin/faculty/dashboard';
+      return '/admin/organization/dashboard';
     } else if (this.adminLevel === 'RegularAdmin') {
       return '/admin/scanner';
     } else {
@@ -369,18 +369,18 @@ export const ROLE_MENUS = {
   ],
   
   faculty_admin: [
-    { title: 'แดชบอร์ดหน่วยงาน', url: '/admin/faculty/dashboard', icon: 'analytics' },
-    { title: 'จัดการนักศึกษา', url: '/admin/faculty/students', icon: 'group' },
-    { title: 'จัดการกิจกรรม', url: '/admin/faculty/activities', icon: 'event' },
-    { title: 'รายงาน', url: '/admin/faculty/reports', icon: 'assessment' },
-    { title: 'จัดการเซสชัน', url: '/admin/faculty/sessions', icon: 'security' },
+    { title: 'แดชบอร์ดหน่วยงาน', url: '/admin/organization/dashboard', icon: 'analytics' },
+    { title: 'จัดการนักศึกษา', url: '/admin/organization/students', icon: 'group' },
+    { title: 'จัดการกิจกรรม', url: '/admin/organization/activities', icon: 'event' },
+    { title: 'รายงาน', url: '/admin/organization/reports', icon: 'assessment' },
+    { title: 'จัดการเซสชัน', url: '/admin/organization/sessions', icon: 'security' },
     { title: 'สแกน QR', url: '/admin/scanner', icon: 'qr_code_scanner' },
     { title: 'โปรไฟล์', url: '/profile', icon: 'person' }
   ],
   
   super_admin: [
     { title: 'ภาพรวมระบบ', url: '/admin/system/dashboard', icon: 'analytics' },
-    { title: 'จัดการหน่วยงาน', url: '/admin/system/faculties', icon: 'account_balance' },
+    { title: 'จัดการหน่วยงาน', url: '/admin/system/organizations', icon: 'account_balance' },
     { title: 'จัดการผู้ใช้', url: '/admin/system/users', icon: 'people' },
     { title: 'จัดการผู้ดูแลระบบ', url: '/admin/system/admins', icon: 'admin_panel_settings' },
     { title: 'จัดการเซสชัน', url: '/admin/system/sessions', icon: 'security' },
@@ -403,13 +403,13 @@ export const QUICK_ACTIONS = {
   
   faculty_admin: [
     { title: 'สแกน QR', url: '/admin/scanner', icon: 'qr_code_scanner' },
-    { title: 'สร้างกิจกรรม', url: '/admin/faculty/activities/create', icon: 'add' },
-    { title: 'รายงานวันนี้', url: '/admin/faculty/reports?date=today', icon: 'assessment' }
+    { title: 'สร้างกิจกรรม', url: '/admin/organization/activities/create', icon: 'add' },
+    { title: 'รายงานวันนี้', url: '/admin/organization/reports?date=today', icon: 'assessment' }
   ],
   
   super_admin: [
     { title: 'ภาพรวมระบบ', url: '/admin/system/dashboard', icon: 'analytics' },
-    { title: 'เพิ่มหน่วยงาน', url: '/admin/system/faculties/create', icon: 'add' },
+    { title: 'เพิ่มหน่วยงาน', url: '/admin/system/organizations/create', icon: 'add' },
     { title: 'สร้างผู้ดูแล', url: '/admin/system/admins/create', icon: 'person_add' }
   ]
 };

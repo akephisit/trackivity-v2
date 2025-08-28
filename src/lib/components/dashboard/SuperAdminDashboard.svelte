@@ -143,7 +143,7 @@
         <IconUserPlus class="size-4 mr-2" />
         เพิ่มผู้ใช้
       </Button>
-      <Button size="sm" variant="outline" href="/admin/system/faculties/create">
+      <Button size="sm" variant="outline" href="/admin/system/organizations/create">
         <IconPlus class="size-4 mr-2" />
       เพิ่มหน่วยงาน
       </Button>
@@ -230,7 +230,7 @@
             <IconSchool class="size-5" />
             ภาพรวมหน่วยงาน
           </span>
-          <Button size="sm" variant="outline" href="/admin/system/faculties">
+          <Button size="sm" variant="outline" href="/admin/system/organizations">
             จัดการหน่วยงาน
             <IconChevronRight class="size-4 ml-1" />
           </Button>
@@ -251,7 +251,7 @@
           <div class="text-center py-6 text-muted-foreground">
             <IconSchool class="size-8 mx-auto mb-2 opacity-50" />
             <p>ยังไม่มีหน่วยงานในระบบ</p>
-            <Button size="sm" href="/admin/system/faculties/create" class="mt-2">
+            <Button size="sm" href="/admin/system/organizations/create" class="mt-2">
               เพิ่มหน่วยงานแรก
             </Button>
           </div>
@@ -286,7 +286,7 @@
             
             {#if faculties.length > 5}
               <div class="pt-2 border-t">
-                <Button size="sm" variant="outline" href="/admin/system/faculties" class="w-full">
+                <Button size="sm" variant="outline" href="/admin/system/organizations" class="w-full">
                   ดูหน่วยงานทั้งหมด ({faculties.length - 5} อื่น ๆ)
                 </Button>
               </div>
@@ -398,7 +398,7 @@
             จัดการผู้ใช้
           </Button>
           
-          <Button href="/admin/system/faculties" variant="outline" class="w-full justify-start">
+          <Button href="/admin/system/organizations" variant="outline" class="w-full justify-start">
             <IconSchool class="size-4 mr-2" />
             จัดการหน่วยงาน
           </Button>

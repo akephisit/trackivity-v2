@@ -40,7 +40,7 @@ export const load: PageServerLoad = async (event) => {
 	// For SuperAdmin, show all departments; for FacultyAdmin, show only their faculty's departments
 	let apiEndpoint = `/api/departments`;
 	if (admin_role?.admin_level === 'FacultyAdmin' && admin_role.faculty_id) {
-		apiEndpoint = `/api/faculties/${admin_role.faculty_id}/departments`;
+		apiEndpoint = `/api/organizations/${admin_role.faculty_id}/departments`;
 	}
 
     try {
@@ -206,7 +206,7 @@ export const actions: Actions = {
             targetFacultyId = selected;
         }
 
-        const apiEndpoint = `/api/faculties/${targetFacultyId}/departments`;
+        const apiEndpoint = `/api/organizations/${targetFacultyId}/departments`;
 
 		try {
             // Insert department directly into database
