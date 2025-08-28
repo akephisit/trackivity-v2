@@ -352,7 +352,7 @@ let facultyOptions = $derived((data.organizations || []).map((org: any) => ({
 					<!-- หน่วยงานและสาขาวิชา - 2 คอลัมน์ -->
 					<div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
 						<!-- หน่วยงาน -->
-						<Form.Field {form} name="faculty_id">
+						<Form.Field {form} name="organization_id">
 							<Form.Control>
 								{#snippet children({ props })}
 									<Label for={props.id} class="flex items-center gap-2">
@@ -371,7 +371,7 @@ let facultyOptions = $derived((data.organizations || []).map((org: any) => ({
 											{/each}
 										</Select.Content>
 									</Select.Root>
-									<input type="hidden" {...props} bind:value={$formData.faculty_id} />
+									<input type="hidden" {...props} bind:value={$formData.organization_id} />
 								{/snippet}
 							</Form.Control>
 							<Form.FieldErrors />

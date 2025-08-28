@@ -29,15 +29,15 @@
 
 	// กำหนดสีและไอคอนสำหรับสถิติ (แบ่งตาม Admin Level)
 	function getStatCards() {
-		const isFacultyAdmin = data.admin_role?.admin_level === AdminLevel.FacultyAdmin;
+		const isOrgAdmin = data.admin_role?.admin_level === AdminLevel.OrganizationAdmin;
 		const stats = data.stats;
 
-		if (isFacultyAdmin) {
+		if (isOrgAdmin) {
 			// สถิติเฉพาะหน่วยงานสำหรับ Faculty Admin
 			return [
 				{
 					title: 'ผู้ใช้ในหน่วยงาน',
-					value: stats?.faculty_users || 0,
+					value: stats?.organization_users || 0,
 					icon: IconUsers,
 					color: 'text-blue-600',
 					bgColor: 'bg-blue-100',
@@ -125,28 +125,28 @@
 		},
 	} satisfies Chart.ChartConfig;
 
-	function getAdminLevelText(level: AdminLevel | undefined): string {
+	function getAdminLevelText(level: any): string {
 		if (!level) return 'ไม่ระบุ';
 		switch (level) {
-			case AdminLevel.SuperAdmin:
+			case 'SuperAdmin':
 				return 'ซุปเปอร์แอดมิน';
-			case AdminLevel.FacultyAdmin:
+			case 'OrganizationAdmin':
 				return 'แอดมินหน่วยงาน';
-			case AdminLevel.RegularAdmin:
+			case 'RegularAdmin':
 				return 'แอดมินทั่วไป';
 			default:
 				return 'ไม่ระบุ';
 		}
 	}
 
-	function getAdminLevelBadgeVariant(level: AdminLevel | undefined): 'default' | 'secondary' | 'destructive' | 'outline' {
+	function getAdminLevelBadgeVariant(level: any): 'default' | 'secondary' | 'destructive' | 'outline' {
 		if (!level) return 'outline';
 		switch (level) {
-			case AdminLevel.SuperAdmin:
+			case 'SuperAdmin':
 				return 'destructive';
-			case AdminLevel.FacultyAdmin:
+			case 'OrganizationAdmin':
 				return 'default';
-			case AdminLevel.RegularAdmin:
+			case 'RegularAdmin':
 				return 'secondary';
 			default:
 				return 'outline';
@@ -168,16 +168,16 @@
 		<div>
 			<h1 class="text-3xl font-bold text-gray-900 dark:text-white">
 				แดชบอร์ด
-				{#if data.admin_role?.admin_level === AdminLevel.FacultyAdmin && data.admin_role?.faculty}
-					- {data.admin_role.faculty.name}
+				{#if data.admin_role?.admin_level === AdminLevel.OrganizationAdmin && (data.admin_role as any)?.organization}
+					- {(data.admin_role as any).organization.name}
 				{/if}
 			</h1>
 			<p class="mt-2 text-gray-600 dark:text-gray-400">
 				ยินดีต้อนรับ, {data.user.first_name} {data.user.last_name}
-				{#if data.admin_role?.admin_level === AdminLevel.FacultyAdmin && data.admin_role?.faculty}
+				{#if data.admin_role?.admin_level === AdminLevel.OrganizationAdmin && (data.admin_role as any)?.organization}
 					<span class="ml-2 text-sm bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-2 py-1 rounded-full">
 						<IconSchool class="inline h-4 w-4 mr-1" />
-						{data.admin_role.faculty.code || data.admin_role.faculty.name}
+						{(data.admin_role as any).organization.code || (data.admin_role as any).organization.name}
 					</span>
 				{/if}
 			</p>
@@ -189,8 +189,8 @@
 		</div>
 	</div>
 
-	<!-- Faculty Info Card for Faculty Admin -->
-	{#if data.admin_role?.admin_level === AdminLevel.FacultyAdmin && data.admin_role?.faculty}
+	<!-- Organization Info Card for Organization Admin -->
+	{#if data.admin_role?.admin_level === AdminLevel.OrganizationAdmin && (data.admin_role as any)?.organization}
 		<Card class="border-blue-200 dark:border-blue-800 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950 dark:to-indigo-950">
 			<CardHeader>
 				<CardTitle class="flex items-center gap-2 text-blue-800 dark:text-blue-200">
@@ -205,7 +205,7 @@
 				<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
 					<div class="text-center">
 						<div class="text-2xl font-bold text-blue-700 dark:text-blue-300">
-							{data.admin_role.faculty.name}
+							{(data.admin_role as any).organization.name}
 						</div>
 						<div class="text-sm text-gray-600 dark:text-gray-400">
 							ชื่อหน่วยงาน
@@ -221,7 +221,7 @@
 					</div>
 					<div class="text-center">
 						<div class="text-2xl font-bold text-purple-700 dark:text-purple-300">
-							{data.stats?.faculty_users || 0}
+							{data.stats?.organization_users || 0}
 						</div>
 						<div class="text-sm text-gray-600 dark:text-gray-400">
 							ผู้ใช้ทั้งหมด
@@ -257,7 +257,7 @@
 	</div>
 
 	<!-- Department Analytics for Faculty Admin -->
-	{#if data.admin_role?.admin_level === AdminLevel.FacultyAdmin && departmentChartData?.length > 0}
+{#if data.admin_role?.admin_level === AdminLevel.OrganizationAdmin && departmentChartData?.length > 0}
 		<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
 			<!-- Department Distribution Chart -->
 			<Card>
@@ -308,19 +308,19 @@
 						<div class="flex justify-between items-center mb-2">
 							<span class="text-sm font-medium">อัตราผู้ใช้งานใหม่</span>
 							<span class="text-sm text-gray-500">
-								{Math.round(((data.stats?.new_users_this_month || 0) / Math.max(data.stats?.faculty_users || 1, 1)) * 100)}%
+							{Math.round(((data.stats?.new_users_this_month || 0) / Math.max(data.stats?.organization_users || 1, 1)) * 100)}%
 							</span>
 						</div>
-						<Progress value={Math.round(((data.stats?.new_users_this_month || 0) / Math.max(data.stats?.faculty_users || 1, 1)) * 100)} class="h-2" />
+						<Progress value={Math.round(((data.stats?.new_users_this_month || 0) / Math.max(data.stats?.organization_users || 1, 1)) * 100)} class="h-2" />
 					</div>
 					<div>
 						<div class="flex justify-between items-center mb-2">
 							<span class="text-sm font-medium">อัตราผู้ใช้งานใช้งาน</span>
 							<span class="text-sm text-gray-500">
-								{Math.round(((data.stats?.active_users || 0) / Math.max(data.stats?.faculty_users || 1, 1)) * 100)}%
+							{Math.round(((data.stats?.active_users || 0) / Math.max(data.stats?.organization_users || 1, 1)) * 100)}%
 							</span>
 						</div>
-						<Progress value={Math.round(((data.stats?.active_users || 0) / Math.max(data.stats?.faculty_users || 1, 1)) * 100)} class="h-2" />
+						<Progress value={Math.round(((data.stats?.active_users || 0) / Math.max(data.stats?.organization_users || 1, 1)) * 100)} class="h-2" />
 					</div>
 					<div>
 						<div class="flex justify-between items-center mb-2">
@@ -391,7 +391,7 @@
 							</div>
 						</Button>
 					</div>
-				{:else if data.admin_role?.admin_level === AdminLevel.FacultyAdmin}
+				{:else if data.admin_role?.admin_level === AdminLevel.OrganizationAdmin}
 					<div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
 						<Button variant="outline" class="justify-start h-auto py-3 hover:bg-blue-50 dark:hover:bg-blue-950" onclick={() => window.location.href = '/admin/organization-users'}>
 							<IconUsers class="h-4 w-4 mr-2" />
@@ -437,12 +437,12 @@
 				<CardTitle class="flex items-center gap-2">
 					<IconClock class="h-5 w-5" />
 					กิจกรรมล่าสุด
-					{#if data.admin_role?.admin_level === AdminLevel.FacultyAdmin}
-						<span class="text-sm font-normal text-gray-500">(หน่วยงาน{data.admin_role?.faculty?.name})</span>
+					{#if data.admin_role?.admin_level === AdminLevel.OrganizationAdmin}
+						<span class="text-sm font-normal text-gray-500">(หน่วยงาน{(data.admin_role as any)?.organization?.name})</span>
 					{/if}
 				</CardTitle>
 				<CardDescription>
-					{#if data.admin_role?.admin_level === AdminLevel.FacultyAdmin}
+					{#if data.admin_role?.admin_level === AdminLevel.OrganizationAdmin}
 						กิจกรรมและการเปลี่ยนแปลงล่าสุดในหน่วยงานของคุณ
 					{:else}
 						กิจกรรมและการเปลี่ยนแปลงล่าสุดในระบบ
@@ -500,7 +500,7 @@
 					<div class="text-center py-8 text-gray-500 dark:text-gray-400">
 						<IconClock class="h-8 w-8 mx-auto mb-2 opacity-50" />
 						<p>ยังไม่มีกิจกรรมล่าสุด</p>
-						{#if data.admin_role?.admin_level === AdminLevel.FacultyAdmin}
+					{#if data.admin_role?.admin_level === AdminLevel.OrganizationAdmin}
 							<p class="text-xs mt-2">กิจกรรมจะแสดงเฉพาะในหน่วยงานของคุณ</p>
 						{/if}
 					</div>

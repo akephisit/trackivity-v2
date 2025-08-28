@@ -70,7 +70,7 @@
 	});
 
 	// Get appropriate columns for admin level
-	const columns = $derived(getUserTableColumns(adminLevel, adminLevel === 'FacultyAdmin'));
+	const columns = $derived(getUserTableColumns(adminLevel || 'RegularAdmin', adminLevel === 'OrganizationAdmin'));
 
 	// Create table instance
 	const table = $derived(createSvelteTable({
@@ -134,7 +134,7 @@
 	const selectedUsers = $derived(Object.keys(rowSelection).filter(key => rowSelection[key]));
 
 	// Permission checks
-	const canManageUsers = $derived(adminLevel === 'SuperAdmin' || adminLevel === 'FacultyAdmin');
+	const canManageUsers = $derived(adminLevel === 'SuperAdmin' || adminLevel === 'OrganizationAdmin');
 	const canViewAllFaculties = $derived(adminLevel === 'SuperAdmin');
 
 	// Statistics calculations

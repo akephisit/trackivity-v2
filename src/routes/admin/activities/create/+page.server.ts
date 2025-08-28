@@ -1,4 +1,4 @@
-import { requireFacultyAdmin } from '$lib/server/auth-utils';
+import { requireOrganizationAdmin } from '$lib/server/auth-utils';
 import { fail, redirect } from '@sveltejs/kit';
 import { superValidate } from 'sveltekit-superforms';
 import { zod } from 'sveltekit-superforms/adapters';
@@ -59,8 +59,8 @@ const activityCreateSchema = z.object({
 });
 
 export const load: PageServerLoad = async (event) => {
-	// ตรวจสอบสิทธิ์ - เฉพาะ FacultyAdmin หรือ SuperAdmin
-	const user = await requireFacultyAdmin(event);
+	// ตรวจสอบสิทธิ์ - เฉพาะ OrganizationAdmin หรือ SuperAdmin
+	const user = await requireOrganizationAdmin(event);
 	
 	// สร้าง empty form
 	const form = await superValidate(zod(activityCreateSchema));
@@ -121,7 +121,7 @@ export const load: PageServerLoad = async (event) => {
 export const actions: Actions = {
 	default: async (event) => {
 		// ตรวจสอบสิทธิ์อีกครั้ง
-		await requireFacultyAdmin(event);
+		await requireOrganizationAdmin(event);
 		
 		// Validate form data
 		const form = await superValidate(event, zod(activityCreateSchema));

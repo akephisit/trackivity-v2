@@ -98,7 +98,7 @@
 			editing = false;
 
 			// Refresh user data
-			await auth.refreshUser();
+			await auth.validateSession();
 		} catch (err) {
 			console.error('Failed to update profile:', err);
 			error = 'ไม่สามารถบันทึกข้อมูลได้ กรุณาลองอีกครั้ง';
@@ -275,10 +275,10 @@
 						<p class="text-lg font-medium">{$currentUser.student_id}</p>
 					</div>
 
-					{#if $currentUser.faculty_name}
+					{#if $currentUser.organization_name}
 						<div>
 							<span class="text-muted-foreground text-sm">หน่วยงาน</span>
-							<p class="font-medium">{$currentUser.faculty_name}</p>
+							<p class="font-medium">{$currentUser.organization_name}</p>
 						</div>
 					{/if}
 

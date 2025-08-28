@@ -16,7 +16,7 @@ interface JWTPayload {
   department_id?: string;
   is_admin: boolean;
   admin_level?: string;
-  faculty_id?: string;
+  organization_id?: string;
   iat?: number;
   exp?: number;
 }
@@ -62,14 +62,14 @@ export const GET: RequestHandler = async ({ cookies }) => {
         if (decoded.admin_level === 'SuperAdmin') {
           permissions.push(
             'ViewAllUsers', 'CreateUsers', 'UpdateUsers', 'DeleteUsers',
-            'ViewAllFaculties', 'CreateFaculties', 'UpdateFaculties', 'DeleteFaculties',
+            'ViewAllOrganizations', 'CreateOrganizations', 'UpdateOrganizations', 'DeleteOrganizations',
             'ViewAllSessions', 'ManageAllSessions', 'ViewSystemAnalytics'
           );
-        } else if (decoded.admin_level === 'FacultyAdmin') {
+        } else if (decoded.admin_level === 'OrganizationAdmin') {
           permissions.push(
-            'ViewFacultyUsers', 'CreateFacultyUsers', 'UpdateFacultyUsers',
-            'ViewFacultyAnalytics', 'ManageFacultyActivities',
-            'ViewFacultySessions', 'ManageFacultySessions'
+            'ViewOrganizationUsers', 'CreateOrganizationUsers', 'UpdateOrganizationUsers',
+            'ViewOrganizationAnalytics', 'ManageOrganizationActivities',
+            'ViewOrganizationSessions', 'ManageOrganizationSessions'
           );
         } else {
           permissions.push(
@@ -88,14 +88,14 @@ export const GET: RequestHandler = async ({ cookies }) => {
         first_name: decoded.first_name,
         last_name: decoded.last_name,
         department_id: decoded.department_id,
-        faculty_id: decoded.faculty_id,
+        organization_id: decoded.organization_id,
         session_id: token.slice(0, 16), // Use first 16 chars as session ID
         permissions,
         expires_at: decoded.exp ? new Date(decoded.exp * 1000).toISOString() : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
         admin_role: decoded.is_admin ? {
           id: `admin_${decoded.user_id}`,
           admin_level: (decoded.admin_level as any) || 'RegularAdmin',
-          faculty_id: decoded.faculty_id,
+          organization_id: decoded.organization_id,
           permissions,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()

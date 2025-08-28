@@ -2,7 +2,7 @@
 	import { onMount, createEventDispatcher } from 'svelte';
 	import { formatDistanceToNow, format } from 'date-fns';
 	import { th } from 'date-fns/locale';
-	import { authService, user, type SessionInfo } from '$lib/stores/auth';
+	import { authService, currentUser } from '$lib/stores/auth';
 	import { Button } from '$lib/components/ui/button';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card';
@@ -25,7 +25,7 @@
 	const dispatch = createEventDispatcher();
 
 	// Component state
-	let sessions: SessionInfo[] = [];
+	let sessions: any[] = [];
 	let loading = true;
 	let error = '';
 	let revoking = new Set<string>();
@@ -122,7 +122,7 @@
 
 	// Check if session is current
 	function isCurrentSession(sessionId: string): boolean {
-		return $user?.session_id === sessionId;
+		return $currentUser?.session_id === sessionId;
 	}
 
 	// Check if session is expiring soon (within 1 hour)
@@ -160,7 +160,7 @@
 	}
 
 	// Get session badge variant based on status
-	function getSessionBadgeVariant(session: SessionInfo) {
+	function getSessionBadgeVariant(session: any) {
 		if (isCurrentSession(session.id)) {
 			return 'default';
 		} else if (!session.isActive) {
@@ -170,7 +170,7 @@
 	}
 
 	// Get session status text
-	function getSessionStatusText(session: SessionInfo): string {
+	function getSessionStatusText(session: any): string {
 		if (isCurrentSession(session.id)) {
 			return 'เซสชันปัจจุบัน';
 		} else if (!session.isActive) {

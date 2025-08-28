@@ -104,8 +104,8 @@ export const load: PageServerLoad = async (event) => {
 
 export const actions: Actions = {
     delete: async (event) => {
-        // Ensure only FacultyAdmin/SuperAdmin can delete
-        await requireFacultyAdmin(event);
+        // Ensure only OrganizationAdmin/SuperAdmin can delete
+        await requireOrganizationAdmin(event);
 
         try {
             const formData = await event.request.formData();

@@ -194,26 +194,26 @@ export const actions: Actions = {
 
 		// Determine the API endpoint based on user role
         // Determine target organization
-        let targetFacultyId: string | null = null;
+        let targetOrganizationId: string;
         if (admin_role?.admin_level === 'OrganizationAdmin' && (admin_role as any).organization_id) {
-            targetFacultyId = (admin_role as any).organization_id;
+            targetOrganizationId = (admin_role as any).organization_id as string;
         } else {
             // SuperAdmin must select an organization in the form
             const selected = (form.data as any).organization_id as string | undefined;
             if (!selected) {
                 return fail(400, { form, error: 'กรุณาเลือกหน่วยงาน' });
             }
-            targetFacultyId = selected;
+            targetOrganizationId = selected;
         }
 
-        const apiEndpoint = `/api/organizations/${targetFacultyId}/departments`;
+        const apiEndpoint = `/api/organizations/${targetOrganizationId}/departments`;
 
 		try {
             // Insert department directly into database
             await db.insert(departments).values({
                 name: form.data.name,
                 code: form.data.code,
-                organizationId: targetFacultyId,
+                organizationId: targetOrganizationId,
                 description: form.data.description || null,
                 status: form.data.status
             });

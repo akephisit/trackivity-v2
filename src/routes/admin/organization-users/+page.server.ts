@@ -5,17 +5,17 @@ import type {
     User, 
     UserFilter, 
     UserStats,
-    Faculty,
+    Organization,
     Department
 } from '$lib/types/admin';
 import { AdminLevel } from '$lib/types/admin';
-import { db, users, adminRoles, faculties, departments } from '$lib/server/db';
+import { db, users, adminRoles, organizations, departments } from '$lib/server/db';
 import { eq, and, or, like, desc, count, sql, gte } from 'drizzle-orm';
 
 /**
- * Get users from database with filters and pagination (Faculty-scoped)
- */
-async function getUsersFromDb(facultyId: string | null | undefined, filters: UserFilter, offset: number, limit: number) {
+ * Get users from database with filters and pagination (Organization-scoped)
+*/
+async function getUsersFromDb(organizationId: string | null | undefined, filters: UserFilter, offset: number, limit: number) {
     let query = db
         .select({
             id: users.id,
@@ -29,23 +29,23 @@ async function getUsersFromDb(facultyId: string | null | undefined, filters: Use
             created_at: users.createdAt,
             updated_at: users.updatedAt,
             department_name: departments.name,
-            faculty_id: departments.facultyId,
-            faculty_name: faculties.name,
+            organization_id: departments.organizationId,
+            organization_name: organizations.name,
             admin_level: adminRoles.adminLevel,
-            admin_faculty_id: adminRoles.facultyId,
+            admin_organization_id: adminRoles.organizationId,
             is_admin: sql<boolean>`${adminRoles.id} IS NOT NULL`,
         })
         .from(users)
         .leftJoin(departments, eq(users.departmentId, departments.id))
-        .leftJoin(faculties, eq(departments.facultyId, faculties.id))
+        .leftJoin(organizations, eq(departments.organizationId, organizations.id))
         .leftJoin(adminRoles, eq(users.id, adminRoles.userId))
         .$dynamic();
 
     const conditions = [];
 
-    // Faculty filtering (this page shows faculty-scoped users)
-    if (facultyId) {
-        conditions.push(eq(departments.facultyId, facultyId));
+    // Organization filtering (this page shows organization-scoped users)
+    if (organizationId) {
+        conditions.push(eq(departments.organizationId, organizationId));
     }
 
     // Apply search filters
@@ -108,12 +108,12 @@ async function getUsersFromDb(facultyId: string | null | undefined, filters: Use
 /**
  * Get user statistics from database (Faculty-scoped)
  */
-async function getUserStatsFromDb(facultyId: string | null | undefined): Promise<UserStats> {
-    // Base query for faculty-scoped users
-    const baseConditions = facultyId ? [eq(departments.facultyId, facultyId)] : [];
+async function getUserStatsFromDb(organizationId: string | null | undefined): Promise<UserStats> {
+    // Base query for organization-scoped users
+    const baseConditions = organizationId ? [eq(departments.organizationId, organizationId)] : [];
     
     const [totalUsers, activeUsers, recentRegistrations] = await Promise.all([
-        // Total users in faculty
+        // Total users in organization
         (() => {
             let q = db.select({ count: count() }).from(users)
                 .leftJoin(departments, eq(users.departmentId, departments.id))
@@ -121,7 +121,7 @@ async function getUserStatsFromDb(facultyId: string | null | undefined): Promise
             return baseConditions.length > 0 ? q.where(and(...baseConditions)) : q;
         })(),
         
-        // Active users in faculty
+        // Active users in organization
         (() => {
             let q = db.select({ count: count() }).from(users)
                 .leftJoin(departments, eq(users.departmentId, departments.id))
@@ -130,7 +130,7 @@ async function getUserStatsFromDb(facultyId: string | null | undefined): Promise
             return q.where(and(...conds));
         })(),
         
-        // Recent registrations (last 30 days) in faculty
+        // Recent registrations (last 30 days) in organization
         (() => {
             const thirtyDaysAgo = new Date();
             thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
@@ -163,22 +163,22 @@ async function getUserStatsFromDb(facultyId: string | null | undefined): Promise
 }
 
 /**
- * Get faculties from database
+ * Get organizations from database
  */
-async function getFacultiesFromDb(): Promise<Faculty[]> {
+async function getOrganizationsFromDb(): Promise<Organization[]> {
     const result = await db
         .select({
-            id: faculties.id,
-            name: faculties.name,
-            code: faculties.code,
-            description: faculties.description,
-            status: faculties.status,
-            created_at: faculties.createdAt,
-            updated_at: faculties.updatedAt
+            id: organizations.id,
+            name: organizations.name,
+            code: organizations.code,
+            description: organizations.description,
+            status: organizations.status,
+            created_at: organizations.createdAt,
+            updated_at: organizations.updatedAt
         })
-        .from(faculties)
-        .where(eq(faculties.status, true))
-        .orderBy(faculties.name);
+        .from(organizations)
+        .where(eq(organizations.status, true))
+        .orderBy(organizations.name);
 
     return result.map(f => ({
         ...f,
@@ -189,22 +189,22 @@ async function getFacultiesFromDb(): Promise<Faculty[]> {
 }
 
 /**
- * Get departments for a specific faculty
+ * Get departments for a specific organization
  */
-async function getDepartmentsFromDb(facultyId: string): Promise<Department[]> {
+async function getDepartmentsFromDb(organizationId: string): Promise<Department[]> {
     const result = await db
         .select({
             id: departments.id,
             name: departments.name,
             code: departments.code,
-            faculty_id: departments.facultyId,
+            organization_id: departments.organizationId,
             description: departments.description,
             status: departments.status,
             created_at: departments.createdAt,
             updated_at: departments.updatedAt
         })
         .from(departments)
-        .where(and(eq(departments.facultyId, facultyId), eq(departments.status, true)))
+        .where(and(eq(departments.organizationId, organizationId), eq(departments.status, true)))
         .orderBy(departments.name);
 
     return result.map(d => ({
@@ -218,14 +218,14 @@ async function getDepartmentsFromDb(facultyId: string): Promise<Department[]> {
 /**
  * Server Load Function for Faculty-Scoped User Management
  * Implements role-based access control:
- * - SuperAdmin: Can view all users system-wide with optional faculty filtering
- * - FacultyAdmin: Can only view users within their faculty
+ * - SuperAdmin: Can view all users system-wide with optional organization filtering
+ * - OrganizationAdmin: Can only view users within their organization
  */
 export const load: PageServerLoad = async (event) => {
     // Ensure user is authenticated as admin
     const user = requireAdmin(event);
     const adminLevel = user.admin_role?.admin_level;
-    const facultyId = user.admin_role?.faculty_id;
+    const organizationId = (user.admin_role as any)?.organization_id;
 
     // Extract query parameters for filtering and pagination
     const url = event.url;
@@ -233,7 +233,7 @@ export const load: PageServerLoad = async (event) => {
     
     const filters: UserFilter = {
         search: searchParams.get('search') || undefined,
-        faculty_id: searchParams.get('faculty_id') || undefined,
+        organization_id: searchParams.get('organization_id') || undefined,
         department_id: searchParams.get('department_id') || undefined,
         status: (searchParams.get('status') as any) || 'all',
         role: (searchParams.get('role') as any) || 'all',
@@ -246,30 +246,30 @@ export const load: PageServerLoad = async (event) => {
     const offset = (page - 1) * limit;
 
     try {
-        // Determine which faculty to filter by
-        let targetFacultyId: string | undefined;
+        // Determine which organization to filter by
+        let targetOrganizationId: string | undefined;
         
-        if (adminLevel === AdminLevel.FacultyAdmin) {
-            // FacultyAdmin can only see their faculty
-            if (!facultyId) {
-                throw error(403, 'Faculty admin must be associated with a faculty');
+        if (adminLevel === AdminLevel.OrganizationAdmin) {
+            // OrganizationAdmin can only see their organization
+            if (!organizationId) {
+                throw error(403, 'Organization admin must be associated with an organization');
             }
-            targetFacultyId = facultyId;
+            targetOrganizationId = organizationId;
         } else if (adminLevel === AdminLevel.SuperAdmin) {
-            // SuperAdmin can filter by faculty or see all
-            targetFacultyId = filters.faculty_id || undefined;
+            // SuperAdmin can filter by organization or see all
+            targetOrganizationId = (filters as any).organization_id || undefined;
         } else {
             throw error(403, 'Insufficient permissions to view user data');
         }
 
         // Load data concurrently
-        const [usersData, statsData, facultiesData, departmentsData] = await Promise.all([
-            getUsersFromDb(targetFacultyId, filters, offset, limit),
-            getUserStatsFromDb(targetFacultyId),
-            // Load faculties for filtering (only for SuperAdmin)
-            adminLevel === AdminLevel.SuperAdmin ? getFacultiesFromDb() : Promise.resolve([]),
-            // Load departments for the target faculty
-            targetFacultyId ? getDepartmentsFromDb(targetFacultyId) : Promise.resolve([])
+        const [usersData, statsData, organizationsData, departmentsData] = await Promise.all([
+            getUsersFromDb(targetOrganizationId, filters, offset, limit),
+            getUserStatsFromDb(targetOrganizationId),
+            // Load organizations for filtering (only for SuperAdmin)
+            adminLevel === AdminLevel.SuperAdmin ? getOrganizationsFromDb() : Promise.resolve([]),
+            // Load departments for the target organization
+            targetOrganizationId ? getDepartmentsFromDb(targetOrganizationId) : Promise.resolve([])
         ]);
 
         // Process users data
@@ -296,13 +296,13 @@ export const load: PageServerLoad = async (event) => {
                 name: u.department_name 
             } : undefined;
             
-            // Handle faculty data
-            let faculty = null;
-            if (u.is_admin && u.admin_faculty_id) {
-                const facultyFromList = facultiesData.find(f => f.id === u.admin_faculty_id);
-                faculty = facultyFromList || { id: u.admin_faculty_id, name: 'Unknown Faculty' };
-            } else if (u.faculty_name && u.faculty_id) {
-                faculty = { id: u.faculty_id, name: u.faculty_name };
+            // Handle organization data
+            let organization = null as any;
+            if (u.is_admin && u.admin_organization_id) {
+                const orgFromList = (organizationsData as Organization[]).find(f => f.id === u.admin_organization_id);
+                organization = orgFromList || { id: u.admin_organization_id, name: 'Unknown Organization' };
+            } else if (u.organization_name && u.organization_id) {
+                organization = { id: u.organization_id, name: u.organization_name };
             }
 
             // Determine user role based on admin_level
@@ -313,8 +313,8 @@ export const load: PageServerLoad = async (event) => {
                     case 'super_admin':
                         role = 'super_admin';
                         break;
-                    case 'faculty_admin':
-                        role = 'faculty_admin';
+                    case 'organization_admin':
+                        role = 'organization_admin';
                         break;
                     case 'regular_admin':
                         role = 'regular_admin';
@@ -332,7 +332,7 @@ export const load: PageServerLoad = async (event) => {
                 student_id: u.student_id,
                 employee_id: undefined,
                 department_id: u.department_id,
-                faculty_id: u.faculty_id,
+                organization_id: u.organization_id,
                 status,
                 role,
                 phone: undefined,
@@ -342,7 +342,7 @@ export const load: PageServerLoad = async (event) => {
                 created_at: u.created_at ? new Date(u.created_at).toISOString() : new Date().toISOString(),
                 updated_at: u.updated_at ? new Date(u.updated_at).toISOString() : new Date().toISOString(),
                 department,
-                faculty,
+                organization,
             } as User;
         });
 
@@ -356,17 +356,17 @@ export const load: PageServerLoad = async (event) => {
         return {
             users,
             stats: statsData,
-            faculties: facultiesData,
+            organizations: organizationsData,
             departments: departmentsData,
             pagination,
             filters,
             adminLevel,
-            facultyId: targetFacultyId,
+            organizationId: targetOrganizationId,
             canManageAllUsers: adminLevel === AdminLevel.SuperAdmin
         };
 
     } catch (err) {
-        console.error('Error in faculty-users page load:', err);
+        console.error('Error in organization-users page load:', err);
         throw error(500, 'Failed to load user data');
     }
 };

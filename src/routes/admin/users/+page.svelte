@@ -245,17 +245,17 @@
 									{#if user.role === 'super_admin'}
 										<!-- ซุปเปอร์แอดมินไม่ต้องแสดงหน่วยงาน -->
 										<span class="text-sm text-muted-foreground">-</span>
-									{:else if user.role === 'faculty_admin' || user.role === 'regular_admin'}
+									{:else if user.role === 'organization_admin' || user.role === 'regular_admin'}
 										<!-- แอดมินหน่วยงานและแอดมินทั่วไป แสดงเฉพาะหน่วยงาน -->
-										{#if user.faculty}
-											<span class="text-sm">{user.faculty.name}</span>
+										{#if user.organization}
+											<span class="text-sm">{user.organization.name}</span>
 										{:else}
 											<span class="text-sm text-muted-foreground">ไม่ระบุหน่วยงาน</span>
 										{/if}
 									{:else}
 										<!-- นักศึกษาและอื่นๆ แสดงทั้งหน่วยงานและสาขาวิชา -->
-										{#if user.faculty}
-											<span class="text-sm">{user.faculty.name}</span>
+										{#if user.organization}
+											<span class="text-sm">{user.organization.name}</span>
 										{:else}
 											<span class="text-sm text-muted-foreground">ไม่ระบุหน่วยงาน</span>
 										{/if}

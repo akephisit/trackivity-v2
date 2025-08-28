@@ -563,10 +563,10 @@
 										</Table.Cell>
 										{#if data.userRole === 'SuperAdmin'}
 											<Table.Cell class="py-4">
-												{#if department.faculty}
-													<Badge variant="outline">
-														{department.faculty.name}
-													</Badge>
+											{#if department.organization}
+												<Badge variant="outline">
+													{department.organization.name}
+												</Badge>
 												{:else}
 													<span class="text-gray-400">-</span>
 												{/if}
