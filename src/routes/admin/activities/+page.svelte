@@ -16,7 +16,7 @@
 		IconRefresh
 	} from '@tabler/icons-svelte/icons';
 		import { goto, invalidateAll } from '$app/navigation';
-		import { page } from '$app/stores';
+		import { page } from '$app/state';
 	import { toast } from 'svelte-sonner';
 	import * as AlertDialog from '$lib/components/ui/alert-dialog';
 
@@ -120,7 +120,7 @@
 
 		// Show toast when redirected after deletion
 		$effect(() => {
-			const deleted = $page.url.searchParams.get('deleted');
+			const deleted = page.url.searchParams.get('deleted');
 			if (deleted === '1') {
 				toast.success('ลบกิจกรรมสำเร็จ');
 				// Clean up query param to avoid repeated toasts
