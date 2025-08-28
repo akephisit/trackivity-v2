@@ -6,12 +6,7 @@
 	import { Separator } from '$lib/components/ui/separator';
 	import { Label } from '$lib/components/ui/label';
 	import { Textarea } from '$lib/components/ui/textarea';
-	import { 
-		Select, 
-		SelectContent, 
-		SelectItem, 
-		SelectTrigger
-	} from '$lib/components/ui/select';
+	import * as Select from '$lib/components/ui/select';
 	import { 
 		Table, 
 		TableBody, 
@@ -61,6 +56,15 @@
 	}>();
 	
 	const { activity, participations, participationStats } = data;
+
+	// Eligible faculties names mapped from server-provided IDs and faculties list
+	const eligibleFacultyNames = $derived(() => {
+		const ids: string[] = (data as any).eligible_faculties_selected || [];
+		const list: any[] = (data as any).faculties || [];
+		return ids
+			.map((id: string) => list.find((f) => f.id === id)?.name)
+			.filter((name: string | undefined): name is string => Boolean(name));
+	});
 
 	let showParticipations = $state(true);
 	let showStats = $state(true);
@@ -376,6 +380,21 @@
 					</div>
 				{/if}
 
+				<!-- Eligible Faculties -->
+				{#if eligibleFacultyNames.length > 0}
+					<div class="flex items-start gap-3">
+						<IconBuildingBank class="size-5 mt-0.5 text-muted-foreground flex-shrink-0" />
+						<div>
+							<p class="font-medium">คณะที่สามารถเข้าร่วมได้</p>
+							<div class="flex flex-wrap gap-1">
+								{#each eligibleFacultyNames as name}
+									<Badge variant="secondary">{name}</Badge>
+								{/each}
+							</div>
+						</div>
+					</div>
+				{/if}
+
 				<!-- Creator -->
 				<div class="flex items-start gap-3">
 					<IconUser class="size-5 mt-0.5 text-muted-foreground flex-shrink-0" />
@@ -462,16 +481,16 @@
 					class="flex items-center gap-4"
 				>
 					<div class="flex-1">
-						<Select type="single" name="status" bind:value={selectedStatus}>
-							<SelectTrigger class="w-full">
+						<Select.Root type="single" bind:value={selectedStatus}>
+							<Select.Trigger class="w-full">
 								{selectedStatus ? statusOptions.find(s => s.value === selectedStatus)?.label || 'เลือกสถานะ' : 'เลือกสถานะ'}
-							</SelectTrigger>
-							<SelectContent>
+							</Select.Trigger>
+							<Select.Content>
 								{#each statusOptions as option}
-									<SelectItem value={option.value}>{option.label}</SelectItem>
+									<Select.Item value={option.value}>{option.label}</Select.Item>
 								{/each}
-							</SelectContent>
-						</Select>
+							</Select.Content>
+						</Select.Root>
 					</div>
 					<Button type="submit" disabled={updatingStatus || selectedStatus === activity.status}>
 						{updatingStatus ? 'กำลังอัปเดต...' : 'อัปเดตสถานะ'}
@@ -628,16 +647,16 @@
 				
 				<div class="space-y-2">
 					<Label for="participantStatus">สถานะ</Label>
-					<Select type="single" name="participantStatus" bind:value={participantStatus}>
-						<SelectTrigger>
-							{participantStatus ? participationStatusOptions.find(s => s.value === participantStatus)?.label || 'เลือกสถานะ' : 'เลือกสถานะ'}
-						</SelectTrigger>
-						<SelectContent>
-							{#each participationStatusOptions as option}
-								<SelectItem value={option.value}>{option.label}</SelectItem>
-							{/each}
-						</SelectContent>
-					</Select>
+						<Select.Root type="single" bind:value={participantStatus}>
+							<Select.Trigger>
+								{participantStatus ? participationStatusOptions.find(s => s.value === participantStatus)?.label || 'เลือกสถานะ' : 'เลือกสถานะ'}
+							</Select.Trigger>
+							<Select.Content>
+								{#each participationStatusOptions as option}
+									<Select.Item value={option.value}>{option.label}</Select.Item>
+								{/each}
+							</Select.Content>
+						</Select.Root>
 				</div>
 
 				<div class="space-y-2">

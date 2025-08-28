@@ -120,12 +120,26 @@ export const load: PageServerLoad = async (event) => {
       notes: p.notes || undefined
     }));
 
+    // Load all faculties for selection on edit page
+    let facultiesList: Array<{ id: string; name: string; code?: string }>; 
+    try {
+      const rows = await db.select({ id: faculties.id, name: faculties.name, code: faculties.code }).from(faculties);
+      facultiesList = rows as any;
+    } catch (e) {
+      console.error('Error loading faculties list:', e);
+      facultiesList = [];
+    }
+
+    // Eligible faculties (array of UUIDs) from activity
+    const eligible_faculties_selected: string[] = Array.isArray(a.eligible_faculties) ? (a.eligible_faculties as any) : [];
+
     return {
       user,
       activity,
       participations: participationsList,
       participationStats,
-      faculties: []
+      faculties: facultiesList,
+      eligible_faculties_selected
     };
   } catch (e) {
     console.error('Error loading activity details from database:', e);

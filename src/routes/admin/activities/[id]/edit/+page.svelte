@@ -6,12 +6,7 @@
 	import { Label } from '$lib/components/ui/label';
 	import { Textarea } from '$lib/components/ui/textarea';
 	import { Alert, AlertDescription } from '$lib/components/ui/alert';
-	import { 
-		Select, 
-		SelectContent, 
-		SelectItem, 
-		SelectTrigger
-	} from '$lib/components/ui/select';
+import * as Select from '$lib/components/ui/select';
 	import {
 		IconArrowLeft,
 		IconDeviceFloppy,
@@ -39,6 +34,22 @@
 	let selectedStatus = $state(activity.status);
 	let selectedFaculty = $state(activity.faculty_id || '');
     // No department selection in edit page per requirement
+
+	// Eligible faculties selection (multi-select)
+	// Build options from provided faculties list (server now supplies it)
+	const facultyOptions = (Array.isArray(faculties) ? faculties : []).map((f: any) => ({
+		value: f.id,
+		label: f.name
+	}));
+
+	// Initial selected values from server
+	let selectedEligibleValues = $state<string[]>(data.eligible_faculties_selected || []);
+	let selectedEligible = $derived(
+		selectedEligibleValues.map((id: string) => {
+			const opt = facultyOptions.find((o) => o.value === id);
+			return { value: id, label: opt?.label || id };
+		})
+	);
 
 	// Format datetime for input fields
 	function formatDateTimeForInput(dateString: string): string {
@@ -245,6 +256,66 @@
 					</div>
 				</div>
 
+				<!-- Eligible Faculties -->
+				<div class="space-y-2">
+					<Label for="eligible_faculties">คณะที่สามารถเข้าร่วมได้ *</Label>
+						<input type="hidden" name="eligible_faculties" value={selectedEligibleValues.join(',')} />
+					<Select.Root 
+						type="multiple" 
+						bind:value={selectedEligibleValues as any} 
+							onValueChange={(values) => {
+								if (values && Array.isArray(values)) {
+									selectedEligibleValues = values as string[];
+								}
+							}}
+					>
+						<Select.Trigger>
+							{#if selectedEligible.length === 0}
+								เลือกคณะที่สามารถเข้าร่วมได้
+							{:else if selectedEligible.length === 1}
+								{selectedEligible[0].label}
+							{:else}
+								เลือกแล้ว {selectedEligible.length} คณะ
+							{/if}
+						</Select.Trigger>
+						<Select.Content>
+							{#each facultyOptions as option}
+								<Select.Item value={option.value}>
+									<div class="flex items-center gap-2">
+										<div class="w-4 h-4 flex items-center justify-center">
+											{#if selectedEligible.some(f => f.value === option.value)}
+												<div class="w-3 h-3 bg-blue-600 rounded-sm"></div>
+											{:else}
+												<div class="w-3 h-3 border border-gray-300 rounded-sm"></div>
+											{/if}
+										</div>
+										{option.label}
+									</div>
+								</Select.Item>
+							{/each}
+						</Select.Content>
+					</Select.Root>
+
+					{#if selectedEligible.length > 0}
+						<div class="flex flex-wrap gap-1 mt-2">
+							{#each selectedEligible as faculty}
+								<span class="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-800 text-sm rounded-md">
+									{faculty.label}
+									<button 
+										type="button"
+											onclick={() => {
+											selectedEligibleValues = selectedEligibleValues.filter(v => v !== faculty.value);
+										}}
+										class="text-blue-600 hover:text-blue-800"
+									>
+										×
+									</button>
+								</span>
+							{/each}
+						</div>
+					{/if}
+				</div>
+
 				<!-- Max Participants -->
 				<div class="space-y-2">
 					<Label for="max_participants">จำนวนผู้เข้าร่วมสูงสุด</Label>
@@ -268,21 +339,21 @@
 				<!-- Status -->
 				<div class="space-y-2">
 					<Label for="status">สถานะกิจกรรม *</Label>
-					<Select type="single" name="status" bind:value={selectedStatus}>
-						<SelectTrigger>
-							{selectedStatus ? statusOptions.find(s => s.value === selectedStatus)?.label || 'เลือกสถานะ' : 'เลือกสถานะ'}
-						</SelectTrigger>
-						<SelectContent>
-							{#each statusOptions as option}
-								<SelectItem value={option.value}>
-									<div class="flex flex-col items-start">
-										<span class="font-medium">{option.label}</span>
-										<span class="text-xs text-muted-foreground">{option.description}</span>
-									</div>
-								</SelectItem>
-							{/each}
-						</SelectContent>
-					</Select>
+						<Select.Root type="single" bind:value={selectedStatus}>
+							<Select.Trigger>
+								{selectedStatus ? statusOptions.find(s => s.value === selectedStatus)?.label || 'เลือกสถานะ' : 'เลือกสถานะ'}
+							</Select.Trigger>
+							<Select.Content>
+								{#each statusOptions as option}
+									<Select.Item value={option.value}>
+										<div class="flex flex-col items-start">
+											<span class="font-medium">{option.label}</span>
+											<span class="text-xs text-muted-foreground">{option.description}</span>
+										</div>
+									</Select.Item>
+								{/each}
+							</Select.Content>
+						</Select.Root>
 					{#if selectedStatus}
 						{@const selectedOption = statusOptions.find(opt => opt.value === selectedStatus)}
 						{#if selectedOption}
@@ -297,17 +368,17 @@
 				{#if faculties.length > 0}
 					<div class="space-y-2">
 						<Label for="faculty_id">คณะ</Label>
-						<Select type="single" name="faculty_id" bind:value={selectedFaculty}>
-							<SelectTrigger>
-								{selectedFaculty ? faculties.find((f: any) => f.id === selectedFaculty)?.name || 'เลือกคณะ (ไม่บังคับ)' : 'เลือกคณะ (ไม่บังคับ)'}
-							</SelectTrigger>
-							<SelectContent>
-								<SelectItem value="">ไม่ระบุคณะ</SelectItem>
-								{#each faculties as faculty}
-									<SelectItem value={faculty.id}>{faculty.name}</SelectItem>
-								{/each}
-							</SelectContent>
-						</Select>
+							<Select.Root type="single" bind:value={selectedFaculty}>
+								<Select.Trigger>
+									{selectedFaculty ? faculties.find((f: any) => f.id === selectedFaculty)?.name || 'เลือกคณะ (ไม่บังคับ)' : 'เลือกคณะ (ไม่บังคับ)'}
+								</Select.Trigger>
+								<Select.Content>
+									<Select.Item value="">ไม่ระบุคณะ</Select.Item>
+									{#each faculties as faculty}
+										<Select.Item value={faculty.id}>{faculty.name}</Select.Item>
+									{/each}
+								</Select.Content>
+							</Select.Root>
 						<p class="text-sm text-muted-foreground">
 							เลือกคณะที่เกี่ยวข้องกับกิจกรรมนี้ (ไม่บังคับ)
 						</p>

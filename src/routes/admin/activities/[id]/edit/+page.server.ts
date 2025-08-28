@@ -1,18 +1,17 @@
-import type { PageServerLoad, Actions } from './$types';
-import { error, fail, redirect } from '@sveltejs/kit';
-import type { Activity, ActivityStatus } from '$lib/types/activity';
+import { error, redirect } from '@sveltejs/kit';
+import type { Actions, PageServerLoad } from './$types';
 import { requireFacultyAdmin } from '$lib/server/auth-utils';
-import { db, activities, faculties } from '$lib/server/db';
+import { db, activities, users, faculties, participations } from '$lib/server/db';
 import { eq } from 'drizzle-orm';
 
 export const load: PageServerLoad = async (event) => {
+  const user = await requireFacultyAdmin(event);
   const { params } = event;
-  const { id } = params;
-  if (!id) throw error(404, 'Activity ID is required');
 
-  await requireFacultyAdmin(event);
+  if (!params.id) throw error(400, 'ไม่พบรหัสกิจกรรม');
 
   try {
+    // Load activity core fields including eligible faculties
     const rows = await db
       .select({
         id: activities.id,
@@ -22,6 +21,7 @@ export const load: PageServerLoad = async (event) => {
         activity_type: activities.activityType,
         academic_year: activities.academicYear,
         organizer: activities.organizer,
+        eligible_faculties: activities.eligibleFaculties,
         start_date: activities.startDate,
         end_date: activities.endDate,
         start_time_only: activities.startTimeOnly,
@@ -35,16 +35,22 @@ export const load: PageServerLoad = async (event) => {
         updated_at: activities.updatedAt
       })
       .from(activities)
-      .where(eq(activities.id, id))
+      .where(eq(activities.id, params.id))
       .limit(1);
 
     if (rows.length === 0) throw error(404, 'ไม่พบกิจกรรมที่ระบุ');
     const a = rows[0];
 
-    const startIso = a.start_date && a.start_time_only ? new Date(`${a.start_date}T${a.start_time_only}`).toISOString() : (a.start_date as any);
-    const endIso = a.end_date && a.end_time_only ? new Date(`${a.end_date}T${a.end_time_only}`).toISOString() : (a.end_date as any);
+    // Stats for current participants
+    const participationRows = await db
+      .select({ id: participations.id })
+      .from(participations)
+      .where(eq(participations.activityId, params.id));
 
-    const activity: Activity = {
+    const startIso = a.start_date && a.start_time_only ? new Date(`${a.start_date}T${a.start_time_only}`).toISOString() : a.start_date as any;
+    const endIso = a.end_date && a.end_time_only ? new Date(`${a.end_date}T${a.end_time_only}`).toISOString() : a.end_date as any;
+
+    const activity = {
       id: a.id,
       title: a.title,
       description: a.description || '',
@@ -52,12 +58,12 @@ export const load: PageServerLoad = async (event) => {
       start_time: startIso,
       end_time: endIso,
       max_participants: a.max_participants ?? undefined,
-      current_participants: 0,
+      current_participants: participationRows.length,
       status: a.status as any,
       faculty_id: a.faculty_id || undefined,
       faculty_name: undefined,
       created_by: a.created_by,
-      created_by_name: 'ระบบ',
+      created_by_name: '',
       created_at: a.created_at?.toISOString?.() || new Date().toISOString(),
       updated_at: a.updated_at?.toISOString?.() || new Date().toISOString(),
       is_registered: false,
@@ -71,79 +77,88 @@ export const load: PageServerLoad = async (event) => {
       end_time_only: a.end_time_only as any
     };
 
-    const facs = await db
-      .select({ id: faculties.id, name: faculties.name })
-      .from(faculties);
-    return { activity, faculties: facs };
+    // Fetch faculties for options
+    const facultiesList = await db.select({ id: faculties.id, name: faculties.name, code: faculties.code }).from(faculties);
+
+    const eligible_faculties_selected: string[] = Array.isArray(a.eligible_faculties) ? (a.eligible_faculties as any) : [];
+
+    return {
+      user,
+      activity,
+      faculties: facultiesList,
+      eligible_faculties_selected
+    };
   } catch (e) {
-    console.error('Error loading activity for edit:', e);
-    throw error(500, 'เกิดข้อผิดพลาดในการโหลดข้อมูล');
+    console.error('Edit activity load error:', e);
+    throw error(500, 'ไม่สามารถโหลดข้อมูลสำหรับแก้ไขได้');
   }
 };
 
 export const actions: Actions = {
   update: async (event) => {
     await requireFacultyAdmin(event);
-    const { params, request } = event;
-    const { id } = params;
-    if (!id) return fail(400, { error: 'ไม่พบรหัสกิจกรรม' } as const);
+    const { params } = event;
+    if (!params.id) return { error: 'ไม่พบรหัสกิจกรรม' } as const;
 
-    const formData = await request.formData();
-    const title = (formData.get('title') as string) || '';
-    const description = (formData.get('description') as string) || '';
-    const location = (formData.get('location') as string) || '';
-    const start_time = formData.get('start_time') as string | null;
-    const end_time = formData.get('end_time') as string | null;
-    const max_participants = formData.get('max_participants') as string | null;
-    const status = formData.get('status') as string | null;
-    const faculty_id = formData.get('faculty_id') as string | null;
+    const fd = await event.request.formData();
 
-    if (!title || !location || !start_time || !end_time) {
-      return fail(400, { error: 'กรุณากรอกข้อมูลที่จำเป็นให้ครบถ้วน' } as const);
+    const title = (fd.get('title') || '').toString().trim();
+    const description = (fd.get('description') || '').toString();
+    const location = (fd.get('location') || '').toString().trim();
+    const startTime = (fd.get('start_time') || '').toString(); // yyyy-MM-ddTHH:mm
+    const endTime = (fd.get('end_time') || '').toString();
+    const maxParticipantsRaw = (fd.get('max_participants') || '').toString();
+    const status = (fd.get('status') || '').toString();
+    const facultyIdRaw = (fd.get('faculty_id') || '').toString();
+    const eligibleRaw = (fd.get('eligible_faculties') || '').toString();
+
+    if (!title || !location || !startTime || !endTime) {
+      return { error: 'ข้อมูลไม่ครบถ้วน' } as const;
     }
 
-    const start = new Date(start_time);
-    const end = new Date(end_time);
-    if (isNaN(start.getTime()) || isNaN(end.getTime()) || start >= end) {
-      return fail(400, { error: 'วันที่/เวลาไม่ถูกต้อง' } as const);
+    // Validate status
+    const allowed = ['draft', 'published', 'ongoing', 'completed', 'cancelled'];
+    if (!allowed.includes(status)) {
+      return { error: 'สถานะไม่ถูกต้อง' } as const;
     }
 
-    const pad = (n: number) => String(n).padStart(2, '0');
-    const toDateStr = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-    const toTime = (d: Date) => `${pad(d.getHours())}:${pad(d.getMinutes())}:00`;
+    // Parse datetimes into date + time
+    const [startDateStr, startTimeStr] = startTime.split('T');
+    const [endDateStr, endTimeStr] = endTime.split('T');
+    if (!startDateStr || !startTimeStr || !endDateStr || !endTimeStr) {
+      return { error: 'รูปแบบวันเวลาไม่ถูกต้อง' } as const;
+    }
+
+    const maxParticipants = maxParticipantsRaw ? Number(maxParticipantsRaw) : null;
+    const facultyId = facultyIdRaw || null;
+    const eligibleFaculties = eligibleRaw
+      ? eligibleRaw.split(',').map((s) => s.trim()).filter((s) => s !== '')
+      : [];
 
     try {
-      const startDateStr = toDateStr(start);
-      const endDateStr = toDateStr(end);
+      await db
+        .update(activities)
+        .set({
+          title,
+          description: description || '',
+          location,
+          startDate: startDateStr,
+          endDate: endDateStr,
+          startTimeOnly: startTimeStr,
+          endTimeOnly: endTimeStr,
+          maxParticipants,
+          status: status as any,
+          facultyId,
+          eligibleFaculties: eligibleFaculties as any,
+          updatedAt: new Date()
+        })
+        .where(eq(activities.id, params.id));
 
-      const maxParticipantsVal = max_participants && max_participants.trim() !== '' ? parseInt(max_participants, 10) : null;
-      if (maxParticipantsVal !== null && (isNaN(maxParticipantsVal) || maxParticipantsVal < 1)) {
-        return fail(400, { error: 'จำนวนผู้เข้าร่วมสูงสุดต้องเป็นตัวเลขมากกว่า 0' } as const);
-      }
-
-      await db.update(activities).set({
-        title,
-        description: description || '',
-        location,
-        startDate: startDateStr as any,
-        endDate: endDateStr as any,
-        startTimeOnly: toTime(start),
-        endTimeOnly: toTime(end),
-        maxParticipants: maxParticipantsVal,
-        status: (status as ActivityStatus) || 'draft',
-        facultyId: faculty_id && faculty_id.trim() !== '' ? faculty_id : null,
-        updatedAt: new Date()
-      }).where(eq(activities.id, id));
-
-      // Navigate back to activity detail on success
-      throw redirect(302, `/admin/activities/${id}`);
-    } catch (e: any) {
-      // Let SvelteKit redirects pass through
-      if (e && typeof e === 'object' && 'status' in e && 'location' in e) {
-        throw e;
-      }
-      console.error('Error updating activity (DB):', e?.message || e);
-      return fail(500, { error: `เกิดข้อผิดพลาดในการอัปเดตกิจกรรม: ${e?.message || 'ไม่ทราบสาเหตุ'}` } as const);
+      throw redirect(302, `/admin/activities/${params.id}`);
+    } catch (e) {
+      console.error('Update activity error:', e);
+      return { error: 'อัปเดตกิจกรรมไม่สำเร็จ' } as const;
     }
   }
 };
+
