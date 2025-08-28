@@ -138,6 +138,10 @@ export const actions: Actions = {
       // Navigate back to activity detail on success
       throw redirect(302, `/admin/activities/${id}`);
     } catch (e: any) {
+      // Let SvelteKit redirects pass through
+      if (e && typeof e === 'object' && 'status' in e && 'location' in e) {
+        throw e;
+      }
       console.error('Error updating activity (DB):', e?.message || e);
       return fail(500, { error: `เกิดข้อผิดพลาดในการอัปเดตกิจกรรม: ${e?.message || 'ไม่ทราบสาเหตุ'}` } as const);
     }
