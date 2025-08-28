@@ -162,6 +162,21 @@
     }
   }
 
+  function formatDate(dateString?: string): string {
+    if (!dateString) return 'ไม่ระบุ';
+    try {
+      return new Date(dateString).toLocaleDateString('th-TH', {
+        year: 'numeric', month: '2-digit', day: '2-digit'
+      });
+    } catch {
+      return 'ไม่ระบุ';
+    }
+  }
+
+  function formatTime(timeString?: string): string {
+    return timeString || 'ไม่ระบุ';
+  }
+
   function formatDuration(start: Date): string {
     const now = new Date();
     const diff = now.getTime() - start.getTime();
@@ -271,12 +286,15 @@
               
               <div class="flex items-center gap-2">
                 <IconUsers class="size-4 text-muted-foreground" />
-                <span>{selectedActivity.current_participants} / {selectedActivity.max_participants || 'ไม่จำกัด'} คน</span>
+                <span>ผู้เข้าร่วมสูงสุด: {selectedActivity.max_participants || 'ไม่จำกัด'} คน</span>
               </div>
               
               <div class="flex items-center gap-2">
                 <IconCalendar class="size-4 text-muted-foreground" />
-                <span>{formatDateTime(selectedActivity.start_time)}</span>
+                <span>
+                  {formatDate(selectedActivity.start_date)} {formatTime(selectedActivity.start_time)}
+                  - {formatDate(selectedActivity.end_date)} {formatTime(selectedActivity.end_time)}
+                </span>
               </div>
               
               <div class="flex items-center gap-2">
