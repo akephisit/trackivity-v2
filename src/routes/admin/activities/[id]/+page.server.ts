@@ -1,7 +1,7 @@
-import type { PageServerLoad } from './$types';
+import type { PageServerLoad, Actions } from './$types';
 import { requireAdmin } from '$lib/server/auth-utils';
-import { db, activities, participations, users } from '$lib/server/db';
-import { eq } from 'drizzle-orm';
+import { db, activities, participations, users, faculties } from '$lib/server/db';
+import { eq, count } from 'drizzle-orm';
 import { error } from '@sveltejs/kit';
 
 export const load: PageServerLoad = async (event) => {
@@ -9,53 +9,149 @@ export const load: PageServerLoad = async (event) => {
   const { params } = event;
 
   try {
-    // โหลดกิจกรรมจากฐานข้อมูลโดยตรง
-    const activityResult = await db
+    // Load activity details (with faculty and creator)
+    const activityRows = await db
       .select({
         id: activities.id,
         title: activities.title,
         description: activities.description,
+        location: activities.location,
+        activity_type: activities.activityType,
+        academic_year: activities.academicYear,
+        organizer: activities.organizer,
+        eligible_faculties: activities.eligibleFaculties,
         start_date: activities.startDate,
         end_date: activities.endDate,
-        activity_type: activities.activityType,
-        status: activities.status,
-        location: activities.location,
+        start_time_only: activities.startTimeOnly,
+        end_time_only: activities.endTimeOnly,
+        hours: activities.hours,
         max_participants: activities.maxParticipants,
-        created_at: activities.createdAt
+        status: activities.status,
+        faculty_id: activities.facultyId,
+        created_by: activities.createdBy,
+        created_at: activities.createdAt,
+        updated_at: activities.updatedAt,
+        faculty_name: faculties.name,
+        creator_first: users.firstName,
+        creator_last: users.lastName
       })
       .from(activities)
+      .leftJoin(faculties, eq(activities.facultyId, faculties.id))
+      .leftJoin(users, eq(activities.createdBy, users.id))
       .where(eq(activities.id, params.id))
       .limit(1);
 
-    if (activityResult.length === 0) {
+    if (activityRows.length === 0) {
       throw error(404, 'ไม่พบกิจกรรมที่ระบุ');
     }
 
-    const activity = activityResult[0];
+    const a = activityRows[0];
 
-    // โหลดผู้เข้าร่วมกิจกรรม
-    const participantsResult = await db
+    // Load participation list
+    const participationRows = await db
       .select({
-        id: users.id,
+        id: participations.id,
+        user_id: users.id,
         email: users.email,
         first_name: users.firstName,
         last_name: users.lastName,
         student_id: users.studentId,
-        // participations doesn't have createdAt; use registeredAt
-        participated_at: participations.registeredAt
+        department_id: users.departmentId,
+        status: participations.status,
+        registered_at: participations.registeredAt,
+        checked_in_at: participations.checkedInAt,
+        checked_out_at: participations.checkedOutAt,
+        notes: participations.notes
       })
       .from(participations)
       .innerJoin(users, eq(participations.userId, users.id))
-      .where(eq(participations.activityId, params.id))
-      .orderBy(participations.registeredAt);
+      .where(eq(participations.activityId, params.id));
 
-    return { 
+    // Compute stats
+    const participationStats = {
+      total: participationRows.length,
+      registered: participationRows.filter((p) => p.status === 'registered').length,
+      checked_in: participationRows.filter((p) => p.status === 'checked_in').length,
+      completed: participationRows.filter((p) => p.status === 'completed').length
+    };
+
+    // Map to Activity type expected by page
+    const startIso = a.start_date && a.start_time_only ? new Date(`${a.start_date}T${a.start_time_only}`).toISOString() : a.start_date as any;
+    const endIso = a.end_date && a.end_time_only ? new Date(`${a.end_date}T${a.end_time_only}`).toISOString() : a.end_date as any;
+
+    const activity = {
+      id: a.id,
+      title: a.title,
+      description: a.description || '',
+      location: a.location || '',
+      start_time: startIso,
+      end_time: endIso,
+      max_participants: a.max_participants ?? undefined,
+      current_participants: participationRows.length,
+      status: a.status as any,
+      faculty_id: a.faculty_id || undefined,
+      faculty_name: a.faculty_name || undefined,
+      created_by: a.created_by,
+      created_by_name: `${a.creator_first ?? ''} ${a.creator_last ?? ''}`.trim() || 'ระบบ',
+      created_at: a.created_at?.toISOString?.() || new Date().toISOString(),
+      updated_at: a.updated_at?.toISOString?.() || new Date().toISOString(),
+      is_registered: false,
+      activity_type: a.activity_type || undefined,
+      hours: a.hours ?? undefined,
+      organizer: a.organizer ?? undefined,
+      academic_year: a.academic_year ?? undefined,
+      start_date: a.start_date as any,
+      end_date: a.end_date as any,
+      start_time_only: a.start_time_only as any,
+      end_time_only: a.end_time_only as any
+    };
+
+    const participationsList = participationRows.map((p) => ({
+      id: p.id,
+      user_id: p.user_id,
+      user_name: `${p.first_name ?? ''} ${p.last_name ?? ''}`.trim() || p.email,
+      student_id: p.student_id,
+      email: p.email,
+      department_name: undefined,
+      status: p.status as any,
+      registered_at: p.registered_at?.toISOString?.() || new Date().toISOString(),
+      checked_in_at: p.checked_in_at?.toISOString?.(),
+      checked_out_at: p.checked_out_at?.toISOString?.(),
+      notes: p.notes || undefined
+    }));
+
+    return {
       user,
       activity,
-      participants: participantsResult
+      participations: participationsList,
+      participationStats,
+      faculties: []
     };
   } catch (e) {
     console.error('Error loading activity details from database:', e);
     throw error(500, 'ไม่สามารถโหลดรายละเอียดกิจกรรมได้');
+  }
+};
+
+export const actions: Actions = {
+  updateStatus: async (event) => {
+    const user = requireAdmin(event);
+    const { params } = event;
+    const formData = await event.request.formData();
+    const status = formData.get('status') as string | null;
+
+    if (!params.id) return { error: 'ไม่พบรหัสกิจกรรม' } as const;
+    if (!status) return { error: 'กรุณาเลือกสถานะ' } as const;
+
+    const allowed = ['draft', 'published', 'ongoing', 'completed', 'cancelled'];
+    if (!allowed.includes(status)) return { error: 'สถานะไม่ถูกต้อง' } as const;
+
+    try {
+      await db.update(activities).set({ status: status as any, updatedAt: new Date() }).where(eq(activities.id, params.id));
+      return { success: true } as const;
+    } catch (e) {
+      console.error('Update status error:', e);
+      return { error: 'อัปเดตสถานะไม่สำเร็จ' } as const;
+    }
   }
 };
