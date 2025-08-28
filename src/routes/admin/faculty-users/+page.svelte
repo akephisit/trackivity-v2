@@ -154,12 +154,12 @@
 	<div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
 		<div>
 			<h1 class="text-2xl font-bold">
-				{adminLevel === 'SuperAdmin' ? 'ระบบจัดการผู้ใช้ทั้งหมด' : 'จัดการผู้ใช้คณะ'}
+				{adminLevel === 'SuperAdmin' ? 'ระบบจัดการผู้ใช้ทั้งหมด' : 'จัดการผู้ใช้หน่วยงาน'}
 			</h1>
 			<p class="text-muted-foreground">
 				{adminLevel === 'SuperAdmin' 
-					? 'จัดการผู้ใช้ทั้งระบบพร้อมการกรองตามคณะ'
-					: 'จัดการข้อมูลผู้ใช้ในคณะของคุณ'}
+					? 'จัดการผู้ใช้ทั้งระบบพร้อมการกรองตามหน่วยงาน'
+					: 'จัดการข้อมูลผู้ใช้ในหน่วยงานของคุณ'}
 			</p>
 		</div>
 		

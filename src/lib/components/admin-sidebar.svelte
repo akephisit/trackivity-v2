@@ -81,11 +81,11 @@
 					description: 'จัดการผู้ใช้ทั้งหมดในระบบ'
 				},
 				{
-					title: 'จัดการคณะ',
+					title: 'จัดการหน่วยงาน',
 					href: '/admin/faculties',
 					icon: IconBuilding,
 					active: page.url.pathname.startsWith('/admin/faculties'),
-					description: 'จัดการข้อมูลคณะต่างๆ'
+					description: 'จัดการข้อมูลหน่วยงานต่างๆ'
 				},
 				{
 					title: 'จัดการแอดมิน',
@@ -102,21 +102,21 @@
 					href: '/admin/departments',
 					icon: IconBuildingStore,
 					active: page.url.pathname.startsWith('/admin/departments'),
-					description: 'จัดการภาควิชาในคณะ'
+					description: 'จัดการสาขา/ภาควิชาในหน่วยงาน'
 				},
 				{
-					title: 'จัดการผู้ใช้คณะ',
+					title: 'จัดการผู้ใช้หน่วยงาน',
 					href: '/admin/faculty-users',
 					icon: IconUsers,
 					active: page.url.pathname.startsWith('/admin/faculty-users'),
-					description: 'จัดการผู้ใช้ในคณะ'
+					description: 'จัดการผู้ใช้ในหน่วยงาน'
 				},
 				{
-					title: 'จัดการแอดมินคณะ',
+					title: 'จัดการแอดมินหน่วยงาน',
 					href: '/admin/faculty-admins',
 					icon: IconUserCog,
 					active: page.url.pathname.startsWith('/admin/faculty-admins'),
-					description: 'จัดการผู้ดูแลคณะ'
+					description: 'จัดการผู้ดูแลหน่วยงาน'
 				}
 			);
 		}
@@ -156,7 +156,7 @@
 
 	function getAdminLevelText(level?: string) {
 		if (level === 'SuperAdmin' || level === 'super_admin') return 'ซุปเปอร์แอดมิน';
-		if (level === 'FacultyAdmin' || level === 'faculty_admin') return 'แอดมินคณะ';
+		if (level === 'FacultyAdmin' || level === 'faculty_admin') return 'แอดมินหน่วยงาน';
 		return 'แอดมินทั่วไป';
 	}
 
@@ -164,7 +164,7 @@
 		if (level === AdminLevel.SuperAdmin) {
 			return 'ซุปเปอร์แอดมิน';
 		} else if (level === AdminLevel.FacultyAdmin) {
-			return facultyName ? `แอดมินคณะ${facultyName}` : 'แอดมินคณะ';
+			return facultyName ? `แอดมินหน่วยงาน${facultyName}` : 'แอดมินหน่วยงาน';
 		}
 		return 'แอดมิน';
 	}
@@ -271,7 +271,7 @@
 								{#snippet child({ props })}
 									<a href="/admin/reports" {...props} class="flex items-center space-x-3">
 										<IconUsers class="!w-4 !h-4 flex-shrink-0" />
-										<span class="text-sm">รายงานคณะ</span>
+										<span class="text-sm">รายงานหน่วยงาน</span>
 									</a>
 								{/snippet}
 							</Sidebar.MenuButton>

@@ -9,15 +9,15 @@ import { eq, desc } from 'drizzle-orm';
 
 // Faculty schemas
 const facultyCreateSchema = z.object({
-	name: z.string().min(1, 'กรุณากรอกชื่อคณะ'),
-	code: z.string().min(1, 'กรุณากรอกรหัสคณะ').max(10, 'รหัสคณะต้องไม่เกิน 10 ตัวอักษร'),
+  name: z.string().min(1, 'กรุณากรอกชื่อหน่วยงาน'),
+  code: z.string().min(1, 'กรุณากรอกรหัสหน่วยงาน').max(10, 'รหัสหน่วยงานต้องไม่เกิน 10 ตัวอักษร'),
 	description: z.string().optional(),
 	status: z.boolean().default(true)
 });
 
 const facultyUpdateSchema = z.object({
-	name: z.string().min(1, 'กรุณากรอกชื่อคณะ').optional(),
-	code: z.string().min(1, 'กรุณากรอกรหัสคณะ').max(10, 'รหัสคณะต้องไม่เกิน 10 ตัวอักษร').optional(),
+  name: z.string().min(1, 'กรุณากรอกชื่อหน่วยงาน').optional(),
+  code: z.string().min(1, 'กรุณากรอกรหัสหน่วยงาน').max(10, 'รหัสหน่วยงานต้องไม่เกิน 10 ตัวอักษร').optional(),
 	description: z.string().optional(),
 	status: z.boolean().optional()
 });
@@ -170,7 +170,7 @@ export const actions: Actions = {
 				.where(eq(faculties.id, facultyId));
 
 			if (!currentFaculty) {
-				return fail(404, { error: 'ไม่พบคณะที่ต้องการ' });
+          return fail(404, { error: 'ไม่พบหน่วยงานที่ต้องการ' });
 			}
 
 			// Toggle status

@@ -277,7 +277,7 @@
 
 					{#if $currentUser.faculty_name}
 						<div>
-							<span class="text-muted-foreground text-sm">คณะ</span>
+							<span class="text-muted-foreground text-sm">หน่วยงาน</span>
 							<p class="font-medium">{$currentUser.faculty_name}</p>
 						</div>
 					{/if}

@@ -51,7 +51,7 @@
 		head_name: z.string().optional(),
 		head_email: z.string().email('รูปแบบอีเมลไม่ถูกต้อง').optional().or(z.literal('')),
 		status: z.boolean().default(true),
-		faculty_id: z.string().uuid('กรุณาเลือกคณะที่ถูกต้อง').optional()
+  faculty_id: z.string().uuid('กรุณาเลือกหน่วยงานที่ถูกต้อง').optional()
 	});
 
 	// Forms
@@ -340,7 +340,7 @@
 			</h1>
 			<p class="mt-3 text-lg text-gray-600 dark:text-gray-400">
 				{#if data.userRole === 'FacultyAdmin'}
-					จัดการภาควิชาในคณะของคุณ รวมถึงการเปิด-ปิดการใช้งาน
+        จัดการภาควิชาในหน่วยงานของคุณ รวมถึงการเปิด-ปิดการใช้งาน
 				{:else}
 					จัดการภาควิชาทั้งหมดในระบบ รวมถึงการเปิด-ปิดการใช้งาน
 				{/if}
@@ -525,7 +525,7 @@
 									<Table.Head class="font-semibold">ชื่อภาควิชา</Table.Head>
 									<Table.Head class="font-semibold">รหัส</Table.Head>
 									{#if data.userRole === 'SuperAdmin'}
-										<Table.Head class="font-semibold">คณะ</Table.Head>
+              <Table.Head class="font-semibold">หน่วยงาน</Table.Head>
 									{/if}
 									<Table.Head class="font-semibold">หัวหน้าภาค</Table.Head>
 									<Table.Head class="text-center font-semibold">จำนวนนักศึกษา</Table.Head>
@@ -766,20 +766,20 @@
 				<Form.Field form={createForm} name="faculty_id">
 					<Form.Control>
 						{#snippet children({ props })}
-							<Label for={props.id}>คณะ</Label>
+            <Label for={props.id}>หน่วยงาน</Label>
 							<select
 								{...props}
 								bind:value={$createFormData.faculty_id}
 								class="w-full border rounded-md p-2 bg-background"
 								disabled={$createSubmitting}
 							>
-								<option value="" disabled selected>กรุณาเลือกคณะ</option>
+              <option value="" disabled selected>กรุณาเลือกหน่วยงาน</option>
 								{#if data.faculties}
 									{#each data.faculties as fac}
 										<option value={fac.id}>{fac.name}</option>
 									{/each}
 								{:else}
-									<option disabled>ไม่พบรายการคณะ</option>
+                <option disabled>ไม่พบรายการหน่วยงาน</option>
 								{/if}
 							</select>
 						{/snippet}

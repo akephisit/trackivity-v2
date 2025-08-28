@@ -89,7 +89,7 @@
   function getRoleDisplayName(adminLevel?: string): string {
     switch (adminLevel) {
       case 'SuperAdmin': return 'ผู้ดูแลระบบสูงสุด';
-      case 'FacultyAdmin': return 'ผู้ดูแลคณะ';
+      case 'FacultyAdmin': return 'ผู้ดูแลหน่วยงาน';
       case 'RegularAdmin': return 'ผู้ดูแลทั่วไป';
       default: return 'นักศึกษา';
     }
@@ -173,7 +173,7 @@
 
         {#if $isFacultyAdmin}
           <SidebarGroup>
-            <SidebarGroupLabel>จัดการคณะ</SidebarGroupLabel>
+            <SidebarGroupLabel>จัดการหน่วยงาน</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
                 {#each navigationItems.filter(item => item.url?.includes('/admin/faculty')) as item}

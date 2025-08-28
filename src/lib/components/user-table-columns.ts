@@ -94,7 +94,7 @@ export const userTableColumns: ColumnDef<User>[] = [
     {
         id: 'faculty',
         accessorFn: (row) => row.faculty?.name || '',
-        header: 'คณะ',
+    header: 'หน่วยงาน',
         cell: ({ row }) => renderSnippet(FacultyCell, { user: row.original }),
         size: 150,
         filterFn: (row, id, value) => {

@@ -55,7 +55,7 @@
 		{ value: 'faculty', label: 'อาจารย์' },
 		{ value: 'staff', label: 'เจ้าหน้าที่' },
 		{ value: 'super_admin', label: 'ซุปเปอร์แอดมิน' },
-		{ value: 'faculty_admin', label: 'แอดมินคณะ' },
+		{ value: 'faculty_admin', label: 'แอดมินหน่วยงาน' },
 		{ value: 'regular_admin', label: 'แอดมินทั่วไป' },
 		{ value: 'admin', label: 'แอดมินอื่นๆ' }
 	];
@@ -226,10 +226,10 @@
 			{#if showFacultyFilter && faculties.length > 0}
 				<Select.Root type="single">
 					<Select.Trigger class="w-40">
-						{selectedFaculty === 'all' ? 'ทุกคณะ' : faculties.find(f => f.id === selectedFaculty)?.name || 'คณะ'}
+						{selectedFaculty === 'all' ? 'ทุกหน่วยงาน' : faculties.find(f => f.id === selectedFaculty)?.name || 'หน่วยงาน'}
 					</Select.Trigger>
 					<Select.Content>
-						<Select.Item value="all" onclick={() => selectedFaculty = 'all'}>ทุกคณะ</Select.Item>
+						<Select.Item value="all" onclick={() => selectedFaculty = 'all'}>ทุกหน่วยงาน</Select.Item>
 						{#each faculties as faculty}
 							<Select.Item value={faculty.id} onclick={() => selectedFaculty = faculty.id}>{faculty.name}</Select.Item>
 						{/each}
@@ -346,7 +346,7 @@
 
 			{#if selectedFaculty !== 'all'}
 				<Badge variant="secondary" class="gap-1">
-					คณะ: {faculties.find(f => f.id === selectedFaculty)?.name}
+					หน่วยงาน: {faculties.find(f => f.id === selectedFaculty)?.name}
 					<button on:click={() => { selectedFaculty = 'all'; applyFilters(); }}>
 						<IconX class="h-3 w-3" />
 					</button>

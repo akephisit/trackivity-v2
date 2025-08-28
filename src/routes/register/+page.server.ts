@@ -23,7 +23,7 @@ export const load: PageServerLoad = async (event) => {
 		}
 	}
 
-	// โหลดรายการคณะจากฐานข้อมูลโดยตรง
+// โหลดรายการหน่วยงานจากฐานข้อมูลโดยตรง
 	let facultiesList: Faculty[] = [];
 
 	try {
@@ -44,7 +44,7 @@ export const load: PageServerLoad = async (event) => {
 		facultiesList = result;
 	} catch (error) {
 		console.error('Failed to load faculties from database:', error);
-		throw new Error('ไม่สามารถโหลดข้อมูลคณะได้ กรุณาลองใหม่อีกครั้ง');
+    throw new Error('ไม่สามารถโหลดข้อมูลหน่วยงานได้ กรุณาลองใหม่อีกครั้ง');
 	}
 
 	const form = await superValidate(zod(registerSchema));

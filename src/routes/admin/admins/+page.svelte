@@ -71,7 +71,7 @@
 	// Admin Level options
 	const adminLevelOptions = [
 		{ value: AdminLevel.RegularAdmin, label: 'แอดมินทั่วไป' },
-		{ value: AdminLevel.FacultyAdmin, label: 'แอดมินคณะ' },
+		{ value: AdminLevel.FacultyAdmin, label: 'แอดมินหน่วยงาน' },
 		{ value: AdminLevel.SuperAdmin, label: 'ซุปเปอร์แอดมิน' }
 	];
 
@@ -127,7 +127,7 @@
 			case AdminLevel.SuperAdmin:
 				return 'ซุปเปอร์แอดมิน';
 			case AdminLevel.FacultyAdmin:
-				return 'แอดมินคณะ';
+				return 'แอดมินหน่วยงาน';
 			case AdminLevel.RegularAdmin:
 				return 'แอดมินทั่วไป';
 			default:
@@ -394,7 +394,7 @@
 		
 		facultyAndRegularAdmins.forEach(admin => {
 			const facultyId = admin.faculty_id || 'unassigned';
-			const facultyName = admin.faculty?.name || getFacultyName(admin) || 'ไม่ได้มอบหมายคณะ';
+			const facultyName = admin.faculty?.name || getFacultyName(admin) || 'ไม่ได้มอบหมายหน่วยงาน';
 			
 			if (!facultyGroups[facultyId]) {
 				facultyGroups[facultyId] = {
@@ -453,7 +453,7 @@
 				จัดการแอดมิน
 			</h1>
 			<p class="mt-3 text-lg text-gray-600 dark:text-gray-400">
-				จัดการผู้ดูแลระบบและกำหนดสิทธิ์การเข้าถึง แยกตามระดับและคณะ
+				จัดการผู้ดูแลระบบและกำหนดสิทธิ์การเข้าถึง แยกตามระดับและหน่วยงาน
 			</p>
 		</div>
 		<Button onclick={openDialog} class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 text-base font-medium">
@@ -488,7 +488,7 @@
 
 		<Card>
 			<CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
-				<CardTitle class="text-sm font-medium">แอดมินคณะ</CardTitle>
+				<CardTitle class="text-sm font-medium">แอดมินหน่วยงาน</CardTitle>
 				<IconShield class="h-4 w-4 text-blue-500" />
 			</CardHeader>
 			<CardContent>
@@ -500,7 +500,7 @@
 
 		<Card>
 			<CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
-				<CardTitle class="text-sm font-medium">แอดมินคณะและทั่วไป</CardTitle>
+				<CardTitle class="text-sm font-medium">แอดมินหน่วยงานและทั่วไป</CardTitle>
 				<IconUsers class="h-4 w-4 text-gray-500" />
 			</CardHeader>
 			<CardContent>
@@ -508,7 +508,7 @@
 					{groupedAdmins.facultyGroups.reduce((acc, [, group]) => acc + group.admins.length, 0)}
 				</div>
 				<p class="text-xs text-muted-foreground">
-					รวมแอดมินในคณะทั้งหมด
+					รวมแอดมินในหน่วยงานทั้งหมด
 				</p>
 			</CardContent>
 		</Card>
@@ -659,13 +659,13 @@
 							<div class="w-full border-t border-gray-200 dark:border-gray-700"></div>
 						</div>
 						<div class="relative flex justify-center text-sm">
-							<span class="px-4 bg-white dark:bg-gray-900 text-gray-500 dark:text-gray-400 font-medium">แอดมินคณะและทั่วไป</span>
+						<span class="px-4 bg-white dark:bg-gray-900 text-gray-500 dark:text-gray-400 font-medium">แอดมินหน่วยงานและทั่วไป</span>
 						</div>
 					</div>
 				{/if}
 				
 				<div class="space-y-6" role="region" aria-labelledby="faculty-admins-heading">
-					<h2 id="faculty-admins-heading" class="sr-only">แอดมินคณะและทั่วไป จัดกลุ่มตามคณะ</h2>
+					<h2 id="faculty-admins-heading" class="sr-only">แอดมินหน่วยงานและทั่วไป จัดกลุ่มตามหน่วยงาน</h2>
 					{#each groupedAdmins.facultyGroups as [facultyId, facultyGroup] (facultyId)}
 						<Collapsible.Root open class="group">
 							<Card class="border-blue-200 shadow-sm hover:shadow-md transition-shadow">
@@ -678,7 +678,7 @@
 												</div>
 												<div>
 													<h3 class="text-lg font-bold text-blue-700 dark:text-blue-300">
-														{facultyGroup.faculty?.name || 'ไม่ได้มอบหมายคณะ'}
+														{facultyGroup.faculty?.name || 'ไม่ได้มอบหมายหน่วยงาน'}
 													</h3>
 													<div class="flex items-center gap-2 mt-1">
 														<Badge variant="default" class="bg-blue-100 text-blue-800 hover:bg-blue-100 px-2 py-1">
@@ -695,14 +695,14 @@
 										</CardTitle>
 										<Collapsible.Trigger 
 											class="flex items-center justify-center w-8 h-8 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors [&[data-state=open]>svg]:rotate-180"
-											aria-label={facultyGroup.faculty?.name ? `ขยาย/หดแอดมินคณะ${facultyGroup.faculty.name}` : 'ขยาย/หดแอดมินที่ไม่ได้มอบหมายคณะ'}
+											aria-label={facultyGroup.faculty?.name ? `ขยาย/หดแอดมินหน่วยงาน${facultyGroup.faculty.name}` : 'ขยาย/หดแอดมินที่ไม่ได้มอบหมายหน่วยงาน'}
 											title="คลิกเพื่อขยาย/หดรายการแอดมิน"
 										>
 											<IconChevronDown class="h-4 w-4 text-blue-600 dark:text-blue-400 transition-transform duration-200" aria-hidden="true" />
 										</Collapsible.Trigger>
 									</div>
-									<CardDescription class="text-blue-600 dark:text-blue-300 mt-3 ml-13">
-										แอดมินคณะและแอดมินทั่วไป {facultyGroup.faculty?.name ? `ที่มีสิทธิ์จัดการข้อมูลในคณะ${facultyGroup.faculty.name}` : 'ที่ยังไม่ได้รับมอบหมายคณะที่รับผิดชอบ'}
+										<CardDescription class="text-blue-600 dark:text-blue-300 mt-3 ml-13">
+											แอดมินหน่วยงานและแอดมินทั่วไป {facultyGroup.faculty?.name ? `ที่มีสิทธิ์จัดการข้อมูลในหน่วยงาน${facultyGroup.faculty.name}` : 'ที่ยังไม่ได้รับมอบหมายหน่วยงานที่รับผิดชอบ'}
 									</CardDescription>
 								</CardHeader>
 								<Collapsible.Content class="data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down">
@@ -965,7 +965,7 @@
 				<Form.Field {form} name="faculty_id">
 					<Form.Control>
 						{#snippet children({ props })}
-							<Label for={props.id}>คณะ <span class="text-red-500">*</span></Label>
+							<Label for={props.id}>หน่วยงาน <span class="text-red-500">*</span></Label>
 							<Select.Root 
 								type="single" 
 								bind:value={selectedFaculty} 
@@ -978,7 +978,7 @@
 								}}
 							>
 								<Select.Trigger class={!selectedFaculty ? "border-red-300" : ""}>
-									{facultyOptions.find(opt => opt.value === selectedFaculty)?.label ?? "เลือกคณะที่รับผิดชอบ"}
+									{facultyOptions.find(opt => opt.value === selectedFaculty)?.label ?? "เลือกหน่วยงานที่รับผิดชอบ"}
 								</Select.Trigger>
 								<Select.Content>
 									{#each facultyOptions as option}
@@ -989,7 +989,7 @@
 								</Select.Content>
 							</Select.Root>
 							{#if selectedAdminLevel === AdminLevel.FacultyAdmin && !selectedFaculty}
-								<p class="text-sm text-red-600 mt-1">กรุณาเลือกคณะสำหรับแอดมินระดับคณะ</p>
+							<p class="text-sm text-red-600 mt-1">กรุณาเลือกหน่วยงานสำหรับแอดมินระดับหน่วยงาน</p>
 							{/if}
 							<!-- Debug info -->
 							{#if selectedAdminLevel === AdminLevel.FacultyAdmin}
@@ -1006,7 +1006,7 @@
 					<div class="flex items-center">
 						<IconShield class="h-5 w-5 text-blue-500 mr-2" />
 						<p class="text-sm text-blue-700 dark:text-blue-300">
-							ซุปเปอร์แอดมินมีสิทธิ์เข้าถึงทุกคณะ ไม่จำเป็นต้องระบุคณะเฉพาะ
+							ซุปเปอร์แอดมินมีสิทธิ์เข้าถึงทุกหน่วยงาน ไม่จำเป็นต้องระบุหน่วยงานเฉพาะ
 						</p>
 					</div>
 				</div>
@@ -1144,10 +1144,10 @@
 
 				{#if editSelectedAdminLevel === AdminLevel.FacultyAdmin}
 					<div class="space-y-2">
-						<Label>คณะ</Label>
+						<Label>หน่วยงาน</Label>
 						<Select.Root type="single" bind:value={editSelectedFaculty}>
 							<Select.Trigger>
-								{facultyOptions.find(opt => opt.value === editSelectedFaculty)?.label ?? "เลือกคณะ"}
+								{facultyOptions.find(opt => opt.value === editSelectedFaculty)?.label ?? "เลือกหน่วยงาน"}
 							</Select.Trigger>
 							<Select.Content>
 								{#each facultyOptions as option}

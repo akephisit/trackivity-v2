@@ -33,7 +33,7 @@ export interface Activity {
 	academic_year?: string;
 	name?: string;
 	require_score?: boolean;
-	organizerType?: 'คณะ' | 'มหาวิทยาลัย';
+    organizerType?: 'หน่วยงาน' | 'มหาวิทยาลัย';
 	participantCount?: number;
 	createdAt?: string;
 	updatedAt?: string;

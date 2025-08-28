@@ -77,7 +77,7 @@
 		{ value: 'Other', label: 'อื่นๆ', description: 'กิจกรรมประเภทอื่นๆ' }
 	];
 
-	// แก้ไขการ parse ข้อมูลคณะ
+// แก้ไขการ parse ข้อมูลหน่วยงาน
 	let actualFaculties = [];
 	if (data.faculties) {
 		if (Array.isArray(data.faculties)) {
@@ -297,7 +297,7 @@
 											<Input
 												{...props}
 												bind:value={$formData.organizer}
-												placeholder="เช่น คณะวิทยาศาสตร์"
+												placeholder="เช่น หน่วยงานวิทยาศาสตร์"
 												disabled={$submitting}
 												class="text-base"
 											/>

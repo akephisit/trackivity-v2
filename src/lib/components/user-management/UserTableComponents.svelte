@@ -341,7 +341,7 @@
 		
 		<DropdownMenu.Item onclick={() => dispatch('transferUser', user)}>
 			<IconDownload class="mr-2 h-4 w-4" />
-			ย้ายคณะ/สาขา
+			ย้ายหน่วยงาน/สาขา
 		</DropdownMenu.Item>
 		
 		<DropdownMenu.Separator />

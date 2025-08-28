@@ -33,8 +33,8 @@
 
 	// Faculty schemas
 	const facultyCreateSchema = z.object({
-		name: z.string().min(1, 'กรุณากรอกชื่อคณะ'),
-		code: z.string().min(1, 'กรุณากรอกรหัสคณะ').max(10, 'รหัสคณะต้องไม่เกิน 10 ตัวอักษร'),
+  name: z.string().min(1, 'กรุณากรอกชื่อหน่วยงาน'),
+  code: z.string().min(1, 'กรุณากรอกรหัสหน่วยงาน').max(10, 'รหัสหน่วยงานต้องไม่เกิน 10 ตัวอักษร'),
 		description: z.string().optional(),
 		status: z.boolean().default(true)
 	});
@@ -44,7 +44,7 @@
 		validators: zodClient(facultyCreateSchema),
 		onResult: async ({ result }) => {
 			if (result.type === 'success') {
-				toast.success('สร้างคณะสำเร็จ');
+        toast.success('สร้างหน่วยงานสำเร็จ');
 				createDialogOpen = false;
 				
 				setTimeout(async () => {
@@ -60,7 +60,7 @@
 					}
 				}, 500);
 			} else if (result.type === 'failure') {
-				toast.error('เกิดข้อผิดพลาดในการสร้างคณะ');
+        toast.error('เกิดข้อผิดพลาดในการสร้างหน่วยงาน');
 			}
 		}
 	});
@@ -136,7 +136,7 @@
 			const result = await response.json();
 
 			if (result.type === 'success') {
-				toast.success('แก้ไขคณะสำเร็จ');
+        toast.success('แก้ไขหน่วยงานสำเร็จ');
 				editDialogOpen = false;
 				setTimeout(async () => {
 					try {
@@ -148,7 +148,7 @@
 					}
 				}, 500);
 			} else {
-				toast.error('เกิดข้อผิดพลาดในการแก้ไขคณะ');
+        toast.error('เกิดข้อผิดพลาดในการแก้ไขหน่วยงาน');
 			}
 		} catch (error) {
 			console.error('Update error:', error);
@@ -171,7 +171,7 @@
 			const result = await response.json();
 
 			if (result.type === 'success') {
-				toast.success('ลบคณะสำเร็จ');
+        toast.success('ลบหน่วยงานสำเร็จ');
 				deleteDialogOpen = false;
 				facultyToDelete = null;
 				setTimeout(async () => {
@@ -184,7 +184,7 @@
 					}
 				}, 500);
 			} else {
-				toast.error('เกิดข้อผิดพลาดในการลบคณะ');
+        toast.error('เกิดข้อผิดพลาดในการลบหน่วยงาน');
 			}
 		} catch (error) {
 			console.error('Delete error:', error);
@@ -210,7 +210,7 @@
 			const result = await response.json();
 
 			if (result.type === 'success') {
-				toast.success(`${actionText}คณะสำเร็จ`);
+        toast.success(`${actionText}หน่วยงานสำเร็จ`);
 				setTimeout(async () => {
 					try {
 						await invalidate('app:page-data');
@@ -221,7 +221,7 @@
 					}
 				}, 300);
 			} else {
-				toast.error(result.error || `เกิดข้อผิดพลาดในการ${actionText}คณะ`);
+        toast.error(result.error || `เกิดข้อผิดพลาดในการ${actionText}หน่วยงาน`);
 			}
 		} catch (error) {
 			console.error('Toggle status error:', error);
@@ -245,7 +245,7 @@
 </script>
 
 <svelte:head>
-	<title>จัดการคณะ - Admin Panel</title>
+<title>จัดการหน่วยงาน - Admin Panel</title>
 </svelte:head>
 
 <div class="space-y-6">
@@ -253,15 +253,15 @@
 	<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
 		<div>
 			<h1 id="faculty-management-heading" class="text-4xl font-bold text-gray-900 dark:text-white">
-				จัดการคณะ
+				จัดการหน่วยงาน
 			</h1>
 			<p class="mt-3 text-lg text-gray-600 dark:text-gray-400">
-				จัดการข้อมูลคณะในมหาวิทยาลัย รวมถึงการเปิด-ปิดการใช้งาน
+				จัดการข้อมูลหน่วยงานในมหาวิทยาลัย รวมถึงการเปิด-ปิดการใช้งาน
 			</p>
 		</div>
 		<Button onclick={openCreateDialog} class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 text-base font-medium">
 			<IconPlus class="h-5 w-5 mr-2" />
-			เพิ่มคณะใหม่
+			เพิ่มหน่วยงานใหม่
 		</Button>
 	</div>
 
@@ -269,7 +269,7 @@
 	<div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
 		<Card>
 			<CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
-				<CardTitle class="text-sm font-medium">คณะทั้งหมด</CardTitle>
+				<CardTitle class="text-sm font-medium">หน่วยงานทั้งหมด</CardTitle>
 				<IconSchool class="h-4 w-4 text-muted-foreground" />
 			</CardHeader>
 			<CardContent>
@@ -312,11 +312,11 @@
 		{:else if data.faculties.length === 0}
 			<div class="text-center py-16 text-gray-500 dark:text-gray-400">
 				<IconSchool class="h-16 w-16 mx-auto mb-6 opacity-50" />
-				<h3 class="text-xl font-semibold mb-2">ยังไม่มีข้อมูลคณะในระบบ</h3>
-				<p class="text-gray-400 mb-6">เริ่มต้นด้วยการเพิ่มคณะแรก</p>
+				<h3 class="text-xl font-semibold mb-2">ยังไม่มีข้อมูลหน่วยงานในระบบ</h3>
+				<p class="text-gray-400 mb-6">เริ่มต้นด้วยการเพิ่มหน่วยงานแรก</p>
 				<Button onclick={openCreateDialog} class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3">
 					<IconPlus class="h-5 w-5 mr-2" />
-					เพิ่มคณะแรก
+					เพิ่มหน่วยงานแรก
 				</Button>
 			</div>
 		{:else}
@@ -324,10 +324,10 @@
 				<CardHeader>
 					<CardTitle class="flex items-center gap-3">
 						<IconSchool class="h-6 w-6 text-blue-600" />
-						รายการคณะทั้งหมด
+						รายการหน่วยงานทั้งหมด
 					</CardTitle>
 					<CardDescription>
-						จัดการข้อมูลคณะต่างๆ ในมหาวิทยาลัย
+						จัดการข้อมูลหน่วยงานต่างๆ ในมหาวิทยาลัย
 					</CardDescription>
 				</CardHeader>
 				<CardContent class="p-0">
@@ -335,7 +335,7 @@
 						<Table.Root>
 							<Table.Header>
 								<Table.Row class="bg-gray-50 dark:bg-gray-800">
-									<Table.Head class="font-semibold">ชื่อคณะ</Table.Head>
+									<Table.Head class="font-semibold">ชื่อหน่วยงาน</Table.Head>
 									<Table.Head class="font-semibold">รหัส</Table.Head>
 									<Table.Head class="font-semibold">คำอธิบาย</Table.Head>
 									<Table.Head class="font-semibold">สถานะ</Table.Head>
@@ -391,7 +391,7 @@
 													onclick={() => handleToggleStatus(faculty.id, faculty.status)}
 													disabled={toggleLoading[faculty.id] || false}
 													class="{faculty.status ? 'text-orange-600 hover:text-orange-700 hover:bg-orange-50' : 'text-green-600 hover:text-green-700 hover:bg-green-50'} transition-colors"
-													title="{faculty.status ? 'ปิดใช้งาน' : 'เปิดใช้งาน'}คณะ"
+													title="{faculty.status ? 'ปิดใช้งาน' : 'เปิดใช้งาน'}หน่วยงาน"
 												>
 													{#if toggleLoading[faculty.id]}
 														<IconLoader class="h-4 w-4 animate-spin" />
@@ -406,7 +406,7 @@
 													size="sm" 
 													onclick={() => openEditDialog(faculty)}
 													class="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-													title="แก้ไขคณะ"
+													title="แก้ไขหน่วยงาน"
 												>
 													<IconEdit class="h-4 w-4" />
 												</Button>
@@ -415,7 +415,7 @@
 													size="sm"
 													onclick={() => openDeleteDialog(faculty.id, faculty.name)}
 													class="text-red-600 hover:text-red-700 hover:bg-red-50"
-													title="ลบคณะ"
+													title="ลบหน่วยงาน"
 												>
 													<IconTrash class="h-4 w-4" />
 												</Button>
@@ -436,9 +436,9 @@
 <Dialog.Root bind:open={createDialogOpen}>
 	<Dialog.Content class="sm:max-w-md">
 		<Dialog.Header>
-			<Dialog.Title>เพิ่มคณะใหม่</Dialog.Title>
+	<Dialog.Title>เพิ่มหน่วยงานใหม่</Dialog.Title>
 			<Dialog.Description>
-				กรอกข้อมูลเพื่อสร้างคณะใหม่ในระบบ
+				กรอกข้อมูลเพื่อสร้างหน่วยงานใหม่ในระบบ
 			</Dialog.Description>
 		</Dialog.Header>
 
@@ -454,11 +454,11 @@
 			<Form.Field form={createForm} name="name">
 				<Form.Control>
 					{#snippet children({ props })}
-						<Label for={props.id}>ชื่อคณะ</Label>
+						<Label for={props.id}>ชื่อหน่วยงาน</Label>
 						<Input
 							{...props}
 							bind:value={$createFormData.name}
-							placeholder="เช่น คณะวิทยาศาสตร์"
+							placeholder="เช่น หน่วยงานวิทยาศาสตร์"
 							disabled={$createSubmitting}
 						/>
 					{/snippet}
@@ -469,7 +469,7 @@
 			<Form.Field form={createForm} name="code">
 				<Form.Control>
 					{#snippet children({ props })}
-						<Label for={props.id}>รหัสคณะ</Label>
+						<Label for={props.id}>รหัสหน่วยงาน</Label>
 						<Input
 							{...props}
 							bind:value={$createFormData.code}
@@ -489,7 +489,7 @@
 						<Textarea
 							{...props}
 							bind:value={$createFormData.description}
-							placeholder="คำอธิบายเพิ่มเติมเกี่ยวกับคณะ"
+							placeholder="คำอธิบายเพิ่มเติมเกี่ยวกับหน่วยงาน"
 							disabled={$createSubmitting}
 							rows={3}
 						/>
@@ -521,7 +521,7 @@
 						<IconLoader class="mr-2 h-4 w-4 animate-spin" />
 						กำลังสร้าง...
 					{:else}
-						สร้างคณะ
+						สร้างหน่วยงาน
 					{/if}
 				</Button>
 			</Dialog.Footer>
@@ -533,24 +533,24 @@
 <Dialog.Root bind:open={editDialogOpen}>
 	<Dialog.Content class="sm:max-w-md">
 		<Dialog.Header>
-			<Dialog.Title>แก้ไขคณะ</Dialog.Title>
+	<Dialog.Title>แก้ไขหน่วยงาน</Dialog.Title>
 			<Dialog.Description>
-				แก้ไขข้อมูลของคณะ
+				แก้ไขข้อมูลของหน่วยงาน
 			</Dialog.Description>
 		</Dialog.Header>
 
 		{#if editingFaculty}
 			<div class="space-y-4">
 				<div class="space-y-2">
-					<Label>ชื่อคณะ</Label>
+						<Label>ชื่อหน่วยงาน</Label>
 					<Input
 						bind:value={editFormData.name}
-						placeholder="เช่น คณะวิทยาศาสตร์"
+							placeholder="เช่น หน่วยงานวิทยาศาสตร์"
 					/>
 				</div>
 
 				<div class="space-y-2">
-					<Label>รหัสคณะ</Label>
+						<Label>รหัสหน่วยงาน</Label>
 					<Input
 						bind:value={editFormData.code}
 						placeholder="เช่น SCI"
@@ -562,7 +562,7 @@
 					<Label>คำอธิบาย</Label>
 					<Textarea
 						bind:value={editFormData.description}
-						placeholder="คำอธิบายเพิ่มเติมเกี่ยวกับคณะ"
+						placeholder="คำอธิบายเพิ่มเติมเกี่ยวกับหน่วยงาน"
 						rows={3}
 					/>
 				</div>
@@ -589,11 +589,11 @@
 <AlertDialog.Root bind:open={deleteDialogOpen}>
 	<AlertDialog.Content>
 		<AlertDialog.Header>
-			<AlertDialog.Title>ยืนยันการลบคณะ</AlertDialog.Title>
+    <AlertDialog.Title>ยืนยันการลบหน่วยงาน</AlertDialog.Title>
 			<AlertDialog.Description>
 				{#if facultyToDelete}
-					คุณแน่ใจหรือไม่ที่จะลบคณะ "{facultyToDelete.name}"?<br />
-					<strong class="text-red-600">การดำเนินการนี้จะลบข้อมูลทั้งหมดที่เกี่ยวข้องกับคณะนี้ รวมถึงภาควิชาและแอดมินในคณะ</strong><br />
+            คุณแน่ใจหรือไม่ที่จะลบหน่วยงาน "{facultyToDelete.name}"?<br />
+            <strong class="text-red-600">การดำเนินการนี้จะลบข้อมูลทั้งหมดที่เกี่ยวข้องกับหน่วยงานนี้ รวมถึงภาควิชาและแอดมินในหน่วยงาน</strong><br />
 					การดำเนินการนี้ไม่สามารถยกเลิกได้
 				{:else}
 					กำลังโหลดข้อมูล...
@@ -611,7 +611,7 @@
 				onclick={handleDelete}
 				class="bg-red-600 hover:bg-red-700 text-white"
 			>
-				ลบคณะ
+            ลบหน่วยงาน
 			</AlertDialog.Action>
 		</AlertDialog.Footer>
 	</AlertDialog.Content>

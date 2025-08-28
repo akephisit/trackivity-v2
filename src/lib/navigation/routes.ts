@@ -89,14 +89,14 @@ export const ROUTES: RouteConfig[] = [
   // Faculty Admin Routes
   {
     path: '/admin/faculty',
-    title: 'จัดการคณะ',
+    title: 'จัดการหน่วยงาน',
     permissions: ['ViewFacultyUsers', 'ManageFacultyActivities'],
     admin_levels: ['FacultyAdmin', 'SuperAdmin'],
     icon: 'school',
     children: [
       {
         path: '/admin/faculty/dashboard',
-        title: 'แดshboard คณะ',
+        title: 'แดชบอร์ดหน่วยงาน',
         permissions: ['ViewFacultyAnalytics'],
         admin_levels: ['FacultyAdmin', 'SuperAdmin'],
         icon: 'analytics'
@@ -149,7 +149,7 @@ export const ROUTES: RouteConfig[] = [
       },
       {
         path: '/admin/system/faculties',
-        title: 'จัดการคณะ',
+        title: 'จัดการหน่วยงาน',
         permissions: ['ViewAllFaculties', 'CreateFaculties'],
         admin_levels: ['SuperAdmin'],
         icon: 'account_balance'
@@ -369,7 +369,7 @@ export const ROLE_MENUS = {
   ],
   
   faculty_admin: [
-    { title: 'แดshboard คณะ', url: '/admin/faculty/dashboard', icon: 'analytics' },
+    { title: 'แดชบอร์ดหน่วยงาน', url: '/admin/faculty/dashboard', icon: 'analytics' },
     { title: 'จัดการนักศึกษา', url: '/admin/faculty/students', icon: 'group' },
     { title: 'จัดการกิจกรรม', url: '/admin/faculty/activities', icon: 'event' },
     { title: 'รายงาน', url: '/admin/faculty/reports', icon: 'assessment' },
@@ -380,7 +380,7 @@ export const ROLE_MENUS = {
   
   super_admin: [
     { title: 'ภาพรวมระบบ', url: '/admin/system/dashboard', icon: 'analytics' },
-    { title: 'จัดการคณะ', url: '/admin/system/faculties', icon: 'account_balance' },
+    { title: 'จัดการหน่วยงาน', url: '/admin/system/faculties', icon: 'account_balance' },
     { title: 'จัดการผู้ใช้', url: '/admin/system/users', icon: 'people' },
     { title: 'จัดการผู้ดูแลระบบ', url: '/admin/system/admins', icon: 'admin_panel_settings' },
     { title: 'จัดการเซสชัน', url: '/admin/system/sessions', icon: 'security' },
@@ -409,7 +409,7 @@ export const QUICK_ACTIONS = {
   
   super_admin: [
     { title: 'ภาพรวมระบบ', url: '/admin/system/dashboard', icon: 'analytics' },
-    { title: 'เพิ่มคณะ', url: '/admin/system/faculties/create', icon: 'add' },
+    { title: 'เพิ่มหน่วยงาน', url: '/admin/system/faculties/create', icon: 'add' },
     { title: 'สร้างผู้ดูแล', url: '/admin/system/admins/create', icon: 'person_add' }
   ]
 };

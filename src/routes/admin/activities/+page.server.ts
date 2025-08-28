@@ -70,7 +70,7 @@ export const load: PageServerLoad = async (event) => {
 				// Legacy fields for compatibility
 				name: activity.title,
 				organizer: activity.organizer || 'ระบบ',
-				organizerType: 'คณะ',
+				organizerType: 'หน่วยงาน',
 				participantCount: 0, // TODO: Count from participations table
 				status: activity.status || 'รอดำเนินการ'
 			}));

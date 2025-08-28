@@ -16,8 +16,8 @@ const departmentCreateSchema = z.object({
 	head_name: z.string().optional(),
 	head_email: z.string().email('รูปแบบอีเมลไม่ถูกต้อง').optional().or(z.literal('')),
 	status: z.boolean().default(true),
-	// สำหรับ SuperAdmin ต้องเลือกคณะ
-	faculty_id: z.string().uuid('รหัสคณะไม่ถูกต้อง').optional()
+// สำหรับ SuperAdmin ต้องเลือกหน่วยงาน
+  faculty_id: z.string().uuid('รหัสหน่วยงานไม่ถูกต้อง').optional()
 });
 
 const departmentUpdateSchema = z.object({
@@ -201,7 +201,7 @@ export const actions: Actions = {
             // SuperAdmin must select a faculty in the form
             const selected = (form.data as any).faculty_id as string | undefined;
             if (!selected) {
-                return fail(400, { form, error: 'กรุณาเลือกคณะ' });
+                return fail(400, { form, error: 'กรุณาเลือกหน่วยงาน' });
             }
             targetFacultyId = selected;
         }

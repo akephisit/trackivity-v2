@@ -89,7 +89,7 @@
   function getRoleDisplayName(adminLevel?: string): string {
     switch (adminLevel) {
       case 'SuperAdmin': return 'ผู้ดูแลระบบสูงสุด';
-      case 'FacultyAdmin': return 'ผู้ดูแลคณะ';
+      case 'FacultyAdmin': return 'ผู้ดูแลหน่วยงาน';
       case 'RegularAdmin': return 'ผู้ดูแลทั่วไป';
       default: return 'นักศึกษา';
     }

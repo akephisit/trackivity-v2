@@ -73,7 +73,7 @@
 	function getRoleText(role: string): string {
 		switch (role) {
 			case 'super_admin': return 'ซุปเปอร์แอดมิน';
-			case 'faculty_admin': return 'แอดมินคณะ';
+			case 'faculty_admin': return 'แอดมินหน่วยงาน';
 			case 'regular_admin': return 'แอดมินทั่วไป';
 			case 'admin': return 'แอดมิน';
 			case 'faculty': return 'อาจารย์';
@@ -199,7 +199,7 @@
 			<CardDescription>
 				จัดการและติดตามผู้ใช้ในระบบ
 				{#if !canManageAllUsers}
-				(เฉพาะคณะของคุณ)
+				(เฉพาะหน่วยงานของคุณ)
 				{/if}
 			</CardDescription>
 		</CardHeader>
@@ -212,7 +212,7 @@
 							<Table.Head>อีเมล</Table.Head>
 							<Table.Head>บทบาท</Table.Head>
 							<Table.Head>สถานะ</Table.Head>
-							<Table.Head>คณะ/ภาควิชา</Table.Head>
+							<Table.Head>หน่วยงาน/ภาควิชา</Table.Head>
 							<Table.Head>เข้าสู่ระบบล่าสุด</Table.Head>
 							<Table.Head>สร้างเมื่อ</Table.Head>
 						</Table.Row>
@@ -243,21 +243,21 @@
 							<Table.Cell>
 								<div class="flex flex-col">
 									{#if user.role === 'super_admin'}
-										<!-- ซุปเปอร์แอดมินไม่ต้องแสดงคณะ -->
+										<!-- ซุปเปอร์แอดมินไม่ต้องแสดงหน่วยงาน -->
 										<span class="text-sm text-muted-foreground">-</span>
 									{:else if user.role === 'faculty_admin' || user.role === 'regular_admin'}
-										<!-- แอดมินคณะและแอดมินทั่วไป แสดงเฉพาะคณะ -->
+										<!-- แอดมินหน่วยงานและแอดมินทั่วไป แสดงเฉพาะหน่วยงาน -->
 										{#if user.faculty}
 											<span class="text-sm">{user.faculty.name}</span>
 										{:else}
-											<span class="text-sm text-muted-foreground">ไม่ระบุคณะ</span>
+											<span class="text-sm text-muted-foreground">ไม่ระบุหน่วยงาน</span>
 										{/if}
 									{:else}
-										<!-- นักศึกษาและอื่นๆ แสดงทั้งคณะและสาขาวิชา -->
+										<!-- นักศึกษาและอื่นๆ แสดงทั้งหน่วยงานและสาขาวิชา -->
 										{#if user.faculty}
 											<span class="text-sm">{user.faculty.name}</span>
 										{:else}
-											<span class="text-sm text-muted-foreground">ไม่ระบุคณะ</span>
+											<span class="text-sm text-muted-foreground">ไม่ระบุหน่วยงาน</span>
 										{/if}
 										{#if user.department}
 											<span class="text-xs text-muted-foreground">{user.department.name}</span>

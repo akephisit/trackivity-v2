@@ -27,15 +27,15 @@
 							{:else if page.url.pathname.startsWith('/admin/activities')}
 								จัดการกิจกรรม
 							{:else if page.url.pathname.startsWith('/admin/faculties')}
-								จัดการคณะ
+							จัดการหน่วยงาน
 							{:else if page.url.pathname.startsWith('/admin/admins')}
 								จัดการแอดมิน
 							{:else if page.url.pathname.startsWith('/admin/departments')}
 								จัดการภาควิชา
 							{:else if page.url.pathname.startsWith('/admin/faculty-users')}
-								จัดการผู้ใช้คณะ
+							จัดการผู้ใช้หน่วยงาน
 							{:else if page.url.pathname.startsWith('/admin/faculty-admins')}
-								จัดการแอดมินคณะ
+							จัดการแอดมินหน่วยงาน
 							{:else if page.url.pathname.startsWith('/admin/settings')}
 								ตั้งค่า
 							{:else}

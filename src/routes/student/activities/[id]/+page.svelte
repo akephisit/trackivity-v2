@@ -258,7 +258,7 @@
 					<div class="flex items-start gap-3">
 						<IconBuildingBank class="size-5 mt-0.5 text-muted-foreground flex-shrink-0" />
 						<div>
-							<p class="font-medium">คณะ</p>
+						<p class="font-medium">หน่วยงาน</p>
 							<p class="text-sm text-muted-foreground">{activity.faculty_name}</p>
 						</div>
 					</div>

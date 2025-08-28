@@ -46,7 +46,7 @@
 		name: z.string().min(1, 'กรุณากรอกชื่อ'),
 		email: z.string().email('รูปแบบอีเมลไม่ถูกต้อง'),
 		password: z.string().min(6, 'รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร').optional(),
-		faculty_id: z.string().min(1, 'กรุณาเลือกคณะ'),
+		faculty_id: z.string().min(1, 'กรุณาเลือกหน่วยงาน'),
 		admin_level: z.nativeEnum(AdminLevel).default(AdminLevel.FacultyAdmin),
 		permissions: z.array(z.string()).default([])
 	});
@@ -56,7 +56,7 @@
 		validators: zodClient(adminCreateSchema),
 		onResult: async ({ result }) => {
 			if (result.type === 'success') {
-				toast.success('สร้างแอดมินคณะสำเร็จ');
+				toast.success('สร้างแอดมินหน่วยงานสำเร็จ');
 				createDialogOpen = false;
 				
 				setTimeout(async () => {
@@ -72,7 +72,7 @@
 					}
 				}, 500);
 			} else if (result.type === 'failure') {
-				toast.error('เกิดข้อผิดพลาดในการสร้างแอดมินคณะ');
+				toast.error('เกิดข้อผิดพลาดในการสร้างแอดมินหน่วยงาน');
 			}
 		}
 	});
@@ -132,10 +132,10 @@
 		{ value: ADMIN_PERMISSIONS.VIEW_DASHBOARD, label: 'ดูแดชบอร์ด' },
 		{ value: ADMIN_PERMISSIONS.MANAGE_ACTIVITIES, label: 'จัดการกิจกรรม' },
 		{ value: ADMIN_PERMISSIONS.MANAGE_USERS, label: 'จัดการผู้ใช้ทั่วไป' },
-		{ value: ADMIN_PERMISSIONS.MANAGE_FACULTY_USERS, label: 'จัดการผู้ใช้ในคณะ' },
+		{ value: ADMIN_PERMISSIONS.MANAGE_FACULTY_USERS, label: 'จัดการผู้ใช้ในหน่วยงาน' },
 		{ value: ADMIN_PERMISSIONS.MANAGE_DEPARTMENTS, label: 'จัดการภาควิชา' },
 		{ value: ADMIN_PERMISSIONS.VIEW_REPORTS, label: 'ดูรายงาน' },
-		{ value: ADMIN_PERMISSIONS.MANAGE_FACULTY_SETTINGS, label: 'จัดการการตั้งค่าคณะ' },
+		{ value: ADMIN_PERMISSIONS.MANAGE_FACULTY_SETTINGS, label: 'จัดการการตั้งค่าหน่วยงาน' },
 		{ value: ADMIN_PERMISSIONS.EXPORT_DATA, label: 'ส่งออกข้อมูล' }
 	];
 
@@ -241,7 +241,7 @@
 			const result = await response.json();
 
 			if (result.type === 'success') {
-				toast.success('แก้ไขข้อมูลแอดมินคณะสำเร็จ');
+				toast.success('แก้ไขข้อมูลแอดมินหน่วยงานสำเร็จ');
 				editDialogOpen = false;
 				setTimeout(async () => {
 					try {
@@ -276,7 +276,7 @@
 			const result = await response.json();
 
 			if (result.type === 'success') {
-				toast.success('ลบแอดมินคณะสำเร็จ');
+				toast.success('ลบแอดมินหน่วยงานสำเร็จ');
 				deleteDialogOpen = false;
 				adminToDelete = null;
 				setTimeout(async () => {
@@ -316,7 +316,7 @@
 			const result = await response.json();
 
 			if (result.type === 'success') {
-				toast.success(`${actionText}แอดมินคณะสำเร็จ`);
+				toast.success(`${actionText}แอดมินหน่วยงานสำเร็จ`);
 				setTimeout(async () => {
 					try {
 						await invalidate('app:page-data');
@@ -445,8 +445,8 @@
 	// Get page title based on user role
 	let pageTitle = $derived(
 		!data.isSuperAdmin && data.currentFaculty 
-			? `จัดการแอดมินคณะ - ${(data.currentFaculty as any)?.name}`
-			: 'จัดการแอดมินคณะ'
+		? `จัดการแอดมินหน่วยงาน - ${(data.currentFaculty as any)?.name}`
+		: 'จัดการแอดมินหน่วยงาน'
 	)
 </script>
 
@@ -463,9 +463,9 @@
 			</h1>
 			<p class="mt-3 text-lg text-gray-600 dark:text-gray-400">
 				{#if data.isSuperAdmin}
-					จัดการแอดมินคณะในระบบ รวมถึงการสร้าง แก้ไข และจัดการสิทธิ์การเข้าถึง
+					จัดการแอดมินหน่วยงานในระบบ รวมถึงการสร้าง แก้ไข และจัดการสิทธิ์การเข้าถึง
 				{:else}
-					ดูรายการแอดมินในคณะของคุณ และติดตามกิจกรรมการเข้าใช้งาน
+					ดูรายการแอดมินในหน่วยงานของคุณ และติดตามกิจกรรมการเข้าใช้งาน
 				{/if}
 			</p>
 		</div>
@@ -473,7 +473,7 @@
 			{#if data.isSuperAdmin}
 				<Button onclick={openCreateDialog} class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 text-base font-medium">
 					<IconPlus class="h-5 w-5 mr-2" />
-					เพิ่มแอดมินคณะ
+						เพิ่มแอดมินหน่วยงาน
 				</Button>
 			{:else}
 				<Button onclick={openCreateGeneralAdminDialog} class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 text-base font-medium">
@@ -495,7 +495,7 @@
 				<div class="text-2xl font-bold">{stats.total_admins}</div>
 				{#if data.isSuperAdmin && stats.faculty_breakdown}
 					<p class="text-xs text-muted-foreground">
-						ใน {stats.total_faculties} คณะ
+							ใน {stats.total_faculties} หน่วยงาน
 					</p>
 				{/if}
 			</CardContent>
@@ -568,7 +568,7 @@
 						<IconSearch class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
 						<Input
 							bind:value={searchQuery}
-							placeholder="ค้นหาชื่อ, อีเมล, หรือคณะ..."
+            placeholder="ค้นหาชื่อ, อีเมล, หรือหน่วยงาน..."
 							class="pl-10 pr-10"
 						/>
 						{#if searchQuery}
@@ -613,13 +613,13 @@
 			
 				{#if data.isSuperAdmin && (data.faculties?.length || 0) > 1}
 				<div>
-					<Label class="text-sm font-medium">กรองตามคณะ</Label>
+        <Label class="text-sm font-medium">กรองตามหน่วยงาน</Label>
 					<Select.Root type="single" bind:value={facultyFilter}>
 						<Select.Trigger class="mt-1 w-[180px]">
-							{facultyFilter === 'all' ? 'ทุกคณะ' : (data.faculties as any[])?.find((f: any) => f.id === facultyFilter)?.name || 'เลือกคณะ'}
+            {facultyFilter === 'all' ? 'ทุกหน่วยงาน' : (data.faculties as any[])?.find((f: any) => f.id === facultyFilter)?.name || 'เลือกหน่วยงาน'}
 						</Select.Trigger>
 						<Select.Content>
-							<Select.Item value="all">ทุกคณะ</Select.Item>
+            <Select.Item value="all">ทุกหน่วยงาน</Select.Item>
 							{#each (data.faculties || []) as faculty}
 								<Select.Item value={faculty.id}>{faculty.name}</Select.Item>
 							{/each}
@@ -650,22 +650,22 @@
 					<IconShield class="h-16 w-16 mx-auto mb-6 opacity-50" />
 					<h3 class="text-xl font-semibold mb-2">
 						{#if data.isSuperAdmin}
-							ยังไม่มีแอดมินคณะในระบบ
+            ยังไม่มีแอดมินหน่วยงานในระบบ
 						{:else}
-							ยังไม่มีแอดมินคณะในคณะนี้
+            ยังไม่มีแอดมินหน่วยงานในหน่วยงานนี้
 						{/if}
 					</h3>
 					<p class="text-gray-400 mb-6">
 						{#if data.isSuperAdmin}
-							เริ่มต้นด้วยการเพิ่มแอดมินคณะคนแรก
+            เริ่มต้นด้วยการเพิ่มแอดมินหน่วยงานคนแรก
 						{:else}
-							ติดต่อซุปเปอร์แอดมินเพื่อเพิ่มแอดมินคณะ
+            ติดต่อซุปเปอร์แอดมินเพื่อเพิ่มแอดมินหน่วยงาน
 						{/if}
 					</p>
 					{#if data.isSuperAdmin}
 						<Button onclick={openCreateDialog} class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3">
 							<IconPlus class="h-5 w-5 mr-2" />
-							เพิ่มแอดมินคณะแรก
+            เพิ่มแอดมินหน่วยงานแรก
 						</Button>
 					{:else}
 						<Button onclick={openCreateGeneralAdminDialog} class="bg-green-600 hover:bg-green-700 text-white px-6 py-3">
@@ -680,13 +680,13 @@
 				<CardHeader>
 					<CardTitle class="flex items-center gap-3">
 						<IconShield class="h-6 w-6 text-blue-600" />
-						รายการแอดมินคณะ
+            รายการแอดมินหน่วยงาน
 						<Badge variant="secondary" class="ml-2">
 							{filteredAdmins().length} รายการ
 						</Badge>
 					</CardTitle>
 					<CardDescription>
-						จัดการข้อมูลและสิทธิ์การเข้าถึงของแอดมินคณะและแอดมินทั่วไปในคณะ
+            จัดการข้อมูลและสิทธิ์การเข้าถึงของแอดมินหน่วยงานและแอดมินทั่วไปในหน่วยงาน
 					</CardDescription>
 				</CardHeader>
 				<CardContent class="p-0">
@@ -696,7 +696,7 @@
 								<Table.Row class="bg-gray-50 dark:bg-gray-800">
 									<Table.Head class="font-semibold">ชื่อและข้อมูล</Table.Head>
 									{#if data.isSuperAdmin}
-										<Table.Head class="font-semibold">คณะ</Table.Head>
+                    <Table.Head class="font-semibold">หน่วยงาน</Table.Head>
 									{/if}
 									<Table.Head class="font-semibold">บทบาท</Table.Head>
 									<Table.Head class="font-semibold">ภาควิชาที่ดูแล</Table.Head>
@@ -747,7 +747,7 @@
 													class="text-xs flex items-center gap-1"
 												>
 													<IconShield class="h-3 w-3" />
-													{admin.admin_level === AdminLevel.FacultyAdmin ? 'แอดมินคณะ' : 'แอดมินทั่วไป'}
+                            {admin.admin_level === AdminLevel.FacultyAdmin ? 'แอดมินหน่วยงาน' : 'แอดมินทั่วไป'}
 												</Badge>
 												{#if admin.assigned_departments && admin.assigned_departments.length > 0}
 													<Badge variant="secondary" class="text-xs flex items-center gap-1">
@@ -884,9 +884,9 @@
 <Dialog.Root bind:open={createDialogOpen}>
 	<Dialog.Content class="sm:max-w-2xl">
 		<Dialog.Header>
-			<Dialog.Title>เพิ่มแอดมินคณะใหม่</Dialog.Title>
+    <Dialog.Title>เพิ่มแอดมินหน่วยงานใหม่</Dialog.Title>
 			<Dialog.Description>
-				สร้างบัญชีแอดมินคณะใหม่พร้อมกำหนดสิทธิ์การเข้าถึง
+            สร้างบัญชีแอดมินหน่วยงานใหม่พร้อมกำหนดสิทธิ์การเข้าถึง
 			</Dialog.Description>
 		</Dialog.Header>
 
@@ -975,10 +975,10 @@
 			<Form.Field form={createForm} name="faculty_id">
 				<Form.Control>
 					{#snippet children({ props })}
-						<Label for={props.id}>คณะ</Label>
+                    <Label for={props.id}>หน่วยงาน</Label>
 						<Select.Root type="single" bind:value={$createFormData.faculty_id}>
 							<Select.Trigger>
-								{$createFormData.faculty_id ? data.faculties.find(f => f.id === $createFormData.faculty_id)?.name : 'เลือกคณะที่จะดูแล'}
+                        {$createFormData.faculty_id ? data.faculties.find(f => f.id === $createFormData.faculty_id)?.name : 'เลือกหน่วยงานที่จะดูแล'}
 							</Select.Trigger>
 							<Select.Content>
 								{#each data.faculties as faculty}
@@ -1014,7 +1014,7 @@
 					{/each}
 				</div>
 				<p class="text-xs text-gray-500">
-					แอดมินคณะจะได้รับสิทธิ์พื้นฐานในการดูแดชบอร์ดและจัดการผู้ใช้ในคณะ
+					แอดมินหน่วยงานจะได้รับสิทธิ์พื้นฐานในการดูแดชบอร์ดและจัดการผู้ใช้ในหน่วยงาน
 				</p>
 			</div>
 
@@ -1032,7 +1032,7 @@
 						<IconLoader class="mr-2 h-4 w-4 animate-spin" />
 						กำลังสร้าง...
 					{:else}
-						สร้างแอดมินคณะ
+						สร้างแอดมินหน่วยงาน
 					{/if}
 				</Button>
 			</Dialog.Footer>
@@ -1048,7 +1048,7 @@
 		<Dialog.Header>
 			<Dialog.Title>เพิ่มแอดมินทั่วไปใหม่</Dialog.Title>
 			<Dialog.Description>
-				สร้างบัญชีแอดมินทั่วไปสำหรับการจัดการในคณะ {data.currentFaculty?.name || ''}
+            สร้างบัญชีแอดมินทั่วไปสำหรับการจัดการในหน่วยงาน {data.currentFaculty?.name || ''}
 			</Dialog.Description>
 		</Dialog.Header>
 
@@ -1095,7 +1095,7 @@
 				<ul class="mt-2 text-xs text-blue-600 dark:text-blue-400 ml-6 space-y-1">
 					<li>• ดูแดชบอร์ด</li>
 					<li>• จัดการกิจกรรม</li>
-					<li>• สังกัดคณะ: {data.currentFaculty?.name || 'ไม่ระบุ'}</li>
+                    <li>• สังกัดหน่วยงาน: {data.currentFaculty?.name || 'ไม่ระบุ'}</li>
 				</ul>
 			</div>
 
@@ -1127,10 +1127,10 @@
 		<Dialog.Header>
 			<Dialog.Title class="flex items-center gap-2">
 				<IconShield class="h-5 w-5 text-blue-600" />
-				รายละเอียดแอดมินคณะ
+    รายละเอียดแอดมินหน่วยงาน
 			</Dialog.Title>
 			<Dialog.Description>
-				ข้อมูลและสิทธิ์การเข้าถึงของแอดมินคณะ
+    ข้อมูลและสิทธิ์การเข้าถึงของแอดมินหน่วยงาน
 			</Dialog.Description>
 		</Dialog.Header>
 
@@ -1150,7 +1150,7 @@
 						</p>
 					</div>
 					<div class="space-y-2">
-						<Label class="text-sm font-medium text-gray-500">คณะ</Label>
+                    <Label class="text-sm font-medium text-gray-500">หน่วยงาน</Label>
 						<p class="text-gray-700 flex items-center gap-1">
 							<IconSchool class="h-4 w-4" />
 							{viewingAdmin.faculty?.name || 'ไม่ระบุ'}
@@ -1224,7 +1224,7 @@
 						<div class="text-center py-8 text-gray-500">
 							<IconBuilding class="h-12 w-12 mx-auto mb-3 opacity-50" />
 							<p class="text-sm">ไม่ได้รับมอบหมายให้ดูแลภาควิชาใดๆ</p>
-							<p class="text-xs text-gray-400 mt-1">ทำหน้าที่เป็นแอดมินคณะเท่านั้น</p>
+                        <p class="text-xs text-gray-400 mt-1">ทำหน้าที่เป็นแอดมินหน่วยงานเท่านั้น</p>
 						</div>
 					{/if}
 				</div>
@@ -1277,7 +1277,7 @@
 <Dialog.Root bind:open={editDialogOpen}>
 	<Dialog.Content class="sm:max-w-2xl">
 		<Dialog.Header>
-			<Dialog.Title>แก้ไขข้อมูลแอดมินคณะ</Dialog.Title>
+    <Dialog.Title>แก้ไขข้อมูลแอดมินหน่วยงาน</Dialog.Title>
 			<Dialog.Description>
 				แก้ไขข้อมูลส่วนตัวและสิทธิ์การเข้าถึง
 			</Dialog.Description>
@@ -1312,10 +1312,10 @@
 				</div>
 
 				<div class="space-y-2">
-					<Label>คณะ</Label>
+                <Label>หน่วยงาน</Label>
 					<Select.Root type="single" bind:value={editFormData.faculty_id}>
 						<Select.Trigger>
-							{editFormData.faculty_id ? data.faculties.find(f => f.id === editFormData.faculty_id)?.name : 'เลือกคณะ'}
+                        {editFormData.faculty_id ? data.faculties.find(f => f.id === editFormData.faculty_id)?.name : 'เลือกหน่วยงาน'}
 						</Select.Trigger>
 						<Select.Content>
 							{#each data.faculties as faculty}
@@ -1380,10 +1380,10 @@
 <AlertDialog.Root bind:open={deleteDialogOpen}>
 	<AlertDialog.Content>
 		<AlertDialog.Header>
-			<AlertDialog.Title>ยืนยันการลบแอดมินคณะ</AlertDialog.Title>
+    <AlertDialog.Title>ยืนยันการลบแอดมินหน่วยงาน</AlertDialog.Title>
 			<AlertDialog.Description>
 				{#if adminToDelete}
-					คุณแน่ใจหรือไม่ที่จะลบแอดมินคณะ "{adminToDelete.name}"?<br />
+                    คุณแน่ใจหรือไม่ที่จะลบแอดมินหน่วยงาน "{adminToDelete.name}"?<br />
 					<strong class="text-red-600">การดำเนินการนี้จะลบบัญชีและสิทธิ์การเข้าถึงทั้งหมด</strong><br />
 					การดำเนินการนี้ไม่สามารถยกเลิกได้
 				{:else}
@@ -1402,7 +1402,7 @@
 				onclick={handleDelete}
 				class="bg-red-600 hover:bg-red-700 text-white"
 			>
-				ลบแอดมินคณะ
+                ลบแอดมินหน่วยงาน
 			</AlertDialog.Action>
 		</AlertDialog.Footer>
 	</AlertDialog.Content>

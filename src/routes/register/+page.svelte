@@ -349,19 +349,19 @@
 						</Form.Field>
 					</div>
 
-					<!-- คณะและสาขาวิชา - 2 คอลัมน์ -->
+					<!-- หน่วยงานและสาขาวิชา - 2 คอลัมน์ -->
 					<div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-						<!-- คณะ -->
+						<!-- หน่วยงาน -->
 						<Form.Field {form} name="faculty_id">
 							<Form.Control>
 								{#snippet children({ props })}
 									<Label for={props.id} class="flex items-center gap-2">
 										<IconUser class="h-4 w-4" />
-										คณะ
+										หน่วยงาน
 									</Label>
 									<Select.Root type="single" bind:value={selectedFaculty} disabled={$submitting}>
 										<Select.Trigger class="w-full">
-											{facultyOptions.find(opt => opt.value.toString() === selectedFaculty)?.label ?? "เลือกคณะ"}
+											{facultyOptions.find(opt => opt.value.toString() === selectedFaculty)?.label ?? "เลือกหน่วยงาน"}
 										</Select.Trigger>
 										<Select.Content>
 											{#each facultyOptions as option}
@@ -390,7 +390,7 @@
 											{#if loadingDepartments}
 												กำลังโหลด...
 											{:else if !selectedFaculty}
-												เลือกคณะก่อน
+												เลือกหน่วยงานก่อน
 											{:else if departmentOptions.length === 0}
 												ไม่มีสาขาวิชา
 											{:else}
@@ -423,8 +423,8 @@
 							</div>
 							<div>
 								<ul class="space-y-1 list-disc list-inside">
-									<li>เลือกคณะก่อนเพื่อดูรายการสาขาวิชา</li>
-									<li>คณะและสาขาวิชาเป็นข้อมูลที่จำเป็น</li>
+									<li>เลือกหน่วยงานก่อนเพื่อดูรายการสาขาวิชา</li>
+									<li>หน่วยงานและสาขาวิชาเป็นข้อมูลที่จำเป็น</li>
 									<li>สามารถแก้ไขข้อมูลได้ภายหลัง</li>
 								</ul>
 							</div>

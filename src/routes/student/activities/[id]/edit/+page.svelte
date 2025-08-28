@@ -203,13 +203,13 @@
 				<!-- Faculty -->
 				{#if faculties.length > 0}
 					<div class="space-y-2">
-						<Label for="faculty_id">คณะ</Label>
+						<Label for="faculty_id">หน่วยงาน</Label>
 						<Select type="single" name="faculty_id" bind:value={selectedFaculty}>
 							<SelectTrigger>
-								{selectedFaculty ? faculties.find((f: any) => f.id === selectedFaculty)?.name : 'เลือกคณะ (ไม่บังคับ)'}
+								{selectedFaculty ? faculties.find((f: any) => f.id === selectedFaculty)?.name : 'เลือกหน่วยงาน (ไม่บังคับ)'}
 							</SelectTrigger>
 							<SelectContent>
-								<SelectItem value="">ไม่ระบุคณะ</SelectItem>
+								<SelectItem value="">ไม่ระบุหน่วยงาน</SelectItem>
 								{#each faculties as faculty}
 									<SelectItem value={faculty.id}>{faculty.name}</SelectItem>
 								{/each}

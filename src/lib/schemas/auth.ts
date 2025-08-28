@@ -89,7 +89,7 @@ export const registerSchema = z.object({
 		.min(1, 'กรุณายืนยันรหัสผ่าน'),
 	faculty_id: z
 		.string()
-		.min(1, 'กรุณาเลือกคณะ'),
+    .min(1, 'กรุณาเลือกหน่วยงาน'),
 	department_id: z
 		.string()
 		.min(1, 'กรุณาเลือกสาขาวิชา')
@@ -144,7 +144,7 @@ export const adminCreateSchema = z.object({
 	}
 	return true;
 }, {
-	message: 'แอดมินระดับคณะต้องระบุคณะ',
+message: 'แอดมินระดับหน่วยงานต้องระบุหน่วยงาน',
 	path: ['faculty_id']
 });
 
@@ -165,7 +165,7 @@ export const adminUpdateSchema = z.object({
 		.optional(),
 	faculty_id: z
 		.number()
-		.positive('กรุณาเลือกคณะ')
+    .positive('กรุณาเลือกหน่วยงาน')
 		.optional(),
 	permissions: z
 		.array(z.string())

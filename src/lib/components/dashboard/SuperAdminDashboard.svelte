@@ -145,7 +145,7 @@
       </Button>
       <Button size="sm" variant="outline" href="/admin/system/faculties/create">
         <IconPlus class="size-4 mr-2" />
-        เพิ่มคณะ
+      เพิ่มหน่วยงาน
       </Button>
     </div>
   </div>
@@ -228,10 +228,10 @@
         <CardTitle class="flex items-center justify-between">
           <span class="flex items-center gap-2">
             <IconSchool class="size-5" />
-            ภาพรวมคณะ
+            ภาพรวมหน่วยงาน
           </span>
           <Button size="sm" variant="outline" href="/admin/system/faculties">
-            จัดการคณะ
+            จัดการหน่วยงาน
             <IconChevronRight class="size-4 ml-1" />
           </Button>
         </CardTitle>
@@ -250,9 +250,9 @@
         {:else if faculties.length === 0}
           <div class="text-center py-6 text-muted-foreground">
             <IconSchool class="size-8 mx-auto mb-2 opacity-50" />
-            <p>ยังไม่มีคณะในระบบ</p>
+            <p>ยังไม่มีหน่วยงานในระบบ</p>
             <Button size="sm" href="/admin/system/faculties/create" class="mt-2">
-              เพิ่มคณะแรก
+              เพิ่มหน่วยงานแรก
             </Button>
           </div>
         {:else}
@@ -287,7 +287,7 @@
             {#if faculties.length > 5}
               <div class="pt-2 border-t">
                 <Button size="sm" variant="outline" href="/admin/system/faculties" class="w-full">
-                  ดูคณะทั้งหมด ({faculties.length - 5} อื่น ๆ)
+                  ดูหน่วยงานทั้งหมด ({faculties.length - 5} อื่น ๆ)
                 </Button>
               </div>
             {/if}
@@ -400,7 +400,7 @@
           
           <Button href="/admin/system/faculties" variant="outline" class="w-full justify-start">
             <IconSchool class="size-4 mr-2" />
-            จัดการคณะ
+            จัดการหน่วยงาน
           </Button>
           
           <Button href="/admin/system/sessions" variant="outline" class="w-full justify-start">

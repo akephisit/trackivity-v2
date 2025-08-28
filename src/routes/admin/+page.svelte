@@ -33,15 +33,15 @@
 		const stats = data.stats;
 
 		if (isFacultyAdmin) {
-			// สถิติเฉพาะคณะสำหรับ Faculty Admin
+			// สถิติเฉพาะหน่วยงานสำหรับ Faculty Admin
 			return [
 				{
-					title: 'ผู้ใช้ในคณะ',
+					title: 'ผู้ใช้ในหน่วยงาน',
 					value: stats?.faculty_users || 0,
 					icon: IconUsers,
 					color: 'text-blue-600',
 					bgColor: 'bg-blue-100',
-					description: 'จำนวนผู้ใช้ในคณะของคุณ'
+					description: 'จำนวนผู้ใช้ในหน่วยงานของคุณ'
 				},
 				{
 					title: 'ภาควิชา',
@@ -49,7 +49,7 @@
 					icon: IconBuilding,
 					color: 'text-green-600',
 					bgColor: 'bg-green-100',
-					description: 'จำนวนภาควิชาในคณะ'
+					description: 'จำนวนภาควิชาในหน่วยงาน'
 				},
 				{
 					title: 'ผู้ใช้ใหม่เดือนนี้',
@@ -131,7 +131,7 @@
 			case AdminLevel.SuperAdmin:
 				return 'ซุปเปอร์แอดมิน';
 			case AdminLevel.FacultyAdmin:
-				return 'แอดมินคณะ';
+				return 'แอดมินหน่วยงาน';
 			case AdminLevel.RegularAdmin:
 				return 'แอดมินทั่วไป';
 			default:
@@ -195,10 +195,10 @@
 			<CardHeader>
 				<CardTitle class="flex items-center gap-2 text-blue-800 dark:text-blue-200">
 					<IconSchool class="h-5 w-5" />
-					ข้อมูลคณะ
+					ข้อมูลหน่วยงาน
 				</CardTitle>
 				<CardDescription>
-					ข้อมูลสรุปของคณะที่คุณดูแล
+					ข้อมูลสรุปของหน่วยงานที่คุณดูแล
 				</CardDescription>
 			</CardHeader>
 			<CardContent>
@@ -208,7 +208,7 @@
 							{data.admin_role.faculty.name}
 						</div>
 						<div class="text-sm text-gray-600 dark:text-gray-400">
-							ชื่อคณะ
+							ชื่อหน่วยงาน
 						</div>
 					</div>
 					<div class="text-center">
@@ -267,7 +267,7 @@
 						การกระจายผู้ใช้ตามภาควิชา
 					</CardTitle>
 					<CardDescription>
-						จำนวนผู้ใช้ในแต่ละภาควิชาของคณะ
+						จำนวนผู้ใช้ในแต่ละภาควิชาของหน่วยงาน
 					</CardDescription>
 				</CardHeader>
 				<CardContent>
@@ -297,10 +297,10 @@
 				<CardHeader>
 					<CardTitle class="flex items-center gap-2">
 						<IconAward class="h-5 w-5" />
-						ประสิทธิภาพคณะ
+						ประสิทธิภาพหน่วยงาน
 					</CardTitle>
 					<CardDescription>
-						ตัวชี้วัดและเป้าหมายของคณะ
+						ตัวชี้วัดและเป้าหมายของหน่วยงาน
 					</CardDescription>
 				</CardHeader>
 				<CardContent class="space-y-4">
@@ -379,8 +379,8 @@
 						<Button variant="outline" class="justify-start h-auto py-3 hover:bg-purple-50 dark:hover:bg-purple-950" onclick={() => window.location.href = '/admin/faculties'}>
 							<IconBuilding class="h-4 w-4 mr-2" />
 							<div class="text-left">
-								<div class="font-medium">จัดการคณะ</div>
-								<div class="text-xs text-gray-500">เพิ่ม แก้ไขข้อมูลคณะ</div>
+								<div class="font-medium">จัดการหน่วยงาน</div>
+								<div class="text-xs text-gray-500">เพิ่ม แก้ไขข้อมูลหน่วยงาน</div>
 							</div>
 						</Button>
 						<Button variant="outline" class="justify-start h-auto py-3 hover:bg-orange-50 dark:hover:bg-orange-950">
@@ -396,22 +396,22 @@
 						<Button variant="outline" class="justify-start h-auto py-3 hover:bg-blue-50 dark:hover:bg-blue-950" onclick={() => window.location.href = '/admin/faculty-users'}>
 							<IconUsers class="h-4 w-4 mr-2" />
 							<div class="text-left">
-								<div class="font-medium">จัดการผู้ใช้คณะ</div>
-								<div class="text-xs text-gray-500">จัดการผู้ใช้ในคณะของคุณ</div>
+								<div class="font-medium">จัดการผู้ใช้หน่วยงาน</div>
+								<div class="text-xs text-gray-500">จัดการผู้ใช้ในหน่วยงานของคุณ</div>
 							</div>
 						</Button>
 						<Button variant="outline" class="justify-start h-auto py-3 hover:bg-green-50 dark:hover:bg-green-950" onclick={() => window.location.href = '/admin/departments'}>
 							<IconBuilding class="h-4 w-4 mr-2" />
 							<div class="text-left">
 								<div class="font-medium">จัดการภาควิชา</div>
-								<div class="text-xs text-gray-500">เพิ่ม แก้ไข ภาควิชาในคณะ</div>
+								<div class="text-xs text-gray-500">เพิ่ม แก้ไข ภาควิชาในหน่วยงาน</div>
 							</div>
 						</Button>
 						<Button variant="outline" class="justify-start h-auto py-3 hover:bg-purple-50 dark:hover:bg-purple-950">
 							<IconChartBar class="h-4 w-4 mr-2" />
 							<div class="text-left">
-								<div class="font-medium">รายงานคณะ</div>
-								<div class="text-xs text-gray-500">สถิติและรายงานของคณะ</div>
+								<div class="font-medium">รายงานหน่วยงาน</div>
+								<div class="text-xs text-gray-500">สถิติและรายงานของหน่วยงาน</div>
 							</div>
 						</Button>
 						<Button variant="outline" class="justify-start h-auto py-3 hover:bg-indigo-50 dark:hover:bg-indigo-950">
@@ -438,12 +438,12 @@
 					<IconClock class="h-5 w-5" />
 					กิจกรรมล่าสุด
 					{#if data.admin_role?.admin_level === AdminLevel.FacultyAdmin}
-						<span class="text-sm font-normal text-gray-500">(คณะ{data.admin_role?.faculty?.name})</span>
+						<span class="text-sm font-normal text-gray-500">(หน่วยงาน{data.admin_role?.faculty?.name})</span>
 					{/if}
 				</CardTitle>
 				<CardDescription>
 					{#if data.admin_role?.admin_level === AdminLevel.FacultyAdmin}
-						กิจกรรมและการเปลี่ยนแปลงล่าสุดในคณะของคุณ
+						กิจกรรมและการเปลี่ยนแปลงล่าสุดในหน่วยงานของคุณ
 					{:else}
 						กิจกรรมและการเปลี่ยนแปลงล่าสุดในระบบ
 					{/if}
@@ -501,7 +501,7 @@
 						<IconClock class="h-8 w-8 mx-auto mb-2 opacity-50" />
 						<p>ยังไม่มีกิจกรรมล่าสุด</p>
 						{#if data.admin_role?.admin_level === AdminLevel.FacultyAdmin}
-							<p class="text-xs mt-2">กิจกรรมจะแสดงเฉพาะในคณะของคุณ</p>
+							<p class="text-xs mt-2">กิจกรรมจะแสดงเฉพาะในหน่วยงานของคุณ</p>
 						{/if}
 					</div>
 				{/if}

@@ -232,7 +232,7 @@
           <Badge variant="outline">{data.admin?.admin_level}</Badge>
         </div>
         <div>
-          <p class="text-sm text-muted-foreground">คณะ</p>
+          <p class="text-sm text-muted-foreground">หน่วยงาน</p>
           <p class="font-medium">{data.admin?.faculty_name || 'ทั้งหมด'}</p>
         </div>
       </div>
