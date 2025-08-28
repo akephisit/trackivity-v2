@@ -15,6 +15,7 @@
 	
 	// Import filtering component
 	import UserFilters from '$lib/components/user-management/UserFilters.svelte';
+    import { PrefixOptions } from '$lib/schemas/auth';
 
 	// Get data from server load function
 	let { data } = $props();
