@@ -2,9 +2,7 @@ import { redirect } from '@sveltejs/kit';
 import jwt from 'jsonwebtoken';
 import type { RequestEvent } from '@sveltejs/kit';
 import type { SessionUser, AdminLevel, Permission } from '$lib/types';
-
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
-
+import { JWT_SECRET } from '$env/static/private';
 /**
  * JWT payload interface for server-side validation
  */

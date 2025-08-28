@@ -1,8 +1,6 @@
 import { type Handle, type HandleServerError, redirect } from '@sveltejs/kit';
 import jwt from 'jsonwebtoken';
-
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
-
+import { JWT_SECRET } from '$env/static/private';
 /**
  * JWT payload interface for type safety
  */

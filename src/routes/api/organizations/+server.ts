@@ -2,8 +2,7 @@ import { json } from '@sveltejs/kit';
 import { db, organizations } from '$lib/server/db';
 import { eq } from 'drizzle-orm';
 import jwt from 'jsonwebtoken';
-
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
+import { JWT_SECRET } from '$env/static/private';
 
 function verifyToken(token: string) {
   try {

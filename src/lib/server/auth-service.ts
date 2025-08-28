@@ -3,8 +3,7 @@ import { eq } from 'drizzle-orm';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import type { SessionUser, Permission } from '$lib/types';
-
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
+import { JWT_SECRET } from '$env/static/private';
 const JWT_EXPIRES_IN = '7d';
 
 export interface AuthInput {

@@ -3,8 +3,7 @@ import { db, users, departments, organizations } from '$lib/server/db';
 import { eq, like, and, sql } from 'drizzle-orm';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
-
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
+import { JWT_SECRET } from '$env/static/private';
 
 // Helper function to verify JWT and get user info
 function verifyToken(token: string) {
