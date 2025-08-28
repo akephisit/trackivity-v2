@@ -19,7 +19,7 @@
 		"db:generate": "drizzle-kit generate",
 		"db:migrate": "drizzle-kit migrate",
 		"db:studio": "drizzle-kit studio",
-		"create-super-admin": "tsx scripts/create-super-admin.ts"
+		"create-super-admin": "bun run scripts/create-super-admin.ts"
 	},
 	"devDependencies": {
 		"@dnd-kit-svelte/core": "^0.0.8",
