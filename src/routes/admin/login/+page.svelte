@@ -16,14 +16,16 @@
 
 	const form = superForm(data.form, {
 		validators: zodClient(adminLoginSchema),
-		onResult: ({ result }) => {
-			if (result.type === 'failure') {
-				toast.error('การเข้าสู่ระบบไม่สำเร็จ');
-			} else if (result.type === 'redirect') {
-				toast.success('เข้าสู่ระบบสำเร็จ');
-			}
-		}
-	});
+    onResult: ({ result }) => {
+      if (result.type === 'failure') {
+        // Show server-provided message via toast only
+        const message = (result as any)?.data?.message || 'การเข้าสู่ระบบไม่สำเร็จ';
+        toast.error(message);
+      } else if (result.type === 'redirect') {
+        toast.success('เข้าสู่ระบบสำเร็จ');
+      }
+    }
+  });
 
 	const { form: formData, enhance, errors, submitting } = form;
 
@@ -65,17 +67,7 @@
 			</CardHeader>
 			<CardContent class="space-y-4">
 				<form method="POST" use:enhance class="space-y-4">
-					{#if $errors._errors}
-						<Alert variant="destructive">
-							<IconAlertTriangle class="h-4 w-4" />
-							<AlertDescription>
-								<div class="space-y-2">
-									<p class="font-medium">เกิดข้อผิดพลาดในการเข้าสู่ระบบ</p>
-									<p class="text-sm">{$errors._errors[0]}</p>
-								</div>
-							</AlertDescription>
-						</Alert>
-					{/if}
+    <!-- Inline error alert removed; rely on toast messages only -->
 
 					<Form.Field {form} name="email">
 						<Form.Control>

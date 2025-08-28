@@ -42,6 +42,14 @@ export async function authenticateAndIssueToken(input: AuthInput): Promise<AuthR
 
   const foundUser = userRes[0];
 
+  // Enforce password-based login only (no passwordless)
+  // Guard against disabled/blank hashes (treat as password login disabled)
+  if (!foundUser.passwordHash || foundUser.passwordHash.trim() === '' || foundUser.passwordHash === 'DISABLED') {
+    const err: any = new Error('Password login disabled for this account');
+    err.code = 'PASSWORD_DISABLED';
+    throw err;
+  }
+
   const isValidPassword = await bcrypt.compare(password, foundUser.passwordHash);
   if (!isValidPassword) {
     const err: any = new Error('Invalid credentials');
