@@ -165,6 +165,10 @@ export const actions: Actions = {
       // Redirect back to activities list
       throw redirect(302, '/admin/activities');
     } catch (e) {
+      // Allow SvelteKit Redirect objects to pass through
+      if (e && typeof e === 'object' && 'status' in (e as any) && 'location' in (e as any)) {
+        throw e as any;
+      }
       console.error('Delete activity error:', e);
       return { error: 'ลบกิจกรรมไม่สำเร็จ' } as const;
     }

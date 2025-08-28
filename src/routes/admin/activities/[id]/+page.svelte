@@ -720,9 +720,24 @@
                                 method: 'POST',
                                 body: fd
                             });
+                            // Handle SvelteKit action redirect formats
+                            try {
+                                const data = await response.clone().json().catch(() => null);
+                                if (data && data.type === 'redirect' && data.location) {
+                                    goto(data.location);
+                                    return;
+                                }
+                            } catch {}
                             if (response.redirected) {
                                 goto(response.url);
+                                return;
                             }
+                            if (response.ok) {
+                                // Fallback: navigate to list if server returned 200 without redirect
+                                goto('/admin/activities');
+                                return;
+                            }
+                            toast?.error?.('ลบกิจกรรมไม่สำเร็จ');
                         }}
                     >
 				ลบกิจกรรม
