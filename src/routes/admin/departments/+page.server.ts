@@ -3,9 +3,9 @@ import { superValidate } from 'sveltekit-superforms';
 import { zod } from 'sveltekit-superforms/adapters';
 import { z } from 'zod';
 import type { PageServerLoad, Actions } from './$types';
-import type { Department, Faculty } from '$lib/types/admin';
+import type { Department, Organization } from '$lib/types/admin';
 import { requireAdmin } from '$lib/server/auth-utils';
-import { db, faculties, departments } from '$lib/server/db';
+import { db, organizations, departments } from '$lib/server/db';
 import { eq, and, desc } from 'drizzle-orm';
 
 // Department schemas
@@ -39,7 +39,7 @@ export const load: PageServerLoad = async (event) => {
 
 	// For SuperAdmin, show all departments; for FacultyAdmin, show only their faculty's departments
 	let apiEndpoint = `/api/departments`;
-	if (admin_role?.admin_level === 'FacultyAdmin' && admin_role.faculty_id) {
+    if (admin_role?.admin_level === 'OrganizationAdmin' && (admin_role as any).organization_id) {
 		apiEndpoint = `/api/organizations/${admin_role.faculty_id}/departments`;
 	}
 
@@ -52,14 +52,14 @@ export const load: PageServerLoad = async (event) => {
                     id: departments.id,
                     name: departments.name,
                     code: departments.code,
-                    faculty_id: departments.facultyId,
+                    organization_id: departments.organizationId,
                     description: departments.description,
                     status: departments.status,
                     created_at: departments.createdAt,
                     updated_at: departments.updatedAt
                 })
                 .from(departments)
-                .where(eq(departments.facultyId, admin_role.faculty_id))
+                .where(eq(departments.organizationId, (admin_role as any).organization_id))
                 .orderBy(desc(departments.createdAt));
 
             departmentsData = rows.map((d) => ({
@@ -69,21 +69,21 @@ export const load: PageServerLoad = async (event) => {
                 updated_at: d.updated_at?.toISOString() || new Date().toISOString()
             }));
         } else {
-            // SuperAdmin - get all departments with faculty info
+            // SuperAdmin - get all departments with organization info
             const rows = await db
                 .select({
                     id: departments.id,
                     name: departments.name,
                     code: departments.code,
-                    faculty_id: departments.facultyId,
+                    organization_id: departments.organizationId,
                     description: departments.description,
                     status: departments.status,
                     created_at: departments.createdAt,
                     updated_at: departments.updatedAt,
-                    faculty_name: faculties.name
+                    organization_name: organizations.name
                 })
                 .from(departments)
-                .leftJoin(faculties, eq(departments.facultyId, faculties.id))
+                .leftJoin(organizations, eq(departments.organizationId, organizations.id))
                 .orderBy(desc(departments.createdAt));
 
             departmentsData = rows.map((d) => ({
@@ -94,21 +94,21 @@ export const load: PageServerLoad = async (event) => {
             }));
         }
 
-		// For FacultyAdmin, get their faculty info
-		let currentFaculty: Faculty | null = null;
-        if (admin_role?.admin_level === 'FacultyAdmin' && admin_role.faculty_id) {
+        // For OrganizationAdmin, get their organization info
+        let currentFaculty: Organization | null = null;
+        if (admin_role?.admin_level === 'OrganizationAdmin' && (admin_role as any).organization_id) {
             const facRows = await db
                 .select({
-                    id: faculties.id,
-                    name: faculties.name,
-                    code: faculties.code,
-                    description: faculties.description,
-                    status: faculties.status,
-                    created_at: faculties.createdAt,
-                    updated_at: faculties.updatedAt
+                    id: organizations.id,
+                    name: organizations.name,
+                    code: organizations.code,
+                    description: organizations.description,
+                    status: organizations.status,
+                    created_at: organizations.createdAt,
+                    updated_at: organizations.updatedAt
                 })
-                .from(faculties)
-                .where(eq(faculties.id, admin_role.faculty_id))
+                .from(organizations)
+                .where(eq(organizations.id, (admin_role as any).organization_id))
                 .limit(1);
 
             if (facRows.length > 0) {
@@ -122,22 +122,22 @@ export const load: PageServerLoad = async (event) => {
             }
         }
 
-		// If SuperAdmin, load faculties list for selection
-		let facultiesList: Faculty[] | null = null;
+        // If SuperAdmin, load organizations list for selection
+        let facultiesList: Organization[] | null = null;
         if (admin_role?.admin_level === 'SuperAdmin') {
             const facRows = await db
                 .select({
-                    id: faculties.id,
-                    name: faculties.name,
-                    code: faculties.code,
-                    description: faculties.description,
-                    status: faculties.status,
-                    created_at: faculties.createdAt,
-                    updated_at: faculties.updatedAt
+                    id: organizations.id,
+                    name: organizations.name,
+                    code: organizations.code,
+                    description: organizations.description,
+                    status: organizations.status,
+                    created_at: organizations.createdAt,
+                    updated_at: organizations.updatedAt
                 })
-                .from(faculties)
-                .where(eq(faculties.status, true))
-                .orderBy(faculties.name);
+                .from(organizations)
+                .where(eq(organizations.status, true))
+                .orderBy(organizations.name);
 
             facultiesList = facRows.map((f) => ({
                 ...f,
@@ -213,7 +213,7 @@ export const actions: Actions = {
             await db.insert(departments).values({
                 name: form.data.name,
                 code: form.data.code,
-                facultyId: targetFacultyId,
+                organizationId: targetFacultyId,
                 description: form.data.description || null,
                 status: form.data.status
             });

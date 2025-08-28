@@ -70,7 +70,7 @@ export async function authenticateAndIssueToken(input: AuthInput): Promise<AuthR
     if (!dbLevel) return null;
     switch (dbLevel) {
       case 'super_admin': return 'SuperAdmin';
-      case 'faculty_admin': return 'FacultyAdmin';
+      case 'organization_admin': return 'OrganizationAdmin';
       case 'regular_admin': return 'RegularAdmin';
       default: return 'RegularAdmin';
     }
@@ -82,14 +82,14 @@ export async function authenticateAndIssueToken(input: AuthInput): Promise<AuthR
     if (adminLevel === 'super_admin') {
       permissions.push(
         'ViewAllUsers', 'CreateUsers', 'UpdateUsers', 'DeleteUsers',
-        'ViewAllFaculties', 'CreateFaculties', 'UpdateFaculties', 'DeleteFaculties',
+        'ViewAllOrganizations', 'CreateOrganizations', 'UpdateOrganizations', 'DeleteOrganizations',
         'ViewAllSessions', 'ManageAllSessions', 'ViewSystemAnalytics'
       );
-    } else if (adminLevel === 'faculty_admin') {
+    } else if (adminLevel === 'organization_admin') {
       permissions.push(
-        'ViewFacultyUsers', 'CreateFacultyUsers', 'UpdateFacultyUsers',
-        'ViewFacultyAnalytics', 'ManageFacultyActivities',
-        'ViewFacultySessions', 'ManageFacultySessions'
+        'ViewOrganizationUsers', 'CreateOrganizationUsers', 'UpdateOrganizationUsers',
+        'ViewOrganizationAnalytics', 'ManageOrganizationActivities',
+        'ViewOrganizationSessions', 'ManageOrganizationSessions'
       );
     } else {
       permissions.push(
@@ -109,7 +109,7 @@ export async function authenticateAndIssueToken(input: AuthInput): Promise<AuthR
     department_id: foundUser.departmentId,
     is_admin: isAdmin,
     admin_level: convertedAdminLevel,
-    faculty_id: isAdmin ? adminRoleRes[0].facultyId : null
+    organization_id: isAdmin ? (adminRoleRes[0] as any).organizationId : null
   };
 
   // Expiration: 30 days if remember_me, otherwise default 7 days
@@ -124,7 +124,7 @@ export async function authenticateAndIssueToken(input: AuthInput): Promise<AuthR
     first_name: foundUser.firstName,
     last_name: foundUser.lastName,
     department_id: foundUser.departmentId || undefined,
-    faculty_id: (isAdmin ? adminRoleRes[0].facultyId : null) || undefined,
+    organization_id: (isAdmin ? (adminRoleRes[0] as any).organizationId : null) || undefined,
     session_id: token.slice(0, 16),
     permissions,
     expires_at: expiresAt.toISOString(),
@@ -133,7 +133,7 @@ export async function authenticateAndIssueToken(input: AuthInput): Promise<AuthR
     admin_role: isAdmin ? {
       id: adminRoleRes[0].id,
       admin_level: convertedAdminLevel as any,
-      faculty_id: adminRoleRes[0].facultyId || undefined,
+      organization_id: (adminRoleRes[0] as any).organizationId || undefined,
       permissions,
       created_at: adminRoleRes[0].createdAt?.toISOString() || new Date().toISOString(),
       updated_at: adminRoleRes[0].updatedAt?.toISOString() || new Date().toISOString()

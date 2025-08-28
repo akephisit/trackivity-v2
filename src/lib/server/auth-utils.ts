@@ -17,7 +17,7 @@ export interface JWTPayload {
   department_id?: string;
   is_admin: boolean;
   admin_level?: string;
-  faculty_id?: string;
+  organization_id?: string;
   iat?: number;
   exp?: number;
 }
@@ -57,14 +57,14 @@ export function getAuthenticatedUser(event: RequestEvent): SessionUser | null {
     if (user.admin_level === 'SuperAdmin') {
       permissions.push(
         'ViewAllUsers', 'CreateUsers', 'UpdateUsers', 'DeleteUsers',
-        'ViewAllFaculties', 'CreateFaculties', 'UpdateFaculties', 'DeleteFaculties',
+        'ViewAllOrganizations', 'CreateOrganizations', 'UpdateOrganizations', 'DeleteOrganizations',
         'ViewAllSessions', 'ManageAllSessions', 'ViewSystemAnalytics'
       );
-    } else if (user.admin_level === 'FacultyAdmin') {
+    } else if (user.admin_level === 'OrganizationAdmin') {
       permissions.push(
-        'ViewFacultyUsers', 'CreateFacultyUsers', 'UpdateFacultyUsers',
-        'ViewFacultyAnalytics', 'ManageFacultyActivities',
-        'ViewFacultySessions', 'ManageFacultySessions'
+        'ViewOrganizationUsers', 'CreateOrganizationUsers', 'UpdateOrganizationUsers',
+        'ViewOrganizationAnalytics', 'ManageOrganizationActivities',
+        'ViewOrganizationSessions', 'ManageOrganizationSessions'
       );
     } else {
       permissions.push(
@@ -82,14 +82,14 @@ export function getAuthenticatedUser(event: RequestEvent): SessionUser | null {
     first_name: user.first_name,
     last_name: user.last_name,
     department_id: undefined, // Will be populated by server if needed
-    faculty_id: user.faculty_id,
+    organization_id: (user as any).organization_id,
     session_id: `session_${user.id}`,
     permissions,
     expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
     admin_role: user.is_admin ? {
       id: `admin_${user.id}`,
       admin_level: (user.admin_level as AdminLevel) || 'RegularAdmin',
-      faculty_id: user.faculty_id,
+      organization_id: (user as any).organization_id,
       permissions,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
@@ -163,7 +163,7 @@ export function requirePermission(
 export function hasAdminLevel(userLevel: AdminLevel, requiredLevel: AdminLevel): boolean {
   const hierarchy = {
     'SuperAdmin': 3,
-    'FacultyAdmin': 2,
+    'OrganizationAdmin': 2,
     'RegularAdmin': 1
   };
   
@@ -180,11 +180,11 @@ export function requireSuperAdmin(event: RequestEvent): SessionUser {
 /**
  * Require FacultyAdmin or SuperAdmin access
  */
-export function requireFacultyAdmin(event: RequestEvent): SessionUser {
+export function requireOrganizationAdmin(event: RequestEvent): SessionUser {
   const user = requireAdmin(event);
   
   const level = user.admin_role!.admin_level;
-  if (level !== 'SuperAdmin' && level !== 'FacultyAdmin') {
+  if (level !== 'SuperAdmin' && level !== 'OrganizationAdmin') {
     throw redirect(303, '/unauthorized');
   }
 
@@ -194,21 +194,21 @@ export function requireFacultyAdmin(event: RequestEvent): SessionUser {
 /**
  * Require access to specific faculty
  */
-export function requireFacultyAccess(
+export function requireOrganizationAccess(
   event: RequestEvent,
-  facultyId: string
+  organizationId: string
 ): SessionUser {
   const user = requireAdmin(event);
   
   const level = user.admin_role!.admin_level;
   
-  // SuperAdmin can access all faculties
+  // SuperAdmin can access all organizations
   if (level === 'SuperAdmin') {
     return user;
   }
   
-  // FacultyAdmin can only access their own faculty
-  if (level === 'FacultyAdmin' && user.admin_role!.faculty_id === facultyId) {
+  // OrganizationAdmin can only access their own organization
+  if (level === 'OrganizationAdmin' && (user.admin_role as any)!.organization_id === organizationId) {
     return user;
   }
   

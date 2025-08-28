@@ -3,9 +3,9 @@ import { superValidate } from 'sveltekit-superforms';
 import { zod } from 'sveltekit-superforms/adapters';
 import { registerSchema } from '$lib/schemas/auth';
 import type { Actions, PageServerLoad } from './$types';
-import type { Faculty } from '$lib/types/admin';
+import type { Organization } from '$lib/types/admin';
 import { getOptionalAuthUser } from '$lib/server/auth-utils';
-import { db, faculties } from '$lib/server/db';
+import { db, organizations } from '$lib/server/db';
 import { eq } from 'drizzle-orm';
 
 
@@ -24,26 +24,26 @@ export const load: PageServerLoad = async (event) => {
 	}
 
 // โหลดรายการหน่วยงานจากฐานข้อมูลโดยตรง
-	let facultiesList: Faculty[] = [];
+let organizationsList: Organization[] = [];
 
 	try {
 		const result = await db
 			.select({
-				id: faculties.id,
-				name: faculties.name,
-				code: faculties.code,
-				description: faculties.description,
-				status: faculties.status,
-				created_at: faculties.createdAt,
-				updated_at: faculties.updatedAt
-			})
-			.from(faculties)
-			.where(eq(faculties.status, true))
-			.orderBy(faculties.name);
+    id: organizations.id,
+    name: organizations.name,
+    code: organizations.code,
+    description: organizations.description,
+    status: organizations.status,
+    created_at: organizations.createdAt,
+    updated_at: organizations.updatedAt
+  })
+  .from(organizations)
+  .where(eq(organizations.status, true))
+  .orderBy(organizations.name);
 
-		facultiesList = result;
+    organizationsList = result;
 	} catch (error) {
-		console.error('Failed to load faculties from database:', error);
+    console.error('Failed to load organizations from database:', error);
     throw new Error('ไม่สามารถโหลดข้อมูลหน่วยงานได้ กรุณาลองใหม่อีกครั้ง');
 	}
 
@@ -51,7 +51,7 @@ export const load: PageServerLoad = async (event) => {
 	
 	return {
 		form,
-		faculties: facultiesList
+    organizations: organizationsList
 	};
 };
 

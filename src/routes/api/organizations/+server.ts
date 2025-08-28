@@ -1,5 +1,5 @@
 import { json } from '@sveltejs/kit';
-import { db, faculties } from '$lib/server/db';
+import { db, organizations } from '$lib/server/db';
 import { eq } from 'drizzle-orm';
 import jwt from 'jsonwebtoken';
 
@@ -15,19 +15,19 @@ function verifyToken(token: string) {
 
 export const GET = async ({ cookies }: { cookies: any }) => {
   try {
-    // Get all active faculties (no auth required for basic list)
+    // Get all active organizations (no auth required for basic list)
     const facultiesList = await db.select({
-      id: faculties.id,
-      name: faculties.name,
-      code: faculties.code,
-      description: faculties.description,
-      status: faculties.status,
-      createdAt: faculties.createdAt,
-      updatedAt: faculties.updatedAt
+      id: organizations.id,
+      name: organizations.name,
+      code: organizations.code,
+      description: organizations.description,
+      status: organizations.status,
+      createdAt: organizations.createdAt,
+      updatedAt: organizations.updatedAt
     })
-    .from(faculties)
-    .where(eq(faculties.status, true))
-    .orderBy(faculties.name);
+    .from(organizations)
+    .where(eq(organizations.status, true))
+    .orderBy(organizations.name);
 
     return json({
       success: true,
@@ -35,7 +35,7 @@ export const GET = async ({ cookies }: { cookies: any }) => {
     });
 
   } catch (error) {
-    console.error('Get faculties error:', error);
+    console.error('Get organizations error:', error);
     return json({
       success: false,
       error: { code: 'INTERNAL_ERROR', message: 'Internal server error' }
@@ -72,21 +72,21 @@ export const POST = async ({ request, cookies }: { request: any; cookies: any })
       }, { status: 400 });
     }
 
-    // Check if faculty code already exists
+    // Check if organization code already exists
     const existingFaculty = await db.select()
-      .from(faculties)
-      .where(eq(faculties.code, code))
+      .from(organizations)
+      .where(eq(organizations.code, code))
       .limit(1);
 
     if (existingFaculty.length > 0) {
       return json({
         success: false,
-        error: { code: 'FACULTY_EXISTS', message: 'Faculty with this code already exists' }
+      error: { code: 'ORGANIZATION_EXISTS', message: 'Organization with this code already exists' }
       }, { status: 409 });
     }
 
-    // Create faculty
-    const newFaculty = await db.insert(faculties)
+    // Create organization
+    const newFaculty = await db.insert(organizations)
       .values({
         name,
         code,
@@ -96,13 +96,13 @@ export const POST = async ({ request, cookies }: { request: any; cookies: any })
         updatedAt: new Date()
       })
       .returning({
-        id: faculties.id,
-        name: faculties.name,
-        code: faculties.code,
-        description: faculties.description,
-        status: faculties.status,
-        createdAt: faculties.createdAt,
-        updatedAt: faculties.updatedAt
+        id: organizations.id,
+        name: organizations.name,
+        code: organizations.code,
+        description: organizations.description,
+        status: organizations.status,
+        createdAt: organizations.createdAt,
+        updatedAt: organizations.updatedAt
       });
 
     return json({

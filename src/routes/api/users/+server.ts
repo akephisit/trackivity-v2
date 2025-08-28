@@ -1,5 +1,5 @@
 import { json } from '@sveltejs/kit';
-import { db, users, departments, faculties } from '$lib/server/db';
+import { db, users, departments, organizations } from '$lib/server/db';
 import { eq, like, and, sql } from 'drizzle-orm';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
@@ -69,17 +69,17 @@ export const GET = async ({ url, cookies }: { url: any; cookies: any }) => {
         id: departments.id,
         name: departments.name,
         code: departments.code,
-        facultyId: departments.facultyId
+        organizationId: departments.organizationId
       },
-      faculty: {
-        id: faculties.id,
-        name: faculties.name,
-        code: faculties.code
+      organization: {
+        id: organizations.id,
+        name: organizations.name,
+        code: organizations.code
       }
     })
     .from(users)
     .leftJoin(departments, eq(users.departmentId, departments.id))
-    .leftJoin(faculties, eq(departments.facultyId, faculties.id))
+    .leftJoin(organizations, eq(departments.organizationId, organizations.id))
     .where(whereClause)
     .limit(perPage)
     .offset(offset);

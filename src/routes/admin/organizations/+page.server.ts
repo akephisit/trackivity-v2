@@ -4,10 +4,10 @@ import { zod } from 'sveltekit-superforms/adapters';
 import { z } from 'zod';
 import type { PageServerLoad, Actions } from './$types';
 import { requireAdmin } from '$lib/server/auth-utils';
-import { db, faculties } from '$lib/server/db';
+import { db, organizations } from '$lib/server/db';
 import { eq, desc } from 'drizzle-orm';
 
-// Faculty schemas
+// Organization schemas
 const facultyCreateSchema = z.object({
   name: z.string().min(1, 'กรุณากรอกชื่อหน่วยงาน'),
   code: z.string().min(1, 'กรุณากรอกรหัสหน่วยงาน').max(10, 'รหัสหน่วยงานต้องไม่เกิน 10 ตัวอักษร'),
@@ -30,19 +30,19 @@ export const load: PageServerLoad = async (event) => {
 	const user = requireAdmin(event);
 
 	try {
-		// Fetch all faculties directly from database
-		const facultiesData = await db
-			.select({
-				id: faculties.id,
-				name: faculties.name,
-				code: faculties.code,
-				description: faculties.description,
-				status: faculties.status,
-				created_at: faculties.createdAt,
-				updated_at: faculties.updatedAt
-			})
-			.from(faculties)
-			.orderBy(desc(faculties.createdAt));
+    // Fetch all organizations directly from database
+    const facultiesData = await db
+      .select({
+        id: organizations.id,
+        name: organizations.name,
+        code: organizations.code,
+        description: organizations.description,
+        status: organizations.status,
+        created_at: organizations.createdAt,
+        updated_at: organizations.updatedAt
+      })
+      .from(organizations)
+      .orderBy(desc(organizations.createdAt));
 
 		// Create forms
 		const createForm = await superValidate(zod(facultyCreateSchema));
@@ -55,7 +55,7 @@ export const load: PageServerLoad = async (event) => {
 			user
 		};
 	} catch (error) {
-		console.error('Failed to load faculties data:', error);
+      console.error('Failed to load organizations data:', error);
 		return {
 			faculties: [],
 			createForm: await superValidate(zod(facultyCreateSchema)),
@@ -79,7 +79,7 @@ export const actions: Actions = {
 
 		try {
 			// Insert directly into database
-            await db.insert(faculties).values({
+            await db.insert(organizations).values({
                 name: form.data.name,
                 code: form.data.code,
                 description: form.data.description || null,
@@ -113,15 +113,15 @@ export const actions: Actions = {
 
 		try {
 			// Update directly in database
-			await db.update(faculties)
-				.set({
-					...(form.data.name && { name: form.data.name }),
-					...(form.data.code && { code: form.data.code }),
-					...(form.data.description !== undefined && { description: form.data.description }),
-					...(form.data.status !== undefined && { status: form.data.status }),
-					updatedAt: new Date()
-				})
-				.where(eq(faculties.id, facultyId));
+            await db.update(organizations)
+              .set({
+                ...(form.data.name && { name: form.data.name }),
+                ...(form.data.code && { code: form.data.code }),
+                ...(form.data.description !== undefined && { description: form.data.description }),
+                ...(form.data.status !== undefined && { status: form.data.status }),
+                updatedAt: new Date()
+              })
+              .where(eq(organizations.id, facultyId));
 
 			return { form, success: true };
 		} catch (error) {
@@ -143,7 +143,7 @@ export const actions: Actions = {
 
 		try {
 			// Delete directly from database
-			await db.delete(faculties).where(eq(faculties.id, facultyId));
+            await db.delete(organizations).where(eq(organizations.id, facultyId));
 
 			return { success: true };
 		} catch (error) {
@@ -164,22 +164,22 @@ export const actions: Actions = {
 
 		try {
 			// Get current status first
-			const [currentFaculty] = await db
-				.select({ status: faculties.status })
-				.from(faculties)
-				.where(eq(faculties.id, facultyId));
+            const [currentFaculty] = await db
+              .select({ status: organizations.status })
+              .from(organizations)
+              .where(eq(organizations.id, facultyId));
 
 			if (!currentFaculty) {
           return fail(404, { error: 'ไม่พบหน่วยงานที่ต้องการ' });
 			}
 
 			// Toggle status
-			await db.update(faculties)
-				.set({ 
-					status: !currentFaculty.status,
-					updatedAt: new Date()
-				})
-				.where(eq(faculties.id, facultyId));
+            await db.update(organizations)
+              .set({ 
+                status: !currentFaculty.status,
+                updatedAt: new Date()
+              })
+              .where(eq(organizations.id, facultyId));
 
 			return { success: true };
 		} catch (error) {

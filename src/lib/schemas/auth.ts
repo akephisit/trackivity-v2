@@ -87,7 +87,7 @@ export const registerSchema = z.object({
 	confirmPassword: z
 		.string()
 		.min(1, 'กรุณายืนยันรหัสผ่าน'),
-	faculty_id: z
+	organization_id: z
 		.string()
     .min(1, 'กรุณาเลือกหน่วยงาน'),
 	department_id: z
@@ -128,24 +128,24 @@ export const adminCreateSchema = z.object({
 		.nativeEnum(AdminLevel, {
 			message: 'กรุณาเลือกระดับแอดมิน'
 		}),
-	faculty_id: z
+	organization_id: z
 		.string()
 		.optional()
 		.refine(val => !val || val === '' || /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val), {
-			message: 'รูปแบบ Faculty ID ไม่ถูกต้อง'
+			message: 'รูปแบบ Organization ID ไม่ถูกต้อง'
 		}),
 	permissions: z
 		.array(z.string())
 		.default([])
 }).refine(data => {
-	// FacultyAdmin ต้องมี faculty_id
-	if (data.admin_level === AdminLevel.FacultyAdmin && (!data.faculty_id || data.faculty_id === '')) {
+	// OrganizationAdmin ต้องมี organization_id
+	if (data.admin_level === AdminLevel.OrganizationAdmin && (!(data as any).organization_id || (data as any).organization_id === '')) {
 		return false;
 	}
 	return true;
 }, {
 message: 'แอดมินระดับหน่วยงานต้องระบุหน่วยงาน',
-	path: ['faculty_id']
+	path: ['organization_id']
 });
 
 export const adminUpdateSchema = z.object({
@@ -163,7 +163,7 @@ export const adminUpdateSchema = z.object({
 	admin_level: z
 		.nativeEnum(AdminLevel)
 		.optional(),
-	faculty_id: z
+	organization_id: z
 		.number()
     .positive('กรุณาเลือกหน่วยงาน')
 		.optional(),

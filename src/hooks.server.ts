@@ -15,7 +15,7 @@ interface JWTPayload {
   department_id?: string;
   is_admin: boolean;
   admin_level?: string;
-  faculty_id?: string;
+  organization_id?: string;
   iat?: number;
   exp?: number;
 }
@@ -149,7 +149,7 @@ export const handle: Handle = async ({ event, resolve }) => {
         last_name: decoded.last_name,
         is_admin: decoded.is_admin || false,
         admin_level: decoded.admin_level,
-        faculty_id: decoded.faculty_id
+        organization_id: (decoded as any).organization_id
       };
       
       isAuthenticated = true;

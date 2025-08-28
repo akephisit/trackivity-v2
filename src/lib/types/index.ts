@@ -24,13 +24,13 @@ export interface User {
 export interface AdminRole {
   id: UUID;
   admin_level: AdminLevel;
-  faculty_id?: UUID;
+  organization_id?: UUID;
   permissions: Permission[];
   created_at: Timestamp;
   updated_at: Timestamp;
 }
 
-export type AdminLevel = 'SuperAdmin' | 'FacultyAdmin' | 'RegularAdmin';
+export type AdminLevel = 'SuperAdmin' | 'OrganizationAdmin' | 'RegularAdmin';
 
 export type Permission = 
   // System-wide permissions
@@ -38,21 +38,21 @@ export type Permission =
   | 'CreateUsers'
   | 'UpdateUsers'
   | 'DeleteUsers'
-  | 'ViewAllFaculties'
-  | 'CreateFaculties'
-  | 'UpdateFaculties'
-  | 'DeleteFaculties'
+  | 'ViewAllOrganizations'
+  | 'CreateOrganizations'
+  | 'UpdateOrganizations'
+  | 'DeleteOrganizations'
   | 'ViewAllSessions'
   | 'ManageAllSessions'
   | 'ViewSystemAnalytics'
-  // Faculty-scoped permissions
-  | 'ViewFacultyUsers'
-  | 'CreateFacultyUsers'
-  | 'UpdateFacultyUsers'
-  | 'ViewFacultyAnalytics'
-  | 'ManageFacultyActivities'
-  | 'ViewFacultySessions'
-  | 'ManageFacultySessions'
+  // Organization-scoped permissions
+  | 'ViewOrganizationUsers'
+  | 'CreateOrganizationUsers'
+  | 'UpdateOrganizationUsers'
+  | 'ViewOrganizationAnalytics'
+  | 'ManageOrganizationActivities'
+  | 'ViewOrganizationSessions'
+  | 'ManageOrganizationSessions'
   // Regular admin permissions
   | 'ViewAssignedActivities'
   | 'ScanQRCodes'
@@ -71,8 +71,8 @@ export interface SessionUser {
   address?: string;
   avatar_url?: string;
   department_id?: UUID;
-  faculty_id?: UUID;
-  faculty_name?: string;
+  organization_id?: UUID;
+  organization_name?: string;
   department_name?: string;
   admin_role?: AdminRole;
   session_id: string;
@@ -101,8 +101,8 @@ export interface DeviceInfo {
   app_version?: string;
 }
 
-// ===== FACULTY & DEPARTMENT TYPES =====
-export interface Faculty {
+// ===== ORGANIZATION & DEPARTMENT TYPES =====
+export interface Organization {
   id: UUID;
   name: string;
   code: string;
@@ -119,11 +119,11 @@ export interface Department {
   id: UUID;
   name: string;
   code: string;
-  faculty_id: UUID;
+  organization_id: UUID;
   is_active: boolean;
   created_at: Timestamp;
   updated_at: Timestamp;
-  faculty?: Faculty;
+  organization?: Organization;
   total_students?: number;
 }
 
@@ -134,7 +134,7 @@ export interface Activity {
   description?: string;
   activity_type: ActivityType;
   location?: string;
-  faculty_id?: UUID;
+  organization_id?: UUID;
   department_id?: UUID;
   start_date: Timestamp;
   end_date: Timestamp;
@@ -145,7 +145,7 @@ export interface Activity {
   created_at: Timestamp;
   updated_at: Timestamp;
   qr_settings?: QRSettings;
-  faculty?: Faculty;
+  organization?: Organization;
   department?: Department;
   creator?: User;
 }
@@ -283,14 +283,14 @@ export interface Analytics {
   total_activities: number;
   total_participations: number;
   active_sessions: number;
-  faculty_breakdown: FacultyStats[];
+  organization_breakdown: OrganizationStats[];
   activity_breakdown: ActivityStats[];
   participation_trends: ParticipationTrend[];
 }
 
-export interface FacultyStats {
-  faculty_id: UUID;
-  faculty_name: string;
+export interface OrganizationStats {
+  organization_id: UUID;
+  organization_name: string;
   total_students: number;
   total_activities: number;
   total_participations: number;

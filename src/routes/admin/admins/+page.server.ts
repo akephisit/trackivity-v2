@@ -4,9 +4,9 @@ import { superValidate } from 'sveltekit-superforms';
 import { zod } from 'sveltekit-superforms/adapters';
 import { adminCreateSchema } from '$lib/schemas/auth';
 import type { PageServerLoad, Actions } from './$types';
-import type { AdminRole, Faculty } from '$lib/types/admin';
+import type { AdminRole, Organization } from '$lib/types/admin';
 import { AdminLevel } from '$lib/types/admin';
-import { db, users, adminRoles, faculties, departments } from '$lib/server/db';
+import { db, users, adminRoles, organizations, departments } from '$lib/server/db';
 import { eq, and, desc, sql } from 'drizzle-orm';
 import bcrypt from 'bcrypt';
 import crypto from 'crypto';
@@ -14,22 +14,22 @@ import crypto from 'crypto';
 export const load: PageServerLoad = async (event) => {
 	const user = requireSuperAdmin(event);
 
-	// Load faculties directly from database
-	let facultiesList: Faculty[] = [];
+// Load organizations directly from database
+let facultiesList: Organization[] = [];
 	try {
 		const facRows = await db
 			.select({
-				id: faculties.id,
-				name: faculties.name,
-				code: faculties.code,
-				description: faculties.description,
-				status: faculties.status,
-				created_at: faculties.createdAt,
-				updated_at: faculties.updatedAt
-			})
-			.from(faculties)
-			.where(eq(faculties.status, true))
-			.orderBy(faculties.name);
+    id: organizations.id,
+    name: organizations.name,
+    code: organizations.code,
+    description: organizations.description,
+    status: organizations.status,
+    created_at: organizations.createdAt,
+    updated_at: organizations.updatedAt
+  })
+  .from(organizations)
+  .where(eq(organizations.status, true))
+  .orderBy(organizations.name);
 
 		facultiesList = facRows.map((f) => ({
 			...f,
@@ -38,7 +38,7 @@ export const load: PageServerLoad = async (event) => {
 			updated_at: f.updated_at?.toISOString() || new Date().toISOString()
 		}));
 	} catch (error) {
-		console.error('Failed to load faculties:', error);
+    console.error('Failed to load organizations:', error);
 	}
 
 	// โหลดรายการแอดมินจากฐานข้อมูลโดยตรง (รวมข้อมูล user)
@@ -49,7 +49,7 @@ export const load: PageServerLoad = async (event) => {
                     id: adminRoles.id,
                     user_id: users.id,
                     admin_level: adminRoles.adminLevel,
-                    faculty_id: adminRoles.facultyId,
+                    organization_id: (adminRoles as any).organizationId,
                     permissions: adminRoles.permissions,
                     is_enabled: adminRoles.isEnabled,
                     created_at: adminRoles.createdAt,
@@ -67,23 +67,23 @@ export const load: PageServerLoad = async (event) => {
 			.innerJoin(users, eq(adminRoles.userId, users.id))
 			.orderBy(desc(adminRoles.createdAt));
 
-		const mapAdminLevel = (lvl: string): AdminLevel => {
-			switch (lvl) {
-				case 'super_admin':
-					return AdminLevel.SuperAdmin;
-				case 'faculty_admin':
-					return AdminLevel.FacultyAdmin;
-				case 'regular_admin':
-				default:
-					return AdminLevel.RegularAdmin;
-			}
-		};
+        const mapAdminLevel = (lvl: string): AdminLevel => {
+            switch (lvl) {
+                case 'super_admin':
+                    return AdminLevel.SuperAdmin;
+                case 'organization_admin':
+                    return AdminLevel.OrganizationAdmin;
+                case 'regular_admin':
+                default:
+                    return AdminLevel.RegularAdmin;
+            }
+        };
 
 		admins = rows.map((r) => ({
 			id: r.id,
 			user_id: r.user_id,
 			admin_level: mapAdminLevel(r.admin_level as unknown as string),
-			faculty_id: r.faculty_id || undefined,
+            organization_id: (r as any).organization_id || undefined,
 			permissions: r.permissions || [],
 			created_at: r.created_at?.toISOString() || new Date().toISOString(),
 			updated_at: r.updated_at?.toISOString() || new Date().toISOString(),
@@ -95,13 +95,13 @@ export const load: PageServerLoad = async (event) => {
                     first_name: r.first_name,
                     last_name: r.last_name,
                     department_id: r.department_id || undefined,
-                    faculty_id: r.faculty_id || undefined,
+                    organization_id: (r as any).organization_id || undefined,
                     status: 'active',
 				role: 'admin',
 				created_at: r.user_created_at?.toISOString() || new Date().toISOString(),
 				updated_at: r.user_updated_at?.toISOString() || new Date().toISOString()
 			},
-			faculty: r.faculty_id ? facultiesList.find((f) => f.id === r.faculty_id) : undefined,
+			organization: (r as any).organization_id ? facultiesList.find((f) => f.id === (r as any).organization_id) : undefined,
 			is_active: false,
 			is_enabled: r.is_enabled ?? true
 		}));

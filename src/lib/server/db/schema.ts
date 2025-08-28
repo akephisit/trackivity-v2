@@ -19,7 +19,7 @@ import { sql } from 'drizzle-orm';
 
 // ===== ENUMS =====
 export const userStatus = pgEnum('user_status', ['active', 'inactive', 'suspended']);
-export const adminLevel = pgEnum('admin_level', ['super_admin', 'faculty_admin', 'regular_admin']);
+export const adminLevel = pgEnum('admin_level', ['super_admin', 'organization_admin', 'regular_admin']);
 export const activityStatus = pgEnum('activity_status', ['draft', 'published', 'ongoing', 'completed', 'cancelled']);
 export const participationStatus = pgEnum('participation_status', ['registered', 'checked_in', 'checked_out', 'completed', 'no_show']);
 export const subscriptionType = pgEnum('subscription_type', ['basic', 'premium', 'enterprise']);
@@ -29,8 +29,8 @@ export const notificationStatus = pgEnum('notification_status', ['pending', 'sen
 
 // ===== CORE TABLES =====
 
-// Faculties table
-export const faculties = pgTable('faculties', {
+// Organizations table
+export const organizations = pgTable('organizations', {
   id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
   name: varchar('name', { length: 255 }).notNull(),
   code: varchar('code', { length: 10 }).notNull().unique(),
@@ -40,7 +40,7 @@ export const faculties = pgTable('faculties', {
   updatedAt: timestamp('updated_at', { withTimezone: true }).default(sql`NOW()`)
 }, (table) => {
   return {
-    statusIdx: index('idx_faculties_status').on(table.status),
+    statusIdx: index('idx_organizations_status').on(table.status),
   };
 });
 
@@ -49,14 +49,14 @@ export const departments = pgTable('departments', {
   id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
   name: varchar('name', { length: 255 }).notNull(),
   code: varchar('code', { length: 10 }).notNull(),
-  facultyId: uuid('faculty_id').notNull().references(() => faculties.id, { onDelete: 'cascade' }),
+  organizationId: uuid('organization_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
   description: text('description'),
   status: boolean('status').notNull().default(true),
   createdAt: timestamp('created_at', { withTimezone: true }).default(sql`NOW()`),
   updatedAt: timestamp('updated_at', { withTimezone: true }).default(sql`NOW()`)
 }, (table) => {
   return {
-    codeFacultyUnique: unique().on(table.code, table.facultyId),
+    codeOrganizationUnique: unique().on(table.code, table.organizationId),
   };
 });
 
@@ -88,7 +88,7 @@ export const adminRoles = pgTable('admin_roles', {
   id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
   userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }).unique(),
   adminLevel: adminLevel('admin_level').notNull(),
-  facultyId: uuid('faculty_id').references(() => faculties.id, { onDelete: 'cascade' }),
+  organizationId: uuid('organization_id').references(() => organizations.id, { onDelete: 'cascade' }),
   permissions: text('permissions').array().notNull().default(sql`'{}'`),
   isEnabled: boolean('is_enabled').notNull().default(true),
   lastSessionId: varchar('last_session_id', { length: 255 }),
@@ -97,7 +97,7 @@ export const adminRoles = pgTable('admin_roles', {
 }, (table) => {
   return {
     userIdIdx: index('idx_admin_roles_user_id').on(table.userId),
-    facultyIdIdx: index('idx_admin_roles_faculty_id').on(table.facultyId),
+    organizationIdIdx: index('idx_admin_roles_organization_id').on(table.organizationId),
     isEnabledIdx: index('idx_admin_roles_is_enabled').on(table.isEnabled),
     lastSessionIdx: index('idx_admin_roles_last_session').on(table.lastSessionId),
   };
@@ -120,13 +120,13 @@ export const activities = pgTable('activities', {
   hours: integer('hours').notNull(),
   maxParticipants: integer('max_participants'),
   status: activityStatus('status').notNull().default('draft'),
-  facultyId: uuid('faculty_id').references(() => faculties.id, { onDelete: 'set null' }),
+  organizationId: uuid('organization_id').references(() => organizations.id, { onDelete: 'set null' }),
   createdBy: uuid('created_by').notNull().references(() => users.id, { onDelete: 'cascade' }),
   createdAt: timestamp('created_at', { withTimezone: true }).default(sql`NOW()`),
   updatedAt: timestamp('updated_at', { withTimezone: true }).default(sql`NOW()`)
 }, (table) => {
   return {
-    facultyIdIdx: index('idx_activities_faculty_id').on(table.facultyId),
+    organizationIdIdx: index('idx_activities_organization_id').on(table.organizationId),
     createdByIdx: index('idx_activities_created_by').on(table.createdBy),
     statusIdx: index('idx_activities_status').on(table.status),
     academicYearIdx: index('idx_activities_academic_year').on(table.academicYear),
@@ -193,10 +193,10 @@ export const sessions = pgTable('sessions', {
 
 // ===== ANALYTICS TABLES =====
 
-// Faculty analytics table
-export const facultyAnalytics = pgTable('faculty_analytics', {
+// Organization analytics table
+export const organizationAnalytics = pgTable('organization_analytics', {
   id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
-  facultyId: uuid('faculty_id').notNull().references(() => faculties.id, { onDelete: 'cascade' }).unique(),
+  organizationId: uuid('organization_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }).unique(),
   totalStudents: integer('total_students').default(0),
   activeStudents: integer('active_students').default(0),
   totalActivities: integer('total_activities').default(0),
@@ -209,8 +209,8 @@ export const facultyAnalytics = pgTable('faculty_analytics', {
   updatedAt: timestamp('updated_at', { withTimezone: true }).default(sql`NOW()`)
 }, (table) => {
   return {
-    facultyIdIdx: index('idx_faculty_analytics_faculty_id').on(table.facultyId),
-    calculatedAtIdx: index('idx_faculty_analytics_calculated_at').on(table.calculatedAt),
+    organizationIdIdx: index('idx_organization_analytics_organization_id').on(table.organizationId),
+    calculatedAtIdx: index('idx_organization_analytics_calculated_at').on(table.calculatedAt),
   };
 });
 
@@ -325,8 +325,8 @@ export const subscriptionExpiryLog = pgTable('subscription_expiry_log', {
 // Type exports for use in application
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
-export type Faculty = typeof faculties.$inferSelect;
-export type NewFaculty = typeof faculties.$inferInsert;
+export type Organization = typeof organizations.$inferSelect;
+export type NewOrganization = typeof organizations.$inferInsert;
 export type Department = typeof departments.$inferSelect;
 export type NewDepartment = typeof departments.$inferInsert;
 export type Activity = typeof activities.$inferSelect;

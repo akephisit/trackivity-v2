@@ -14,21 +14,21 @@
 		IconRefresh,
 		IconDownload
 	} from '@tabler/icons-svelte/icons';
-	import type { UserFilter, Faculty, Department } from '$lib/types/admin';
+import type { UserFilter, Organization, Department } from '$lib/types/admin';
 	import { createEventDispatcher } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
 
 	// Props
 	export let filters: UserFilter = {};
-	export let faculties: Faculty[] = [];
+export let faculties: Organization[] = [];
 	export let departments: Department[] = [];
 	export let showFacultyFilter = true;
 	export let loading = false;
 
 	// Internal state
 	let searchValue = filters.search || '';
-	let selectedFaculty = filters.faculty_id || 'all';
+let selectedFaculty = (filters as any).organization_id || 'all';
 	let selectedDepartment = filters.department_id || 'all';
 	let selectedStatus = filters.status || 'all';
 	let selectedRole = filters.role || 'all';
@@ -37,9 +37,9 @@
 	let showAdvancedFilters = false;
 
 	// Reactive filtered departments based on selected faculty
-	$: filteredDepartments = selectedFaculty === 'all' 
-		? (departments || []) 
-		: (departments || []).filter(dept => dept.faculty_id === selectedFaculty);
+$: filteredDepartments = selectedFaculty === 'all' 
+    ? (departments || []) 
+    : (departments || []).filter(dept => (dept as any).organization_id === selectedFaculty);
 
 	// Event dispatcher
 	const dispatch = createEventDispatcher<{
@@ -55,7 +55,7 @@
 		{ value: 'faculty', label: 'อาจารย์' },
 		{ value: 'staff', label: 'เจ้าหน้าที่' },
 		{ value: 'super_admin', label: 'ซุปเปอร์แอดมิน' },
-		{ value: 'faculty_admin', label: 'แอดมินหน่วยงาน' },
+    { value: 'organization_admin', label: 'แอดมินหน่วยงาน' },
 		{ value: 'regular_admin', label: 'แอดมินทั่วไป' },
 		{ value: 'admin', label: 'แอดมินอื่นๆ' }
 	];
@@ -75,7 +75,7 @@
 	function applyFilters() {
 		const newFilters: UserFilter = {
 			search: searchValue || undefined,
-			faculty_id: selectedFaculty === 'all' ? undefined : selectedFaculty,
+        organization_id: selectedFaculty === 'all' ? undefined : selectedFaculty,
 			department_id: selectedDepartment === 'all' ? undefined : selectedDepartment,
 			status: selectedStatus === 'all' ? undefined : selectedStatus as any,
 			role: selectedRole === 'all' ? undefined : selectedRole as any,
@@ -88,7 +88,7 @@
 		
 		// Clear existing filter params
 		params.delete('search');
-		params.delete('faculty_id');
+    params.delete('organization_id');
 		params.delete('department_id');
 		params.delete('status');
 		params.delete('role');
@@ -131,7 +131,7 @@
 	function handleExport() {
 		const currentFilters: UserFilter = {
 			search: searchValue || undefined,
-			faculty_id: selectedFaculty === 'all' ? undefined : selectedFaculty,
+        organization_id: selectedFaculty === 'all' ? undefined : selectedFaculty,
 			department_id: selectedDepartment === 'all' ? undefined : selectedDepartment,
 			status: selectedStatus === 'all' ? undefined : selectedStatus as any,
 			role: selectedRole === 'all' ? undefined : selectedRole as any,
@@ -169,7 +169,7 @@
 	function initializeFromUrl() {
 		const params = $page.url.searchParams;
 		searchValue = params.get('search') || '';
-		selectedFaculty = params.get('faculty_id') || 'all';
+    selectedFaculty = params.get('organization_id') || 'all';
 		selectedDepartment = params.get('department_id') || 'all';
 		selectedStatus = (params.get('status') as any) || 'all';
 		selectedRole = (params.get('role') as any) || 'all';

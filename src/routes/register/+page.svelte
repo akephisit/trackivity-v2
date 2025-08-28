@@ -32,8 +32,8 @@
 	let showPassword = $state(false);
 	let showConfirmPassword = $state(false);
 
-	// Faculty and Department selection state variables
-	let selectedFaculty = $state('');
+// Organization and Department selection state variables
+let selectedFaculty = $state('');
 	let selectedDepartment = $state('');
 	let departments = $state<Department[]>([]);
 	let loadingDepartments = $state(false);
@@ -46,11 +46,11 @@
 		showConfirmPassword = !showConfirmPassword;
 	}
 
-	// Faculty options for registration
-	let facultyOptions = $derived(data.faculties.map(faculty => ({
-		value: faculty.id,
-		label: faculty.name
-	})));
+// Organization options for registration
+let facultyOptions = $derived((data.organizations || []).map((org: any) => ({
+		value: org.id,
+		label: org.name
+})));
 
 	// Department options based on selected faculty
 	let departmentOptions = $derived(departments.map(dept => ({
@@ -84,7 +84,7 @@
 		}
 	});
 
-	// Load departments based on faculty selection
+// Load departments based on organization selection
 	async function loadDepartments(facultyId: string) {
 		if (!facultyId) {
 			departments = [];

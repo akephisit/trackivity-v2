@@ -22,7 +22,7 @@ declare global {
 				last_name: string;
 				is_admin: boolean;
 				admin_level?: string;
-				faculty_id?: string;
+				organization_id?: string;
 			} | null;
 		}
 		

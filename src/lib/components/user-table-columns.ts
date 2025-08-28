@@ -90,16 +90,16 @@ export const userTableColumns: ColumnDef<User>[] = [
         },
     },
 
-    // Faculty column (visible for SuperAdmin)
+    // Organization column (visible for SuperAdmin)
     {
         id: 'faculty',
-        accessorFn: (row) => row.faculty?.name || '',
+        accessorFn: (row) => (row as any).organization?.name || '',
     header: 'หน่วยงาน',
         cell: ({ row }) => renderSnippet(FacultyCell, { user: row.original }),
         size: 150,
         filterFn: (row, id, value) => {
             if (value === 'all' || !value) return true;
-            return row.original.faculty_id === value;
+            return (row.original as any).organization_id === value;
         },
     },
 
@@ -186,12 +186,12 @@ export const userTableColumns: ColumnDef<User>[] = [
 
 // Export function to get columns based on admin level
 export function getUserTableColumns(
-    adminLevel: 'SuperAdmin' | 'FacultyAdmin' | 'RegularAdmin',
+    adminLevel: 'SuperAdmin' | 'OrganizationAdmin' | 'RegularAdmin',
     facultyScoped = false
 ): ColumnDef<User>[] {
     return userTableColumns.filter(column => {
-        // Hide faculty column for FacultyAdmin (they only see their faculty)
-        if (column.id === 'faculty' && (adminLevel === 'FacultyAdmin' || facultyScoped)) {
+        // Hide organization column for OrganizationAdmin (they only see their organization)
+        if (column.id === 'faculty' && (adminLevel === 'OrganizationAdmin' || facultyScoped)) {
             return false;
         }
 
@@ -241,7 +241,7 @@ export const columnVisibilityPresets = {
         // email column removed
         identifier: true,
         status: true,
-        faculty: false, // Hidden for faculty admin
+        faculty: false, // Hidden for organization admin
         department: true,
         phone: false,
         last_login: true,

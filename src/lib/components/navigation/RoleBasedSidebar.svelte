@@ -171,7 +171,7 @@
           <SidebarSeparator />
         {/if}
 
-        {#if $isFacultyAdmin}
+        {#if $currentUser?.admin_role?.admin_level === 'OrganizationAdmin'}
           <SidebarGroup>
             <SidebarGroupLabel>จัดการหน่วยงาน</SidebarGroupLabel>
             <SidebarGroupContent>

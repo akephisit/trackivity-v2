@@ -17,7 +17,7 @@
 		IconCalendarEvent
 	} from '@tabler/icons-svelte/icons';
     // Use string literal admin level to avoid enum mismatch across modules
-    type AdminLevel = 'SuperAdmin' | 'FacultyAdmin' | 'RegularAdmin';
+    type AdminLevel = 'SuperAdmin' | 'OrganizationAdmin' | 'RegularAdmin';
 	import { mode, setMode } from 'mode-watcher';
 	import { toast } from 'svelte-sonner';
 	import type { ComponentProps } from "svelte";
@@ -96,7 +96,7 @@
 					description: 'จัดการผู้ดูแลระบบ'
 				}
 			);
-		} else if (adminLevel === 'FacultyAdmin') {
+		} else if (adminLevel === 'OrganizationAdmin') {
 			baseItems.push(
 				{
 					title: 'จัดการภาควิชา',
@@ -157,14 +157,14 @@
 
 	function getAdminLevelText(level?: string) {
 		if (level === 'SuperAdmin' || level === 'super_admin') return 'ซุปเปอร์แอดมิน';
-		if (level === 'FacultyAdmin' || level === 'faculty_admin') return 'แอดมินหน่วยงาน';
+		if (level === 'OrganizationAdmin' || level === 'organization_admin') return 'แอดมินหน่วยงาน';
 		return 'แอดมินทั่วไป';
 	}
 
 	function getRoleDisplayName(level?: AdminLevel, facultyName?: string) {
 		if (level === 'SuperAdmin') {
 			return 'ซุปเปอร์แอดมิน';
-		} else if (level === 'FacultyAdmin') {
+		} else if (level === 'OrganizationAdmin') {
 			return facultyName ? `แอดมินหน่วยงาน${facultyName}` : 'แอดมินหน่วยงาน';
 		}
 		return 'แอดมิน';
@@ -252,7 +252,7 @@
 		</Sidebar.Group>
 
 		<!-- Quick Actions for Faculty Admin -->
-			{#if admin_role?.admin_level === 'FacultyAdmin'}
+			{#if admin_role?.admin_level === 'OrganizationAdmin'}
 			<Sidebar.Group>
 				<Sidebar.GroupLabel>การดำเนินการด่วน</Sidebar.GroupLabel>
 				<Sidebar.GroupContent>

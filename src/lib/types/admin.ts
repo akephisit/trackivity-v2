@@ -1,11 +1,11 @@
 export enum AdminLevel {
 	SuperAdmin = 'SuperAdmin',
-	FacultyAdmin = 'FacultyAdmin', 
+	OrganizationAdmin = 'OrganizationAdmin', 
 	RegularAdmin = 'RegularAdmin'
 }
 
 // For API compatibility
-export type AdminLevelAPI = 'super_admin' | 'faculty_admin' | 'regular_admin';
+export type AdminLevelAPI = 'super_admin' | 'organization_admin' | 'regular_admin';
 
 export interface User {
     id: string; // UUID string
@@ -16,9 +16,9 @@ export interface User {
     student_id?: string;
 	employee_id?: string;
 	department_id?: string;
-	faculty_id?: string;
+	organization_id?: string;
     status: 'active' | 'inactive' | 'suspended' | 'online' | 'offline' | 'disabled';
-	role: 'student' | 'faculty' | 'staff' | 'admin' | 'super_admin' | 'faculty_admin' | 'regular_admin';
+	role: 'student' | 'faculty' | 'staff' | 'admin' | 'super_admin' | 'organization_admin' | 'regular_admin';
 	phone?: string;
 	avatar?: string;
 	last_login?: string;
@@ -26,10 +26,10 @@ export interface User {
 	created_at: string;
 	updated_at: string;
 	department?: Department;
-	faculty?: Faculty;
+	organization?: Organization;
 }
 
-export interface Faculty {
+export interface Organization {
 	id: string; // UUID string
 	name: string;
 	code: string;
@@ -44,7 +44,7 @@ export interface Department {
 	name: string;
 	code: string;
 	description?: string;
-	faculty_id: string; // UUID string
+	organization_id: string; // UUID string
 	head_name?: string;
 	head_email?: string;
 	students_count?: number;
@@ -52,7 +52,7 @@ export interface Department {
 	status: boolean;
 	created_at: string;
 	updated_at: string;
-	faculty?: Faculty;
+	organization?: Organization;
 	department_admins?: ExtendedAdminRole[];
 }
 
@@ -60,13 +60,13 @@ export interface AdminRole {
 	id: string; // UUID string
 	user_id: string; // UUID string
 	admin_level: AdminLevel;
-	faculty_id?: string; // UUID string
+	organization_id?: string; // UUID string
 	permissions: string[];
 	is_enabled: boolean; // Whether admin account is enabled (can login)
 	created_at: string;
 	updated_at: string;
 	user?: User;
-	faculty?: Faculty;
+	organization?: Organization;
 }
 
 export interface LoginCredentials {
@@ -79,7 +79,7 @@ export interface RegisterData {
 	password: string;
 	name: string;
 	admin_level?: AdminLevel;
-	faculty_id?: number;
+	organization_id?: number;
 }
 
 export interface AuthSession {
@@ -100,8 +100,8 @@ export interface AdminDashboardStats {
 	recent_activities?: any[];
 	popular_activities?: any[];
 	
-	// Faculty-specific stats (FacultyAdmin)
-	faculty_users?: number;
+	// Organization-specific stats (OrganizationAdmin)
+	organization_users?: number;
 	departments_count?: number;
 	active_users?: number;
 	new_users_this_month?: number;
@@ -123,10 +123,10 @@ export interface ApiResponse<T = any> {
 // User Management Types
 export interface UserFilter {
 	search?: string;
-	faculty_id?: string;
+	organization_id?: string;
 	department_id?: string;
 	status?: 'active' | 'inactive' | 'suspended' | 'online' | 'offline' | 'disabled' | 'all';
-	role?: 'student' | 'faculty' | 'staff' | 'admin' | 'super_admin' | 'faculty_admin' | 'regular_admin' | 'all';
+	role?: 'student' | 'faculty' | 'staff' | 'admin' | 'super_admin' | 'organization_admin' | 'regular_admin' | 'all';
 	created_after?: string;
 	created_before?: string;
 }
@@ -153,9 +153,9 @@ export interface UserStats {
 	faculty: number;
 	staff: number;
 	recent_registrations: number;
-	faculty_breakdown?: Array<{
-		faculty_id: string;
-		faculty_name: string;
+	organization_breakdown?: Array<{
+		organization_id: string;
+		organization_name: string;
 		user_count: number;
 	}>;
 }
@@ -178,7 +178,7 @@ export interface UserUpdateRequest {
 	status?: 'active' | 'inactive' | 'suspended';
 	role?: 'student' | 'faculty' | 'staff' | 'admin';
 	department_id?: string;
-	faculty_id?: string;
+	organization_id?: string;
 }
 
 export interface BulkUserOperation {
@@ -187,7 +187,7 @@ export interface BulkUserOperation {
 	params?: {
 		status?: 'active' | 'inactive' | 'suspended';
 		role?: 'student' | 'faculty' | 'staff' | 'admin';
-		faculty_id?: string;
+		organization_id?: string;
 		department_id?: string;
 	};
 }
@@ -200,9 +200,9 @@ export interface UserExportOptions {
 }
 
 // Faculty Admin Management Types
-export interface FacultyAdminFilter {
+export interface OrganizationAdminFilter {
 	search?: string;
-	faculty_id?: string;
+	organization_id?: string;
 	status?: 'active' | 'inactive' | 'suspended' | 'all';
 	admin_level?: AdminLevel;
 	last_login_after?: string;
@@ -212,7 +212,7 @@ export interface FacultyAdminFilter {
 	has_permissions?: string[];
 }
 
-export interface FacultyAdminPagination {
+export interface OrganizationAdminPagination {
 	page: number;
 	limit: number;
 	total: number;

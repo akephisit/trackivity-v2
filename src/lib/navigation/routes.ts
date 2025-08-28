@@ -90,42 +90,42 @@ export const ROUTES: RouteConfig[] = [
   {
     path: '/admin/organization',
     title: 'จัดการหน่วยงาน',
-    permissions: ['ViewFacultyUsers', 'ManageFacultyActivities'],
+    permissions: ['ViewOrganizationUsers', 'ManageOrganizationActivities'],
     admin_levels: ['FacultyAdmin', 'SuperAdmin'],
     icon: 'school',
     children: [
       {
         path: '/admin/organization/dashboard',
         title: 'แดชบอร์ดหน่วยงาน',
-        permissions: ['ViewFacultyAnalytics'],
+        permissions: ['ViewOrganizationAnalytics'],
         admin_levels: ['FacultyAdmin', 'SuperAdmin'],
         icon: 'analytics'
       },
       {
         path: '/admin/organization/students',
         title: 'จัดการนักศึกษา',
-        permissions: ['ViewFacultyUsers', 'CreateFacultyUsers'],
+        permissions: ['ViewOrganizationUsers', 'CreateOrganizationUsers'],
         admin_levels: ['FacultyAdmin', 'SuperAdmin'],
         icon: 'group'
       },
       {
         path: '/admin/organization/activities',
         title: 'จัดการกิจกรรม',
-        permissions: ['ManageFacultyActivities'],
+        permissions: ['ManageOrganizationActivities'],
         admin_levels: ['FacultyAdmin', 'SuperAdmin'],
         icon: 'event'
       },
       {
         path: '/admin/organization/reports',
         title: 'รายงาน',
-        permissions: ['ViewFacultyAnalytics'],
+        permissions: ['ViewOrganizationAnalytics'],
         admin_levels: ['FacultyAdmin', 'SuperAdmin'],
         icon: 'assessment'
       },
       {
         path: '/admin/organization/sessions',
         title: 'จัดการเซสชัน',
-        permissions: ['ViewFacultySessions', 'ManageFacultySessions'],
+        permissions: ['ViewOrganizationSessions', 'ManageOrganizationSessions'],
         admin_levels: ['FacultyAdmin', 'SuperAdmin'],
         icon: 'security'
       }
@@ -150,7 +150,7 @@ export const ROUTES: RouteConfig[] = [
       {
         path: '/admin/system/organizations',
         title: 'จัดการหน่วยงาน',
-        permissions: ['ViewAllFaculties', 'CreateFaculties'],
+        permissions: ['ViewAllOrganizations', 'CreateOrganizations'],
         admin_levels: ['SuperAdmin'],
         icon: 'account_balance'
       },

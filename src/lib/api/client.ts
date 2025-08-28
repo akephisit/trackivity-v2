@@ -530,8 +530,8 @@ export class ApiClient {
     return this.get<Analytics>('/api/analytics');
   }
 
-  async getFacultyAnalytics(facultyId: string): Promise<ApiResponse<Analytics>> {
-    return this.get<Analytics>(`/api/analytics/faculties/${facultyId}`);
+  async getOrganizationAnalytics(organizationId: string): Promise<ApiResponse<Analytics>> {
+    return this.get<Analytics>(`/api/analytics/organizations/${organizationId}`);
   }
 
   // ===== NOTIFICATIONS =====
