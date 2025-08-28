@@ -12,7 +12,7 @@ import type {
   LoginResponse,
   RegisterRequest,
   User,
-  Faculty,
+  Organization as Faculty,
   Department,
   Activity,
   QRCode,

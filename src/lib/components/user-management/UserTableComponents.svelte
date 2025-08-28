@@ -184,10 +184,10 @@
 </Badge>
 {/if}
 
-<!-- Faculty Cell Component -->
+<!-- Organization Cell Component -->
 {#if user}
-<div class="text-sm truncate" title={user.faculty?.name || '-'}>
-	{user.faculty?.name || '-'}
+<div class="text-sm truncate" title={(user as any).organization?.name || '-'}>
+	{(user as any).organization?.name || '-'}
 </div>
 {/if}
 

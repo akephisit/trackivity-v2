@@ -13,8 +13,8 @@ export interface Activity {
 	max_participants?: number;
 	current_participants: number;
 	status: ActivityStatus;
-	faculty_id?: string;
-	faculty_name?: string;
+	organization_id?: string;
+	organization_name?: string;
 	created_by: string;
 	created_by_name: string;
 	created_at: string;
@@ -47,7 +47,7 @@ export interface ActivityCreateData {
 	start_time: string; // ISO datetime
 	end_time: string; // ISO datetime
 	max_participants?: number;
-	faculty_id?: string;
+	organization_id?: string;
 	department_id?: string;
 }
 
@@ -60,7 +60,7 @@ export interface ActivityUpdateData {
 	end_time?: string;
 	max_participants?: number;
 	status?: ActivityStatus;
-	faculty_id?: string;
+	organization_id?: string;
 	department_id?: string;
 }
 

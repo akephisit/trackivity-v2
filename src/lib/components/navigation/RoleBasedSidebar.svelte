@@ -1,6 +1,6 @@
 <script lang="ts">
   import { page } from '$app/stores';
-  import { currentUser, isAuthenticated, isSuperAdmin, isFacultyAdmin } from '$lib/stores/auth';
+  import { currentUser, isAuthenticated, isSuperAdmin } from '$lib/stores/auth';
   import { getNavigationItems } from '$lib/navigation/routes';
   
   import {
@@ -89,7 +89,7 @@
   function getRoleDisplayName(adminLevel?: string): string {
     switch (adminLevel) {
       case 'SuperAdmin': return 'ผู้ดูแลระบบสูงสุด';
-      case 'FacultyAdmin': return 'ผู้ดูแลหน่วยงาน';
+      case 'OrganizationAdmin': return 'ผู้ดูแลหน่วยงาน';
       case 'RegularAdmin': return 'ผู้ดูแลทั่วไป';
       default: return 'นักศึกษา';
     }
@@ -98,7 +98,7 @@
   function getRoleBadgeVariant(adminLevel?: string): 'default' | 'secondary' | 'destructive' | 'outline' {
     switch (adminLevel) {
       case 'SuperAdmin': return 'destructive';
-      case 'FacultyAdmin': return 'default';
+      case 'OrganizationAdmin': return 'default';
       case 'RegularAdmin': return 'secondary';
       default: return 'outline';
     }

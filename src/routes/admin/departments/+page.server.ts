@@ -17,7 +17,7 @@ const departmentCreateSchema = z.object({
 	head_email: z.string().email('รูปแบบอีเมลไม่ถูกต้อง').optional().or(z.literal('')),
 	status: z.boolean().default(true),
 // สำหรับ SuperAdmin ต้องเลือกหน่วยงาน
-  faculty_id: z.string().uuid('รหัสหน่วยงานไม่ถูกต้อง').optional()
+  organization_id: z.string().uuid('รหัสหน่วยงานไม่ถูกต้อง').optional()
 });
 
 const departmentUpdateSchema = z.object({
@@ -193,13 +193,13 @@ export const actions: Actions = {
 		}
 
 		// Determine the API endpoint based on user role
-        // Determine target faculty
+        // Determine target organization
         let targetFacultyId: string | null = null;
-        if (admin_role?.admin_level === 'FacultyAdmin' && admin_role.faculty_id) {
-            targetFacultyId = admin_role.faculty_id;
+        if (admin_role?.admin_level === 'OrganizationAdmin' && (admin_role as any).organization_id) {
+            targetFacultyId = (admin_role as any).organization_id;
         } else {
-            // SuperAdmin must select a faculty in the form
-            const selected = (form.data as any).faculty_id as string | undefined;
+            // SuperAdmin must select an organization in the form
+            const selected = (form.data as any).organization_id as string | undefined;
             if (!selected) {
                 return fail(400, { form, error: 'กรุณาเลือกหน่วยงาน' });
             }

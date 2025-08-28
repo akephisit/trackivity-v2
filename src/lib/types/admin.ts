@@ -219,21 +219,21 @@ export interface OrganizationAdminPagination {
 	pages: number;
 }
 
-export interface FacultyAdminListResponse {
+export interface OrganizationAdminListResponse {
 	admins: AdminRole[];
-	pagination: FacultyAdminPagination;
-	filters: FacultyAdminFilter;
+	pagination: OrganizationAdminPagination;
+	filters: OrganizationAdminFilter;
 }
 
-export interface FacultyAdminStats {
+export interface OrganizationAdminStats {
 	total_admins: number;
 	active_admins: number;
 	inactive_admins: number;
 	recent_logins: number; // admins logged in within last 7 days
-	total_faculties: number;
-	faculty_breakdown?: Array<{
-		faculty_id: string;
-		faculty_name: string;
+	total_organizations: number;
+	organization_breakdown?: Array<{
+		organization_id: string;
+		organization_name: string;
 		admin_count: number;
 		active_count: number;
 	}>;
@@ -243,7 +243,7 @@ export interface FacultyAdminStats {
 	}>;
 }
 
-export interface FacultyAdminActivity {
+export interface OrganizationAdminActivity {
 	id: string;
 	admin_id: string;
 	action: 'login' | 'logout' | 'permission_change' | 'status_change' | 'profile_update' | 'password_change';
@@ -254,30 +254,30 @@ export interface FacultyAdminActivity {
 	admin?: AdminRole;
 }
 
-export interface FacultyAdminUpdateRequest {
+export interface OrganizationAdminUpdateRequest {
 	first_name?: string;
 	last_name?: string;
 	email?: string;
 	status?: 'active' | 'inactive' | 'suspended';
-	faculty_id?: string;
+	organization_id?: string;
 	permissions?: string[];
 	admin_level?: AdminLevel;
 }
 
 export interface BulkAdminOperation {
 	admin_ids: string[];
-	operation: 'activate' | 'deactivate' | 'suspend' | 'delete' | 'change_faculty' | 'update_permissions';
+	operation: 'activate' | 'deactivate' | 'suspend' | 'delete' | 'change_organization' | 'update_permissions';
 	params?: {
 		status?: 'active' | 'inactive' | 'suspended';
-		faculty_id?: string;
+		organization_id?: string;
 		permissions?: string[];
 		admin_level?: AdminLevel;
 	};
 }
 
-export interface FacultyAdminExportOptions {
+export interface OrganizationAdminExportOptions {
 	format: 'csv' | 'xlsx' | 'pdf';
-	filters?: FacultyAdminFilter;
+	filters?: OrganizationAdminFilter;
 	fields?: string[];
 	include_stats?: boolean;
 	include_permissions?: boolean;
@@ -297,16 +297,16 @@ export interface ExtendedAdminRole extends AdminRole {
 }
 
 // Faculty Admin Dashboard Statistics
-export interface FacultyAdminDashboardStats extends AdminDashboardStats {
-	// Faculty admin specific stats
-	faculty_admin_count?: number;
+export interface OrganizationAdminDashboardStats extends AdminDashboardStats {
+	// Organization admin specific stats
+	organization_admin_count?: number;
 	department_admins?: number;
 	permission_distribution?: Array<{
 		permission: string;
 		admin_count: number;
 		percentage: number;
 	}>;
-	recent_activities?: FacultyAdminActivity[];
+	recent_activities?: OrganizationAdminActivity[];
 	login_frequency?: Array<{
 		date: string;
 		login_count: number;
@@ -317,10 +317,10 @@ export interface FacultyAdminDashboardStats extends AdminDashboardStats {
 	active_admins?: number;
 	inactive_admins?: number;
 	recent_logins?: number;
-	total_faculties?: number;
-	faculty_breakdown?: Array<{
-		faculty_id: string;
-		faculty_name: string;
+	total_organizations?: number;
+	organization_breakdown?: Array<{
+		organization_id: string;
+		organization_name: string;
 		admin_count: number;
 		active_count: number;
 	}>;
@@ -331,10 +331,10 @@ export const ADMIN_PERMISSIONS = {
 	VIEW_DASHBOARD: 'ViewDashboard',
 	MANAGE_ACTIVITIES: 'ManageActivities', 
 	MANAGE_USERS: 'ManageUsers',
-	MANAGE_FACULTY_USERS: 'ManageFacultyUsers',
+	MANAGE_FACULTY_USERS: 'ManageOrganizationUsers',
 	MANAGE_DEPARTMENTS: 'ManageDepartments',
 	VIEW_REPORTS: 'ViewReports',
-	MANAGE_FACULTY_SETTINGS: 'ManageFacultySettings',
+	MANAGE_FACULTY_SETTINGS: 'ManageOrganizationSettings',
 	EXPORT_DATA: 'ExportData'
 } as const;
 

@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { apiClient, isApiSuccess } from '$lib/api/client';
-  import type { Analytics, Faculty, UserSession } from '$lib/types';
+  import type { Analytics, Organization, UserSession } from '$lib/types';
   
   import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
   import { Button } from '$lib/components/ui/button';
@@ -30,7 +30,7 @@
 
   // Component state
   let analytics: Analytics | null = null;
-  let faculties: Faculty[] = [];
+  let faculties: Organization[] = [];
   let activeSessions: UserSession[] = [];
   let loading = {
     analytics: true,
@@ -118,7 +118,7 @@
     });
   }
 
-  function calculateFacultyUtilization(faculty: Faculty): number {
+  function calculateFacultyUtilization(faculty: Organization): number {
     if (!faculty.total_students || faculty.total_students === 0) return 0;
     // This would be calculated based on actual participation vs capacity
     // For now using mock calculation
