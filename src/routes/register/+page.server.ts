@@ -41,7 +41,15 @@ let organizationsList: Organization[] = [];
   .where(eq(organizations.status, true))
   .orderBy(organizations.name);
 
-    organizationsList = result;
+    organizationsList = result.map(o => ({
+      id: o.id,
+      name: o.name,
+      code: o.code,
+      description: o.description || undefined,
+      status: !!o.status,
+      created_at: o.created_at?.toISOString() || new Date().toISOString(),
+      updated_at: o.updated_at?.toISOString() || new Date().toISOString()
+    }));
 	} catch (error) {
     console.error('Failed to load organizations from database:', error);
     throw new Error('ไม่สามารถโหลดข้อมูลหน่วยงานได้ กรุณาลองใหม่อีกครั้ง');

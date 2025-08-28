@@ -381,13 +381,13 @@
 				{/if}
 
 				<!-- Eligible Organizations -->
-				{#if eligibleFacultyNames.length > 0}
+				{#if eligibleFacultyNames().length > 0}
 					<div class="flex items-start gap-3">
 						<IconBuildingBank class="size-5 mt-0.5 text-muted-foreground flex-shrink-0" />
 						<div>
 							<p class="font-medium">หน่วยงานที่สามารถเข้าร่วมได้</p>
 							<div class="flex flex-wrap gap-1">
-								{#each eligibleFacultyNames as name}
+								{#each eligibleFacultyNames() as name}
 									<Badge variant="secondary">{name}</Badge>
 								{/each}
 							</div>

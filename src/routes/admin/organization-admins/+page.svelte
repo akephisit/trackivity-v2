@@ -34,7 +34,7 @@
 	} from '@tabler/icons-svelte/icons';
 	import { toast } from 'svelte-sonner';
 	import { invalidateAll, invalidate } from '$app/navigation';
-	import type { ExtendedAdminRole, FacultyAdminUpdateRequest } from '$lib/types/admin';
+import type { ExtendedAdminRole } from '$lib/types/admin';
 	import { AdminLevel, ADMIN_PERMISSIONS } from '$lib/types/admin';
 	import { PrefixOptions } from '$lib/schemas/auth';
 
@@ -42,12 +42,12 @@
 	let refreshing = $state(false);
 
 	// Admin creation schema
-	const adminCreateSchema = z.object({
+const adminCreateSchema = z.object({
 		name: z.string().min(1, 'กรุณากรอกชื่อ'),
 		email: z.string().email('รูปแบบอีเมลไม่ถูกต้อง'),
 		password: z.string().min(6, 'รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร').optional(),
-		faculty_id: z.string().min(1, 'กรุณาเลือกหน่วยงาน'),
-		admin_level: z.nativeEnum(AdminLevel).default(AdminLevel.FacultyAdmin),
+		organization_id: z.string().min(1, 'กรุณาเลือกหน่วยงาน'),
+		admin_level: z.nativeEnum(AdminLevel).default(AdminLevel.OrganizationAdmin),
 		permissions: z.array(z.string()).default([])
 	});
 
@@ -88,14 +88,14 @@
 
 	// Edit form states
 	let editingAdmin = $state<ExtendedAdminRole | null>(null);
-	let editFormData = $state<FacultyAdminUpdateRequest>({
+let editFormData = $state({
 		first_name: '',
 		last_name: '',
 		email: '',
 		status: 'active',
-		faculty_id: '',
+		organization_id: '',
 		permissions: []
-	});
+	} as any);
 
 	// View dialog state
 	let viewingAdmin = $state<ExtendedAdminRole | null>(null);
@@ -122,9 +122,9 @@
 		name: '',
 		email: '',
 		password: '',
-		admin_level: AdminLevel.RegularAdmin,
-		faculty_id: data.userFacultyId || '',
-		permissions: [ADMIN_PERMISSIONS.VIEW_DASHBOARD, ADMIN_PERMISSIONS.MANAGE_ACTIVITIES]
+                admin_level: AdminLevel.RegularAdmin,
+                organization_id: data.userOrganizationId || '',
+                permissions: [ADMIN_PERMISSIONS.VIEW_DASHBOARD, ADMIN_PERMISSIONS.MANAGE_ACTIVITIES]
 	});
 
 	// Available permissions list
@@ -140,16 +140,16 @@
 	];
 
 	// Filtered admins
-	let filteredAdmins = $derived(() => {
-		let filtered = data.facultyAdmins;
+let filteredAdmins = $derived(() => {
+		let filtered = data.organizationAdmins as any[];
 
 		// Apply search filter
 		if (searchQuery.trim()) {
 			const query = searchQuery.toLowerCase();
-			filtered = filtered.filter(admin => 
+			filtered = filtered.filter((admin: any) => 
 				admin.full_name?.toLowerCase().includes(query) ||
 				admin.user?.email.toLowerCase().includes(query) ||
-				admin.faculty?.name.toLowerCase().includes(query)
+				admin.organization?.name?.toLowerCase().includes(query)
 			);
 		}
 
@@ -162,7 +162,7 @@
 
 		// Apply faculty filter
 		if (facultyFilter !== 'all') {
-			filtered = filtered.filter(admin => admin.faculty_id === facultyFilter);
+			filtered = filtered.filter((admin: any) => admin.organization_id === facultyFilter);
 		}
 
 		return filtered;
@@ -178,8 +178,8 @@
 			last_name: '',
 			email: '',
 			password: '',
-			faculty_id: data.isSuperAdmin ? '' : (data.userFacultyId || ''),
-			admin_level: AdminLevel.FacultyAdmin,
+			organization_id: data.isSuperAdmin ? '' : (data.userOrganizationId || ''),
+			admin_level: AdminLevel.OrganizationAdmin,
 			permissions: selectedPermissions
 		};
 		selectedPermissions = [
@@ -195,7 +195,7 @@
 			email: '',
 			password: '',
 			admin_level: AdminLevel.RegularAdmin,
-			faculty_id: data.userFacultyId || '',
+			organization_id: data.userOrganizationId || '',
 			permissions: [ADMIN_PERMISSIONS.VIEW_DASHBOARD, ADMIN_PERMISSIONS.MANAGE_ACTIVITIES]
 		};
 		createGeneralAdminDialogOpen = true;
@@ -208,9 +208,9 @@
 			last_name: admin.user?.last_name || '',
 			email: admin.user?.email || '',
 			status: (admin.user?.status as any) || 'active',
-			faculty_id: admin.faculty_id || '',
+			organization_id: (admin as any).organization_id || '',
 			permissions: admin.permissions || []
-		};
+		} as any;
 		editDialogOpen = true;
 	}
 
@@ -407,7 +407,7 @@
 			formData.append('email', generalAdminFormData.email);
 			formData.append('password', generalAdminFormData.password);
 			formData.append('admin_level', generalAdminFormData.admin_level);
-			formData.append('faculty_id', generalAdminFormData.faculty_id);
+			formData.append('organization_id', (generalAdminFormData as any).organization_id);
 			formData.append('permissions', JSON.stringify(generalAdminFormData.permissions));
 
 			const response = await fetch('?/create', {
@@ -444,8 +444,8 @@
 
 	// Get page title based on user role
 	let pageTitle = $derived(
-		!data.isSuperAdmin && data.currentFaculty 
-		? `จัดการแอดมินหน่วยงาน - ${(data.currentFaculty as any)?.name}`
+		!data.isSuperAdmin && data.currentOrganization 
+		? `จัดการแอดมินหน่วยงาน - ${(data.currentOrganization as any)?.name}`
 		: 'จัดการแอดมินหน่วยงาน'
 	)
 </script>
@@ -493,11 +493,11 @@
 			</CardHeader>
 			<CardContent>
 				<div class="text-2xl font-bold">{stats.total_admins}</div>
-				{#if data.isSuperAdmin && stats.faculty_breakdown}
-					<p class="text-xs text-muted-foreground">
-							ใน {stats.total_faculties} หน่วยงาน
-					</p>
-				{/if}
+					{#if data.isSuperAdmin && (stats.total_organizations ?? 0) > 0}
+						<p class="text-xs text-muted-foreground">
+								ใน {stats.total_organizations} หน่วยงาน
+						</p>
+					{/if}
 			</CardContent>
 		</Card>
 
@@ -611,16 +611,16 @@
 				</div>
 			</div>
 			
-				{#if data.isSuperAdmin && (data.faculties?.length || 0) > 1}
+		{#if data.isSuperAdmin && (data.organizations?.length || 0) > 1}
 				<div>
         <Label class="text-sm font-medium">กรองตามหน่วยงาน</Label>
-					<Select.Root type="single" bind:value={facultyFilter}>
+			<Select.Root type="single" bind:value={facultyFilter}>
 						<Select.Trigger class="mt-1 w-[180px]">
-            {facultyFilter === 'all' ? 'ทุกหน่วยงาน' : (data.faculties as any[])?.find((f: any) => f.id === facultyFilter)?.name || 'เลือกหน่วยงาน'}
+				{facultyFilter === 'all' ? 'ทุกหน่วยงาน' : (data.organizations as any[])?.find((f: any) => f.id === facultyFilter)?.name || 'เลือกหน่วยงาน'}
 						</Select.Trigger>
 						<Select.Content>
             <Select.Item value="all">ทุกหน่วยงาน</Select.Item>
-							{#each (data.faculties || []) as faculty}
+				{#each (data.organizations || []) as faculty}
 								<Select.Item value={faculty.id}>{faculty.name}</Select.Item>
 							{/each}
 						</Select.Content>
@@ -730,10 +730,10 @@
 										</Table.Cell>
 										{#if data.isSuperAdmin}
 											<Table.Cell class="py-4">
-												{#if admin.faculty}
+						{#if admin.organization}
 													<Badge variant="outline" class="flex items-center gap-1">
 														<IconSchool class="h-3 w-3" />
-														{admin.faculty.name}
+								{admin.organization.name}
 													</Badge>
 												{:else}
 													<span class="text-gray-400">-</span>
@@ -742,12 +742,12 @@
 										{/if}
 										<Table.Cell class="py-4">
 											<div class="flex flex-wrap gap-1">
-												<Badge 
-													variant={admin.admin_level === AdminLevel.FacultyAdmin ? "default" : "secondary"} 
+								<Badge 
+									variant={admin.admin_level === AdminLevel.OrganizationAdmin ? "default" : "secondary"} 
 													class="text-xs flex items-center gap-1"
 												>
 													<IconShield class="h-3 w-3" />
-                            {admin.admin_level === AdminLevel.FacultyAdmin ? 'แอดมินหน่วยงาน' : 'แอดมินทั่วไป'}
+                            {admin.admin_level === AdminLevel.OrganizationAdmin ? 'แอดมินหน่วยงาน' : 'แอดมินทั่วไป'}
 												</Badge>
 												{#if admin.assigned_departments && admin.assigned_departments.length > 0}
 													<Badge variant="secondary" class="text-xs flex items-center gap-1">
@@ -972,16 +972,16 @@
 				</Form.Field>
 			</div>
 
-			<Form.Field form={createForm} name="faculty_id">
+                        <Form.Field form={createForm} name="organization_id">
 				<Form.Control>
 					{#snippet children({ props })}
                     <Label for={props.id}>หน่วยงาน</Label>
-						<Select.Root type="single" bind:value={$createFormData.faculty_id}>
-							<Select.Trigger>
-                        {$createFormData.faculty_id ? data.faculties.find(f => f.id === $createFormData.faculty_id)?.name : 'เลือกหน่วยงานที่จะดูแล'}
-							</Select.Trigger>
+                                                <Select.Root type="single" bind:value={(($createFormData as any).organization_id)}>
+                                                        <Select.Trigger>
+                        {(($createFormData as any).organization_id) ? (data.organizations as any[]).find((f: any) => f.id === ($createFormData as any).organization_id)?.name : 'เลือกหน่วยงานที่จะดูแล'}
+                                                        </Select.Trigger>
 							<Select.Content>
-								{#each data.faculties as faculty}
+                                                        {#each data.organizations as faculty}
 									<Select.Item value={faculty.id}>{faculty.name}</Select.Item>
 								{/each}
 							</Select.Content>
@@ -1047,9 +1047,9 @@
 	<Dialog.Content class="sm:max-w-lg">
 		<Dialog.Header>
 			<Dialog.Title>เพิ่มแอดมินทั่วไปใหม่</Dialog.Title>
-			<Dialog.Description>
-            สร้างบัญชีแอดมินทั่วไปสำหรับการจัดการในหน่วยงาน {data.currentFaculty?.name || ''}
-			</Dialog.Description>
+                        <Dialog.Description>
+            สร้างบัญชีแอดมินทั่วไปสำหรับการจัดการในหน่วยงาน {data.currentOrganization?.name || ''}
+                        </Dialog.Description>
 		</Dialog.Header>
 
 		<div class="space-y-4">
@@ -1095,7 +1095,7 @@
 				<ul class="mt-2 text-xs text-blue-600 dark:text-blue-400 ml-6 space-y-1">
 					<li>• ดูแดชบอร์ด</li>
 					<li>• จัดการกิจกรรม</li>
-                    <li>• สังกัดหน่วยงาน: {data.currentFaculty?.name || 'ไม่ระบุ'}</li>
+                    <li>• สังกัดหน่วยงาน: {data.currentOrganization?.name || 'ไม่ระบุ'}</li>
 				</ul>
 			</div>
 
@@ -1153,7 +1153,7 @@
                     <Label class="text-sm font-medium text-gray-500">หน่วยงาน</Label>
 						<p class="text-gray-700 flex items-center gap-1">
 							<IconSchool class="h-4 w-4" />
-							{viewingAdmin.faculty?.name || 'ไม่ระบุ'}
+								{viewingAdmin.organization?.name || 'ไม่ระบุ'}
 						</p>
 					</div>
 					<div class="space-y-2">
@@ -1313,12 +1313,12 @@
 
 				<div class="space-y-2">
                 <Label>หน่วยงาน</Label>
-					<Select.Root type="single" bind:value={editFormData.faculty_id}>
+					<Select.Root type="single" bind:value={editFormData.organization_id}>
 						<Select.Trigger>
-                        {editFormData.faculty_id ? data.faculties.find(f => f.id === editFormData.faculty_id)?.name : 'เลือกหน่วยงาน'}
+                        {editFormData.organization_id ? (data.organizations as any[]).find((f: any) => f.id === editFormData.organization_id)?.name : 'เลือกหน่วยงาน'}
 						</Select.Trigger>
 						<Select.Content>
-							{#each data.faculties as faculty}
+							{#each data.organizations as faculty}
 								<Select.Item value={faculty.id}>{faculty.name}</Select.Item>
 							{/each}
 						</Select.Content>

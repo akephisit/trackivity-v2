@@ -5,16 +5,16 @@ import type {
     User, 
     UserFilter, 
     UserStats,
-    Faculty
+    Organization
 } from '$lib/types/admin';
 import { AdminLevel } from '$lib/types/admin';
-import { db, users, adminRoles, faculties, departments } from '$lib/server/db';
+import { db, users, adminRoles, organizations, departments } from '$lib/server/db';
 import { eq, and, or, like, desc, count, sql, gte } from 'drizzle-orm';
 
 /**
  * Get users from database with filters and pagination
  */
-async function getUsersFromDb(adminLevel: string, facultyId: string | null | undefined, filters: UserFilter, offset: number, limit: number) {
+async function getUsersFromDb(adminLevel: string, organizationId: string | null | undefined, filters: UserFilter, offset: number, limit: number) {
     let query = db
         .select({
             id: users.id,
@@ -28,23 +28,23 @@ async function getUsersFromDb(adminLevel: string, facultyId: string | null | und
             created_at: users.createdAt,
             updated_at: users.updatedAt,
             department_name: departments.name,
-            faculty_id: departments.facultyId,
-            faculty_name: faculties.name,
+            organization_id: departments.organizationId,
+            organization_name: organizations.name,
             admin_level: adminRoles.adminLevel,
-            admin_faculty_id: adminRoles.facultyId,
+            admin_organization_id: adminRoles.organizationId,
             is_admin: sql<boolean>`${adminRoles.id} IS NOT NULL`,
         })
         .from(users)
         .leftJoin(departments, eq(users.departmentId, departments.id))
-        .leftJoin(faculties, eq(departments.facultyId, faculties.id))
+        .leftJoin(organizations, eq(departments.organizationId, organizations.id))
         .leftJoin(adminRoles, eq(users.id, adminRoles.userId))
         .$dynamic();
 
     const conditions = [];
 
-    // Faculty filtering for FacultyAdmin
-    if (adminLevel === AdminLevel.FacultyAdmin && facultyId) {
-        conditions.push(eq(departments.facultyId, facultyId));
+    // Organization filtering for OrganizationAdmin
+    if (adminLevel === AdminLevel.OrganizationAdmin && organizationId) {
+        conditions.push(eq(departments.organizationId, organizationId));
     }
 
     // Apply filters
@@ -58,8 +58,8 @@ async function getUsersFromDb(adminLevel: string, facultyId: string | null | und
         ));
     }
 
-    if (filters.faculty_id) {
-        conditions.push(eq(departments.facultyId, filters.faculty_id));
+    if (filters.organization_id) {
+        conditions.push(eq(departments.organizationId, (filters as any).organization_id));
     }
 
     if (filters.department_id) {
@@ -111,11 +111,11 @@ async function getUsersFromDb(adminLevel: string, facultyId: string | null | und
 /**
  * Get user statistics from database
  */
-async function getUserStatsFromDb(adminLevel: string, facultyId: string | null | undefined): Promise<UserStats> {
+async function getUserStatsFromDb(adminLevel: string, organizationId: string | null | undefined): Promise<UserStats> {
     // Base conditions for faculty filtering
-    const baseConditions = [];
-    if (adminLevel === AdminLevel.FacultyAdmin && facultyId) {
-        baseConditions.push(eq(departments.facultyId, facultyId));
+    const baseConditions: any[] = [];
+    if (adminLevel === AdminLevel.OrganizationAdmin && organizationId) {
+        baseConditions.push(eq(departments.organizationId, organizationId));
     }
 
     const [totalUsers, activeUsers, recentRegistrations] = await Promise.all([
@@ -175,26 +175,26 @@ async function getUserStatsFromDb(adminLevel: string, facultyId: string | null |
 /**
  * Get faculties from database
  */
-async function getFacultiesFromDb(): Promise<Faculty[]> {
+async function getOrganizationsFromDb(): Promise<Organization[]> {
     const result = await db
         .select({
-            id: faculties.id,
-            name: faculties.name,
-            code: faculties.code,
-            description: faculties.description,
-            status: faculties.status,
-            created_at: faculties.createdAt,
-            updated_at: faculties.updatedAt
+            id: organizations.id,
+            name: organizations.name,
+            code: organizations.code,
+            description: organizations.description,
+            status: organizations.status,
+            created_at: organizations.createdAt,
+            updated_at: organizations.updatedAt
         })
-        .from(faculties)
-        .where(eq(faculties.status, true))
-        .orderBy(faculties.name);
+        .from(organizations)
+        .where(eq(organizations.status, true))
+        .orderBy(organizations.name);
 
-    return result.map(f => ({
-        ...f,
-        description: f.description || undefined, // Convert null to undefined
-        created_at: f.created_at?.toISOString() || new Date().toISOString(),
-        updated_at: f.updated_at?.toISOString() || new Date().toISOString()
+    return result.map(o => ({
+        ...o,
+        description: o.description || undefined, // Convert null to undefined
+        created_at: o.created_at?.toISOString() || new Date().toISOString(),
+        updated_at: o.updated_at?.toISOString() || new Date().toISOString()
     }));
 }
 
@@ -202,13 +202,13 @@ async function getFacultiesFromDb(): Promise<Faculty[]> {
  * Server Load Function for General User Management
  * Implements role-based access control:
  * - SuperAdmin: Can view all users system-wide
- * - FacultyAdmin: Can only view users within their faculty
+* - OrganizationAdmin: Can only view users within their organization
  */
 export const load: PageServerLoad = async (event) => {
     // Ensure user is authenticated as admin
     const user = requireAdmin(event);
     const adminLevel = user.admin_role?.admin_level;
-    const facultyId = user.admin_role?.faculty_id;
+    const organizationId = (user.admin_role as any)?.organization_id;
 
     // Extract query parameters for filtering and pagination
     const url = event.url;
@@ -216,7 +216,7 @@ export const load: PageServerLoad = async (event) => {
     
     const filters: UserFilter = {
         search: searchParams.get('search') || undefined,
-        faculty_id: searchParams.get('faculty_id') || undefined,
+        organization_id: searchParams.get('organization_id') || undefined,
         department_id: searchParams.get('department_id') || undefined,
         status: (searchParams.get('status') as any) || 'all',
         role: (searchParams.get('role') as any) || 'all',
@@ -230,28 +230,26 @@ export const load: PageServerLoad = async (event) => {
 
     try {
         // Validate admin access
-        if (adminLevel === AdminLevel.FacultyAdmin && !facultyId) {
-            throw error(403, 'Faculty admin must be associated with a faculty');
+        if (adminLevel === AdminLevel.OrganizationAdmin && !organizationId) {
+            throw error(403, 'Organization admin must be associated with an organization');
         }
 
-        if (adminLevel !== AdminLevel.SuperAdmin && adminLevel !== AdminLevel.FacultyAdmin) {
+        if (adminLevel !== AdminLevel.SuperAdmin && adminLevel !== AdminLevel.OrganizationAdmin) {
             throw error(403, 'Insufficient permissions to view user data');
         }
 
         // Direct database queries instead of API calls
-        const [usersData, statsData, facultiesData] = await Promise.all([
-            getUsersFromDb(adminLevel, facultyId, filters, offset, limit),
-            getUserStatsFromDb(adminLevel, facultyId),
-            // Load faculties for filtering (only for SuperAdmin)
-            adminLevel === AdminLevel.SuperAdmin ? getFacultiesFromDb() : Promise.resolve([])
+        const [usersData, statsData, organizationsData] = await Promise.all([
+            getUsersFromDb(adminLevel, organizationId, filters, offset, limit),
+            getUserStatsFromDb(adminLevel, organizationId),
+            // Load organizations for filtering (only for SuperAdmin)
+            adminLevel === AdminLevel.SuperAdmin ? getOrganizationsFromDb() : Promise.resolve([])
         ]);
 
-        // Process faculties data
-        const faculties: Faculty[] = facultiesData;
-
-        // Create a faculty lookup map for better performance
-        const facultyMap = new Map();
-        faculties.forEach(f => facultyMap.set(f.id, f));
+        // Process organizations data
+        const orgs: Organization[] = organizationsData;
+        const orgMap = new Map();
+        orgs.forEach(o => orgMap.set(o.id, o));
 
         // Process users data
         const { users: rawUsers, totalCount } = usersData;
@@ -277,15 +275,13 @@ export const load: PageServerLoad = async (event) => {
 
             const department = u.department_name ? { id: u.department_id, name: u.department_name } : undefined;
             
-            // Handle faculty data
-            let faculty = null;
-            if (u.is_admin && u.admin_faculty_id) {
-                // For admin users, use admin's faculty
-                const facultyFromMap = facultyMap.get(u.admin_faculty_id);
-                faculty = facultyFromMap || { id: u.admin_faculty_id, name: 'Unknown Faculty' };
-            } else if (u.faculty_name && u.faculty_id) {
-                // For regular users, use department's faculty
-                faculty = { id: u.faculty_id, name: u.faculty_name };
+            // Handle organization data
+            let organization: { id: string; name: string } | undefined = undefined;
+            if (u.is_admin && u.admin_organization_id) {
+                const orgFromMap = orgMap.get(u.admin_organization_id);
+                organization = orgFromMap || { id: u.admin_organization_id, name: 'Unknown Organization' };
+            } else if (u.organization_name && u.organization_id) {
+                organization = { id: u.organization_id, name: u.organization_name };
             }
 
             // Determine user role based on admin_level
@@ -296,8 +292,8 @@ export const load: PageServerLoad = async (event) => {
                     case 'super_admin':
                         role = 'super_admin';
                         break;
-                    case 'faculty_admin':
-                        role = 'faculty_admin';
+                    case 'organization_admin':
+                        role = 'organization_admin';
                         break;
                     case 'regular_admin':
                         role = 'regular_admin';
@@ -315,7 +311,7 @@ export const load: PageServerLoad = async (event) => {
                 student_id: u.student_id,
                 employee_id: undefined, // Not in database schema yet
                 department_id: u.department_id,
-                faculty_id: u.faculty_id,
+                organization_id: u.organization_id,
                 status,
                 role,
                 phone: undefined, // Not in database schema yet
@@ -325,7 +321,7 @@ export const load: PageServerLoad = async (event) => {
                 created_at: u.created_at ? new Date(u.created_at).toISOString() : new Date().toISOString(),
                 updated_at: u.updated_at ? new Date(u.updated_at).toISOString() : new Date().toISOString(),
                 department,
-                faculty,
+                organization,
             } as User;
         });
 
@@ -335,11 +331,11 @@ export const load: PageServerLoad = async (event) => {
         return {
             users,
             stats,
-            faculties,
+            organizations: orgs,
             pagination,
             filters,
             adminLevel,
-            facultyId,
+            organizationId,
             canManageAllUsers: adminLevel === AdminLevel.SuperAdmin
         };
 

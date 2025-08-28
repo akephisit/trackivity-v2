@@ -339,11 +339,11 @@
 										</div>
 									{/if}
 									
-									<!-- Faculty -->
-									{#if activity.faculty_name}
+                                                                        <!-- Organization -->
+                                                                        {#if activity.organization_name}
 										<div class="flex items-center gap-2 text-sm text-muted-foreground">
 											<IconMapPin class="size-4 flex-shrink-0" />
-											<span class="line-clamp-1">{activity.faculty_name}</span>
+                                                                                      <span class="line-clamp-1">{activity.organization_name}</span>
 										</div>
 									{/if}
 									

@@ -36,9 +36,9 @@
 
 	// Extract data from server load with safe defaults
 	const { 
-		stats, 
-		faculties = [], 
-		departments = [], 
+				stats, 
+				organizations = [], 
+				departments = [],
 		filters = {}, 
 		adminLevel
 	} = $derived(data || {});
@@ -236,7 +236,7 @@
 	<!-- Advanced Filters -->
 	<UserFilters
 		filters={filters || {}}
-		faculties={Array.isArray(faculties) ? faculties : []}
+		faculties={Array.isArray(organizations) ? organizations : []}
 		departments={Array.isArray(departments) ? departments : []}
 		showFacultyFilter={canViewAllFaculties}
 		{loading}
