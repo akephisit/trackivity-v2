@@ -24,7 +24,7 @@
 	const { 
 		users = [], 
 		stats = { total_users: 0, active_users: 0, inactive_users: 0, students: 0, faculty: 0, staff: 0, recent_registrations: 0 }, 
-		faculties = [],
+		organizations = [],
 		filters = {},
 		pagination = { page: 1, limit: 20, total_count: 0, total_pages: 1 }, 
 		canManageAllUsers = false,
@@ -175,7 +175,7 @@
 	<!-- Advanced Filters -->
 	<UserFilters
 		filters={filters || {}}
-		faculties={Array.isArray(faculties) ? faculties : []}
+		faculties={Array.isArray(organizations) ? organizations : []}
 		departments={[]}
 		showFacultyFilter={canManageAllUsers}
 		on:filtersChanged={(e) => {
