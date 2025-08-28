@@ -711,17 +711,20 @@
 			<AlertDialog.Cancel onclick={() => deleteActivityDialogOpen = false}>
 				ยกเลิก
 			</AlertDialog.Cancel>
-			<AlertDialog.Action 
-				class="bg-red-600 text-white hover:bg-red-700"
-				onclick={async () => {
-					const response = await fetch('?/deleteActivity', {
-						method: 'POST'
-					});
-					if (response.redirected) {
-						goto(response.url);
-					}
-				}}
-			>
+                    <AlertDialog.Action 
+                        class="bg-red-600 text-white hover:bg-red-700"
+                        onclick={async () => {
+                            const fd = new FormData();
+                            // Empty form body to satisfy form-encoded action requirement
+                            const response = await fetch('?/deleteActivity', {
+                                method: 'POST',
+                                body: fd
+                            });
+                            if (response.redirected) {
+                                goto(response.url);
+                            }
+                        }}
+                    >
 				ลบกิจกรรม
 			</AlertDialog.Action>
 		</AlertDialog.Footer>

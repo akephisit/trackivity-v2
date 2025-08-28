@@ -2,7 +2,7 @@ import type { PageServerLoad, Actions } from './$types';
 import { requireAdmin } from '$lib/server/auth-utils';
 import { db, activities, participations, users, faculties } from '$lib/server/db';
 import { eq, count } from 'drizzle-orm';
-import { error } from '@sveltejs/kit';
+import { error, redirect } from '@sveltejs/kit';
 
 export const load: PageServerLoad = async (event) => {
   const user = requireAdmin(event);
@@ -152,6 +152,36 @@ export const actions: Actions = {
     } catch (e) {
       console.error('Update status error:', e);
       return { error: 'อัปเดตสถานะไม่สำเร็จ' } as const;
+    }
+  },
+  deleteActivity: async (event) => {
+    const user = requireAdmin(event);
+    const { params } = event;
+    if (!params.id) {
+      return { error: 'ไม่พบรหัสกิจกรรม' } as const;
+    }
+    try {
+      await db.delete(activities).where(eq(activities.id, params.id));
+      // Redirect back to activities list
+      throw redirect(302, '/admin/activities');
+    } catch (e) {
+      console.error('Delete activity error:', e);
+      return { error: 'ลบกิจกรรมไม่สำเร็จ' } as const;
+    }
+  },
+  removeParticipant: async (event) => {
+    const user = requireAdmin(event);
+    const formData = await event.request.formData();
+    const participationId = formData.get('participationId') as string | null;
+    if (!participationId) {
+      return { error: 'ไม่พบรหัสผู้เข้าร่วม' } as const;
+    }
+    try {
+      await db.delete(participations).where(eq(participations.id, participationId));
+      return { success: true } as const;
+    } catch (e) {
+      console.error('Remove participant error:', e);
+      return { error: 'ลบผู้เข้าร่วมไม่สำเร็จ' } as const;
     }
   }
 };
