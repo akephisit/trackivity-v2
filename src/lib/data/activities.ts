@@ -1,7 +1,7 @@
 import type { Activity } from '../types/activity.js';
 
-	export const mockActivities: Activity[] = [
-		{
+export const mockActivities: Activity[] = [
+	{
 		id: '1',
 		title: 'งานวันคุ้มครองผู้บริโภค',
 		description: 'กิจกรรมเพื่อสร้างความเข้าใจในการคุ้มครองผู้บริโภค',
@@ -12,14 +12,14 @@ import type { Activity } from '../types/activity.js';
 		current_participants: 150,
 		status: 'completed',
 		organization_id: '1',
-    organization_name: 'หน่วยงานเศรษฐศาสตร์',
+		organization_name: 'หน่วยงานเศรษฐศาสตร์',
 		created_by: 'user1',
 		created_by_name: 'อาจารย์สมชาย ใจดี',
 		created_at: '2024-01-15T10:00:00.000Z',
 		updated_at: '2024-01-20T16:30:00.000Z',
 		is_registered: false,
-    organizer: 'หน่วยงานเศรษฐศาสตร์',
-    organizerType: 'หน่วยงาน'
+		organizer: 'หน่วยงานเศรษฐศาสตร์',
+		organizerType: 'หน่วยงาน'
 	},
 	{
 		id: '2',
@@ -32,14 +32,14 @@ import type { Activity } from '../types/activity.js';
 		current_participants: 280,
 		status: 'ongoing',
 		organization_id: '2',
-    organization_name: 'หน่วยงานวิศวกรรมศาสตร์',
+		organization_name: 'หน่วยงานวิศวกรรมศาสตร์',
 		created_by: 'user2',
 		created_by_name: 'ผศ.ดร.สมหญิง วิชาการ',
 		created_at: '2024-02-01T09:00:00.000Z',
 		updated_at: '2024-02-15T14:20:00.000Z',
 		is_registered: true,
-    organizer: 'หน่วยงานวิศวกรรมศาสตร์',
-    organizerType: 'หน่วยงาน'
+		organizer: 'หน่วยงานวิศวกรรมศาสตร์',
+		organizerType: 'หน่วยงาน'
 	},
 	{
 		id: '3',

@@ -1,6 +1,6 @@
 export enum AdminLevel {
 	SuperAdmin = 'SuperAdmin',
-	OrganizationAdmin = 'OrganizationAdmin', 
+	OrganizationAdmin = 'OrganizationAdmin',
 	RegularAdmin = 'RegularAdmin'
 }
 
@@ -8,17 +8,24 @@ export enum AdminLevel {
 export type AdminLevelAPI = 'super_admin' | 'organization_admin' | 'regular_admin';
 
 export interface User {
-    id: string; // UUID string
-    email: string;
-    prefix?: string; // Title prefix (Mr/Mrs/Miss/Dr/etc.)
-    first_name: string;
-    last_name: string;
-    student_id?: string;
+	id: string; // UUID string
+	email: string;
+	prefix?: string; // Title prefix (Mr/Mrs/Miss/Dr/etc.)
+	first_name: string;
+	last_name: string;
+	student_id?: string;
 	employee_id?: string;
 	department_id?: string;
 	organization_id?: string;
-    status: 'active' | 'inactive' | 'suspended' | 'online' | 'offline' | 'disabled';
-	role: 'student' | 'faculty' | 'staff' | 'admin' | 'super_admin' | 'organization_admin' | 'regular_admin';
+	status: 'active' | 'inactive' | 'suspended' | 'online' | 'offline' | 'disabled';
+	role:
+		| 'student'
+		| 'faculty'
+		| 'staff'
+		| 'admin'
+		| 'super_admin'
+		| 'organization_admin'
+		| 'regular_admin';
 	phone?: string;
 	avatar?: string;
 	last_login?: string;
@@ -99,7 +106,7 @@ export interface AdminDashboardStats {
 	user_registrations_today: number;
 	recent_activities?: any[];
 	popular_activities?: any[];
-	
+
 	// Organization-specific stats (OrganizationAdmin)
 	organization_users?: number;
 	departments_count?: number;
@@ -126,7 +133,15 @@ export interface UserFilter {
 	organization_id?: string;
 	department_id?: string;
 	status?: 'active' | 'inactive' | 'suspended' | 'online' | 'offline' | 'disabled' | 'all';
-	role?: 'student' | 'faculty' | 'staff' | 'admin' | 'super_admin' | 'organization_admin' | 'regular_admin' | 'all';
+	role?:
+		| 'student'
+		| 'faculty'
+		| 'staff'
+		| 'admin'
+		| 'super_admin'
+		| 'organization_admin'
+		| 'regular_admin'
+		| 'all';
 	created_after?: string;
 	created_before?: string;
 }
@@ -246,7 +261,13 @@ export interface OrganizationAdminStats {
 export interface OrganizationAdminActivity {
 	id: string;
 	admin_id: string;
-	action: 'login' | 'logout' | 'permission_change' | 'status_change' | 'profile_update' | 'password_change';
+	action:
+		| 'login'
+		| 'logout'
+		| 'permission_change'
+		| 'status_change'
+		| 'profile_update'
+		| 'password_change';
 	description: string;
 	ip_address?: string;
 	user_agent?: string;
@@ -266,7 +287,13 @@ export interface OrganizationAdminUpdateRequest {
 
 export interface BulkAdminOperation {
 	admin_ids: string[];
-	operation: 'activate' | 'deactivate' | 'suspend' | 'delete' | 'change_organization' | 'update_permissions';
+	operation:
+		| 'activate'
+		| 'deactivate'
+		| 'suspend'
+		| 'delete'
+		| 'change_organization'
+		| 'update_permissions';
 	params?: {
 		status?: 'active' | 'inactive' | 'suspended';
 		organization_id?: string;
@@ -285,8 +312,8 @@ export interface OrganizationAdminExportOptions {
 
 // Enhanced AdminRole interface with additional properties
 export interface ExtendedAdminRole extends AdminRole {
-	is_active?: boolean;  // Whether admin has active login session (from sessions)
-	is_enabled: boolean;  // Whether admin account is enabled (from admin_roles)
+	is_active?: boolean; // Whether admin has active login session (from sessions)
+	is_enabled: boolean; // Whether admin account is enabled (from admin_roles)
 	last_login_formatted?: string;
 	created_at_formatted?: string;
 	permission_count?: number;
@@ -329,7 +356,7 @@ export interface OrganizationAdminDashboardStats extends AdminDashboardStats {
 // Permission definitions
 export const ADMIN_PERMISSIONS = {
 	VIEW_DASHBOARD: 'ViewDashboard',
-	MANAGE_ACTIVITIES: 'ManageActivities', 
+	MANAGE_ACTIVITIES: 'ManageActivities',
 	MANAGE_USERS: 'ManageUsers',
 	MANAGE_FACULTY_USERS: 'ManageOrganizationUsers',
 	MANAGE_DEPARTMENTS: 'ManageDepartments',
@@ -338,13 +365,13 @@ export const ADMIN_PERMISSIONS = {
 	EXPORT_DATA: 'ExportData'
 } as const;
 
-export type AdminPermission = typeof ADMIN_PERMISSIONS[keyof typeof ADMIN_PERMISSIONS];
+export type AdminPermission = (typeof ADMIN_PERMISSIONS)[keyof typeof ADMIN_PERMISSIONS];
 
 // Status definitions
 export const ADMIN_STATUS = {
 	ACTIVE: 'active',
-	INACTIVE: 'inactive', 
+	INACTIVE: 'inactive',
 	SUSPENDED: 'suspended'
 } as const;
 
-export type AdminStatus = typeof ADMIN_STATUS[keyof typeof ADMIN_STATUS];
+export type AdminStatus = (typeof ADMIN_STATUS)[keyof typeof ADMIN_STATUS];

@@ -6,29 +6,29 @@
 	import * as Popover from '$lib/components/ui/popover';
 	import { Calendar } from '$lib/components/ui/calendar';
 	import { Separator } from '$lib/components/ui/separator';
-	import { 
-		IconSearch, 
-		IconFilter, 
-		IconX, 
+	import {
+		IconSearch,
+		IconFilter,
+		IconX,
 		IconCalendar,
 		IconRefresh,
 		IconDownload
 	} from '@tabler/icons-svelte/icons';
-import type { UserFilter, Organization, Department } from '$lib/types/admin';
+	import type { UserFilter, Organization, Department } from '$lib/types/admin';
 	import { createEventDispatcher } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
 
 	// Props
 	export let filters: UserFilter = {};
-export let faculties: Organization[] = [];
+	export let faculties: Organization[] = [];
 	export let departments: Department[] = [];
 	export let showFacultyFilter = true;
 	export let loading = false;
 
 	// Internal state
 	let searchValue = filters.search || '';
-let selectedFaculty = (filters as any).organization_id || 'all';
+	let selectedFaculty = (filters as any).organization_id || 'all';
 	let selectedDepartment = filters.department_id || 'all';
 	let selectedStatus = filters.status || 'all';
 	let selectedRole = filters.role || 'all';
@@ -37,9 +37,10 @@ let selectedFaculty = (filters as any).organization_id || 'all';
 	let showAdvancedFilters = false;
 
 	// Reactive filtered departments based on selected faculty
-$: filteredDepartments = selectedFaculty === 'all' 
-    ? (departments || []) 
-    : (departments || []).filter(dept => (dept as any).organization_id === selectedFaculty);
+	$: filteredDepartments =
+		selectedFaculty === 'all'
+			? departments || []
+			: (departments || []).filter((dept) => (dept as any).organization_id === selectedFaculty);
 
 	// Event dispatcher
 	const dispatch = createEventDispatcher<{
@@ -55,7 +56,7 @@ $: filteredDepartments = selectedFaculty === 'all'
 		{ value: 'faculty', label: 'อาจารย์' },
 		{ value: 'staff', label: 'เจ้าหน้าที่' },
 		{ value: 'super_admin', label: 'ซุปเปอร์แอดมิน' },
-    { value: 'organization_admin', label: 'แอดมินหน่วยงาน' },
+		{ value: 'organization_admin', label: 'แอดมินหน่วยงาน' },
 		{ value: 'regular_admin', label: 'แอดมินทั่วไป' },
 		{ value: 'admin', label: 'แอดมินอื่นๆ' }
 	];
@@ -75,20 +76,20 @@ $: filteredDepartments = selectedFaculty === 'all'
 	function applyFilters() {
 		const newFilters: UserFilter = {
 			search: searchValue || undefined,
-        organization_id: selectedFaculty === 'all' ? undefined : selectedFaculty,
+			organization_id: selectedFaculty === 'all' ? undefined : selectedFaculty,
 			department_id: selectedDepartment === 'all' ? undefined : selectedDepartment,
-			status: selectedStatus === 'all' ? undefined : selectedStatus as any,
-			role: selectedRole === 'all' ? undefined : selectedRole as any,
+			status: selectedStatus === 'all' ? undefined : (selectedStatus as any),
+			role: selectedRole === 'all' ? undefined : (selectedRole as any),
 			created_after: createdAfter || undefined,
 			created_before: createdBefore || undefined
 		};
 
 		// Update URL with filters
 		const params = new URLSearchParams($page.url.searchParams);
-		
+
 		// Clear existing filter params
 		params.delete('search');
-    params.delete('organization_id');
+		params.delete('organization_id');
 		params.delete('department_id');
 		params.delete('status');
 		params.delete('role');
@@ -131,10 +132,10 @@ $: filteredDepartments = selectedFaculty === 'all'
 	function handleExport() {
 		const currentFilters: UserFilter = {
 			search: searchValue || undefined,
-        organization_id: selectedFaculty === 'all' ? undefined : selectedFaculty,
+			organization_id: selectedFaculty === 'all' ? undefined : selectedFaculty,
 			department_id: selectedDepartment === 'all' ? undefined : selectedDepartment,
-			status: selectedStatus === 'all' ? undefined : selectedStatus as any,
-			role: selectedRole === 'all' ? undefined : selectedRole as any,
+			status: selectedStatus === 'all' ? undefined : (selectedStatus as any),
+			role: selectedRole === 'all' ? undefined : (selectedRole as any),
 			created_after: createdAfter || undefined,
 			created_before: createdBefore || undefined
 		};
@@ -169,7 +170,7 @@ $: filteredDepartments = selectedFaculty === 'all'
 	function initializeFromUrl() {
 		const params = $page.url.searchParams;
 		searchValue = params.get('search') || '';
-    selectedFaculty = params.get('organization_id') || 'all';
+		selectedFaculty = params.get('organization_id') || 'all';
 		selectedDepartment = params.get('department_id') || 'all';
 		selectedStatus = (params.get('status') as any) || 'all';
 		selectedRole = (params.get('role') as any) || 'all';
@@ -183,14 +184,14 @@ $: filteredDepartments = selectedFaculty === 'all'
 
 <div class="space-y-4">
 	<!-- Search and Quick Filters Row -->
-	<div class="flex flex-col sm:flex-row gap-3">
+	<div class="flex flex-col gap-3 sm:flex-row">
 		<!-- Search Input -->
 		<div class="relative flex-1">
-			<IconSearch class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+			<IconSearch class="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
 			<Input
 				bind:value={searchValue}
 				placeholder="ค้นหาชื่อ, อีเมล, รหัสนักศึกษา..."
-				class="pl-10 pr-4"
+				class="pr-4 pl-10"
 				onkeydown={handleSearchKeydown}
 				disabled={loading}
 			/>
@@ -201,11 +202,13 @@ $: filteredDepartments = selectedFaculty === 'all'
 			<!-- Status Filter -->
 			<Select.Root type="single">
 				<Select.Trigger class="w-32">
-					{statusOptions.find(o => o.value === selectedStatus)?.label || 'สถานะ'}
+					{statusOptions.find((o) => o.value === selectedStatus)?.label || 'สถานะ'}
 				</Select.Trigger>
 				<Select.Content>
 					{#each statusOptions as option}
-						<Select.Item value={option.value} onclick={() => selectedStatus = option.value as any}>{option.label}</Select.Item>
+						<Select.Item value={option.value} onclick={() => (selectedStatus = option.value as any)}
+							>{option.label}</Select.Item
+						>
 					{/each}
 				</Select.Content>
 			</Select.Root>
@@ -213,11 +216,13 @@ $: filteredDepartments = selectedFaculty === 'all'
 			<!-- Role Filter -->
 			<Select.Root type="single">
 				<Select.Trigger class="w-32">
-					{roleOptions.find(o => o.value === selectedRole)?.label || 'บทบาท'}
+					{roleOptions.find((o) => o.value === selectedRole)?.label || 'บทบาท'}
 				</Select.Trigger>
 				<Select.Content>
 					{#each roleOptions as option}
-						<Select.Item value={option.value} onclick={() => selectedRole = option.value as any}>{option.label}</Select.Item>
+						<Select.Item value={option.value} onclick={() => (selectedRole = option.value as any)}
+							>{option.label}</Select.Item
+						>
 					{/each}
 				</Select.Content>
 			</Select.Root>
@@ -226,12 +231,18 @@ $: filteredDepartments = selectedFaculty === 'all'
 			{#if showFacultyFilter && faculties.length > 0}
 				<Select.Root type="single">
 					<Select.Trigger class="w-40">
-						{selectedFaculty === 'all' ? 'ทุกหน่วยงาน' : faculties.find(f => f.id === selectedFaculty)?.name || 'หน่วยงาน'}
+						{selectedFaculty === 'all'
+							? 'ทุกหน่วยงาน'
+							: faculties.find((f) => f.id === selectedFaculty)?.name || 'หน่วยงาน'}
 					</Select.Trigger>
 					<Select.Content>
-						<Select.Item value="all" onclick={() => selectedFaculty = 'all'}>ทุกหน่วยงาน</Select.Item>
+						<Select.Item value="all" onclick={() => (selectedFaculty = 'all')}
+							>ทุกหน่วยงาน</Select.Item
+						>
 						{#each faculties as faculty}
-							<Select.Item value={faculty.id} onclick={() => selectedFaculty = faculty.id}>{faculty.name}</Select.Item>
+							<Select.Item value={faculty.id} onclick={() => (selectedFaculty = faculty.id)}
+								>{faculty.name}</Select.Item
+							>
 						{/each}
 					</Select.Content>
 				</Select.Root>
@@ -241,10 +252,10 @@ $: filteredDepartments = selectedFaculty === 'all'
 			<Button
 				variant="outline"
 				size="sm"
-				onclick={() => showAdvancedFilters = !showAdvancedFilters}
+				onclick={() => (showAdvancedFilters = !showAdvancedFilters)}
 				class={showAdvancedFilters ? 'bg-muted' : ''}
 			>
-				<IconFilter class="h-4 w-4 mr-2" />
+				<IconFilter class="mr-2 h-4 w-4" />
 				ตัวกรองเพิ่มเติม
 				{#if activeFiltersCount > 0}
 					<Badge variant="secondary" class="ml-2 h-5 w-5 p-0 text-xs">
@@ -257,31 +268,38 @@ $: filteredDepartments = selectedFaculty === 'all'
 
 	<!-- Advanced Filters Panel -->
 	{#if showAdvancedFilters}
-		<div class="border rounded-lg p-4 space-y-4 bg-muted/20">
+		<div class="space-y-4 rounded-lg border bg-muted/20 p-4">
 			<div class="flex items-center justify-between">
 				<h3 class="text-sm font-medium">ตัวกรองขั้นสูง</h3>
-				<Button
-					variant="ghost"
-					size="sm"
-					onclick={() => showAdvancedFilters = false}
-				>
+				<Button variant="ghost" size="sm" onclick={() => (showAdvancedFilters = false)}>
 					<IconX class="h-4 w-4" />
 				</Button>
 			</div>
 
-			<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+			<div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
 				<!-- Department Filter -->
 				{#if filteredDepartments.length > 0}
 					<div>
-						<label for="department-select" class="text-sm font-medium mb-2 block">สาขา/ภาควิชา</label>
+						<label for="department-select" class="mb-2 block text-sm font-medium"
+							>สาขา/ภาควิชา</label
+						>
 						<Select.Root type="single">
 							<Select.Trigger id="department-select">
-								{selectedDepartment === 'all' ? 'ทุกสาขา' : filteredDepartments.find(d => d.id === selectedDepartment)?.name || 'เลือกสาขา'}
+								{selectedDepartment === 'all'
+									? 'ทุกสาขา'
+									: filteredDepartments.find((d) => d.id === selectedDepartment)?.name ||
+										'เลือกสาขา'}
 							</Select.Trigger>
 							<Select.Content>
-								<Select.Item value="all" onclick={() => selectedDepartment = 'all'}>ทุกสาขา</Select.Item>
+								<Select.Item value="all" onclick={() => (selectedDepartment = 'all')}
+									>ทุกสาขา</Select.Item
+								>
 								{#each filteredDepartments as department}
-									<Select.Item value={department.id} onclick={() => selectedDepartment = department.id}>{department.name}</Select.Item>
+									<Select.Item
+										value={department.id}
+										onclick={() => (selectedDepartment = department.id)}
+										>{department.name}</Select.Item
+									>
 								{/each}
 							</Select.Content>
 						</Select.Root>
@@ -290,22 +308,26 @@ $: filteredDepartments = selectedFaculty === 'all'
 
 				<!-- Date Range Filters -->
 				<div>
-					<label for="created-after-select" class="text-sm font-medium mb-2 block">สมัครหลังจากวันที่</label>
+					<label for="created-after-select" class="mb-2 block text-sm font-medium"
+						>สมัครหลังจากวันที่</label
+					>
 					<input
 						id="created-after-select"
 						type="date"
 						bind:value={createdAfter}
-						class="w-full px-3 py-2 border border-gray-300 rounded-md"
+						class="w-full rounded-md border border-gray-300 px-3 py-2"
 					/>
 				</div>
 
 				<div>
-					<label for="created-before-select" class="text-sm font-medium mb-2 block">สมัครก่อนวันที่</label>
+					<label for="created-before-select" class="mb-2 block text-sm font-medium"
+						>สมัครก่อนวันที่</label
+					>
 					<input
 						id="created-before-select"
 						type="date"
 						bind:value={createdBefore}
-						class="w-full px-3 py-2 border border-gray-300 rounded-md"
+						class="w-full rounded-md border border-gray-300 px-3 py-2"
 					/>
 				</div>
 			</div>
@@ -314,13 +336,18 @@ $: filteredDepartments = selectedFaculty === 'all'
 
 	<!-- Active Filters Display -->
 	{#if activeFiltersCount > 0}
-		<div class="flex items-center gap-2 flex-wrap">
+		<div class="flex flex-wrap items-center gap-2">
 			<span class="text-sm text-muted-foreground">ตัวกรองที่เปิดใช้งาน:</span>
-			
+
 			{#if searchValue}
 				<Badge variant="secondary" class="gap-1">
 					ค้นหา: {searchValue}
-					<button on:click={() => { searchValue = ''; applyFilters(); }}>
+					<button
+						on:click={() => {
+							searchValue = '';
+							applyFilters();
+						}}
+					>
 						<IconX class="h-3 w-3" />
 					</button>
 				</Badge>
@@ -328,8 +355,13 @@ $: filteredDepartments = selectedFaculty === 'all'
 
 			{#if selectedStatus !== 'all'}
 				<Badge variant="secondary" class="gap-1">
-					สถานะ: {statusOptions.find(o => o.value === selectedStatus)?.label}
-					<button on:click={() => { selectedStatus = 'all'; applyFilters(); }}>
+					สถานะ: {statusOptions.find((o) => o.value === selectedStatus)?.label}
+					<button
+						on:click={() => {
+							selectedStatus = 'all';
+							applyFilters();
+						}}
+					>
 						<IconX class="h-3 w-3" />
 					</button>
 				</Badge>
@@ -337,8 +369,13 @@ $: filteredDepartments = selectedFaculty === 'all'
 
 			{#if selectedRole !== 'all'}
 				<Badge variant="secondary" class="gap-1">
-					บทบาท: {roleOptions.find(o => o.value === selectedRole)?.label}
-					<button on:click={() => { selectedRole = 'all'; applyFilters(); }}>
+					บทบาท: {roleOptions.find((o) => o.value === selectedRole)?.label}
+					<button
+						on:click={() => {
+							selectedRole = 'all';
+							applyFilters();
+						}}
+					>
 						<IconX class="h-3 w-3" />
 					</button>
 				</Badge>
@@ -346,8 +383,13 @@ $: filteredDepartments = selectedFaculty === 'all'
 
 			{#if selectedFaculty !== 'all'}
 				<Badge variant="secondary" class="gap-1">
-					หน่วยงาน: {faculties.find(f => f.id === selectedFaculty)?.name}
-					<button on:click={() => { selectedFaculty = 'all'; applyFilters(); }}>
+					หน่วยงาน: {faculties.find((f) => f.id === selectedFaculty)?.name}
+					<button
+						on:click={() => {
+							selectedFaculty = 'all';
+							applyFilters();
+						}}
+					>
 						<IconX class="h-3 w-3" />
 					</button>
 				</Badge>
@@ -355,8 +397,13 @@ $: filteredDepartments = selectedFaculty === 'all'
 
 			{#if selectedDepartment !== 'all'}
 				<Badge variant="secondary" class="gap-1">
-					สาขา: {departments.find(d => d.id === selectedDepartment)?.name}
-					<button on:click={() => { selectedDepartment = 'all'; applyFilters(); }}>
+					สาขา: {departments.find((d) => d.id === selectedDepartment)?.name}
+					<button
+						on:click={() => {
+							selectedDepartment = 'all';
+							applyFilters();
+						}}
+					>
 						<IconX class="h-3 w-3" />
 					</button>
 				</Badge>
@@ -368,20 +415,20 @@ $: filteredDepartments = selectedFaculty === 'all'
 	<div class="flex items-center justify-between">
 		<div class="flex gap-2">
 			<Button onclick={applyFilters} disabled={loading}>
-				<IconRefresh class="h-4 w-4 mr-2" />
+				<IconRefresh class="mr-2 h-4 w-4" />
 				ปรับปรุงผลการค้นหา
 			</Button>
 
 			{#if activeFiltersCount > 0}
 				<Button variant="outline" onclick={clearFilters}>
-					<IconX class="h-4 w-4 mr-2" />
+					<IconX class="mr-2 h-4 w-4" />
 					ล้างตัวกรอง
 				</Button>
 			{/if}
 		</div>
 
 		<Button variant="outline" onclick={handleExport}>
-			<IconDownload class="h-4 w-4 mr-2" />
+			<IconDownload class="mr-2 h-4 w-4" />
 			ส่งออกข้อมูล
 		</Button>
 	</div>

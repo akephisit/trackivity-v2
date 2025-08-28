@@ -1,4 +1,4 @@
-import { MediaQuery } from "svelte/reactivity";
+import { MediaQuery } from 'svelte/reactivity';
 import { browser } from '$app/environment';
 
 const DEFAULT_MOBILE_BREAKPOINT = 768;
@@ -15,7 +15,10 @@ export const isMobile = new IsMobile();
 // Additional mobile utilities
 export function isMobileDevice(): boolean {
 	if (!browser) return false;
-	return isMobile.current || /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+	return (
+		isMobile.current ||
+		/Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+	);
 }
 
 export function isTabletDevice(): boolean {

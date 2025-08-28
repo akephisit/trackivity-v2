@@ -5,40 +5,40 @@ import { eq } from 'drizzle-orm';
 import { error } from '@sveltejs/kit';
 
 export const load: PageServerLoad = async (event) => {
-  const user = requireAuth(event);
-  const { params } = event;
+	const user = requireAuth(event);
+	const { params } = event;
 
-  try {
-    // โหลดกิจกรรมจากฐานข้อมูลโดยตรง
-    const result = await db
-      .select({
-        id: activities.id,
-        title: activities.title,
-        description: activities.description,
-        start_date: activities.startDate,
-        end_date: activities.endDate,
-        activity_type: activities.activityType,
-        status: activities.status,
-        location: activities.location,
-        max_participants: activities.maxParticipants,
-        created_at: activities.createdAt
-      })
-      .from(activities)
-      .where(eq(activities.id, params.id))
-      .limit(1);
+	try {
+		// โหลดกิจกรรมจากฐานข้อมูลโดยตรง
+		const result = await db
+			.select({
+				id: activities.id,
+				title: activities.title,
+				description: activities.description,
+				start_date: activities.startDate,
+				end_date: activities.endDate,
+				activity_type: activities.activityType,
+				status: activities.status,
+				location: activities.location,
+				max_participants: activities.maxParticipants,
+				created_at: activities.createdAt
+			})
+			.from(activities)
+			.where(eq(activities.id, params.id))
+			.limit(1);
 
-    if (result.length === 0) {
-      throw error(404, 'ไม่พบกิจกรรมที่ระบุ');
-    }
+		if (result.length === 0) {
+			throw error(404, 'ไม่พบกิจกรรมที่ระบุ');
+		}
 
-    const activity = result[0];
+		const activity = result[0];
 
-    return { 
-      user,
-      activity 
-    };
-  } catch (e) {
-    console.error('Error loading activity from database:', e);
-    throw error(500, 'ไม่สามารถโหลดข้อมูลกิจกรรมได้');
-  }
+		return {
+			user,
+			activity
+		};
+	} catch (e) {
+		console.error('Error loading activity from database:', e);
+		throw error(500, 'ไม่สามารถโหลดข้อมูลกิจกรรมได้');
+	}
 };

@@ -1,5 +1,11 @@
 <script lang="ts">
-	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card';
+	import {
+		Card,
+		CardContent,
+		CardDescription,
+		CardHeader,
+		CardTitle
+	} from '$lib/components/ui/card';
 	import { Button } from '$lib/components/ui/button';
 	import { Badge } from '$lib/components/ui/badge';
 	import * as Table from '$lib/components/ui/table';
@@ -16,10 +22,10 @@
 	} from '@tanstack/table-core';
 	import { createSvelteTable } from '$lib/components/ui/data-table/data-table.svelte.js';
 	import { FlexRender } from '$lib/components/ui/data-table';
-	import { 
-		IconUsers, 
-		IconUserCheck, 
-		IconUserX, 
+	import {
+		IconUsers,
+		IconUserCheck,
+		IconUserX,
 		IconPlus,
 		IconDownload,
 		IconRefresh,
@@ -35,18 +41,23 @@
 	let { data } = $props();
 
 	// Extract data from server load with safe defaults
-	const { 
-				stats, 
-				organizations = [], 
-				departments = [],
-		filters = {}, 
+	const {
+		stats,
+		organizations = [],
+		departments = [],
+		filters = {},
 		adminLevel
 	} = $derived(data || {});
 
 	// Normalize users and pagination shapes
 	const usersRaw = $derived<any>(data?.users ?? []);
 	const usersList = $derived<any[]>(Array.isArray(usersRaw) ? usersRaw : (usersRaw?.users ?? []));
-	const paginationRaw = $derived<any>(data?.pagination ?? (Array.isArray(usersRaw) ? { page: 1, limit: 20, total: usersList.length, pages: 1 } : usersRaw?.pagination ?? { page: 1, limit: 20, total: 0, pages: 1 }));
+	const paginationRaw = $derived<any>(
+		data?.pagination ??
+			(Array.isArray(usersRaw)
+				? { page: 1, limit: 20, total: usersList.length, pages: 1 }
+				: (usersRaw?.pagination ?? { page: 1, limit: 20, total: 0, pages: 1 }))
+	);
 	const paginationNorm = $derived({
 		page: paginationRaw?.page ?? 1,
 		limit: paginationRaw?.limit ?? 20,
@@ -70,71 +81,77 @@
 	});
 
 	// Get appropriate columns for admin level
-	const columns = $derived(getUserTableColumns(adminLevel || 'RegularAdmin', adminLevel === 'OrganizationAdmin'));
+	const columns = $derived(
+		getUserTableColumns(adminLevel || 'RegularAdmin', adminLevel === 'OrganizationAdmin')
+	);
 
 	// Create table instance
-	const table = $derived(createSvelteTable({
-		get data() {
-			return usersList;
-		},
-		columns,
-		state: {
-			get sorting() {
-				return sorting;
+	const table = $derived(
+		createSvelteTable({
+			get data() {
+				return usersList;
 			},
-			get columnFilters() {
-				return columnFilters;
+			columns,
+			state: {
+				get sorting() {
+					return sorting;
+				},
+				get columnFilters() {
+					return columnFilters;
+				},
+				get columnVisibility() {
+					return columnVisibility;
+				},
+				get rowSelection() {
+					return rowSelection;
+				},
+				get pagination() {
+					return tablePagination;
+				}
 			},
-			get columnVisibility() {
-				return columnVisibility;
+			enableRowSelection: true,
+			getCoreRowModel: getCoreRowModel(),
+			getFilteredRowModel: getFilteredRowModel(),
+			getSortedRowModel: getSortedRowModel(),
+			getPaginationRowModel: getPaginationRowModel(),
+			onSortingChange: (updater) => {
+				if (typeof updater === 'function') {
+					sorting = updater(sorting);
+				} else {
+					sorting = updater;
+				}
 			},
-			get rowSelection() {
-				return rowSelection;
+			onColumnFiltersChange: (updater) => {
+				if (typeof updater === 'function') {
+					columnFilters = updater(columnFilters);
+				} else {
+					columnFilters = updater;
+				}
 			},
-			get pagination() {
-				return tablePagination;
+			onColumnVisibilityChange: (updater) => {
+				if (typeof updater === 'function') {
+					columnVisibility = updater(columnVisibility);
+				} else {
+					columnVisibility = updater;
+				}
+			},
+			onRowSelectionChange: (updater) => {
+				if (typeof updater === 'function') {
+					rowSelection = updater(rowSelection);
+				} else {
+					rowSelection = updater;
+				}
 			}
-		},
-		enableRowSelection: true,
-		getCoreRowModel: getCoreRowModel(),
-		getFilteredRowModel: getFilteredRowModel(),
-		getSortedRowModel: getSortedRowModel(),
-		getPaginationRowModel: getPaginationRowModel(),
-		onSortingChange: (updater) => {
-			if (typeof updater === 'function') {
-				sorting = updater(sorting);
-			} else {
-				sorting = updater;
-			}
-		},
-		onColumnFiltersChange: (updater) => {
-			if (typeof updater === 'function') {
-				columnFilters = updater(columnFilters);
-			} else {
-				columnFilters = updater;
-			}
-		},
-		onColumnVisibilityChange: (updater) => {
-			if (typeof updater === 'function') {
-				columnVisibility = updater(columnVisibility);
-			} else {
-				columnVisibility = updater;
-			}
-		},
-		onRowSelectionChange: (updater) => {
-			if (typeof updater === 'function') {
-				rowSelection = updater(rowSelection);
-			} else {
-				rowSelection = updater;
-			}
-		}
-	}));
+		})
+	);
 
 	// Track selected users
-	const selectedUsers = $derived(Object.keys(rowSelection).filter(key => rowSelection[key]));
+	const selectedUsers = $derived(Object.keys(rowSelection).filter((key) => rowSelection[key]));
 
 	// Permission checks
-	const canManageUsers = $derived(adminLevel === 'SuperAdmin' || adminLevel === 'OrganizationAdmin');
+	const canManageUsers = $derived(
+		adminLevel === 'SuperAdmin' || adminLevel === 'OrganizationAdmin'
+	);
 	const canViewAllFaculties = $derived(adminLevel === 'SuperAdmin');
 
 	// Statistics calculations
@@ -151,18 +168,18 @@
 
 <div class="space-y-6">
 	<!-- Header -->
-	<div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+	<div class="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
 		<div>
 			<h1 class="text-2xl font-bold">
 				{adminLevel === 'SuperAdmin' ? 'ระบบจัดการผู้ใช้ทั้งหมด' : 'จัดการผู้ใช้หน่วยงาน'}
 			</h1>
 			<p class="text-muted-foreground">
-				{adminLevel === 'SuperAdmin' 
+				{adminLevel === 'SuperAdmin'
 					? 'จัดการผู้ใช้ทั้งระบบพร้อมการกรองตามหน่วยงาน'
 					: 'จัดการข้อมูลผู้ใช้ในหน่วยงานของคุณ'}
 			</p>
 		</div>
-		
+
 		<div class="flex gap-2">
 			{#if canManageUsers}
 				<Button>
@@ -170,7 +187,7 @@
 					เพิ่มผู้ใช้
 				</Button>
 			{/if}
-			
+
 			<Button variant="outline">
 				<IconRefresh class="mr-2 h-4 w-4" />
 				รีเฟรช
@@ -179,7 +196,7 @@
 	</div>
 
 	<!-- Statistics Cards -->
-	<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+	<div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
 		<Card>
 			<CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
 				<CardTitle class="text-sm font-medium">ผู้ใช้ทั้งหมด</CardTitle>
@@ -301,7 +318,7 @@
 						แสดงผลจำนวน {usersList.length} จาก {paginationNorm.total} รายการ
 					</CardDescription>
 				</div>
-				
+
 				<div class="flex gap-2">
 					<Button variant="outline" size="sm">
 						<IconSettings class="mr-2 h-4 w-4" />
@@ -310,7 +327,7 @@
 				</div>
 			</div>
 		</CardHeader>
-		
+
 		<CardContent class="p-0">
 			<div class="overflow-hidden">
 				<Table.Root>
@@ -318,7 +335,7 @@
 						{#each table.getHeaderGroups() as headerGroup (headerGroup.id)}
 							<Table.Row>
 								{#each headerGroup.headers as header (header.id)}
-									<Table.Head 
+									<Table.Head
 										colspan={header.colSpan}
 										class={header.column.getCanSort() ? 'cursor-pointer select-none' : ''}
 										onclick={header.column.getToggleSortingHandler()}
@@ -334,7 +351,7 @@
 							</Table.Row>
 						{/each}
 					</Table.Header>
-					
+
 					<Table.Body>
 						{#if table.getRowModel().rows?.length}
 							{#each table.getRowModel().rows as row (row.id)}
@@ -373,26 +390,25 @@
 			<CardContent class="p-4">
 				<div class="flex items-center justify-between">
 					<div class="text-sm text-muted-foreground">
-						แสดงผล {((paginationNorm.page || 1) - 1) * (paginationNorm.limit || 20) + 1} - 
-						{Math.min((paginationNorm.page || 1) * (paginationNorm.limit || 20), paginationNorm.total)} 
+						แสดงผล {((paginationNorm.page || 1) - 1) * (paginationNorm.limit || 20) + 1} -
+						{Math.min(
+							(paginationNorm.page || 1) * (paginationNorm.limit || 20),
+							paginationNorm.total
+						)}
 						จาก {paginationNorm.total} รายการ
 					</div>
-					
+
 					<div class="flex items-center gap-2">
-						<Button 
-							variant="outline" 
-							size="sm"
-							disabled={(paginationNorm.page || 1) <= 1}
-						>
+						<Button variant="outline" size="sm" disabled={(paginationNorm.page || 1) <= 1}>
 							หน้าก่อนหน้า
 						</Button>
-						
-								<span class="text-sm">
-									หน้า {paginationNorm.page || 1} จาก {paginationNorm.pages || 1}
-								</span>
-						
-						<Button 
-							variant="outline" 
+
+						<span class="text-sm">
+							หน้า {paginationNorm.page || 1} จาก {paginationNorm.pages || 1}
+						</span>
+
+						<Button
+							variant="outline"
 							size="sm"
 							disabled={(paginationNorm.page || 1) >= (paginationNorm.pages || 1)}
 						>

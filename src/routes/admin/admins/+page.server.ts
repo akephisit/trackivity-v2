@@ -14,22 +14,22 @@ import crypto from 'crypto';
 export const load: PageServerLoad = async (event) => {
 	const user = requireSuperAdmin(event);
 
-// Load organizations directly from database
-let facultiesList: Organization[] = [];
+	// Load organizations directly from database
+	let facultiesList: Organization[] = [];
 	try {
 		const facRows = await db
 			.select({
-    id: organizations.id,
-    name: organizations.name,
-    code: organizations.code,
-    description: organizations.description,
-    status: organizations.status,
-    created_at: organizations.createdAt,
-    updated_at: organizations.updatedAt
-  })
-  .from(organizations)
-  .where(eq(organizations.status, true))
-  .orderBy(organizations.name);
+				id: organizations.id,
+				name: organizations.name,
+				code: organizations.code,
+				description: organizations.description,
+				status: organizations.status,
+				created_at: organizations.createdAt,
+				updated_at: organizations.updatedAt
+			})
+			.from(organizations)
+			.where(eq(organizations.status, true))
+			.orderBy(organizations.name);
 
 		facultiesList = facRows.map((f) => ({
 			...f,
@@ -38,70 +38,72 @@ let facultiesList: Organization[] = [];
 			updated_at: f.updated_at?.toISOString() || new Date().toISOString()
 		}));
 	} catch (error) {
-    console.error('Failed to load organizations:', error);
+		console.error('Failed to load organizations:', error);
 	}
 
 	// โหลดรายการแอดมินจากฐานข้อมูลโดยตรง (รวมข้อมูล user)
 	let admins: AdminRole[] = [];
 	try {
-            const rows = await db
-                .select({
-                    id: adminRoles.id,
-                    user_id: users.id,
-                    admin_level: adminRoles.adminLevel,
-                    organization_id: (adminRoles as any).organizationId,
-                    permissions: adminRoles.permissions,
-                    is_enabled: adminRoles.isEnabled,
-                    created_at: adminRoles.createdAt,
-                    updated_at: adminRoles.updatedAt,
-                    user_email: users.email,
-                    user_prefix: users.prefix,
-                    first_name: users.firstName,
-                    last_name: users.lastName,
-                    student_id: users.studentId,
-                    department_id: users.departmentId,
-                    user_created_at: users.createdAt,
-				user_updated_at: users.updatedAt,
+		const rows = await db
+			.select({
+				id: adminRoles.id,
+				user_id: users.id,
+				admin_level: adminRoles.adminLevel,
+				organization_id: (adminRoles as any).organizationId,
+				permissions: adminRoles.permissions,
+				is_enabled: adminRoles.isEnabled,
+				created_at: adminRoles.createdAt,
+				updated_at: adminRoles.updatedAt,
+				user_email: users.email,
+				user_prefix: users.prefix,
+				first_name: users.firstName,
+				last_name: users.lastName,
+				student_id: users.studentId,
+				department_id: users.departmentId,
+				user_created_at: users.createdAt,
+				user_updated_at: users.updatedAt
 			})
 			.from(adminRoles)
 			.innerJoin(users, eq(adminRoles.userId, users.id))
 			.orderBy(desc(adminRoles.createdAt));
 
-        const mapAdminLevel = (lvl: string): AdminLevel => {
-            switch (lvl) {
-                case 'super_admin':
-                    return AdminLevel.SuperAdmin;
-                case 'organization_admin':
-                    return AdminLevel.OrganizationAdmin;
-                case 'regular_admin':
-                default:
-                    return AdminLevel.RegularAdmin;
-            }
-        };
+		const mapAdminLevel = (lvl: string): AdminLevel => {
+			switch (lvl) {
+				case 'super_admin':
+					return AdminLevel.SuperAdmin;
+				case 'organization_admin':
+					return AdminLevel.OrganizationAdmin;
+				case 'regular_admin':
+				default:
+					return AdminLevel.RegularAdmin;
+			}
+		};
 
 		admins = rows.map((r) => ({
 			id: r.id,
 			user_id: r.user_id,
 			admin_level: mapAdminLevel(r.admin_level as unknown as string),
-            organization_id: (r as any).organization_id || undefined,
+			organization_id: (r as any).organization_id || undefined,
 			permissions: r.permissions || [],
 			created_at: r.created_at?.toISOString() || new Date().toISOString(),
 			updated_at: r.updated_at?.toISOString() || new Date().toISOString(),
-                user: {
-                    id: r.user_id,
-                    student_id: r.student_id,
-                    email: r.user_email,
-                    prefix: r.user_prefix || 'Generic',
-                    first_name: r.first_name,
-                    last_name: r.last_name,
-                    department_id: r.department_id || undefined,
-                    organization_id: (r as any).organization_id || undefined,
-                    status: 'active',
+			user: {
+				id: r.user_id,
+				student_id: r.student_id,
+				email: r.user_email,
+				prefix: r.user_prefix || 'Generic',
+				first_name: r.first_name,
+				last_name: r.last_name,
+				department_id: r.department_id || undefined,
+				organization_id: (r as any).organization_id || undefined,
+				status: 'active',
 				role: 'admin',
 				created_at: r.user_created_at?.toISOString() || new Date().toISOString(),
 				updated_at: r.user_updated_at?.toISOString() || new Date().toISOString()
 			},
-			organization: (r as any).organization_id ? facultiesList.find((f) => f.id === (r as any).organization_id) : undefined,
+			organization: (r as any).organization_id
+				? facultiesList.find((f) => f.id === (r as any).organization_id)
+				: undefined,
 			is_active: false,
 			is_enabled: r.is_enabled ?? true
 		}));
@@ -135,7 +137,14 @@ export const actions: Actions = {
 			const getDefaultPermissions = (level: string) => {
 				switch (level) {
 					case 'SuperAdmin':
-						return ['ManageUsers', 'ManageAdmins', 'ManageActivities', 'ViewDashboard', 'ManageFaculties', 'ManageSessions'];
+						return [
+							'ManageUsers',
+							'ManageAdmins',
+							'ManageActivities',
+							'ViewDashboard',
+							'ManageFaculties',
+							'ManageSessions'
+						];
 					case 'OrganizationAdmin':
 						return ['ViewDashboard', 'ManageActivities', 'ManageUsers'];
 					default:
@@ -144,7 +153,9 @@ export const actions: Actions = {
 			};
 
 			// Map AdminLevel to DB enum string
-			const toDbAdminLevel = (level: AdminLevel): 'super_admin' | 'organization_admin' | 'regular_admin' => {
+			const toDbAdminLevel = (
+				level: AdminLevel
+			): 'super_admin' | 'organization_admin' | 'regular_admin' => {
 				switch (level) {
 					case AdminLevel.SuperAdmin:
 						return 'super_admin';
@@ -157,7 +168,11 @@ export const actions: Actions = {
 			};
 
 			// Ensure email not taken
-			const existing = await db.select({ id: users.id }).from(users).where(eq(users.email, form.data.email)).limit(1);
+			const existing = await db
+				.select({ id: users.id })
+				.from(users)
+				.where(eq(users.email, form.data.email))
+				.limit(1);
 			if (existing.length > 0) {
 				form.errors._errors = ['อีเมลนี้ถูกใช้งานแล้ว'];
 				return fail(400, { form });
@@ -170,29 +185,41 @@ export const actions: Actions = {
 
 			let studentId = genStudentId();
 			for (let i = 0; i < 3; i++) {
-				const exists = await db.select({ id: users.id }).from(users).where(eq(users.studentId, studentId)).limit(1);
+				const exists = await db
+					.select({ id: users.id })
+					.from(users)
+					.where(eq(users.studentId, studentId))
+					.limit(1);
 				if (exists.length === 0) break;
 				studentId = genStudentId();
 			}
 
 			// Insert user
-                const [newUser] = await db.insert(users).values({
-                    studentId,
-                    email: form.data.email,
-                    passwordHash,
-                    prefix: form.data.prefix,
-                    firstName: form.data.first_name,
-                    lastName: form.data.last_name,
-                    qrSecret,
-                    status: 'active'
-                }).returning({ id: users.id });
+			const [newUser] = await db
+				.insert(users)
+				.values({
+					studentId,
+					email: form.data.email,
+					passwordHash,
+					prefix: form.data.prefix,
+					firstName: form.data.first_name,
+					lastName: form.data.last_name,
+					qrSecret,
+					status: 'active'
+				})
+				.returning({ id: users.id });
 
 			// Insert admin role
-			const perms = form.data.permissions?.length ? form.data.permissions : getDefaultPermissions(form.data.admin_level);
+			const perms = form.data.permissions?.length
+				? form.data.permissions
+				: getDefaultPermissions(form.data.admin_level);
 			await db.insert(adminRoles).values({
 				userId: newUser.id,
 				adminLevel: toDbAdminLevel(form.data.admin_level),
-				organizationId: form.data.admin_level === AdminLevel.OrganizationAdmin ? (form.data as any).organization_id || null : null,
+				organizationId:
+					form.data.admin_level === AdminLevel.OrganizationAdmin
+						? (form.data as any).organization_id || null
+						: null,
 				permissions: perms,
 				isEnabled: true
 			});
@@ -200,10 +227,12 @@ export const actions: Actions = {
 			return { form, success: true, message: 'สร้างแอดมินสำเร็จ' };
 		} catch (error) {
 			console.error('Create admin error:', error);
-			
+
 			// ตรวจสอบประเภทของ error เพื่อให้ข้อความที่เหมาะสม
 			if (error instanceof TypeError && error.message.includes('fetch')) {
-				form.errors._errors = ['เกิดข้อผิดพลาดในการเชื่อมต่อกับเซิร์ฟเวอร์ กรุณาตรวจสอบว่า Backend Server กำลังทำงานอยู่'];
+				form.errors._errors = [
+					'เกิดข้อผิดพลาดในการเชื่อมต่อกับเซิร์ฟเวอร์ กรุณาตรวจสอบว่า Backend Server กำลังทำงานอยู่'
+				];
 			} else if (error instanceof Error) {
 				form.errors._errors = [`เกิดข้อผิดพลาด: ${error.message}`];
 			} else {
@@ -227,7 +256,7 @@ export const actions: Actions = {
 			return { success: true, message: 'ลบแอดมินสำเร็จ' };
 		} catch (error) {
 			console.error('Delete admin error:', error);
-			
+
 			if (error instanceof TypeError && error.message.includes('fetch')) {
 				return fail(500, { error: 'เกิดข้อผิดพลาดในการเชื่อมต่อกับเซิร์ฟเวอร์' });
 			} else if (error instanceof SyntaxError) {
@@ -248,11 +277,14 @@ export const actions: Actions = {
 		}
 
 		try {
-			await db.update(adminRoles).set({ isEnabled: isActive, updatedAt: new Date() }).where(eq(adminRoles.id, adminId));
+			await db
+				.update(adminRoles)
+				.set({ isEnabled: isActive, updatedAt: new Date() })
+				.where(eq(adminRoles.id, adminId));
 			return { success: true, message: `${isActive ? 'เปิดใช้งาน' : 'ปิดใช้งาน'}แอดมินสำเร็จ` };
 		} catch (error) {
 			console.error('Toggle admin status error:', error);
-			
+
 			if (error instanceof TypeError && error.message.includes('fetch')) {
 				return fail(500, { error: 'เกิดข้อผิดพลาดในการเชื่อมต่อกับเซิร์ฟเวอร์' });
 			} else if (error instanceof SyntaxError) {
@@ -292,41 +324,44 @@ export const actions: Actions = {
 		}
 
 		try {
-            // ตรวจสอบว่ามีข้อมูลที่จำเป็นครบถ้วน
-            const requiredFields = ['first_name', 'last_name', 'email'];
-            const missingFields = requiredFields.filter(field => !updateData[field]);
-			
+			// ตรวจสอบว่ามีข้อมูลที่จำเป็นครบถ้วน
+			const requiredFields = ['first_name', 'last_name', 'email'];
+			const missingFields = requiredFields.filter((field) => !updateData[field]);
+
 			if (missingFields.length > 0) {
-				return fail(400, { 
-					error: `ข้อมูลไม่ครบถ้วน: ${missingFields.join(', ')}` 
+				return fail(400, {
+					error: `ข้อมูลไม่ครบถ้วน: ${missingFields.join(', ')}`
 				});
 			}
 
-            const setObj: any = {
-                firstName: updateData.first_name,
-                lastName: updateData.last_name,
-                email: updateData.email,
-                updatedAt: new Date()
-            };
-            if (updateData.prefix !== undefined) {
-                setObj.prefix = updateData.prefix || 'Generic';
-            }
+			const setObj: any = {
+				firstName: updateData.first_name,
+				lastName: updateData.last_name,
+				email: updateData.email,
+				updatedAt: new Date()
+			};
+			if (updateData.prefix !== undefined) {
+				setObj.prefix = updateData.prefix || 'Generic';
+			}
 			if (updateData.department_id !== undefined) {
 				setObj.departmentId = updateData.department_id || null;
 			}
 
 			await db.update(users).set(setObj).where(eq(users.id, targetUserId));
 
-			return { 
-				success: true, 
+			return {
+				success: true,
 				message: 'อัพเดตข้อมูลแอดมินสำเร็จ'
 			};
 		} catch (error) {
 			console.error('Update admin error:', error);
-			
+
 			// ให้ error handling ที่ดีขึ้น
 			if (error instanceof TypeError && error.message.includes('fetch')) {
-				return fail(500, { error: 'เกิดข้อผิดพลาดในการเชื่อมต่อกับเซิร์ฟเวอร์ กรุณาตรวจสอบว่า Backend Server กำลังทำงานอยู่' });
+				return fail(500, {
+					error:
+						'เกิดข้อผิดพลาดในการเชื่อมต่อกับเซิร์ฟเวอร์ กรุณาตรวจสอบว่า Backend Server กำลังทำงานอยู่'
+				});
 			} else if (error instanceof SyntaxError) {
 				return fail(500, { error: 'เกิดข้อผิดพลาดในการประมวลผลข้อมูลจากเซิร์ฟเวอร์' });
 			} else if (error instanceof Error) {

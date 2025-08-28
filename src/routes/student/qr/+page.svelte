@@ -222,7 +222,7 @@
 						</div>
 						<div class="sm:col-span-2">
 							<span class="text-muted-foreground">เวลาที่เหลือ:</span>
-							<p class="text-primary mt-1 font-medium">
+							<p class="mt-1 font-medium text-primary">
 								{formatTimeRemaining($qrCode.expires_at)}
 							</p>
 						</div>
@@ -258,7 +258,7 @@
 				{:else if $qrStatus === 'generating'}
 					<div class="flex items-center justify-center py-6">
 						<div class="space-y-2 text-center">
-							<IconClock class="text-muted-foreground mx-auto size-8 animate-pulse" />
+							<IconClock class="mx-auto size-8 animate-pulse text-muted-foreground" />
 							<p class="text-muted-foreground">กำลังสร้าง QR Code...</p>
 						</div>
 					</div>
@@ -283,7 +283,7 @@
 		<div class="flex justify-center">
 			<QRCodeGenerator size="large" showStatus={false} />
 		</div>
-		<div class="text-muted-foreground space-y-1 text-center text-xs">
+		<div class="space-y-1 text-center text-xs text-muted-foreground">
 			<p>ID: <span>{$qrCode.id}</span></p>
 			<p class="text-muted-foreground/70">แสดง QR Code นี้ให้เจ้าหน้าที่สแกนเพื่อเข้าร่วมกิจกรรม</p>
 		</div>
@@ -298,7 +298,7 @@
 			</CardTitle>
 		</CardHeader>
 		<CardContent>
-			<ol class="text-muted-foreground list-inside list-decimal space-y-2 text-sm">
+			<ol class="list-inside list-decimal space-y-2 text-sm text-muted-foreground">
 				<li>แสดง QR Code นี้ให้เจ้าหน้าที่ที่กิจกรรม</li>
 				<li>เจ้าหน้าที่จะสแกน QR Code เพื่อบันทึกการเข้าร่วม</li>
 				<li>QR Code จะหมดอายุและสร้างใหม่อัตโนมัติเพื่อความปลอดภัย</li>
@@ -311,12 +311,12 @@
 	<!-- Tips for Mobile -->
 	<Card class="border-primary/20 bg-primary/5 lg:hidden">
 		<CardHeader>
-			<CardTitle class="text-primary flex items-center gap-2 text-sm">
+			<CardTitle class="flex items-center gap-2 text-sm text-primary">
 				<IconInfoCircle class="size-4" />
 				เคล็ดลับสำหรับมือถือ
 			</CardTitle>
 		</CardHeader>
-		<CardContent class="text-muted-foreground space-y-1 text-xs">
+		<CardContent class="space-y-1 text-xs text-muted-foreground">
 			<p>• เพิ่มความสว่างของหน้าจอให้เต็มที่เมื่อแสดง QR Code</p>
 			<p>• ถือโทรศัพท์ให้มั่นคงเมื่อเจ้าหน้าที่กำลังสแกน</p>
 			<p>• สามารถจับภาพหน้าจอ QR Code เก็บไว้ได้</p>

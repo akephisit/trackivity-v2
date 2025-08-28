@@ -4,11 +4,11 @@
 	import { goto } from '$app/navigation';
 	import { cn } from '$lib/utils';
 	import { Button } from '$lib/components/ui/button';
-	import { 
-		IconHome, 
-		IconCalendarEvent, 
-		IconQrcode, 
-		IconUser, 
+	import {
+		IconHome,
+		IconCalendarEvent,
+		IconQrcode,
+		IconUser,
 		IconHistory,
 		IconLogout,
 		IconMenu,
@@ -28,37 +28,37 @@
 		{ href: '/student/profile', icon: IconUser, label: 'โปรไฟล์' }
 	];
 
-    // Check authentication and user role
-    onMount(() => {
-        let unsubscribe: () => void = () => {};
-        let userUnsubscribe: () => void = () => {};
+	// Check authentication and user role
+	onMount(() => {
+		let unsubscribe: () => void = () => {};
+		let userUnsubscribe: () => void = () => {};
 
-        (async () => {
-            // Ensure we probe server first so store reflects real session
-            const { auth } = await import('$lib/stores/auth');
-            await auth.validateSession();
+		(async () => {
+			// Ensure we probe server first so store reflects real session
+			const { auth } = await import('$lib/stores/auth');
+			await auth.validateSession();
 
-            unsubscribe = isAuthenticated.subscribe((authenticated) => {
-                if (!authenticated) {
-                    goto('/login');
-                    return;
-                }
-            });
+			unsubscribe = isAuthenticated.subscribe((authenticated) => {
+				if (!authenticated) {
+					goto('/login');
+					return;
+				}
+			});
 
-            userUnsubscribe = currentUser.subscribe((user) => {
-                if (user && user.admin_role) {
-                    // If user is admin, redirect to admin panel
-                    goto('/admin');
-                    return;
-                }
-            });
-        })();
+			userUnsubscribe = currentUser.subscribe((user) => {
+				if (user && user.admin_role) {
+					// If user is admin, redirect to admin panel
+					goto('/admin');
+					return;
+				}
+			});
+		})();
 
-        return () => {
-            unsubscribe();
-            userUnsubscribe();
-        };
-    });
+		return () => {
+			unsubscribe();
+			userUnsubscribe();
+		};
+	});
 
 	function isActiveRoute(href: string, exact = false) {
 		if (exact) {
@@ -83,35 +83,25 @@
 
 <div class="min-h-screen bg-background">
 	<!-- Mobile Header -->
-	<header class="lg:hidden bg-card border-b sticky top-0 z-40">
+	<header class="sticky top-0 z-40 border-b bg-card lg:hidden">
 		<div class="flex items-center justify-between px-4 py-3">
 			<div class="flex items-center gap-3">
-				<Button
-					variant="ghost"
-					size="sm"
-					onclick={toggleMobileMenu}
-					class="p-2"
-				>
+				<Button variant="ghost" size="sm" onclick={toggleMobileMenu} class="p-2">
 					{#if mobileMenuOpen}
 						<IconX class="size-5" />
 					{:else}
 						<IconMenu class="size-5" />
 					{/if}
 				</Button>
-				<h1 class="font-semibold text-lg">Trackivity</h1>
+				<h1 class="text-lg font-semibold">Trackivity</h1>
 			</div>
-			
+
 			{#if $currentUser}
 				<div class="flex items-center gap-2">
 					<span class="text-sm text-muted-foreground">
 						{$currentUser.first_name}
 					</span>
-					<Button
-						variant="ghost"
-						size="sm"
-						onclick={handleLogout}
-						class="p-2"
-					>
+					<Button variant="ghost" size="sm" onclick={handleLogout} class="p-2">
 						<IconLogout class="size-4" />
 					</Button>
 				</div>
@@ -121,23 +111,23 @@
 
 	<div class="flex">
 		<!-- Desktop Sidebar -->
-		<aside class="hidden lg:flex w-64 bg-card border-r min-h-screen flex-col">
+		<aside class="hidden min-h-screen w-64 flex-col border-r bg-card lg:flex">
 			<!-- Logo -->
-			<div class="p-6 border-b">
+			<div class="border-b p-6">
 				<h1 class="text-xl font-bold text-foreground">Trackivity</h1>
-				<p class="text-sm text-muted-foreground mt-1">Student Portal</p>
+				<p class="mt-1 text-sm text-muted-foreground">Student Portal</p>
 			</div>
 
 			<!-- Navigation -->
-			<nav class="flex-1 px-4 py-6 space-y-2">
+			<nav class="flex-1 space-y-2 px-4 py-6">
 				{#each navItems as item}
 					<a
 						href={item.href}
 						class={cn(
-							"flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
+							'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
 							isActiveRoute(item.href, item.exact)
-								? "bg-primary text-primary-foreground"
-								: "text-muted-foreground hover:text-foreground hover:bg-muted"
+								? 'bg-primary text-primary-foreground'
+								: 'text-muted-foreground hover:bg-muted hover:text-foreground'
 						)}
 					>
 						<item.icon class="size-5" />
@@ -148,21 +138,17 @@
 
 			<!-- User Info -->
 			{#if $currentUser}
-				<div class="p-4 border-t">
+				<div class="border-t p-4">
 					<div class="space-y-2">
 						<p class="text-sm font-medium">
-							{$currentUser.first_name} {$currentUser.last_name}
+							{$currentUser.first_name}
+							{$currentUser.last_name}
 						</p>
 						<p class="text-xs text-muted-foreground">
 							รหัส: {$currentUser.student_id}
 						</p>
-						<Button
-							variant="ghost"
-							size="sm"
-							onclick={handleLogout}
-							class="w-full justify-start"
-						>
-							<IconLogout class="size-4 mr-2" />
+						<Button variant="ghost" size="sm" onclick={handleLogout} class="w-full justify-start">
+							<IconLogout class="mr-2 size-4" />
 							ออกจากระบบ
 						</Button>
 					</div>
@@ -172,8 +158,8 @@
 
 		<!-- Mobile Menu Overlay -->
 		{#if mobileMenuOpen}
-			<div 
-				class="lg:hidden fixed inset-0 bg-black/20 z-50"
+			<div
+				class="fixed inset-0 z-50 bg-black/20 lg:hidden"
 				role="button"
 				tabindex="0"
 				aria-label="Close mobile menu"
@@ -183,37 +169,34 @@
 		{/if}
 
 		<!-- Mobile Sidebar -->
-		<aside class={cn(
-			"lg:hidden fixed left-0 top-0 w-64 bg-card border-r min-h-screen flex-col z-50 transform transition-transform duration-300",
-			mobileMenuOpen ? "translate-x-0" : "-translate-x-full"
-		)}>
+		<aside
+			class={cn(
+				'fixed top-0 left-0 z-50 min-h-screen w-64 transform flex-col border-r bg-card transition-transform duration-300 lg:hidden',
+				mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
+			)}
+		>
 			<!-- Logo -->
-			<div class="p-6 border-b flex items-center justify-between">
+			<div class="flex items-center justify-between border-b p-6">
 				<div>
 					<h1 class="text-xl font-bold text-foreground">Trackivity</h1>
-					<p class="text-sm text-muted-foreground mt-1">Student Portal</p>
+					<p class="mt-1 text-sm text-muted-foreground">Student Portal</p>
 				</div>
-				<Button
-					variant="ghost"
-					size="sm"
-					onclick={closeMobileMenu}
-					class="p-2"
-				>
+				<Button variant="ghost" size="sm" onclick={closeMobileMenu} class="p-2">
 					<IconX class="size-5" />
 				</Button>
 			</div>
 
 			<!-- Navigation -->
-			<nav class="flex-1 px-4 py-6 space-y-2">
+			<nav class="flex-1 space-y-2 px-4 py-6">
 				{#each navItems as item}
 					<a
 						href={item.href}
 						onclick={closeMobileMenu}
 						class={cn(
-							"flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
+							'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
 							isActiveRoute(item.href, item.exact)
-								? "bg-primary text-primary-foreground"
-								: "text-muted-foreground hover:text-foreground hover:bg-muted"
+								? 'bg-primary text-primary-foreground'
+								: 'text-muted-foreground hover:bg-muted hover:text-foreground'
 						)}
 					>
 						<item.icon class="size-5" />
@@ -224,21 +207,17 @@
 
 			<!-- User Info -->
 			{#if $currentUser}
-				<div class="p-4 border-t">
+				<div class="border-t p-4">
 					<div class="space-y-2">
 						<p class="text-sm font-medium">
-							{$currentUser.first_name} {$currentUser.last_name}
+							{$currentUser.first_name}
+							{$currentUser.last_name}
 						</p>
 						<p class="text-xs text-muted-foreground">
 							รหัส: {$currentUser.student_id}
 						</p>
-						<Button
-							variant="ghost"
-							size="sm"
-							onclick={handleLogout}
-							class="w-full justify-start"
-						>
-							<IconLogout class="size-4 mr-2" />
+						<Button variant="ghost" size="sm" onclick={handleLogout} class="w-full justify-start">
+							<IconLogout class="mr-2 size-4" />
 							ออกจากระบบ
 						</Button>
 					</div>
@@ -248,23 +227,21 @@
 
 		<!-- Main Content -->
 		<main class="flex-1 lg:ml-0">
-			<div class="container mx-auto px-4 py-6 lg:px-6 max-w-7xl">
+			<div class="container mx-auto max-w-7xl px-4 py-6 lg:px-6">
 				{@render children?.()}
 			</div>
 		</main>
 	</div>
 
 	<!-- Bottom Navigation for Mobile -->
-	<nav class="lg:hidden fixed bottom-0 left-0 right-0 bg-card border-t z-30">
+	<nav class="fixed right-0 bottom-0 left-0 z-30 border-t bg-card lg:hidden">
 		<div class="flex items-center justify-around py-2">
 			{#each navItems.slice(0, 4) as item}
 				<a
 					href={item.href}
 					class={cn(
-						"flex flex-col items-center gap-1 px-3 py-2 text-xs font-medium transition-colors min-w-0",
-						isActiveRoute(item.href, item.exact)
-							? "text-primary"
-							: "text-muted-foreground"
+						'flex min-w-0 flex-col items-center gap-1 px-3 py-2 text-xs font-medium transition-colors',
+						isActiveRoute(item.href, item.exact) ? 'text-primary' : 'text-muted-foreground'
 					)}
 				>
 					<item.icon class="size-5 flex-shrink-0" />
@@ -275,7 +252,7 @@
 	</nav>
 
 	<!-- Bottom padding for mobile bottom nav -->
-	<div class="lg:hidden h-16"></div>
+	<div class="h-16 lg:hidden"></div>
 </div>
 
 <style>

@@ -1,7 +1,7 @@
 <script lang="ts">
-	import type { HTMLAttributes } from "svelte/elements";
-	import type { WithElementRef } from "$lib/utils.js";
-	import IconPoint from "@tabler/icons-svelte/icons/point";
+	import type { HTMLAttributes } from 'svelte/elements';
+	import type { WithElementRef } from '$lib/utils.js';
+	import IconPoint from '@tabler/icons-svelte/icons/point';
 
 	let {
 		ref = $bindable(null),

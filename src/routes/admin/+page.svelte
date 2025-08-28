@@ -1,14 +1,20 @@
 <script lang="ts">
-	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card';
+	import {
+		Card,
+		CardContent,
+		CardDescription,
+		CardHeader,
+		CardTitle
+	} from '$lib/components/ui/card';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
 	import { Separator } from '$lib/components/ui/separator';
 	import { Progress } from '$lib/components/ui/progress';
 	import * as Chart from '$lib/components/ui/chart';
-	import { 
-		IconUsers, 
-		IconShield, 
-		IconBuilding, 
+	import {
+		IconUsers,
+		IconShield,
+		IconBuilding,
 		IconActivity,
 		IconTrendingUp,
 		IconClock,
@@ -111,18 +117,20 @@
 	const statCards = $derived(getStatCards());
 
 	// Chart data for department breakdown (Faculty Admin)
-	const departmentChartData = $derived(data.stats?.department_breakdown?.map((dept: any) => ({
-		department: dept.name?.substring(0, 20) + (dept.name?.length > 20 ? '...' : '') || 'ไม่ระบุ',
-		users: dept.user_count || 0,
-		color: 'var(--chart-1)'
-	})) || []);
+	const departmentChartData = $derived(
+		data.stats?.department_breakdown?.map((dept: any) => ({
+			department: dept.name?.substring(0, 20) + (dept.name?.length > 20 ? '...' : '') || 'ไม่ระบุ',
+			users: dept.user_count || 0,
+			color: 'var(--chart-1)'
+		})) || []
+	);
 
 	// Chart configuration
 	const chartConfig = {
 		users: {
-			label: "จำนวนผู้ใช้",
-			color: "var(--chart-1)",
-		},
+			label: 'จำนวนผู้ใช้',
+			color: 'var(--chart-1)'
+		}
 	} satisfies Chart.ChartConfig;
 
 	function getAdminLevelText(level: any): string {
@@ -139,7 +147,9 @@
 		}
 	}
 
-	function getAdminLevelBadgeVariant(level: any): 'default' | 'secondary' | 'destructive' | 'outline' {
+	function getAdminLevelBadgeVariant(
+		level: any
+	): 'default' | 'secondary' | 'destructive' | 'outline' {
 		if (!level) return 'outline';
 		switch (level) {
 			case 'SuperAdmin':
@@ -173,11 +183,15 @@
 				{/if}
 			</h1>
 			<p class="mt-2 text-gray-600 dark:text-gray-400">
-				ยินดีต้อนรับ, {data.user.first_name} {data.user.last_name}
+				ยินดีต้อนรับ, {data.user.first_name}
+				{data.user.last_name}
 				{#if data.admin_role?.admin_level === AdminLevel.OrganizationAdmin && (data.admin_role as any)?.organization}
-					<span class="ml-2 text-sm bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-2 py-1 rounded-full">
-						<IconSchool class="inline h-4 w-4 mr-1" />
-						{(data.admin_role as any).organization.code || (data.admin_role as any).organization.name}
+					<span
+						class="ml-2 rounded-full bg-blue-100 px-2 py-1 text-sm text-blue-800 dark:bg-blue-900 dark:text-blue-200"
+					>
+						<IconSchool class="mr-1 inline h-4 w-4" />
+						{(data.admin_role as any).organization.code ||
+							(data.admin_role as any).organization.name}
 					</span>
 				{/if}
 			</p>
@@ -191,41 +205,35 @@
 
 	<!-- Organization Info Card for Organization Admin -->
 	{#if data.admin_role?.admin_level === AdminLevel.OrganizationAdmin && (data.admin_role as any)?.organization}
-		<Card class="border-blue-200 dark:border-blue-800 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950 dark:to-indigo-950">
+		<Card
+			class="border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50 dark:border-blue-800 dark:from-blue-950 dark:to-indigo-950"
+		>
 			<CardHeader>
 				<CardTitle class="flex items-center gap-2 text-blue-800 dark:text-blue-200">
 					<IconSchool class="h-5 w-5" />
 					ข้อมูลหน่วยงาน
 				</CardTitle>
-				<CardDescription>
-					ข้อมูลสรุปของหน่วยงานที่คุณดูแล
-				</CardDescription>
+				<CardDescription>ข้อมูลสรุปของหน่วยงานที่คุณดูแล</CardDescription>
 			</CardHeader>
 			<CardContent>
-				<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+				<div class="grid grid-cols-1 gap-4 md:grid-cols-3">
 					<div class="text-center">
 						<div class="text-2xl font-bold text-blue-700 dark:text-blue-300">
 							{(data.admin_role as any).organization.name}
 						</div>
-						<div class="text-sm text-gray-600 dark:text-gray-400">
-							ชื่อหน่วยงาน
-						</div>
+						<div class="text-sm text-gray-600 dark:text-gray-400">ชื่อหน่วยงาน</div>
 					</div>
 					<div class="text-center">
 						<div class="text-2xl font-bold text-green-700 dark:text-green-300">
 							{data.stats?.departments_count || 0}
 						</div>
-						<div class="text-sm text-gray-600 dark:text-gray-400">
-							ภาควิชา
-						</div>
+						<div class="text-sm text-gray-600 dark:text-gray-400">ภาควิชา</div>
 					</div>
 					<div class="text-center">
 						<div class="text-2xl font-bold text-purple-700 dark:text-purple-300">
 							{data.stats?.organization_users || 0}
 						</div>
-						<div class="text-sm text-gray-600 dark:text-gray-400">
-							ผู้ใช้ทั้งหมด
-						</div>
+						<div class="text-sm text-gray-600 dark:text-gray-400">ผู้ใช้ทั้งหมด</div>
 					</div>
 				</div>
 			</CardContent>
@@ -233,14 +241,14 @@
 	{/if}
 
 	<!-- Stats Cards -->
-	<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+	<div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
 		{#each statCards as stat}
-			<Card class="hover:shadow-lg transition-shadow duration-200">
+			<Card class="transition-shadow duration-200 hover:shadow-lg">
 				<CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
 					<CardTitle class="text-sm font-medium text-gray-600 dark:text-gray-400">
 						{stat.title}
 					</CardTitle>
-					<div class="p-2 rounded-lg {stat.bgColor} dark:bg-opacity-20">
+					<div class="rounded-lg p-2 {stat.bgColor} dark:bg-opacity-20">
 						<stat.icon class="h-4 w-4 {stat.color}" />
 					</div>
 				</CardHeader>
@@ -248,7 +256,7 @@
 					<div class="text-2xl font-bold text-gray-900 dark:text-white">
 						{(stat.value || 0).toLocaleString()}
 					</div>
-					<p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+					<p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
 						{stat.description}
 					</p>
 				</CardContent>
@@ -257,8 +265,8 @@
 	</div>
 
 	<!-- Department Analytics for Faculty Admin -->
-{#if data.admin_role?.admin_level === AdminLevel.OrganizationAdmin && departmentChartData?.length > 0}
-		<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+	{#if data.admin_role?.admin_level === AdminLevel.OrganizationAdmin && departmentChartData?.length > 0}
+		<div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
 			<!-- Department Distribution Chart -->
 			<Card>
 				<CardHeader>
@@ -266,9 +274,7 @@
 						<IconChartBar class="h-5 w-5" />
 						การกระจายผู้ใช้ตามภาควิชา
 					</CardTitle>
-					<CardDescription>
-						จำนวนผู้ใช้ในแต่ละภาควิชาของหน่วยงาน
-					</CardDescription>
+					<CardDescription>จำนวนผู้ใช้ในแต่ละภาควิชาของหน่วยงาน</CardDescription>
 				</CardHeader>
 				<CardContent>
 					<Chart.Container config={chartConfig} class="min-h-[200px] w-full">
@@ -280,8 +286,8 @@
 							axis="x"
 							props={{
 								xAxis: {
-									format: (d) => d.length > 15 ? d.substring(0, 15) + '...' : d,
-								},
+									format: (d) => (d.length > 15 ? d.substring(0, 15) + '...' : d)
+								}
 							}}
 						>
 							{#snippet tooltip()}
@@ -299,44 +305,66 @@
 						<IconAward class="h-5 w-5" />
 						ประสิทธิภาพหน่วยงาน
 					</CardTitle>
-					<CardDescription>
-						ตัวชี้วัดและเป้าหมายของหน่วยงาน
-					</CardDescription>
+					<CardDescription>ตัวชี้วัดและเป้าหมายของหน่วยงาน</CardDescription>
 				</CardHeader>
 				<CardContent class="space-y-4">
 					<div>
-						<div class="flex justify-between items-center mb-2">
+						<div class="mb-2 flex items-center justify-between">
 							<span class="text-sm font-medium">อัตราผู้ใช้งานใหม่</span>
 							<span class="text-sm text-gray-500">
-							{Math.round(((data.stats?.new_users_this_month || 0) / Math.max(data.stats?.organization_users || 1, 1)) * 100)}%
+								{Math.round(
+									((data.stats?.new_users_this_month || 0) /
+										Math.max(data.stats?.organization_users || 1, 1)) *
+										100
+								)}%
 							</span>
 						</div>
-						<Progress value={Math.round(((data.stats?.new_users_this_month || 0) / Math.max(data.stats?.organization_users || 1, 1)) * 100)} class="h-2" />
+						<Progress
+							value={Math.round(
+								((data.stats?.new_users_this_month || 0) /
+									Math.max(data.stats?.organization_users || 1, 1)) *
+									100
+							)}
+							class="h-2"
+						/>
 					</div>
 					<div>
-						<div class="flex justify-between items-center mb-2">
+						<div class="mb-2 flex items-center justify-between">
 							<span class="text-sm font-medium">อัตราผู้ใช้งานใช้งาน</span>
 							<span class="text-sm text-gray-500">
-							{Math.round(((data.stats?.active_users || 0) / Math.max(data.stats?.organization_users || 1, 1)) * 100)}%
+								{Math.round(
+									((data.stats?.active_users || 0) /
+										Math.max(data.stats?.organization_users || 1, 1)) *
+										100
+								)}%
 							</span>
 						</div>
-						<Progress value={Math.round(((data.stats?.active_users || 0) / Math.max(data.stats?.organization_users || 1, 1)) * 100)} class="h-2" />
+						<Progress
+							value={Math.round(
+								((data.stats?.active_users || 0) /
+									Math.max(data.stats?.organization_users || 1, 1)) *
+									100
+							)}
+							class="h-2"
+						/>
 					</div>
 					<div>
-						<div class="flex justify-between items-center mb-2">
+						<div class="mb-2 flex items-center justify-between">
 							<span class="text-sm font-medium">ความครบถ้วนข้อมูลภาควิชา</span>
 							<span class="text-sm text-gray-500">85%</span>
 						</div>
 						<Progress value={85} class="h-2" />
 					</div>
-					<div class="grid grid-cols-2 gap-4 mt-4">
-						<div class="text-center p-3 bg-green-50 dark:bg-green-950 rounded-lg">
-							<IconShieldCheck class="h-6 w-6 text-green-600 dark:text-green-400 mx-auto mb-1" />
-							<div class="text-sm font-medium text-green-800 dark:text-green-200">เป้าหมายสำเร็จ</div>
+					<div class="mt-4 grid grid-cols-2 gap-4">
+						<div class="rounded-lg bg-green-50 p-3 text-center dark:bg-green-950">
+							<IconShieldCheck class="mx-auto mb-1 h-6 w-6 text-green-600 dark:text-green-400" />
+							<div class="text-sm font-medium text-green-800 dark:text-green-200">
+								เป้าหมายสำเร็จ
+							</div>
 							<div class="text-xs text-green-600 dark:text-green-400">3 จาก 4 เป้าหมาย</div>
 						</div>
-						<div class="text-center p-3 bg-blue-50 dark:bg-blue-950 rounded-lg">
-							<IconTrendingUp class="h-6 w-6 text-blue-600 dark:text-blue-400 mx-auto mb-1" />
+						<div class="rounded-lg bg-blue-50 p-3 text-center dark:bg-blue-950">
+							<IconTrendingUp class="mx-auto mb-1 h-6 w-6 text-blue-600 dark:text-blue-400" />
 							<div class="text-sm font-medium text-blue-800 dark:text-blue-200">แนวโน้มดี</div>
 							<div class="text-xs text-blue-600 dark:text-blue-400">+12% จากเดือนที่แล้ว</div>
 						</div>
@@ -347,7 +375,7 @@
 	{/if}
 
 	<!-- Quick Actions & Recent Activities -->
-	<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+	<div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
 		<!-- Quick Actions -->
 		<Card>
 			<CardHeader>
@@ -355,36 +383,49 @@
 					<IconChartBar class="h-5 w-5" />
 					การดำเนินการด่วน
 				</CardTitle>
-				<CardDescription>
-					ฟังก์ชันที่ใช้บ่อยสำหรับการจัดการระบบ
-				</CardDescription>
+				<CardDescription>ฟังก์ชันที่ใช้บ่อยสำหรับการจัดการระบบ</CardDescription>
 			</CardHeader>
 			<CardContent class="space-y-4">
 				{#if data.admin_role?.admin_level === AdminLevel.SuperAdmin}
-					<div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-						<Button variant="outline" class="justify-start h-auto py-3 hover:bg-blue-50 dark:hover:bg-blue-950" onclick={() => window.location.href = '/admin/organization-users'}>
-							<IconUsers class="h-4 w-4 mr-2" />
+					<div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+						<Button
+							variant="outline"
+							class="h-auto justify-start py-3 hover:bg-blue-50 dark:hover:bg-blue-950"
+							onclick={() => (window.location.href = '/admin/organization-users')}
+						>
+							<IconUsers class="mr-2 h-4 w-4" />
 							<div class="text-left">
 								<div class="font-medium">จัดการผู้ใช้</div>
 								<div class="text-xs text-gray-500">เพิ่ม แก้ไข ลบผู้ใช้</div>
 							</div>
 						</Button>
-						<Button variant="outline" class="justify-start h-auto py-3 hover:bg-green-50 dark:hover:bg-green-950" onclick={() => window.location.href = '/admin/admins'}>
-							<IconShield class="h-4 w-4 mr-2" />
+						<Button
+							variant="outline"
+							class="h-auto justify-start py-3 hover:bg-green-50 dark:hover:bg-green-950"
+							onclick={() => (window.location.href = '/admin/admins')}
+						>
+							<IconShield class="mr-2 h-4 w-4" />
 							<div class="text-left">
 								<div class="font-medium">จัดการแอดมิน</div>
 								<div class="text-xs text-gray-500">กำหนดสิทธิ์ผู้ดูแล</div>
 							</div>
 						</Button>
-						<Button variant="outline" class="justify-start h-auto py-3 hover:bg-purple-50 dark:hover:bg-purple-950" onclick={() => window.location.href = '/admin/organizations'}>
-							<IconBuilding class="h-4 w-4 mr-2" />
+						<Button
+							variant="outline"
+							class="h-auto justify-start py-3 hover:bg-purple-50 dark:hover:bg-purple-950"
+							onclick={() => (window.location.href = '/admin/organizations')}
+						>
+							<IconBuilding class="mr-2 h-4 w-4" />
 							<div class="text-left">
 								<div class="font-medium">จัดการหน่วยงาน</div>
 								<div class="text-xs text-gray-500">เพิ่ม แก้ไขข้อมูลหน่วยงาน</div>
 							</div>
 						</Button>
-						<Button variant="outline" class="justify-start h-auto py-3 hover:bg-orange-50 dark:hover:bg-orange-950">
-							<IconActivity class="h-4 w-4 mr-2" />
+						<Button
+							variant="outline"
+							class="h-auto justify-start py-3 hover:bg-orange-50 dark:hover:bg-orange-950"
+						>
+							<IconActivity class="mr-2 h-4 w-4" />
 							<div class="text-left">
 								<div class="font-medium">รายงานระบบ</div>
 								<div class="text-xs text-gray-500">ดูสถิติและรายงาน</div>
@@ -392,30 +433,44 @@
 						</Button>
 					</div>
 				{:else if data.admin_role?.admin_level === AdminLevel.OrganizationAdmin}
-					<div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-						<Button variant="outline" class="justify-start h-auto py-3 hover:bg-blue-50 dark:hover:bg-blue-950" onclick={() => window.location.href = '/admin/organization-users'}>
-							<IconUsers class="h-4 w-4 mr-2" />
+					<div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+						<Button
+							variant="outline"
+							class="h-auto justify-start py-3 hover:bg-blue-50 dark:hover:bg-blue-950"
+							onclick={() => (window.location.href = '/admin/organization-users')}
+						>
+							<IconUsers class="mr-2 h-4 w-4" />
 							<div class="text-left">
 								<div class="font-medium">จัดการผู้ใช้หน่วยงาน</div>
 								<div class="text-xs text-gray-500">จัดการผู้ใช้ในหน่วยงานของคุณ</div>
 							</div>
 						</Button>
-						<Button variant="outline" class="justify-start h-auto py-3 hover:bg-green-50 dark:hover:bg-green-950" onclick={() => window.location.href = '/admin/departments'}>
-							<IconBuilding class="h-4 w-4 mr-2" />
+						<Button
+							variant="outline"
+							class="h-auto justify-start py-3 hover:bg-green-50 dark:hover:bg-green-950"
+							onclick={() => (window.location.href = '/admin/departments')}
+						>
+							<IconBuilding class="mr-2 h-4 w-4" />
 							<div class="text-left">
 								<div class="font-medium">จัดการภาควิชา</div>
 								<div class="text-xs text-gray-500">เพิ่ม แก้ไข ภาควิชาในหน่วยงาน</div>
 							</div>
 						</Button>
-						<Button variant="outline" class="justify-start h-auto py-3 hover:bg-purple-50 dark:hover:bg-purple-950">
-							<IconChartBar class="h-4 w-4 mr-2" />
+						<Button
+							variant="outline"
+							class="h-auto justify-start py-3 hover:bg-purple-50 dark:hover:bg-purple-950"
+						>
+							<IconChartBar class="mr-2 h-4 w-4" />
 							<div class="text-left">
 								<div class="font-medium">รายงานหน่วยงาน</div>
 								<div class="text-xs text-gray-500">สถิติและรายงานของหน่วยงาน</div>
 							</div>
 						</Button>
-						<Button variant="outline" class="justify-start h-auto py-3 hover:bg-indigo-50 dark:hover:bg-indigo-950">
-							<IconBook class="h-4 w-4 mr-2" />
+						<Button
+							variant="outline"
+							class="h-auto justify-start py-3 hover:bg-indigo-50 dark:hover:bg-indigo-950"
+						>
+							<IconBook class="mr-2 h-4 w-4" />
 							<div class="text-left">
 								<div class="font-medium">จัดการหลักสูตร</div>
 								<div class="text-xs text-gray-500">ดูและจัดการหลักสูตร</div>
@@ -423,8 +478,8 @@
 						</Button>
 					</div>
 				{:else}
-					<div class="text-center py-4 text-gray-500 dark:text-gray-400">
-						<IconActivity class="h-8 w-8 mx-auto mb-2 opacity-50" />
+					<div class="py-4 text-center text-gray-500 dark:text-gray-400">
+						<IconActivity class="mx-auto mb-2 h-8 w-8 opacity-50" />
 						<p>การดำเนินการจะแสดงตามสิทธิ์ของคุณ</p>
 					</div>
 				{/if}
@@ -438,7 +493,9 @@
 					<IconClock class="h-5 w-5" />
 					กิจกรรมล่าสุด
 					{#if data.admin_role?.admin_level === AdminLevel.OrganizationAdmin}
-						<span class="text-sm font-normal text-gray-500">(หน่วยงาน{(data.admin_role as any)?.organization?.name})</span>
+						<span class="text-sm font-normal text-gray-500"
+							>(หน่วยงาน{(data.admin_role as any)?.organization?.name})</span
+						>
 					{/if}
 				</CardTitle>
 				<CardDescription>
@@ -453,7 +510,9 @@
 				{#if data.recentActivities && data.recentActivities.length > 0}
 					<div class="space-y-4">
 						{#each data.recentActivities.slice(0, 5) as activity}
-							<div class="flex items-start space-x-3 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors duration-200">
+							<div
+								class="flex items-start space-x-3 rounded-lg p-3 transition-colors duration-200 hover:bg-gray-50 dark:hover:bg-gray-800"
+							>
 								<div class="flex-shrink-0">
 									{#if activity.type === 'success' || activity.action === 'login' || activity.action === 'profile_update'}
 										<IconCircleCheck class="h-5 w-5 text-green-500" />
@@ -465,7 +524,7 @@
 										<IconActivity class="h-5 w-5 text-blue-500" />
 									{/if}
 								</div>
-								<div class="flex-1 min-w-0">
+								<div class="min-w-0 flex-1">
 									<p class="text-sm font-medium text-gray-900 dark:text-white">
 										{activity.title || activity.description || 'กิจกรรมในระบบ'}
 									</p>
@@ -477,12 +536,14 @@
 											{/if}
 										</p>
 									{/if}
-									<div class="flex items-center justify-between mt-1">
+									<div class="mt-1 flex items-center justify-between">
 										<p class="text-xs text-gray-400 dark:text-gray-500">
 											{formatDateTime(activity.created_at)}
 										</p>
 										{#if activity.faculty_name && data.admin_role?.admin_level === AdminLevel.SuperAdmin}
-											<span class="text-xs bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 px-2 py-1 rounded-full">
+											<span
+												class="rounded-full bg-blue-100 px-2 py-1 text-xs text-blue-700 dark:bg-blue-900 dark:text-blue-300"
+											>
 												{activity.faculty_name}
 											</span>
 										{/if}
@@ -494,14 +555,14 @@
 					<Separator class="my-4" />
 					<Button variant="link" size="sm" class="w-full">
 						ดูกิจกรรมทั้งหมด
-						<IconChartBar class="h-4 w-4 ml-2" />
+						<IconChartBar class="ml-2 h-4 w-4" />
 					</Button>
 				{:else}
-					<div class="text-center py-8 text-gray-500 dark:text-gray-400">
-						<IconClock class="h-8 w-8 mx-auto mb-2 opacity-50" />
+					<div class="py-8 text-center text-gray-500 dark:text-gray-400">
+						<IconClock class="mx-auto mb-2 h-8 w-8 opacity-50" />
 						<p>ยังไม่มีกิจกรรมล่าสุด</p>
-					{#if data.admin_role?.admin_level === AdminLevel.OrganizationAdmin}
-							<p class="text-xs mt-2">กิจกรรมจะแสดงเฉพาะในหน่วยงานของคุณ</p>
+						{#if data.admin_role?.admin_level === AdminLevel.OrganizationAdmin}
+							<p class="mt-2 text-xs">กิจกรรมจะแสดงเฉพาะในหน่วยงานของคุณ</p>
 						{/if}
 					</div>
 				{/if}
@@ -517,35 +578,25 @@
 					<IconTrendingUp class="h-5 w-5" />
 					ข้อมูลระบบ
 				</CardTitle>
-				<CardDescription>
-					สถานะและข้อมูลทั่วไปของระบบ
-				</CardDescription>
+				<CardDescription>สถานะและข้อมูลทั่วไปของระบบ</CardDescription>
 			</CardHeader>
 			<CardContent>
-				<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+				<div class="grid grid-cols-1 gap-6 md:grid-cols-3">
 					<div class="text-center">
-						<div class="text-2xl font-bold text-green-600 dark:text-green-400">
-							99.9%
-						</div>
-						<div class="text-sm text-gray-500 dark:text-gray-400">
-							Uptime
-						</div>
+						<div class="text-2xl font-bold text-green-600 dark:text-green-400">99.9%</div>
+						<div class="text-sm text-gray-500 dark:text-gray-400">Uptime</div>
 					</div>
 					<div class="text-center">
 						<div class="text-2xl font-bold text-blue-600 dark:text-blue-400">
 							{((data.stats?.recent_activities?.length || 0) / 24).toFixed(1)}
 						</div>
-						<div class="text-sm text-gray-500 dark:text-gray-400">
-							กิจกรรมต่อชั่วโมง
-						</div>
+						<div class="text-sm text-gray-500 dark:text-gray-400">กิจกรรมต่อชั่วโมง</div>
 					</div>
 					<div class="text-center">
 						<div class="text-2xl font-bold text-purple-600 dark:text-purple-400">
 							{data.stats?.user_registrations_today || 0}
 						</div>
-						<div class="text-sm text-gray-500 dark:text-gray-400">
-							ผู้ใช้ลงทะเบียนวันนี้
-						</div>
+						<div class="text-sm text-gray-500 dark:text-gray-400">ผู้ใช้ลงทะเบียนวันนี้</div>
 					</div>
 				</div>
 			</CardContent>

@@ -42,17 +42,16 @@
 		try {
 			loading = true;
 			error = null;
-			
+
 			// TODO: Replace with actual API endpoint when available
 			// const response = await apiClient.getUserParticipations({ per_page: 100 });
-			
+
 			// Mock data for now
 			const mockData: ActivityParticipation[] = [];
-			
+
 			participationHistory = mockData;
 			filteredHistory = mockData;
 			calculateStats(mockData);
-			
 		} catch (err) {
 			console.error('Failed to load participation history:', err);
 			error = 'ไม่สามารถโหลดประวัติการเข้าร่วมได้';
@@ -65,12 +64,12 @@
 		const now = new Date();
 		const thisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 		const thisYear = new Date(now.getFullYear(), 0, 1);
-		
+
 		stats = {
 			total: data.length,
-			thisMonth: data.filter(p => new Date(p.participated_at) >= thisMonth).length,
-			thisYear: data.filter(p => new Date(p.participated_at) >= thisYear).length,
-			uniqueActivities: new Set(data.map(p => p.activity?.id)).size
+			thisMonth: data.filter((p) => new Date(p.participated_at) >= thisMonth).length,
+			thisYear: data.filter((p) => new Date(p.participated_at) >= thisYear).length,
+			uniqueActivities: new Set(data.map((p) => p.activity?.id)).size
 		};
 	}
 
@@ -80,9 +79,10 @@
 		// Search filter
 		if (searchQuery.trim()) {
 			const query = searchQuery.toLowerCase();
-			filtered = filtered.filter(p =>
-				p.activity?.name.toLowerCase().includes(query) ||
-				p.activity?.description?.toLowerCase().includes(query)
+			filtered = filtered.filter(
+				(p) =>
+					p.activity?.name.toLowerCase().includes(query) ||
+					p.activity?.description?.toLowerCase().includes(query)
 			);
 		}
 
@@ -91,13 +91,13 @@
 		switch (filterBy) {
 			case 'this_month': {
 				const thisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-				filtered = filtered.filter(p => new Date(p.participated_at) >= thisMonth);
+				filtered = filtered.filter((p) => new Date(p.participated_at) >= thisMonth);
 				break;
 			}
 			case 'last_month': {
 				const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
 				const thisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-				filtered = filtered.filter(p => {
+				filtered = filtered.filter((p) => {
 					const date = new Date(p.participated_at);
 					return date >= lastMonth && date < thisMonth;
 				});
@@ -105,7 +105,7 @@
 			}
 			case 'this_year': {
 				const thisYear = new Date(now.getFullYear(), 0, 1);
-				filtered = filtered.filter(p => new Date(p.participated_at) >= thisYear);
+				filtered = filtered.filter((p) => new Date(p.participated_at) >= thisYear);
 				break;
 			}
 		}
@@ -113,10 +113,14 @@
 		// Sort
 		switch (sortBy) {
 			case 'recent':
-				filtered.sort((a, b) => new Date(b.participated_at).getTime() - new Date(a.participated_at).getTime());
+				filtered.sort(
+					(a, b) => new Date(b.participated_at).getTime() - new Date(a.participated_at).getTime()
+				);
 				break;
 			case 'oldest':
-				filtered.sort((a, b) => new Date(a.participated_at).getTime() - new Date(b.participated_at).getTime());
+				filtered.sort(
+					(a, b) => new Date(a.participated_at).getTime() - new Date(b.participated_at).getTime()
+				);
 				break;
 			case 'activity_name':
 				filtered.sort((a, b) => (a.activity?.name || '').localeCompare(b.activity?.name || ''));
@@ -152,22 +156,26 @@
 
 	function getActivityTypeText(type: string): string {
 		const types: Record<string, string> = {
-			'lecture': 'บรรยาย',
-			'workshop': 'ปฏิบัติการ',
-			'seminar': 'สัมมนา',
-			'exam': 'สอบ',
-			'meeting': 'ประชุม',
-			'event': 'งาน'
+			lecture: 'บรรยาย',
+			workshop: 'ปฏิบัติการ',
+			seminar: 'สัมมนา',
+			exam: 'สอบ',
+			meeting: 'ประชุม',
+			event: 'งาน'
 		};
 		return types[type] || type;
 	}
 
 	function getActivityBadgeVariant(type: string): 'default' | 'secondary' | 'outline' {
 		switch (type) {
-			case 'lecture': return 'default';
-			case 'workshop': return 'secondary';
-			case 'exam': return 'outline';
-			default: return 'outline';
+			case 'lecture':
+				return 'default';
+			case 'workshop':
+				return 'secondary';
+			case 'exam':
+				return 'outline';
+			default:
+				return 'outline';
 		}
 	}
 </script>
@@ -180,10 +188,8 @@
 <div class="space-y-6">
 	<!-- Header -->
 	<div>
-		<h1 class="text-2xl lg:text-3xl font-bold">ประวัติการเข้าร่วม</h1>
-		<p class="text-muted-foreground">
-			ดูประวัติการเข้าร่วมกิจกรรมทั้งหมดของคุณ
-		</p>
+		<h1 class="text-2xl font-bold lg:text-3xl">ประวัติการเข้าร่วม</h1>
+		<p class="text-muted-foreground">ดูประวัติการเข้าร่วมกิจกรรมทั้งหมดของคุณ</p>
 	</div>
 
 	<!-- Statistics -->
@@ -237,23 +243,27 @@
 	<div class="space-y-4">
 		<!-- Search -->
 		<div class="relative">
-			<IconSearch class="absolute left-3 top-1/2 transform -translate-y-1/2 size-4 text-muted-foreground" />
-			<Input
-				bind:value={searchQuery}
-				placeholder="ค้นหากิจกรรม..."
-				class="pl-9"
+			<IconSearch
+				class="absolute top-1/2 left-3 size-4 -translate-y-1/2 transform text-muted-foreground"
 			/>
+			<Input bind:value={searchQuery} placeholder="ค้นหากิจกรรม..." class="pl-9" />
 		</div>
 
 		<!-- Sort and Filter Controls -->
-		<div class="flex flex-col sm:flex-row gap-3">
-			<select bind:value={sortBy} class="flex h-9 w-full items-center justify-between whitespace-nowrap rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50 sm:w-[180px]">
+		<div class="flex flex-col gap-3 sm:flex-row">
+			<select
+				bind:value={sortBy}
+				class="flex h-9 w-full items-center justify-between rounded-md border border-input bg-transparent px-3 py-2 text-sm whitespace-nowrap shadow-sm ring-offset-background placeholder:text-muted-foreground focus:ring-1 focus:ring-ring focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 sm:w-[180px]"
+			>
 				<option value="recent">ล่าสุดก่อน</option>
 				<option value="oldest">เก่าก่อน</option>
 				<option value="activity_name">ชื่อกิจกรรม</option>
 			</select>
 
-			<select bind:value={filterBy} class="flex h-9 w-full items-center justify-between whitespace-nowrap rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50 sm:w-[180px]">
+			<select
+				bind:value={filterBy}
+				class="flex h-9 w-full items-center justify-between rounded-md border border-input bg-transparent px-3 py-2 text-sm whitespace-nowrap shadow-sm ring-offset-background placeholder:text-muted-foreground focus:ring-1 focus:ring-ring focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 sm:w-[180px]"
+			>
 				<option value="all">ทั้งหมด</option>
 				<option value="this_month">เดือนนี้</option>
 				<option value="last_month">เดือนที่แล้ว</option>
@@ -275,7 +285,7 @@
 					<Card>
 						<CardContent class="p-4">
 							<div class="space-y-2">
-								<div class="flex justify-between items-start">
+								<div class="flex items-start justify-between">
 									<Skeleton class="h-4 w-3/4" />
 									<Skeleton class="h-5 w-16" />
 								</div>
@@ -287,29 +297,29 @@
 				{/each}
 			</div>
 		{:else if filteredHistory.length === 0}
-			<div class="text-center py-12">
-				<IconHistory class="size-12 mx-auto mb-4 text-muted-foreground/50" />
-				<h3 class="text-lg font-medium mb-2">ไม่มีประวัติการเข้าร่วม</h3>
-				<p class="text-muted-foreground max-w-md mx-auto">
-					{searchQuery || filterBy !== 'all' ? 
-						'ไม่พบประวัติที่ตรงกับเงื่อนไขที่กำหนด ลองเปลี่ยนการค้นหาหรือตัวกรอง' : 
-						'เมื่อคุณเข้าร่วมกิจกรรม ประวัติจะแสดงที่นี่'}
+			<div class="py-12 text-center">
+				<IconHistory class="mx-auto mb-4 size-12 text-muted-foreground/50" />
+				<h3 class="mb-2 text-lg font-medium">ไม่มีประวัติการเข้าร่วม</h3>
+				<p class="mx-auto max-w-md text-muted-foreground">
+					{searchQuery || filterBy !== 'all'
+						? 'ไม่พบประวัติที่ตรงกับเงื่อนไขที่กำหนด ลองเปลี่ยนการค้นหาหรือตัวกรอง'
+						: 'เมื่อคุณเข้าร่วมกิจกรรม ประวัติจะแสดงที่นี่'}
 				</p>
 			</div>
 		{:else}
 			<div class="space-y-4">
 				{#each filteredHistory as participation}
-					<Card class="hover:shadow-md transition-shadow">
+					<Card class="transition-shadow hover:shadow-md">
 						<CardContent class="p-4">
 							<div class="space-y-3">
 								<!-- Header -->
-								<div class="flex flex-col sm:flex-row sm:items-start justify-between gap-2">
+								<div class="flex flex-col justify-between gap-2 sm:flex-row sm:items-start">
 									<div class="space-y-1">
-										<h3 class="font-medium text-base">
+										<h3 class="text-base font-medium">
 											{participation.activity?.name || 'ไม่ระบุชื่อกิจกรรม'}
 										</h3>
 										{#if participation.activity?.description}
-											<p class="text-sm text-muted-foreground line-clamp-2">
+											<p class="line-clamp-2 text-sm text-muted-foreground">
 												{participation.activity.description}
 											</p>
 										{/if}
@@ -322,12 +332,12 @@
 								</div>
 
 								<!-- Details -->
-								<div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm text-muted-foreground">
+								<div class="grid grid-cols-1 gap-3 text-sm text-muted-foreground sm:grid-cols-2">
 									<div class="flex items-center gap-2">
 										<IconClock class="size-4 flex-shrink-0" />
 										<span>เข้าร่วมเมื่อ: {formatDateShort(participation.participated_at)}</span>
 									</div>
-									
+
 									{#if participation.qr_scan_location}
 										<div class="flex items-center gap-2">
 											<IconMapPin class="size-4 flex-shrink-0" />
@@ -337,7 +347,7 @@
 								</div>
 
 								<!-- Mobile: Full date -->
-								<div class="sm:hidden text-xs text-muted-foreground border-t pt-2">
+								<div class="border-t pt-2 text-xs text-muted-foreground sm:hidden">
 									เวลาเต็ม: {formatDate(participation.participated_at)}
 								</div>
 							</div>

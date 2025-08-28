@@ -7,7 +7,13 @@
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
 	import { Alert, AlertDescription } from '$lib/components/ui/alert';
-	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card';
+	import {
+		Card,
+		CardContent,
+		CardDescription,
+		CardHeader,
+		CardTitle
+	} from '$lib/components/ui/card';
 	import { Checkbox } from '$lib/components/ui/checkbox';
 	import { IconLoader, IconEye, IconEyeOff, IconAlertCircle } from '@tabler/icons-svelte/icons';
 
@@ -52,7 +58,7 @@
 	// Handle form submission
 	async function handleSubmit(event: Event) {
 		event.preventDefault();
-		
+
 		if (!validateForm()) {
 			return;
 		}
@@ -67,7 +73,7 @@
 			if (result.success) {
 				// Dispatch success event
 				dispatch('success', { user: result.user });
-				
+
 				// Redirect to intended page
 				await goto(redirectUrl);
 			} else {
@@ -76,8 +82,8 @@
 			}
 		} catch (error) {
 			console.error('Login error:', error);
-			dispatch('error', { 
-				message: error instanceof Error ? error.message : 'An unexpected error occurred' 
+			dispatch('error', {
+				message: error instanceof Error ? error.message : 'An unexpected error occurred'
 			});
 		}
 	}
@@ -103,14 +109,12 @@
 	}
 </script>
 
-<Card class="w-full max-w-md mx-auto">
+<Card class="mx-auto w-full max-w-md">
 	<CardHeader class="space-y-1">
-		<CardTitle class="text-2xl font-bold text-center">เข้าสู่ระบบ</CardTitle>
-		<CardDescription class="text-center">
-			กรุณาป้อนอีเมลและรหัสผ่านเพื่อเข้าสู่ระบบ
-		</CardDescription>
+		<CardTitle class="text-center text-2xl font-bold">เข้าสู่ระบบ</CardTitle>
+		<CardDescription class="text-center">กรุณาป้อนอีเมลและรหัสผ่านเพื่อเข้าสู่ระบบ</CardDescription>
 	</CardHeader>
-	
+
 	<CardContent>
 		{#if $authError}
 			<Alert variant="destructive" class="mb-4">
@@ -156,7 +160,7 @@
 					/>
 					<button
 						type="button"
-						class="absolute inset-y-0 right-0 pr-3 flex items-center"
+						class="absolute inset-y-0 right-0 flex items-center pr-3"
 						onclick={togglePasswordVisibility}
 						disabled={$isLoading}
 						aria-label={showPassword ? 'ซ่อนรหัสผ่าน' : 'แสดงรหัสผ่าน'}
@@ -181,20 +185,13 @@
 					onkeydown={handleCheckboxKeydown}
 					disabled={$isLoading}
 				/>
-				<Label 
-					for="remember" 
-					class="text-sm font-normal cursor-pointer select-none"
-				>
+				<Label for="remember" class="cursor-pointer text-sm font-normal select-none">
 					จดจำการเข้าสู่ระบบ (30 วัน)
 				</Label>
 			</div>
 
 			<!-- Submit Button -->
-			<Button 
-				type="submit" 
-				class="w-full" 
-				disabled={$isLoading}
-			>
+			<Button type="submit" class="w-full" disabled={$isLoading}>
 				{#if $isLoading}
 					<IconLoader class="mr-2 h-4 w-4 animate-spin" />
 					กำลังเข้าสู่ระบบ...
@@ -207,19 +204,16 @@
 		<!-- Additional Links -->
 		<div class="mt-6 text-center text-sm">
 			<p class="text-gray-600">
-				ยังไม่มีบัญชี? 
-				<a 
-					href="/register" 
-					class="font-medium text-blue-600 hover:text-blue-500 transition-colors"
-				>
+				ยังไม่มีบัญชี?
+				<a href="/register" class="font-medium text-blue-600 transition-colors hover:text-blue-500">
 					สมัครสมาชิก
 				</a>
 			</p>
-			
+
 			<div class="mt-2">
-				<a 
-					href="/forgot-password" 
-					class="text-sm text-gray-600 hover:text-gray-900 transition-colors"
+				<a
+					href="/forgot-password"
+					class="text-sm text-gray-600 transition-colors hover:text-gray-900"
 				>
 					ลืมรหัสผ่าน?
 				</a>
@@ -228,9 +222,9 @@
 
 		<!-- Session Info -->
 		{#if redirectUrl !== '/dashboard'}
-			<div class="mt-4 p-3 bg-blue-50 rounded-md">
+			<div class="mt-4 rounded-md bg-blue-50 p-3">
 				<p class="text-sm text-blue-800">
-					หลังจากเข้าสู่ระบบแล้ว คุณจะถูกนำไปยัง: 
+					หลังจากเข้าสู่ระบบแล้ว คุณจะถูกนำไปยัง:
 					<span class="font-medium">{redirectUrl}</span>
 				</p>
 			</div>
@@ -245,7 +239,7 @@
 		--tw-ring-color: rgb(59 130 246);
 		border-color: rgb(59 130 246);
 	}
-	
+
 	:global(.login-form input.error) {
 		border-color: rgb(239 68 68);
 		--tw-ring-color: rgb(239 68 68);

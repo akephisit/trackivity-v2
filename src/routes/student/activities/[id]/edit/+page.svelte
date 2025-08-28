@@ -6,12 +6,7 @@
 	import { Label } from '$lib/components/ui/label';
 	import { Textarea } from '$lib/components/ui/textarea';
 	import { Alert, AlertDescription } from '$lib/components/ui/alert';
-	import { 
-		Select, 
-		SelectContent, 
-		SelectItem, 
-		SelectTrigger
-	} from '$lib/components/ui/select';
+	import { Select, SelectContent, SelectItem, SelectTrigger } from '$lib/components/ui/select';
 	import {
 		IconArrowLeft,
 		IconDeviceFloppy,
@@ -21,11 +16,11 @@
 	import { goto } from '$app/navigation';
 	import { enhance } from '$app/forms';
 
-	const { data, form } = $props<{ 
-		data: { activity: Activity; faculties: any[] }; 
-		form?: { error?: string; formData?: any; } 
+	const { data, form } = $props<{
+		data: { activity: Activity; faculties: any[] };
+		form?: { error?: string; formData?: any };
 	}>();
-	
+
 	const { activity, faculties } = data;
 
 	let submitting = $state(false);
@@ -40,7 +35,7 @@
 		const day = String(date.getDate()).padStart(2, '0');
 		const hours = String(date.getHours()).padStart(2, '0');
 		const minutes = String(date.getMinutes()).padStart(2, '0');
-		
+
 		return `${year}-${month}-${day}T${hours}:${minutes}`;
 	}
 
@@ -70,11 +65,11 @@
 	<!-- Header -->
 	<div class="flex items-center gap-4">
 		<Button variant="ghost" size="sm" onclick={goBack}>
-			<IconArrowLeft class="size-4 mr-2" />
+			<IconArrowLeft class="mr-2 size-4" />
 			กลับ
 		</Button>
 		<div class="flex-1">
-			<h1 class="text-2xl lg:text-3xl font-bold">แก้ไขกิจกรรม</h1>
+			<h1 class="text-2xl font-bold lg:text-3xl">แก้ไขกิจกรรม</h1>
 			<p class="text-muted-foreground">{activity.title}</p>
 		</div>
 	</div>
@@ -92,10 +87,10 @@
 		<CardHeader>
 			<CardTitle>รายละเอียดกิจกรรม</CardTitle>
 		</CardHeader>
-		
+
 		<CardContent>
-			<form 
-				method="POST" 
+			<form
+				method="POST"
 				action="?/update"
 				use:enhance={() => {
 					submitting = true;
@@ -180,9 +175,7 @@
 						placeholder="ไม่จำกัด"
 						value={form?.formData?.max_participants || activity.max_participants || ''}
 					/>
-					<p class="text-sm text-muted-foreground">
-						เว้นว่างหากไม่ต้องการจำกัดจำนวนผู้เข้าร่วม
-					</p>
+					<p class="text-sm text-muted-foreground">เว้นว่างหากไม่ต้องการจำกัดจำนวนผู้เข้าร่วม</p>
 				</div>
 
 				<!-- Status -->
@@ -190,7 +183,9 @@
 					<Label for="status">สถานะ</Label>
 					<Select type="single" name="status" bind:value={selectedStatus}>
 						<SelectTrigger>
-							{selectedStatus ? statusOptions.find(opt => opt.value === selectedStatus)?.label : 'เลือกสถานะ'}
+							{selectedStatus
+								? statusOptions.find((opt) => opt.value === selectedStatus)?.label
+								: 'เลือกสถานะ'}
 						</SelectTrigger>
 						<SelectContent>
 							{#each statusOptions as option}
@@ -206,7 +201,9 @@
 						<Label for="faculty_id">หน่วยงาน</Label>
 						<Select type="single" name="faculty_id" bind:value={selectedFaculty}>
 							<SelectTrigger>
-								{selectedFaculty ? faculties.find((f: any) => f.id === selectedFaculty)?.name : 'เลือกหน่วยงาน (ไม่บังคับ)'}
+								{selectedFaculty
+									? faculties.find((f: any) => f.id === selectedFaculty)?.name
+									: 'เลือกหน่วยงาน (ไม่บังคับ)'}
 							</SelectTrigger>
 							<SelectContent>
 								<SelectItem value="">ไม่ระบุหน่วยงาน</SelectItem>
@@ -222,37 +219,23 @@
 				<Alert>
 					<IconInfoCircle class="size-4" />
 					<AlertDescription>
-						การแก้ไขกิจกรรมที่มีผู้เข้าร่วมแล้วอาจส่งผลกระทบต่อผู้ที่ลงทะเบียนไว้ 
+						การแก้ไขกิจกรรมที่มีผู้เข้าร่วมแล้วอาจส่งผลกระทบต่อผู้ที่ลงทะเบียนไว้
 						กรุณาตรวจสอบข้อมูลให้ถูกต้องก่อนบันทึก
 					</AlertDescription>
 				</Alert>
 
 				<!-- Action Buttons -->
-				<div class="flex flex-col sm:flex-row gap-4 pt-4">
-					<Button 
-						type="submit" 
-						disabled={submitting}
-						class="flex-1 sm:flex-none"
-					>
-						<IconDeviceFloppy class="size-4 mr-2" />
+				<div class="flex flex-col gap-4 pt-4 sm:flex-row">
+					<Button type="submit" disabled={submitting} class="flex-1 sm:flex-none">
+						<IconDeviceFloppy class="mr-2 size-4" />
 						{submitting ? 'กำลังบันทึก...' : 'บันทึกการเปลี่ยนแปลง'}
 					</Button>
-					
-					<Button 
-						type="button" 
-						variant="outline" 
-						onclick={goBack}
-						disabled={submitting}
-					>
+
+					<Button type="button" variant="outline" onclick={goBack} disabled={submitting}>
 						ยกเลิก
 					</Button>
-					
-					<Button 
-						type="button" 
-						variant="ghost" 
-						onclick={goToList}
-						disabled={submitting}
-					>
+
+					<Button type="button" variant="ghost" onclick={goToList} disabled={submitting}>
 						กลับสู่รายการกิจกรรม
 					</Button>
 				</div>
@@ -262,7 +245,7 @@
 </div>
 
 <style>
-	:global(input[type="datetime-local"]) {
+	:global(input[type='datetime-local']) {
 		font-size: 0.875rem; /* text-sm */
 	}
 </style>

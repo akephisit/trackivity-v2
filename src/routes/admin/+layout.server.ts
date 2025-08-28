@@ -6,7 +6,7 @@ export const load: LayoutServerLoad = async (event) => {
 	if (event.url.pathname === '/admin/login') {
 		return {};
 	}
-	
+
 	// ตรวจสอบว่าผู้ใช้เป็นแอดมิน
 	const user = requireAdmin(event);
 

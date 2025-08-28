@@ -1,7 +1,7 @@
 <script lang="ts">
-	import IconDots from "@tabler/icons-svelte/icons/dots";
-	import type { HTMLAttributes } from "svelte/elements";
-	import { cn, type WithElementRef, type WithoutChildren } from "$lib/utils.js";
+	import IconDots from '@tabler/icons-svelte/icons/dots';
+	import type { HTMLAttributes } from 'svelte/elements';
+	import { cn, type WithElementRef, type WithoutChildren } from '$lib/utils.js';
 
 	let {
 		ref = $bindable(null),
@@ -15,7 +15,7 @@
 	data-slot="breadcrumb-ellipsis"
 	role="presentation"
 	aria-hidden="true"
-	class={cn("flex size-9 items-center justify-center", className)}
+	class={cn('flex size-9 items-center justify-center', className)}
 	{...restProps}
 >
 	<IconDots class="size-4" />

@@ -101,10 +101,10 @@
 			</CardHeader>
 			<CardContent>
 				<div class="space-y-2">
-					<p class="text-muted-foreground text-sm">
+					<p class="text-sm text-muted-foreground">
 						รหัสนักศึกษา: <span class="font-medium">{$currentUser?.student_id}</span>
 					</p>
-					<p class="text-muted-foreground text-sm">
+					<p class="text-sm text-muted-foreground">
 						อีเมล: <span class="font-medium">{$currentUser?.email}</span>
 					</p>
 					<div class="flex gap-2 pt-2">
@@ -147,7 +147,7 @@
 							<p class="text-xs">{formatDate($qrCode.expires_at)}</p>
 						</div>
 					{:else}
-						<p class="text-muted-foreground text-sm">QR Code ยังไม่พร้อมใช้งาน</p>
+						<p class="text-sm text-muted-foreground">QR Code ยังไม่พร้อมใช้งาน</p>
 					{/if}
 
 					<Button size="sm" href="/qr" class="w-full">
@@ -164,39 +164,39 @@
 		<Card>
 			<CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
 				<CardTitle class="text-sm font-medium">การเข้าร่วมทั้งหมด</CardTitle>
-				<IconTrendingUp class="text-muted-foreground size-4" />
+				<IconTrendingUp class="size-4 text-muted-foreground" />
 			</CardHeader>
 			<CardContent>
 				<div class="text-2xl font-bold">
 					{loading.stats ? '--' : stats.totalParticipations}
 				</div>
-				<p class="text-muted-foreground text-xs">กิจกรรมที่เข้าร่วม</p>
+				<p class="text-xs text-muted-foreground">กิจกรรมที่เข้าร่วม</p>
 			</CardContent>
 		</Card>
 
 		<Card>
 			<CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
 				<CardTitle class="text-sm font-medium">เดือนนี้</CardTitle>
-				<IconCalendarEvent class="text-muted-foreground size-4" />
+				<IconCalendarEvent class="size-4 text-muted-foreground" />
 			</CardHeader>
 			<CardContent>
 				<div class="text-2xl font-bold">
 					{loading.stats ? '--' : stats.thisMonthParticipations}
 				</div>
-				<p class="text-muted-foreground text-xs">กิจกรรมในเดือนนี้</p>
+				<p class="text-xs text-muted-foreground">กิจกรรมในเดือนนี้</p>
 			</CardContent>
 		</Card>
 
 		<Card>
 			<CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
 				<CardTitle class="text-sm font-medium">กิจกรรมที่กำลังจะมา</CardTitle>
-				<IconClock class="text-muted-foreground size-4" />
+				<IconClock class="size-4 text-muted-foreground" />
 			</CardHeader>
 			<CardContent>
 				<div class="text-2xl font-bold">
 					{loading.stats ? '--' : stats.upcomingActivities}
 				</div>
-				<p class="text-muted-foreground text-xs">กิจกรรมใน 7 วันข้างหน้า</p>
+				<p class="text-xs text-muted-foreground">กิจกรรมใน 7 วันข้างหน้า</p>
 			</CardContent>
 		</Card>
 	</div>
@@ -234,7 +234,7 @@
 						{/each}
 					</div>
 				{:else if recentActivities.length === 0}
-					<div class="text-muted-foreground py-6 text-center">
+					<div class="py-6 text-center text-muted-foreground">
 						<IconCalendarEvent class="mx-auto mb-2 size-8 opacity-50" />
 						<p>ยังไม่มีกิจกรรม</p>
 					</div>
@@ -250,12 +250,12 @@
 								</div>
 
 								{#if activity.description}
-									<p class="text-muted-foreground line-clamp-2 text-xs">
+									<p class="line-clamp-2 text-xs text-muted-foreground">
 										{activity.description}
 									</p>
 								{/if}
 
-								<div class="text-muted-foreground flex items-center gap-4 text-xs">
+								<div class="flex items-center gap-4 text-xs text-muted-foreground">
 									<span class="flex items-center gap-1">
 										<IconClock class="size-3" />
 										{formatDate(activity.start_date)}
@@ -299,7 +299,7 @@
 						{/each}
 					</div>
 				{:else if participationHistory.length === 0}
-					<div class="text-muted-foreground py-6 text-center">
+					<div class="py-6 text-center text-muted-foreground">
 						<IconHistory class="mx-auto mb-2 size-8 opacity-50" />
 						<p>ยังไม่มีประวัติการเข้าร่วม</p>
 						<p class="mt-1 text-xs">เมื่อคุณเข้าร่วมกิจกรรมแล้ว ประวัติจะแสดงที่นี่</p>
@@ -309,7 +309,7 @@
 						{#each participationHistory as participation}
 							<div class="space-y-2 rounded-lg border p-3">
 								<h4 class="text-sm font-medium">{participation.activity?.name}</h4>
-								<div class="text-muted-foreground flex items-center gap-4 text-xs">
+								<div class="flex items-center gap-4 text-xs text-muted-foreground">
 									<span class="flex items-center gap-1">
 										<IconClock class="size-3" />
 										{formatDate(participation.participated_at)}

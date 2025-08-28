@@ -3,19 +3,19 @@ import type { User } from '$lib/types/admin';
 
 // Local mapping for prefix -> Thai label
 const PREFIX_LABELS: Record<string, string> = {
-    Mr: 'นาย',
-    Mrs: 'นาง',
-    Miss: 'นางสาว',
-    Dr: 'ดร.',
-    Professor: 'ศาสตราจารย์',
-    AssociateProfessor: 'รองศาสตราจารย์',
-    AssistantProfessor: 'ผู้ช่วยศาสตราจารย์',
-    Lecturer: 'อาจารย์',
-    Generic: 'คุณ'
+	Mr: 'นาย',
+	Mrs: 'นาง',
+	Miss: 'นางสาว',
+	Dr: 'ดร.',
+	Professor: 'ศาสตราจารย์',
+	AssociateProfessor: 'รองศาสตราจารย์',
+	AssistantProfessor: 'ผู้ช่วยศาสตราจารย์',
+	Lecturer: 'อาจารย์',
+	Generic: 'คุณ'
 };
 function prefixLabel(prefix?: string): string {
-    if (!prefix) return '';
-    return PREFIX_LABELS[prefix] || '';
+	if (!prefix) return '';
+	return PREFIX_LABELS[prefix] || '';
 }
 
 // Helper functions for display formatting
@@ -34,16 +34,16 @@ function formatDate(dateString: string | undefined): string {
 
 function formatRelativeTime(dateString: string | undefined): string {
 	if (!dateString) return 'ไม่เคย';
-	
+
 	const date = new Date(dateString);
 	const now = new Date();
 	const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
-	
+
 	if (diffInSeconds < 60) return 'เมื่อสักครู่';
 	if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} นาทีที่แล้ว`;
 	if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} ชั่วโมงที่แล้ว`;
 	if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)} วันที่แล้ว`;
-	
+
 	return formatDate(dateString);
 }
 
@@ -57,7 +57,7 @@ function getRoleLabel(role: string): string {
 	return roleLabels[role as keyof typeof roleLabels] || role;
 }
 
-function getRoleVariant(role: string): "default" | "secondary" | "destructive" | "outline" {
+function getRoleVariant(role: string): 'default' | 'secondary' | 'destructive' | 'outline' {
 	const variants = {
 		student: 'outline' as const,
 		faculty: 'default' as const,
@@ -68,37 +68,37 @@ function getRoleVariant(role: string): "default" | "secondary" | "destructive" |
 }
 
 function getStatusLabel(status: string): string {
-    const statusLabels: Record<string, string> = {
-        // New semantics aligned with admin page
-        online: 'ใช้งานอยู่',
-        offline: 'ไม่ออนไลน์',
-        disabled: 'ปิดใช้งาน',
-        // Backward compatibility
-        active: 'ใช้งานอยู่',
-        inactive: 'ไม่ออนไลน์',
-        suspended: 'ถูกระงับ'
-    };
-    return statusLabels[status] || status;
+	const statusLabels: Record<string, string> = {
+		// New semantics aligned with admin page
+		online: 'ใช้งานอยู่',
+		offline: 'ไม่ออนไลน์',
+		disabled: 'ปิดใช้งาน',
+		// Backward compatibility
+		active: 'ใช้งานอยู่',
+		inactive: 'ไม่ออนไลน์',
+		suspended: 'ถูกระงับ'
+	};
+	return statusLabels[status] || status;
 }
 
-function getStatusVariant(status: string): "default" | "secondary" | "destructive" | "outline" {
-    // Map to visual variants; customize classes below
-    const variants: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
-        online: 'default',
-        active: 'default',
-        offline: 'secondary',
-        inactive: 'secondary',
-        disabled: 'destructive',
-        suspended: 'destructive'
-    };
-    return variants[status] || 'outline';
+function getStatusVariant(status: string): 'default' | 'secondary' | 'destructive' | 'outline' {
+	// Map to visual variants; customize classes below
+	const variants: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
+		online: 'default',
+		active: 'default',
+		offline: 'secondary',
+		inactive: 'secondary',
+		disabled: 'destructive',
+		suspended: 'destructive'
+	};
+	return variants[status] || 'outline';
 }
 
 // User Profile Cell Snippet
 export const UserProfileCell = createRawSnippet<[{ user: User }]>((getProps) => {
 	const { user } = getProps();
-    return {
-        render: () => `
+	return {
+		render: () => `
             <div class="flex items-center gap-3 min-w-0">
                 <div class="h-8 w-8 flex-shrink-0 rounded-full bg-gray-200 flex items-center justify-center text-sm font-medium">
                     ${getInitials(user.first_name, user.last_name)}
@@ -113,7 +113,7 @@ export const UserProfileCell = createRawSnippet<[{ user: User }]>((getProps) => 
                 </div>
             </div>
         `
-    };
+	};
 });
 
 // Email Cell Snippet
@@ -137,14 +137,14 @@ export const EmailCell = createRawSnippet<[{ user: User }]>((getProps) => {
 
 // Identifier Cell Snippet
 export const IdentifierCell = createRawSnippet<[{ user: User }]>((getProps) => {
-    const { user } = getProps();
-    return {
-        render: () => `
+	const { user } = getProps();
+	return {
+		render: () => `
             <div class="text-sm">
                 ${user.student_id || user.employee_id || '-'}
             </div>
         `
-    };
+	};
 });
 
 // Role Badge Snippet
@@ -152,13 +152,13 @@ export const RoleBadge = createRawSnippet<[{ role: string }]>((getProps) => {
 	const { role } = getProps();
 	const variant = getRoleVariant(role);
 	const label = getRoleLabel(role);
-    // Align colors with admin status badges
-    const variantClasses = {
-        default: 'bg-green-100 text-green-800',
-        secondary: 'bg-yellow-100 text-yellow-800',
-        destructive: 'bg-red-100 text-red-800',
-        outline: 'border border-gray-200 text-gray-900'
-    };
+	// Align colors with admin status badges
+	const variantClasses = {
+		default: 'bg-green-100 text-green-800',
+		secondary: 'bg-yellow-100 text-yellow-800',
+		destructive: 'bg-red-100 text-red-800',
+		outline: 'border border-gray-200 text-gray-900'
+	};
 	return {
 		render: () => `
 			<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${variantClasses[variant]}">
@@ -170,29 +170,29 @@ export const RoleBadge = createRawSnippet<[{ role: string }]>((getProps) => {
 
 // Status Badge Snippet
 export const StatusBadge = createRawSnippet<[{ status: string }]>((getProps) => {
-    const { status } = getProps();
-    const variant = getStatusVariant(status);
-    const label = getStatusLabel(status);
-    const variantClasses = {
-        default: 'bg-green-100 text-green-800',
-        secondary: 'bg-yellow-100 text-yellow-800',
-        destructive: 'bg-red-100 text-red-800',
-        outline: 'border border-gray-200 text-gray-900'
-    } as const;
-    const dotClasses: Record<string, string> = {
-        default: 'bg-green-500',
-        secondary: 'bg-yellow-500',
-        destructive: 'bg-red-500',
-        outline: 'bg-gray-400'
-    };
-    return {
-        render: () => `
+	const { status } = getProps();
+	const variant = getStatusVariant(status);
+	const label = getStatusLabel(status);
+	const variantClasses = {
+		default: 'bg-green-100 text-green-800',
+		secondary: 'bg-yellow-100 text-yellow-800',
+		destructive: 'bg-red-100 text-red-800',
+		outline: 'border border-gray-200 text-gray-900'
+	} as const;
+	const dotClasses: Record<string, string> = {
+		default: 'bg-green-500',
+		secondary: 'bg-yellow-500',
+		destructive: 'bg-red-500',
+		outline: 'bg-gray-400'
+	};
+	return {
+		render: () => `
             <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${variantClasses[variant]}">
                 <span class="inline-block h-2 w-2 rounded-full mr-1 ${dotClasses[variant]}"></span>
                 ${label}
             </span>
         `
-    };
+	};
 });
 
 // Faculty Cell Snippet
@@ -225,14 +225,18 @@ export const PhoneCell = createRawSnippet<[{ phone?: string }]>((getProps) => {
 	return {
 		render: () => `
 			<div class="flex items-center gap-2">
-				${phone ? `
+				${
+					phone
+						? `
 					<svg class="h-4 w-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
 					</svg>
 					<a href="tel:${phone}" class="text-sm hover:underline">${phone}</a>
-				` : `
+				`
+						: `
 					<span class="text-sm text-gray-500">-</span>
-				`}
+				`
+				}
 			</div>
 		`
 	};
@@ -271,15 +275,19 @@ export const EmailVerifiedCell = createRawSnippet<[{ emailVerifiedAt?: string }]
 	return {
 		render: () => `
 			<div class="flex items-center justify-center">
-				${emailVerifiedAt ? `
+				${
+					emailVerifiedAt
+						? `
 					<svg class="h-4 w-4 text-green-600" fill="currentColor" viewBox="0 0 20 20" title="ยืนยันแล้ว">
 						<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
 					</svg>
-				` : `
+				`
+						: `
 					<svg class="h-4 w-4 text-orange-500" fill="currentColor" viewBox="0 0 20 20" title="ยังไม่ยืนยัน">
 						<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
 					</svg>
-				`}
+				`
+				}
 			</div>
 		`
 	};

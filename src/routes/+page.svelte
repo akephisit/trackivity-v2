@@ -1,11 +1,11 @@
 <script lang="ts">
-	import ActivitiesTable from "$lib/components/activities-table.svelte";
-	import { mockActivities } from "$lib/data/activities.js";
-	import { Button } from "$lib/components/ui/button";
+	import ActivitiesTable from '$lib/components/activities-table.svelte';
+	import { mockActivities } from '$lib/data/activities.js';
+	import { Button } from '$lib/components/ui/button';
 	import { IconUser, IconLogout } from '@tabler/icons-svelte/icons';
 	import type { PageData } from './$types';
-    import { toast } from 'svelte-sonner';
-    import { goto } from '$app/navigation';
+	import { toast } from 'svelte-sonner';
+	import { goto } from '$app/navigation';
 
 	let { data }: { data: PageData } = $props();
 
@@ -32,19 +32,20 @@
 	<!-- Header -->
 	<header class="border-b bg-card">
 		<div class="container mx-auto px-4 py-6">
-			<div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+			<div class="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
 				<div>
 					<h1 class="text-3xl font-bold text-foreground">ระบบติดตามกิจกรรม</h1>
-					<p class="text-muted-foreground mt-1">
+					<p class="mt-1 text-muted-foreground">
 						จัดการและติดตามกิจกรรมทั้งหมดของมหาวิทยาลัยในที่เดียว
 					</p>
 					{#if data.user}
-						<p class="text-sm text-muted-foreground mt-2">
-							ยินดีต้อนรับ, {data.user.first_name} {data.user.last_name}
+						<p class="mt-2 text-sm text-muted-foreground">
+							ยินดีต้อนรับ, {data.user.first_name}
+							{data.user.last_name}
 						</p>
 					{/if}
 				</div>
-				<div class="flex flex-col sm:flex-row items-end sm:items-center gap-3">
+				<div class="flex flex-col items-end gap-3 sm:flex-row sm:items-center">
 					<div class="text-sm text-muted-foreground">
 						{new Date().toLocaleDateString('th-TH', {
 							year: 'numeric',
@@ -66,7 +67,12 @@
 									นักศึกษา
 								</Button>
 							{/if}
-							<Button onclick={handleLogout} variant="outline" size="sm" class="flex items-center gap-2">
+							<Button
+								onclick={handleLogout}
+								variant="outline"
+								size="sm"
+								class="flex items-center gap-2"
+							>
 								<IconLogout class="h-4 w-4" />
 								ออกจากระบบ
 							</Button>
@@ -88,7 +94,7 @@
 	</main>
 
 	<!-- Footer -->
-	<footer class="border-t bg-muted/30 mt-16">
+	<footer class="mt-16 border-t bg-muted/30">
 		<div class="container mx-auto px-4 py-6">
 			<div class="text-center text-sm text-muted-foreground">
 				<p>© 2024 ระบบติดตามกิจกรรม - มหาวิทยาลัยเทคโนโลยีพระจอมเกล้าธนบุรี</p>

@@ -1,434 +1,434 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
-  import { goto } from '$app/navigation';
-  import { toast } from 'svelte-sonner';
-  
-  import QRScanner from '$lib/components/qr/QRScanner.svelte';
-  import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
-  import { Button } from '$lib/components/ui/button';
-  import { Badge } from '$lib/components/ui/badge';
-  import { Separator } from '$lib/components/ui/separator';
-  import { Alert, AlertDescription } from '$lib/components/ui/alert';
-  
-  import { 
-    IconQrcode, 
-    IconActivity, 
-    IconUsers, 
-    IconMapPin, 
-    IconCalendar,
-    IconClock,
-    IconCheck,
-    IconX,
-    IconRefresh,
-    IconSettings,
-    IconArrowBack
-  } from '@tabler/icons-svelte';
+	import { onMount } from 'svelte';
+	import { goto } from '$app/navigation';
+	import { toast } from 'svelte-sonner';
 
-  import type { PageData } from './$types';
+	import QRScanner from '$lib/components/qr/QRScanner.svelte';
+	import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
+	import { Button } from '$lib/components/ui/button';
+	import { Badge } from '$lib/components/ui/badge';
+	import { Separator } from '$lib/components/ui/separator';
+	import { Alert, AlertDescription } from '$lib/components/ui/alert';
 
-  // Extend PageData with fields returned by this page's load
-  type QRScannerPageData = PageData & {
-    admin?: {
-      first_name: string;
-      last_name: string;
-      admin_level: string;
-      faculty_id?: string;
-      faculty_name?: string;
-    };
-    activities?: Array<{
-      id: string;
-      title: string;
-      description?: string;
-      start_date?: string;
-      end_date?: string;
-      start_time?: string;
-      end_time?: string;
-      activity_type?: string;
-      location?: string;
-      max_participants?: number;
-      hours?: number;
-      status?: string;
-      faculty_id?: string;
-      organizer?: string;
-    }>;
-    selectedActivityId?: string;
-  };
+	import {
+		IconQrcode,
+		IconActivity,
+		IconUsers,
+		IconMapPin,
+		IconCalendar,
+		IconClock,
+		IconCheck,
+		IconX,
+		IconRefresh,
+		IconSettings,
+		IconArrowBack
+	} from '@tabler/icons-svelte';
 
-  export let data: QRScannerPageData;
+	import type { PageData } from './$types';
 
-  // Component state
-  let selectedActivity: any = null;
-  let selectedActivityId = data.selectedActivityId || '';
-  let scannerActive = false;
-  let scannerStatus: 'idle' | 'requesting' | 'active' | 'error' = 'idle';
-  let totalScanned = 0;
-  let sessionStats = {
-    successful: 0,
-    failed: 0,
-    startTime: null as Date | null
-  };
+	// Extend PageData with fields returned by this page's load
+	type QRScannerPageData = PageData & {
+		admin?: {
+			first_name: string;
+			last_name: string;
+			admin_level: string;
+			faculty_id?: string;
+			faculty_name?: string;
+		};
+		activities?: Array<{
+			id: string;
+			title: string;
+			description?: string;
+			start_date?: string;
+			end_date?: string;
+			start_time?: string;
+			end_time?: string;
+			activity_type?: string;
+			location?: string;
+			max_participants?: number;
+			hours?: number;
+			status?: string;
+			faculty_id?: string;
+			organizer?: string;
+		}>;
+		selectedActivityId?: string;
+	};
 
-  // Reactive statements
-  $: {
-    if (selectedActivityId) {
-      selectedActivity = data.activities?.find((a: any) => a.id === selectedActivityId) || null;
-      // Update URL when activity changes  
-      const url = new URL(window.location.href);
-      if (url.searchParams.get('activity_id') !== selectedActivityId) {
-        url.searchParams.set('activity_id', selectedActivityId);
-        goto(url.toString(), { replaceState: true, noScroll: true });
-      }
-    } else {
-      selectedActivity = null;
-    }
-  }
+	export let data: QRScannerPageData;
 
-  onMount(() => {
-    if (data.selectedActivityId && (data.activities?.length || 0) > 0) {
-      selectedActivityId = data.selectedActivityId;
-    } else if ((data.activities?.length || 0) === 1) {
-      // Auto-select if only one activity
-      selectedActivityId = data.activities![0].id;
-    }
-  });
+	// Component state
+	let selectedActivity: any = null;
+	let selectedActivityId = data.selectedActivityId || '';
+	let scannerActive = false;
+	let scannerStatus: 'idle' | 'requesting' | 'active' | 'error' = 'idle';
+	let totalScanned = 0;
+	let sessionStats = {
+		successful: 0,
+		failed: 0,
+		startTime: null as Date | null
+	};
 
-  function handleActivityChange(activityId: string) {
-    selectedActivityId = activityId;
-    // Stop scanner when changing activities
-    if (scannerActive) {
-      scannerActive = false;
-    }
-  }
+	// Reactive statements
+	$: {
+		if (selectedActivityId) {
+			selectedActivity = data.activities?.find((a: any) => a.id === selectedActivityId) || null;
+			// Update URL when activity changes
+			const url = new URL(window.location.href);
+			if (url.searchParams.get('activity_id') !== selectedActivityId) {
+				url.searchParams.set('activity_id', selectedActivityId);
+				goto(url.toString(), { replaceState: true, noScroll: true });
+			}
+		} else {
+			selectedActivity = null;
+		}
+	}
 
-  function startScanning() {
-    if (!selectedActivityId) {
-      toast.error('กรุณาเลือกกิจกรรมก่อนเริ่มสแกน');
-      return;
-    }
-    
-    scannerActive = true;
-    sessionStats.startTime = new Date();
-    toast.success('เริ่มระบบสแกน QR Code');
-  }
+	onMount(() => {
+		if (data.selectedActivityId && (data.activities?.length || 0) > 0) {
+			selectedActivityId = data.selectedActivityId;
+		} else if ((data.activities?.length || 0) === 1) {
+			// Auto-select if only one activity
+			selectedActivityId = data.activities![0].id;
+		}
+	});
 
-  function stopScanning() {
-    scannerActive = false;
-    toast.info('หยุดระบบสแกน QR Code');
-  }
+	function handleActivityChange(activityId: string) {
+		selectedActivityId = activityId;
+		// Stop scanner when changing activities
+		if (scannerActive) {
+			scannerActive = false;
+		}
+	}
 
-  function handleScanResult(result: any, _qrData: string) {
-    totalScanned++;
-    
-    if (result.success) {
-      sessionStats.successful++;
-      toast.success(`สแกนสำเร็จ: ${result.user_name}`);
-    } else {
-      sessionStats.failed++;
-      toast.error(`สแกนไม่สำเร็จ: ${result.message}`);
-    }
-  }
+	function startScanning() {
+		if (!selectedActivityId) {
+			toast.error('กรุณาเลือกกิจกรรมก่อนเริ่มสแกน');
+			return;
+		}
 
-  function handleScanError(message: string) {
-    sessionStats.failed++;
-    toast.error(`เกิดข้อผิดพลาด: ${message}`);
-  }
+		scannerActive = true;
+		sessionStats.startTime = new Date();
+		toast.success('เริ่มระบบสแกน QR Code');
+	}
 
-  function handleStatusChange(status: typeof scannerStatus) {
-    scannerStatus = status;
-  }
+	function stopScanning() {
+		scannerActive = false;
+		toast.info('หยุดระบบสแกน QR Code');
+	}
 
-  function resetStats() {
-    sessionStats = {
-      successful: 0,
-      failed: 0,
-      startTime: new Date()
-    };
-    totalScanned = 0;
-    toast.success('รีเซ็ตสถิติเรียบร้อย');
-  }
+	function handleScanResult(result: any, _qrData: string) {
+		totalScanned++;
 
-  function formatDateTime(date: string | Date): string {
-    try {
-      const d = typeof date === 'string' ? new Date(date) : date;
-      return d.toLocaleString('th-TH', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit'
-      });
-    } catch {
-      return 'ไม่ระบุ';
-    }
-  }
+		if (result.success) {
+			sessionStats.successful++;
+			toast.success(`สแกนสำเร็จ: ${result.user_name}`);
+		} else {
+			sessionStats.failed++;
+			toast.error(`สแกนไม่สำเร็จ: ${result.message}`);
+		}
+	}
 
-  function formatDate(dateString?: string): string {
-    if (!dateString) return 'ไม่ระบุ';
-    try {
-      return new Date(dateString).toLocaleDateString('th-TH', {
-        year: 'numeric', month: '2-digit', day: '2-digit'
-      });
-    } catch {
-      return 'ไม่ระบุ';
-    }
-  }
+	function handleScanError(message: string) {
+		sessionStats.failed++;
+		toast.error(`เกิดข้อผิดพลาด: ${message}`);
+	}
 
-  function formatTime(timeString?: string): string {
-    return timeString || 'ไม่ระบุ';
-  }
+	function handleStatusChange(status: typeof scannerStatus) {
+		scannerStatus = status;
+	}
 
-  function formatDuration(start: Date): string {
-    const now = new Date();
-    const diff = now.getTime() - start.getTime();
-    const minutes = Math.floor(diff / 60000);
-    const seconds = Math.floor((diff % 60000) / 1000);
-    return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-  }
+	function resetStats() {
+		sessionStats = {
+			successful: 0,
+			failed: 0,
+			startTime: new Date()
+		};
+		totalScanned = 0;
+		toast.success('รีเซ็ตสถิติเรียบร้อย');
+	}
 
-  function getSuccessRate(): number {
-    if (totalScanned === 0) return 0;
-    return Math.round((sessionStats.successful / totalScanned) * 100);
-  }
+	function formatDateTime(date: string | Date): string {
+		try {
+			const d = typeof date === 'string' ? new Date(date) : date;
+			return d.toLocaleString('th-TH', {
+				year: 'numeric',
+				month: '2-digit',
+				day: '2-digit',
+				hour: '2-digit',
+				minute: '2-digit'
+			});
+		} catch {
+			return 'ไม่ระบุ';
+		}
+	}
+
+	function formatDate(dateString?: string): string {
+		if (!dateString) return 'ไม่ระบุ';
+		try {
+			return new Date(dateString).toLocaleDateString('th-TH', {
+				year: 'numeric',
+				month: '2-digit',
+				day: '2-digit'
+			});
+		} catch {
+			return 'ไม่ระบุ';
+		}
+	}
+
+	function formatTime(timeString?: string): string {
+		return timeString || 'ไม่ระบุ';
+	}
+
+	function formatDuration(start: Date): string {
+		const now = new Date();
+		const diff = now.getTime() - start.getTime();
+		const minutes = Math.floor(diff / 60000);
+		const seconds = Math.floor((diff % 60000) / 1000);
+		return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+	}
+
+	function getSuccessRate(): number {
+		if (totalScanned === 0) return 0;
+		return Math.round((sessionStats.successful / totalScanned) * 100);
+	}
 </script>
 
 <svelte:head>
-  <title>QR Scanner - Admin Dashboard</title>
-  <meta name="description" content="ระบบสแกน QR Code สำหรับผู้ดูแลระบบ" />
+	<title>QR Scanner - Admin Dashboard</title>
+	<meta name="description" content="ระบบสแกน QR Code สำหรับผู้ดูแลระบบ" />
 </svelte:head>
 
-<div class="container mx-auto p-4 space-y-6 max-w-4xl">
-  <!-- Header -->
-  <div class="flex items-center justify-between">
-    <div>
-      <h1 class="text-2xl font-bold flex items-center gap-2">
-        <IconQrcode class="size-6" />
-        ระบบสแกน QR Code
-      </h1>
-      <p class="text-muted-foreground">สแกน QR Code เพื่อบันทึกการเข้าร่วมกิจกรรม</p>
-    </div>
-    
-    <Button variant="outline" onclick={() => goto('/admin')}>
-      <IconArrowBack class="size-4 mr-2" />
-      กลับหน้าหลัก
-    </Button>
-  </div>
+<div class="container mx-auto max-w-4xl space-y-6 p-4">
+	<!-- Header -->
+	<div class="flex items-center justify-between">
+		<div>
+			<h1 class="flex items-center gap-2 text-2xl font-bold">
+				<IconQrcode class="size-6" />
+				ระบบสแกน QR Code
+			</h1>
+			<p class="text-muted-foreground">สแกน QR Code เพื่อบันทึกการเข้าร่วมกิจกรรม</p>
+		</div>
 
-  <!-- Admin Info -->
-  <Card>
-    <CardHeader>
-      <CardTitle class="flex items-center gap-2">
-        <IconSettings class="size-5" />
-        ข้อมูลผู้ดูแลระบบ
-      </CardTitle>
-    </CardHeader>
-    <CardContent>
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div>
-          <p class="text-sm text-muted-foreground">ชื่อ</p>
-          <p class="font-medium">{data.admin?.first_name} {data.admin?.last_name}</p>
-        </div>
-        <div>
-          <p class="text-sm text-muted-foreground">ระดับสิทธิ์</p>
-          <Badge variant="outline">{data.admin?.admin_level}</Badge>
-        </div>
-        <div>
-          <p class="text-sm text-muted-foreground">หน่วยงาน</p>
-          <p class="font-medium">{data.admin?.faculty_name || 'ทั้งหมด'}</p>
-        </div>
-      </div>
-    </CardContent>
-  </Card>
+		<Button variant="outline" onclick={() => goto('/admin')}>
+			<IconArrowBack class="mr-2 size-4" />
+			กลับหน้าหลัก
+		</Button>
+	</div>
 
-  <!-- Activity Selection -->
-  <Card>
-    <CardHeader>
-      <CardTitle class="flex items-center gap-2">
-        <IconActivity class="size-5" />
-        เลือกกิจกรรม
-      </CardTitle>
-    </CardHeader>
-    <CardContent class="space-y-4">
-      {#if (data.activities?.length || 0) === 0}
-        <Alert>
-          <IconX class="h-4 w-4" />
-          <AlertDescription>
-            ไม่พบกิจกรรมที่กำลังดำเนินการ (ongoing) ที่สามารถสแกน QR Code ได้ กรุณาติดต่อผู้ดูแลระบบ
-          </AlertDescription>
-        </Alert>
-      {:else}
-        <div class="space-y-2">
-          <label for="activity-select" class="text-sm font-medium">เลือกกิจกรรมที่ต้องการสแกน (เฉพาะกิจกรรมที่กำลังดำเนินการ):</label>
-          <select 
-            bind:value={selectedActivityId}
-            on:change={(e) => handleActivityChange(e.currentTarget.value)}
-            class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            <option value="">เลือกกิจกรรม...</option>
-            {#each data.activities || [] as activity}
-              <option value={activity.id}>{activity.title}</option>
-            {/each}
-          </select>
-        </div>
+	<!-- Admin Info -->
+	<Card>
+		<CardHeader>
+			<CardTitle class="flex items-center gap-2">
+				<IconSettings class="size-5" />
+				ข้อมูลผู้ดูแลระบบ
+			</CardTitle>
+		</CardHeader>
+		<CardContent>
+			<div class="grid grid-cols-1 gap-4 md:grid-cols-3">
+				<div>
+					<p class="text-sm text-muted-foreground">ชื่อ</p>
+					<p class="font-medium">{data.admin?.first_name} {data.admin?.last_name}</p>
+				</div>
+				<div>
+					<p class="text-sm text-muted-foreground">ระดับสิทธิ์</p>
+					<Badge variant="outline">{data.admin?.admin_level}</Badge>
+				</div>
+				<div>
+					<p class="text-sm text-muted-foreground">หน่วยงาน</p>
+					<p class="font-medium">{data.admin?.faculty_name || 'ทั้งหมด'}</p>
+				</div>
+			</div>
+		</CardContent>
+	</Card>
 
-        <!-- Selected Activity Info -->
-        {#if selectedActivity}
-          <div class="p-4 bg-muted/50 rounded-lg space-y-3">
-            <h3 class="font-semibold flex items-center gap-2">
-              <IconActivity class="size-5" />
-              {selectedActivity.title}
-            </h3>
-            
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-              <div class="flex items-center gap-2">
-                <IconMapPin class="size-4 text-muted-foreground" />
-                <span>{selectedActivity.location}</span>
-              </div>
-              
-              <div class="flex items-center gap-2">
-                <IconUsers class="size-4 text-muted-foreground" />
-                <span>ผู้เข้าร่วมสูงสุด: {selectedActivity.max_participants || 'ไม่จำกัด'} คน</span>
-              </div>
-              
-              <div class="flex items-center gap-2">
-                <IconCalendar class="size-4 text-muted-foreground" />
-                <span>
-                  {formatDate(selectedActivity.start_date)} {formatTime(selectedActivity.start_time)}
-                  - {formatDate(selectedActivity.end_date)} {formatTime(selectedActivity.end_time)}
-                </span>
-              </div>
-              
-              <div class="flex items-center gap-2">
-                <Badge variant="default" class="bg-green-600 hover:bg-green-700">
-                  <div class="flex items-center gap-1">
-                    <div class="w-2 h-2 bg-white rounded-full animate-pulse"></div>
-                    กำลังดำเนินการ
-                  </div>
-                </Badge>
-                <Badge variant="outline" class="text-green-600 border-green-600">
-                  สแกน QR ได้
-                </Badge>
-              </div>
-            </div>
-            
-            {#if selectedActivity.description}
-              <p class="text-sm text-muted-foreground">{selectedActivity.description}</p>
-            {/if}
-          </div>
-        {/if}
-      {/if}
-    </CardContent>
-  </Card>
+	<!-- Activity Selection -->
+	<Card>
+		<CardHeader>
+			<CardTitle class="flex items-center gap-2">
+				<IconActivity class="size-5" />
+				เลือกกิจกรรม
+			</CardTitle>
+		</CardHeader>
+		<CardContent class="space-y-4">
+			{#if (data.activities?.length || 0) === 0}
+				<Alert>
+					<IconX class="h-4 w-4" />
+					<AlertDescription>
+						ไม่พบกิจกรรมที่กำลังดำเนินการ (ongoing) ที่สามารถสแกน QR Code ได้ กรุณาติดต่อผู้ดูแลระบบ
+					</AlertDescription>
+				</Alert>
+			{:else}
+				<div class="space-y-2">
+					<label for="activity-select" class="text-sm font-medium"
+						>เลือกกิจกรรมที่ต้องการสแกน (เฉพาะกิจกรรมที่กำลังดำเนินการ):</label
+					>
+					<select
+						bind:value={selectedActivityId}
+						on:change={(e) => handleActivityChange(e.currentTarget.value)}
+						class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+					>
+						<option value="">เลือกกิจกรรม...</option>
+						{#each data.activities || [] as activity}
+							<option value={activity.id}>{activity.title}</option>
+						{/each}
+					</select>
+				</div>
 
-  <!-- Session Statistics -->
-  {#if sessionStats.startTime}
-    <Card>
-      <CardHeader>
-        <CardTitle class="flex items-center gap-2">
-          <IconClock class="size-5" />
-          สถิติการสแกนในเซสชันนี้
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div class="text-center">
-            <div class="text-2xl font-bold text-green-600">{sessionStats.successful}</div>
-            <div class="text-sm text-muted-foreground">สำเร็จ</div>
-          </div>
-          <div class="text-center">
-            <div class="text-2xl font-bold text-red-600">{sessionStats.failed}</div>
-            <div class="text-sm text-muted-foreground">ไม่สำเร็จ</div>
-          </div>
-          <div class="text-center">
-            <div class="text-2xl font-bold">{totalScanned}</div>
-            <div class="text-sm text-muted-foreground">ทั้งหมด</div>
-          </div>
-          <div class="text-center">
-            <div class="text-2xl font-bold">{getSuccessRate()}%</div>
-            <div class="text-sm text-muted-foreground">อัตราสำเร็จ</div>
-          </div>
-        </div>
-        
-        <Separator class="my-4" />
-        
-        <div class="flex items-center justify-between text-sm">
-          <span>เริ่มเซสชัน: {formatDateTime(sessionStats.startTime)}</span>
-          <span>ระยะเวลา: {formatDuration(sessionStats.startTime)}</span>
-        </div>
-        
-        <div class="mt-2">
-          <Button onclick={resetStats} variant="outline" size="sm">
-            <IconRefresh class="size-4 mr-2" />
-            รีเซ็ตสถิติ
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
-  {/if}
+				<!-- Selected Activity Info -->
+				{#if selectedActivity}
+					<div class="space-y-3 rounded-lg bg-muted/50 p-4">
+						<h3 class="flex items-center gap-2 font-semibold">
+							<IconActivity class="size-5" />
+							{selectedActivity.title}
+						</h3>
 
-  <!-- Scanner Control -->
-  <div class="flex gap-4 justify-center">
-    {#if !scannerActive}
-      <Button 
-        onclick={startScanning}
-        disabled={!selectedActivityId}
-        class="flex items-center gap-2"
-      >
-        <IconQrcode class="size-5" />
-        เริ่มสแกน QR Code
-      </Button>
-    {:else}
-      <Button 
-        onclick={stopScanning}
-        variant="outline"
-        class="flex items-center gap-2"
-      >
-        <IconX class="size-5" />
-        หยุดสแกน
-      </Button>
-    {/if}
-  </div>
+						<div class="grid grid-cols-1 gap-4 text-sm md:grid-cols-2">
+							<div class="flex items-center gap-2">
+								<IconMapPin class="size-4 text-muted-foreground" />
+								<span>{selectedActivity.location}</span>
+							</div>
 
-  <!-- QR Scanner -->
-  {#if scannerActive && selectedActivityId}
-    <QRScanner
-      activity_id={selectedActivityId}
-      isActive={scannerActive}
-      onScan={handleScanResult}
-      onError={handleScanError}
-      onStatusChange={handleStatusChange}
-      showHistory={true}
-      maxHistoryItems={20}
-    />
-  {/if}
+							<div class="flex items-center gap-2">
+								<IconUsers class="size-4 text-muted-foreground" />
+								<span>ผู้เข้าร่วมสูงสุด: {selectedActivity.max_participants || 'ไม่จำกัด'} คน</span>
+							</div>
 
-  <!-- Instructions -->
-  <Card>
-    <CardHeader>
-      <CardTitle>คำแนะนำการใช้งาน</CardTitle>
-    </CardHeader>
-    <CardContent>
-      <div class="space-y-2 text-sm text-muted-foreground">
-        <div class="flex items-start gap-2">
-          <IconCheck class="size-4 mt-0.5 text-green-600" />
-          <span>เลือกกิจกรรมที่มีสถานะ "กำลังดำเนินการ" เท่านั้น</span>
-        </div>
-        <div class="flex items-start gap-2">
-          <IconCheck class="size-4 mt-0.5 text-green-600" />
-          <span>กดปุ่ม "เริ่มสแกน QR Code" เพื่อเปิดกล้อง</span>
-        </div>
-        <div class="flex items-start gap-2">
-          <IconCheck class="size-4 mt-0.5 text-green-600" />
-          <span>วาง QR Code ของนักศึกษาในกรอบที่กำหนด</span>
-        </div>
-        <div class="flex items-start gap-2">
-          <IconCheck class="size-4 mt-0.5 text-green-600" />
-          <span>ระบบจะบันทึกการเข้าร่วมอัตโนมัติเมื่อตรวจพบ QR Code</span>
-        </div>
-        <div class="flex items-start gap-2">
-          <IconCheck class="size-4 mt-0.5 text-green-600" />
-          <span>ตรวจสอบสถิติและประวัติการสแกน - สามารถสแกนได้เฉพาะกิจกรรมที่กำลังดำเนินการ</span>
-        </div>
-      </div>
-    </CardContent>
-  </Card>
+							<div class="flex items-center gap-2">
+								<IconCalendar class="size-4 text-muted-foreground" />
+								<span>
+									{formatDate(selectedActivity.start_date)}
+									{formatTime(selectedActivity.start_time)}
+									- {formatDate(selectedActivity.end_date)}
+									{formatTime(selectedActivity.end_time)}
+								</span>
+							</div>
+
+							<div class="flex items-center gap-2">
+								<Badge variant="default" class="bg-green-600 hover:bg-green-700">
+									<div class="flex items-center gap-1">
+										<div class="h-2 w-2 animate-pulse rounded-full bg-white"></div>
+										กำลังดำเนินการ
+									</div>
+								</Badge>
+								<Badge variant="outline" class="border-green-600 text-green-600">สแกน QR ได้</Badge>
+							</div>
+						</div>
+
+						{#if selectedActivity.description}
+							<p class="text-sm text-muted-foreground">{selectedActivity.description}</p>
+						{/if}
+					</div>
+				{/if}
+			{/if}
+		</CardContent>
+	</Card>
+
+	<!-- Session Statistics -->
+	{#if sessionStats.startTime}
+		<Card>
+			<CardHeader>
+				<CardTitle class="flex items-center gap-2">
+					<IconClock class="size-5" />
+					สถิติการสแกนในเซสชันนี้
+				</CardTitle>
+			</CardHeader>
+			<CardContent>
+				<div class="grid grid-cols-2 gap-4 md:grid-cols-4">
+					<div class="text-center">
+						<div class="text-2xl font-bold text-green-600">{sessionStats.successful}</div>
+						<div class="text-sm text-muted-foreground">สำเร็จ</div>
+					</div>
+					<div class="text-center">
+						<div class="text-2xl font-bold text-red-600">{sessionStats.failed}</div>
+						<div class="text-sm text-muted-foreground">ไม่สำเร็จ</div>
+					</div>
+					<div class="text-center">
+						<div class="text-2xl font-bold">{totalScanned}</div>
+						<div class="text-sm text-muted-foreground">ทั้งหมด</div>
+					</div>
+					<div class="text-center">
+						<div class="text-2xl font-bold">{getSuccessRate()}%</div>
+						<div class="text-sm text-muted-foreground">อัตราสำเร็จ</div>
+					</div>
+				</div>
+
+				<Separator class="my-4" />
+
+				<div class="flex items-center justify-between text-sm">
+					<span>เริ่มเซสชัน: {formatDateTime(sessionStats.startTime)}</span>
+					<span>ระยะเวลา: {formatDuration(sessionStats.startTime)}</span>
+				</div>
+
+				<div class="mt-2">
+					<Button onclick={resetStats} variant="outline" size="sm">
+						<IconRefresh class="mr-2 size-4" />
+						รีเซ็ตสถิติ
+					</Button>
+				</div>
+			</CardContent>
+		</Card>
+	{/if}
+
+	<!-- Scanner Control -->
+	<div class="flex justify-center gap-4">
+		{#if !scannerActive}
+			<Button
+				onclick={startScanning}
+				disabled={!selectedActivityId}
+				class="flex items-center gap-2"
+			>
+				<IconQrcode class="size-5" />
+				เริ่มสแกน QR Code
+			</Button>
+		{:else}
+			<Button onclick={stopScanning} variant="outline" class="flex items-center gap-2">
+				<IconX class="size-5" />
+				หยุดสแกน
+			</Button>
+		{/if}
+	</div>
+
+	<!-- QR Scanner -->
+	{#if scannerActive && selectedActivityId}
+		<QRScanner
+			activity_id={selectedActivityId}
+			isActive={scannerActive}
+			onScan={handleScanResult}
+			onError={handleScanError}
+			onStatusChange={handleStatusChange}
+			showHistory={true}
+			maxHistoryItems={20}
+		/>
+	{/if}
+
+	<!-- Instructions -->
+	<Card>
+		<CardHeader>
+			<CardTitle>คำแนะนำการใช้งาน</CardTitle>
+		</CardHeader>
+		<CardContent>
+			<div class="space-y-2 text-sm text-muted-foreground">
+				<div class="flex items-start gap-2">
+					<IconCheck class="mt-0.5 size-4 text-green-600" />
+					<span>เลือกกิจกรรมที่มีสถานะ "กำลังดำเนินการ" เท่านั้น</span>
+				</div>
+				<div class="flex items-start gap-2">
+					<IconCheck class="mt-0.5 size-4 text-green-600" />
+					<span>กดปุ่ม "เริ่มสแกน QR Code" เพื่อเปิดกล้อง</span>
+				</div>
+				<div class="flex items-start gap-2">
+					<IconCheck class="mt-0.5 size-4 text-green-600" />
+					<span>วาง QR Code ของนักศึกษาในกรอบที่กำหนด</span>
+				</div>
+				<div class="flex items-start gap-2">
+					<IconCheck class="mt-0.5 size-4 text-green-600" />
+					<span>ระบบจะบันทึกการเข้าร่วมอัตโนมัติเมื่อตรวจพบ QR Code</span>
+				</div>
+				<div class="flex items-start gap-2">
+					<IconCheck class="mt-0.5 size-4 text-green-600" />
+					<span>ตรวจสอบสถิติและประวัติการสแกน - สามารถสแกนได้เฉพาะกิจกรรมที่กำลังดำเนินการ</span>
+				</div>
+			</div>
+		</CardContent>
+	</Card>
 </div>

@@ -4,20 +4,20 @@
 	import { quintOut } from 'svelte/easing';
 	import { formatDistanceToNow } from 'date-fns';
 	import { th } from 'date-fns/locale';
-	
+
 	import { sseService, notifications, unreadCount, isConnected } from '$lib/stores/sse';
 	import { Button } from '$lib/components/ui/button';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Card, CardContent } from '$lib/components/ui/card';
 	import { ScrollArea } from '$lib/components/ui/scroll-area';
 	import { Separator } from '$lib/components/ui/separator';
-	import { 
-		IconBell, 
-		IconBellRinging, 
-		IconX, 
-		IconAlertCircle, 
-		IconCircleCheck, 
-		IconInfoCircle, 
+	import {
+		IconBell,
+		IconBellRinging,
+		IconX,
+		IconAlertCircle,
+		IconCircleCheck,
+		IconInfoCircle,
 		IconAlertTriangle,
 		IconTrash,
 		IconCheck,
@@ -52,14 +52,14 @@
 
 	// Clean up timeouts when notifications change
 	$: if ($notifications.length === 0) {
-		autoCloseTimeouts.forEach(timeout => clearTimeout(timeout));
+		autoCloseTimeouts.forEach((timeout) => clearTimeout(timeout));
 		autoCloseTimeouts.clear();
 	}
 
 	onMount(() => {
 		return () => {
 			// Clean up timeouts on component destroy
-			autoCloseTimeouts.forEach(timeout => clearTimeout(timeout));
+			autoCloseTimeouts.forEach((timeout) => clearTimeout(timeout));
 		};
 	});
 
@@ -87,7 +87,7 @@
 
 	// Clear all notifications
 	function clearAllNotifications() {
-		autoCloseTimeouts.forEach(timeout => clearTimeout(timeout));
+		autoCloseTimeouts.forEach((timeout) => clearTimeout(timeout));
 		autoCloseTimeouts.clear();
 		// SSE disabled in v2 - placeholder
 		dispatch('allCleared');
@@ -135,9 +135,9 @@
 	// Format notification time
 	function formatNotificationTime(timestamp: string): string {
 		try {
-			return formatDistanceToNow(new Date(timestamp), { 
-				addSuffix: true, 
-				locale: th 
+			return formatDistanceToNow(new Date(timestamp), {
+				addSuffix: true,
+				locale: th
 			});
 		} catch {
 			return 'เมื่อสักครู่';
@@ -161,9 +161,9 @@
 	>
 		{#if $unreadCount > 0}
 			<IconBellRinging class="h-5 w-5" />
-			<Badge 
-				variant="destructive" 
-				class="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center text-xs"
+			<Badge
+				variant="destructive"
+				class="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center p-0 text-xs"
 			>
 				{$unreadCount > 99 ? '99+' : $unreadCount}
 			</Badge>
@@ -174,24 +174,24 @@
 
 	<!-- Connection Status Indicator -->
 	{#if showConnectionStatus}
-		<div class="absolute -bottom-1 -right-1">
+		<div class="absolute -right-1 -bottom-1">
 			{#if $isConnected}
-				<div class="h-2 w-2 bg-green-500 rounded-full" title="เชื่อมต่อแล้ว"></div>
+				<div class="h-2 w-2 rounded-full bg-green-500" title="เชื่อมต่อแล้ว"></div>
 			{:else}
-				<div class="h-2 w-2 bg-red-500 rounded-full animate-pulse" title="ไม่ได้เชื่อมต่อ"></div>
+				<div class="h-2 w-2 animate-pulse rounded-full bg-red-500" title="ไม่ได้เชื่อมต่อ"></div>
 			{/if}
 		</div>
 	{/if}
 
 	<!-- Notification Panel -->
 	{#if isOpen}
-		<div 
-			class="absolute right-0 top-full mt-2 w-80 z-50"
+		<div
+			class="absolute top-full right-0 z-50 mt-2 w-80"
 			transition:slide={{ duration: 200, easing: quintOut }}
 		>
 			<Card class="border shadow-lg">
 				<!-- Header -->
-				<div class="p-4 border-b">
+				<div class="border-b p-4">
 					<div class="flex items-center justify-between">
 						<div class="flex items-center gap-2">
 							<h3 class="font-semibold">การแจ้งเตือน</h3>
@@ -213,9 +213,9 @@
 										<span class="text-red-600">ขาดการเชื่อมต่อ</span>
 									{/if}
 								</div>
-								<Separator orientation="vertical" class="h-4 mx-2" />
+								<Separator orientation="vertical" class="mx-2 h-4" />
 							{/if}
-							
+
 							<!-- Clear All Button -->
 							{#if $notifications.length > 0}
 								<Button
@@ -228,7 +228,7 @@
 									<IconTrash class="h-3 w-3" />
 								</Button>
 							{/if}
-							
+
 							<!-- Close Button -->
 							<Button
 								variant="ghost"
@@ -248,7 +248,7 @@
 					<ScrollArea class="max-h-[{maxHeight}]">
 						{#if $notifications.length === 0}
 							<div class="p-8 text-center text-gray-500">
-								<IconBell class="h-12 w-12 mx-auto mb-4 opacity-50" />
+								<IconBell class="mx-auto mb-4 h-12 w-12 opacity-50" />
 								<p class="text-sm">ไม่มีการแจ้งเตือน</p>
 							</div>
 						{:else}
@@ -256,10 +256,13 @@
 								{#each $notifications as notification, index (index)}
 									{@const expired = isNotificationExpired(notification)}
 									{#if !expired}
-										<div 
-											class="p-4 hover:bg-gray-50 cursor-pointer transition-colors {getNotificationClasses(notification.notification_type)} border-l-4"
+										<div
+											class="cursor-pointer p-4 transition-colors hover:bg-gray-50 {getNotificationClasses(
+												notification.notification_type
+											)} border-l-4"
 											onclick={() => handleNotificationClick(notification, index)}
-											onkeydown={(e) => e.key === 'Enter' && handleNotificationClick(notification, index)}
+											onkeydown={(e) =>
+												e.key === 'Enter' && handleNotificationClick(notification, index)}
 											role="button"
 											tabindex="0"
 											transition:fade={{ duration: 150 }}
@@ -267,25 +270,27 @@
 											<div class="flex items-start gap-3">
 												<!-- Icon -->
 												<div class="mt-0.5">
-													<svelte:component 
-														this={getNotificationIcon(notification.notification_type)} 
-														class="h-4 w-4" 
+													<svelte:component
+														this={getNotificationIcon(notification.notification_type)}
+														class="h-4 w-4"
 													/>
 												</div>
 
 												<!-- Content -->
-												<div class="flex-1 min-w-0">
+												<div class="min-w-0 flex-1">
 													<div class="flex items-start justify-between">
 														<div class="flex-1">
-															<h4 class="font-medium text-sm mb-1">
+															<h4 class="mb-1 text-sm font-medium">
 																{notification.title}
 															</h4>
-															<p class="text-sm opacity-90 mb-2">
+															<p class="mb-2 text-sm opacity-90">
 																{notification.message}
 															</p>
 															<div class="flex items-center justify-between">
 																<span class="text-xs opacity-75">
-																	{formatNotificationTime(notification.timestamp || new Date().toISOString())}
+																	{formatNotificationTime(
+																		notification.timestamp || new Date().toISOString()
+																	)}
 																</span>
 																{#if notification.action_url}
 																	<IconExternalLink class="h-3 w-3 opacity-50" />
@@ -299,7 +304,10 @@
 																variant="ghost"
 																size="sm"
 																class="h-6 w-6 p-0 opacity-50 hover:opacity-100"
-																onclick={(e) => { e.stopPropagation(); markAsRead(index); }}
+																onclick={(e) => {
+																	e.stopPropagation();
+																	markAsRead(index);
+																}}
 																title="ทำเครื่องหมายว่าอ่านแล้ว"
 															>
 																<IconCheck class="h-3 w-3" />
@@ -307,8 +315,11 @@
 															<Button
 																variant="ghost"
 																size="sm"
-																class="h-6 w-6 p-0 opacity-50 hover:opacity-100 text-red-600"
-																onclick={(e) => { e.stopPropagation(); removeNotification(index); }}
+																class="h-6 w-6 p-0 text-red-600 opacity-50 hover:opacity-100"
+																onclick={(e) => {
+																	e.stopPropagation();
+																	removeNotification(index);
+																}}
 																title="ลบ"
 															>
 																<IconX class="h-3 w-3" />
@@ -327,7 +338,7 @@
 
 				<!-- Footer -->
 				{#if $notifications.length > 0}
-					<div class="p-3 border-t bg-gray-50">
+					<div class="border-t bg-gray-50 p-3">
 						<div class="flex items-center justify-between text-xs text-gray-600">
 							<span>{$notifications.length} การแจ้งเตือน</span>
 							{#if $unreadCount > 0}
@@ -343,8 +354,8 @@
 
 <!-- Click outside to close -->
 {#if isOpen}
-	<div 
-		class="fixed inset-0 z-40" 
+	<div
+		class="fixed inset-0 z-40"
 		onclick={toggleNotifications}
 		onkeydown={(e) => e.key === 'Escape' && toggleNotifications()}
 		role="button"
@@ -359,20 +370,20 @@
 		scrollbar-width: thin;
 		scrollbar-color: rgb(203 213 225) transparent;
 	}
-	
+
 	:global(.notification-scroll::-webkit-scrollbar) {
 		width: 6px;
 	}
-	
+
 	:global(.notification-scroll::-webkit-scrollbar-track) {
 		background: transparent;
 	}
-	
+
 	:global(.notification-scroll::-webkit-scrollbar-thumb) {
 		background-color: rgb(203 213 225);
 		border-radius: 3px;
 	}
-	
+
 	:global(.notification-scroll::-webkit-scrollbar-thumb:hover) {
 		background-color: rgb(148 163 184);
 	}

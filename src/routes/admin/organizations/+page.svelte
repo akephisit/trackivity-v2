@@ -6,7 +6,13 @@
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
 	import { Textarea } from '$lib/components/ui/textarea';
-	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card';
+	import {
+		Card,
+		CardContent,
+		CardDescription,
+		CardHeader,
+		CardTitle
+	} from '$lib/components/ui/card';
 	import { Alert, AlertDescription } from '$lib/components/ui/alert';
 	import * as Form from '$lib/components/ui/form';
 	import * as Dialog from '$lib/components/ui/dialog';
@@ -14,13 +20,13 @@
 	import * as Table from '$lib/components/ui/table';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Switch } from '$lib/components/ui/switch';
-	import { 
-		IconLoader, 
-		IconPlus, 
-		IconEdit, 
-		IconTrash, 
-		IconSchool, 
-		IconToggleLeft, 
+	import {
+		IconLoader,
+		IconPlus,
+		IconEdit,
+		IconTrash,
+		IconSchool,
+		IconToggleLeft,
 		IconToggleRight,
 		IconUsers,
 		IconBuilding
@@ -33,8 +39,8 @@
 
 	// Faculty schemas
 	const facultyCreateSchema = z.object({
-  name: z.string().min(1, 'กรุณากรอกชื่อหน่วยงาน'),
-  code: z.string().min(1, 'กรุณากรอกรหัสหน่วยงาน').max(10, 'รหัสหน่วยงานต้องไม่เกิน 10 ตัวอักษร'),
+		name: z.string().min(1, 'กรุณากรอกชื่อหน่วยงาน'),
+		code: z.string().min(1, 'กรุณากรอกรหัสหน่วยงาน').max(10, 'รหัสหน่วยงานต้องไม่เกิน 10 ตัวอักษร'),
 		description: z.string().optional(),
 		status: z.boolean().default(true)
 	});
@@ -44,9 +50,9 @@
 		validators: zodClient(facultyCreateSchema),
 		onResult: async ({ result }) => {
 			if (result.type === 'success') {
-        toast.success('สร้างหน่วยงานสำเร็จ');
+				toast.success('สร้างหน่วยงานสำเร็จ');
 				createDialogOpen = false;
-				
+
 				setTimeout(async () => {
 					try {
 						refreshing = true;
@@ -60,12 +66,17 @@
 					}
 				}, 500);
 			} else if (result.type === 'failure') {
-        toast.error('เกิดข้อผิดพลาดในการสร้างหน่วยงาน');
+				toast.error('เกิดข้อผิดพลาดในการสร้างหน่วยงาน');
 			}
 		}
 	});
 
-	const { form: createFormData, enhance: createEnhance, errors: createErrors, submitting: createSubmitting } = createForm;
+	const {
+		form: createFormData,
+		enhance: createEnhance,
+		errors: createErrors,
+		submitting: createSubmitting
+	} = createForm;
 
 	// Dialog states
 	let createDialogOpen = $state(false);
@@ -82,10 +93,10 @@
 	});
 
 	// Delete state
-	let facultyToDelete = $state<{id: string, name: string} | null>(null);
+	let facultyToDelete = $state<{ id: string; name: string } | null>(null);
 
 	// Toggle loading
-	let toggleLoading = $state<{[key: string]: boolean}>({});
+	let toggleLoading = $state<{ [key: string]: boolean }>({});
 
 	// Stats
 	let stats = $derived({
@@ -136,7 +147,7 @@
 			const result = await response.json();
 
 			if (result.type === 'success') {
-        toast.success('แก้ไขหน่วยงานสำเร็จ');
+				toast.success('แก้ไขหน่วยงานสำเร็จ');
 				editDialogOpen = false;
 				setTimeout(async () => {
 					try {
@@ -148,7 +159,7 @@
 					}
 				}, 500);
 			} else {
-        toast.error('เกิดข้อผิดพลาดในการแก้ไขหน่วยงาน');
+				toast.error('เกิดข้อผิดพลาดในการแก้ไขหน่วยงาน');
 			}
 		} catch (error) {
 			console.error('Update error:', error);
@@ -171,7 +182,7 @@
 			const result = await response.json();
 
 			if (result.type === 'success') {
-        toast.success('ลบหน่วยงานสำเร็จ');
+				toast.success('ลบหน่วยงานสำเร็จ');
 				deleteDialogOpen = false;
 				facultyToDelete = null;
 				setTimeout(async () => {
@@ -184,7 +195,7 @@
 					}
 				}, 500);
 			} else {
-        toast.error('เกิดข้อผิดพลาดในการลบหน่วยงาน');
+				toast.error('เกิดข้อผิดพลาดในการลบหน่วยงาน');
 			}
 		} catch (error) {
 			console.error('Delete error:', error);
@@ -210,7 +221,7 @@
 			const result = await response.json();
 
 			if (result.type === 'success') {
-        toast.success(`${actionText}หน่วยงานสำเร็จ`);
+				toast.success(`${actionText}หน่วยงานสำเร็จ`);
 				setTimeout(async () => {
 					try {
 						await invalidate('app:page-data');
@@ -221,7 +232,7 @@
 					}
 				}, 300);
 			} else {
-        toast.error(result.error || `เกิดข้อผิดพลาดในการ${actionText}หน่วยงาน`);
+				toast.error(result.error || `เกิดข้อผิดพลาดในการ${actionText}หน่วยงาน`);
 			}
 		} catch (error) {
 			console.error('Toggle status error:', error);
@@ -245,7 +256,7 @@
 </script>
 
 <svelte:head>
-<title>จัดการหน่วยงาน - Admin Panel</title>
+	<title>จัดการหน่วยงาน - Admin Panel</title>
 </svelte:head>
 
 <div class="space-y-6">
@@ -259,14 +270,17 @@
 				จัดการข้อมูลหน่วยงานในมหาวิทยาลัย รวมถึงการเปิด-ปิดการใช้งาน
 			</p>
 		</div>
-		<Button onclick={openCreateDialog} class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 text-base font-medium">
-			<IconPlus class="h-5 w-5 mr-2" />
+		<Button
+			onclick={openCreateDialog}
+			class="bg-blue-600 px-6 py-3 text-base font-medium text-white hover:bg-blue-700"
+		>
+			<IconPlus class="mr-2 h-5 w-5" />
 			เพิ่มหน่วยงานใหม่
 		</Button>
 	</div>
 
 	<!-- Stats Cards -->
-	<div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+	<div class="grid grid-cols-1 gap-6 sm:grid-cols-3">
 		<Card>
 			<CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
 				<CardTitle class="text-sm font-medium">หน่วยงานทั้งหมด</CardTitle>
@@ -306,16 +320,19 @@
 	<div class="space-y-6" role="main" aria-labelledby="faculty-management-heading">
 		{#if refreshing}
 			<div class="flex items-center justify-center py-12" role="status" aria-live="polite">
-				<IconLoader class="h-8 w-8 animate-spin mr-3 text-blue-500" />
+				<IconLoader class="mr-3 h-8 w-8 animate-spin text-blue-500" />
 				<span class="text-lg text-gray-600 dark:text-gray-300">กำลังรีเฟรชข้อมูล...</span>
 			</div>
 		{:else if data.faculties.length === 0}
-			<div class="text-center py-16 text-gray-500 dark:text-gray-400">
-				<IconSchool class="h-16 w-16 mx-auto mb-6 opacity-50" />
-				<h3 class="text-xl font-semibold mb-2">ยังไม่มีข้อมูลหน่วยงานในระบบ</h3>
-				<p class="text-gray-400 mb-6">เริ่มต้นด้วยการเพิ่มหน่วยงานแรก</p>
-				<Button onclick={openCreateDialog} class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3">
-					<IconPlus class="h-5 w-5 mr-2" />
+			<div class="py-16 text-center text-gray-500 dark:text-gray-400">
+				<IconSchool class="mx-auto mb-6 h-16 w-16 opacity-50" />
+				<h3 class="mb-2 text-xl font-semibold">ยังไม่มีข้อมูลหน่วยงานในระบบ</h3>
+				<p class="mb-6 text-gray-400">เริ่มต้นด้วยการเพิ่มหน่วยงานแรก</p>
+				<Button
+					onclick={openCreateDialog}
+					class="bg-blue-600 px-6 py-3 text-white hover:bg-blue-700"
+				>
+					<IconPlus class="mr-2 h-5 w-5" />
 					เพิ่มหน่วยงานแรก
 				</Button>
 			</div>
@@ -326,9 +343,7 @@
 						<IconSchool class="h-6 w-6 text-blue-600" />
 						รายการหน่วยงานทั้งหมด
 					</CardTitle>
-					<CardDescription>
-						จัดการข้อมูลหน่วยงานต่างๆ ในมหาวิทยาลัย
-					</CardDescription>
+					<CardDescription>จัดการข้อมูลหน่วยงานต่างๆ ในมหาวิทยาลัย</CardDescription>
 				</CardHeader>
 				<CardContent class="p-0">
 					<div class="overflow-hidden">
@@ -346,9 +361,11 @@
 							<Table.Body>
 								{#each data.faculties as faculty (faculty.id)}
 									<Table.Row class="hover:bg-gray-50/50 dark:hover:bg-gray-800/50">
-										<Table.Cell class="font-medium py-4">
+										<Table.Cell class="py-4 font-medium">
 											<div class="flex items-center gap-3">
-												<div class="w-10 h-10 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center">
+												<div
+													class="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-900"
+												>
 													<IconSchool class="h-5 w-5 text-blue-600 dark:text-blue-400" />
 												</div>
 												<div>
@@ -363,18 +380,21 @@
 												{faculty.code}
 											</Badge>
 										</Table.Cell>
-										<Table.Cell class="py-4 max-w-xs">
-											<div class="text-sm text-gray-600 dark:text-gray-300 truncate">
+										<Table.Cell class="max-w-xs py-4">
+											<div class="truncate text-sm text-gray-600 dark:text-gray-300">
 												{faculty.description || '-'}
 											</div>
 										</Table.Cell>
 										<Table.Cell class="py-4">
-											<Badge 
+											<Badge
 												variant={faculty.status ? 'default' : 'secondary'}
-												class={faculty.status ? 'bg-green-100 text-green-800 hover:bg-green-100' : 'bg-gray-100 text-gray-600'}
+												class={faculty.status
+													? 'bg-green-100 text-green-800 hover:bg-green-100'
+													: 'bg-gray-100 text-gray-600'}
 											>
-												<span class="w-2 h-2 rounded-full mr-2" 
-													class:bg-green-500={faculty.status} 
+												<span
+													class="mr-2 h-2 w-2 rounded-full"
+													class:bg-green-500={faculty.status}
 													class:bg-gray-400={!faculty.status}
 												></span>
 												{faculty.status ? 'เปิดใช้งาน' : 'ปิดใช้งาน'}
@@ -383,14 +403,16 @@
 										<Table.Cell class="py-4 text-sm text-gray-500">
 											{formatDateTime(faculty.created_at)}
 										</Table.Cell>
-										<Table.Cell class="text-right py-4">
-											<div class="flex items-center gap-1 justify-end">
-												<Button 
-													variant="ghost" 
-													size="sm" 
+										<Table.Cell class="py-4 text-right">
+											<div class="flex items-center justify-end gap-1">
+												<Button
+													variant="ghost"
+													size="sm"
 													onclick={() => handleToggleStatus(faculty.id, faculty.status)}
 													disabled={toggleLoading[faculty.id] || false}
-													class="{faculty.status ? 'text-orange-600 hover:text-orange-700 hover:bg-orange-50' : 'text-green-600 hover:text-green-700 hover:bg-green-50'} transition-colors"
+													class="{faculty.status
+														? 'text-orange-600 hover:bg-orange-50 hover:text-orange-700'
+														: 'text-green-600 hover:bg-green-50 hover:text-green-700'} transition-colors"
 													title="{faculty.status ? 'ปิดใช้งาน' : 'เปิดใช้งาน'}หน่วยงาน"
 												>
 													{#if toggleLoading[faculty.id]}
@@ -401,11 +423,11 @@
 														<IconToggleRight class="h-4 w-4" />
 													{/if}
 												</Button>
-												<Button 
-													variant="ghost" 
-													size="sm" 
+												<Button
+													variant="ghost"
+													size="sm"
 													onclick={() => openEditDialog(faculty)}
-													class="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+													class="text-blue-600 hover:bg-blue-50 hover:text-blue-700"
 													title="แก้ไขหน่วยงาน"
 												>
 													<IconEdit class="h-4 w-4" />
@@ -414,7 +436,7 @@
 													variant="ghost"
 													size="sm"
 													onclick={() => openDeleteDialog(faculty.id, faculty.name)}
-													class="text-red-600 hover:text-red-700 hover:bg-red-50"
+													class="text-red-600 hover:bg-red-50 hover:text-red-700"
 													title="ลบหน่วยงาน"
 												>
 													<IconTrash class="h-4 w-4" />
@@ -436,10 +458,8 @@
 <Dialog.Root bind:open={createDialogOpen}>
 	<Dialog.Content class="sm:max-w-md">
 		<Dialog.Header>
-	<Dialog.Title>เพิ่มหน่วยงานใหม่</Dialog.Title>
-			<Dialog.Description>
-				กรอกข้อมูลเพื่อสร้างหน่วยงานใหม่ในระบบ
-			</Dialog.Description>
+			<Dialog.Title>เพิ่มหน่วยงานใหม่</Dialog.Title>
+			<Dialog.Description>กรอกข้อมูลเพื่อสร้างหน่วยงานใหม่ในระบบ</Dialog.Description>
 		</Dialog.Header>
 
 		<form method="POST" action="?/create" use:createEnhance class="space-y-4">
@@ -503,7 +523,12 @@
 					{#snippet children({ props })}
 						<div class="flex items-center space-x-2">
 							<!-- Real input for superforms serialization -->
-							<input type="checkbox" class="sr-only" {...props} bind:checked={$createFormData.status} />
+							<input
+								type="checkbox"
+								class="sr-only"
+								{...props}
+								bind:checked={$createFormData.status}
+							/>
 							<Switch bind:checked={$createFormData.status} disabled={$createSubmitting} />
 							<Label for={props.id}>เปิดใช้งานทันทีหลังสร้าง</Label>
 						</div>
@@ -513,7 +538,7 @@
 			</Form.Field>
 
 			<Dialog.Footer>
-				<Button type="button" variant="outline" onclick={() => createDialogOpen = false}>
+				<Button type="button" variant="outline" onclick={() => (createDialogOpen = false)}>
 					ยกเลิก
 				</Button>
 				<Button type="submit" disabled={$createSubmitting}>
@@ -533,29 +558,20 @@
 <Dialog.Root bind:open={editDialogOpen}>
 	<Dialog.Content class="sm:max-w-md">
 		<Dialog.Header>
-	<Dialog.Title>แก้ไขหน่วยงาน</Dialog.Title>
-			<Dialog.Description>
-				แก้ไขข้อมูลของหน่วยงาน
-			</Dialog.Description>
+			<Dialog.Title>แก้ไขหน่วยงาน</Dialog.Title>
+			<Dialog.Description>แก้ไขข้อมูลของหน่วยงาน</Dialog.Description>
 		</Dialog.Header>
 
 		{#if editingFaculty}
 			<div class="space-y-4">
 				<div class="space-y-2">
-						<Label>ชื่อหน่วยงาน</Label>
-					<Input
-						bind:value={editFormData.name}
-							placeholder="เช่น หน่วยงานวิทยาศาสตร์"
-					/>
+					<Label>ชื่อหน่วยงาน</Label>
+					<Input bind:value={editFormData.name} placeholder="เช่น หน่วยงานวิทยาศาสตร์" />
 				</div>
 
 				<div class="space-y-2">
-						<Label>รหัสหน่วยงาน</Label>
-					<Input
-						bind:value={editFormData.code}
-						placeholder="เช่น SCI"
-						class="font-mono"
-					/>
+					<Label>รหัสหน่วยงาน</Label>
+					<Input bind:value={editFormData.code} placeholder="เช่น SCI" class="font-mono" />
 				</div>
 
 				<div class="space-y-2">
@@ -573,12 +589,10 @@
 				</div>
 
 				<Dialog.Footer>
-					<Button type="button" variant="outline" onclick={() => editDialogOpen = false}>
+					<Button type="button" variant="outline" onclick={() => (editDialogOpen = false)}>
 						ยกเลิก
 					</Button>
-					<Button type="button" onclick={handleUpdate}>
-						บันทึกการแก้ไข
-					</Button>
+					<Button type="button" onclick={handleUpdate}>บันทึกการแก้ไข</Button>
 				</Dialog.Footer>
 			</div>
 		{/if}
@@ -589,11 +603,14 @@
 <AlertDialog.Root bind:open={deleteDialogOpen}>
 	<AlertDialog.Content>
 		<AlertDialog.Header>
-    <AlertDialog.Title>ยืนยันการลบหน่วยงาน</AlertDialog.Title>
+			<AlertDialog.Title>ยืนยันการลบหน่วยงาน</AlertDialog.Title>
 			<AlertDialog.Description>
 				{#if facultyToDelete}
-            คุณแน่ใจหรือไม่ที่จะลบหน่วยงาน "{facultyToDelete.name}"?<br />
-            <strong class="text-red-600">การดำเนินการนี้จะลบข้อมูลทั้งหมดที่เกี่ยวข้องกับหน่วยงานนี้ รวมถึงภาควิชาและแอดมินในหน่วยงาน</strong><br />
+					คุณแน่ใจหรือไม่ที่จะลบหน่วยงาน "{facultyToDelete.name}"?<br />
+					<strong class="text-red-600"
+						>การดำเนินการนี้จะลบข้อมูลทั้งหมดที่เกี่ยวข้องกับหน่วยงานนี้
+						รวมถึงภาควิชาและแอดมินในหน่วยงาน</strong
+					><br />
 					การดำเนินการนี้ไม่สามารถยกเลิกได้
 				{:else}
 					กำลังโหลดข้อมูล...
@@ -601,17 +618,16 @@
 			</AlertDialog.Description>
 		</AlertDialog.Header>
 		<AlertDialog.Footer>
-			<AlertDialog.Cancel onclick={() => {
-				deleteDialogOpen = false;
-				facultyToDelete = null;
-			}}>
+			<AlertDialog.Cancel
+				onclick={() => {
+					deleteDialogOpen = false;
+					facultyToDelete = null;
+				}}
+			>
 				ยกเลิก
 			</AlertDialog.Cancel>
-			<AlertDialog.Action 
-				onclick={handleDelete}
-				class="bg-red-600 hover:bg-red-700 text-white"
-			>
-            ลบหน่วยงาน
+			<AlertDialog.Action onclick={handleDelete} class="bg-red-600 text-white hover:bg-red-700">
+				ลบหน่วยงาน
 			</AlertDialog.Action>
 		</AlertDialog.Footer>
 	</AlertDialog.Content>

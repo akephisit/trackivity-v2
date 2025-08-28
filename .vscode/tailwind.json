@@ -1,0 +1,33 @@
+{
+	"version": 1.1,
+	"atDirectives": [
+		{
+			"name": "@apply",
+			"description": "Apply utility classes to an element"
+		},
+		{
+			"name": "@theme",
+			"description": "Define custom theme values for Tailwind CSS v4"
+		},
+		{
+			"name": "@custom-variant",
+			"description": "Define custom variants for Tailwind CSS v4"
+		},
+		{
+			"name": "@layer",
+			"description": "Define which layer utilities should be added to"
+		},
+		{
+			"name": "@variants",
+			"description": "Generate responsive, hover, focus variants of utilities"
+		},
+		{
+			"name": "@responsive",
+			"description": "Generate responsive variants of utilities"
+		},
+		{
+			"name": "@screen",
+			"description": "Create media queries that reference your breakpoints by name"
+		}
+	]
+}

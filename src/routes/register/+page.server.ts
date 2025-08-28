@@ -8,12 +8,10 @@ import { getOptionalAuthUser } from '$lib/server/auth-utils';
 import { db, organizations } from '$lib/server/db';
 import { eq } from 'drizzle-orm';
 
-
-
 export const load: PageServerLoad = async (event) => {
 	// ตรวจสอบว่ามี session อยู่แล้วหรือไม่
 	const user = getOptionalAuthUser(event);
-	
+
 	if (user) {
 		// User already logged in, redirect based on role
 		if (user.admin_role) {
@@ -23,43 +21,43 @@ export const load: PageServerLoad = async (event) => {
 		}
 	}
 
-// โหลดรายการหน่วยงานจากฐานข้อมูลโดยตรง
-let organizationsList: Organization[] = [];
+	// โหลดรายการหน่วยงานจากฐานข้อมูลโดยตรง
+	let organizationsList: Organization[] = [];
 
 	try {
 		const result = await db
 			.select({
-    id: organizations.id,
-    name: organizations.name,
-    code: organizations.code,
-    description: organizations.description,
-    status: organizations.status,
-    created_at: organizations.createdAt,
-    updated_at: organizations.updatedAt
-  })
-  .from(organizations)
-  .where(eq(organizations.status, true))
-  .orderBy(organizations.name);
+				id: organizations.id,
+				name: organizations.name,
+				code: organizations.code,
+				description: organizations.description,
+				status: organizations.status,
+				created_at: organizations.createdAt,
+				updated_at: organizations.updatedAt
+			})
+			.from(organizations)
+			.where(eq(organizations.status, true))
+			.orderBy(organizations.name);
 
-    organizationsList = result.map(o => ({
-      id: o.id,
-      name: o.name,
-      code: o.code,
-      description: o.description || undefined,
-      status: !!o.status,
-      created_at: o.created_at?.toISOString() || new Date().toISOString(),
-      updated_at: o.updated_at?.toISOString() || new Date().toISOString()
-    }));
+		organizationsList = result.map((o) => ({
+			id: o.id,
+			name: o.name,
+			code: o.code,
+			description: o.description || undefined,
+			status: !!o.status,
+			created_at: o.created_at?.toISOString() || new Date().toISOString(),
+			updated_at: o.updated_at?.toISOString() || new Date().toISOString()
+		}));
 	} catch (error) {
-    console.error('Failed to load organizations from database:', error);
-    throw new Error('ไม่สามารถโหลดข้อมูลหน่วยงานได้ กรุณาลองใหม่อีกครั้ง');
+		console.error('Failed to load organizations from database:', error);
+		throw new Error('ไม่สามารถโหลดข้อมูลหน่วยงานได้ กรุณาลองใหม่อีกครั้ง');
 	}
 
 	const form = await superValidate(zod(registerSchema));
-	
+
 	return {
 		form,
-    organizations: organizationsList
+		organizations: organizationsList
 	};
 };
 
@@ -71,7 +69,6 @@ export const actions: Actions = {
 		if (!form.valid) {
 			return fail(400, { form });
 		}
-
 
 		try {
 			// ส่งข้อมูลการสมัครไปยัง API endpoint โดยตรง
@@ -110,13 +107,15 @@ export const actions: Actions = {
 			throw redirect(303, '/login?registered=true');
 		} catch (error) {
 			// ตรวจสอบว่าเป็น redirect object หรือไม่
-			if (error instanceof Response || 
+			if (
+				error instanceof Response ||
 				(error && typeof error === 'object' && (error as any).status === 303) ||
 				(error && typeof error === 'object' && (error as any).location) ||
-				(error && error.toString && error.toString().includes('Redirect'))) {
+				(error && error.toString && error.toString().includes('Redirect'))
+			) {
 				throw error;
 			}
-			
+
 			console.error('Registration error:', error);
 			form.errors._errors = ['เกิดข้อผิดพลาดในการเชื่อมต่อ กรุณาลองใหม่อีกครั้ง'];
 			return fail(503, { form });

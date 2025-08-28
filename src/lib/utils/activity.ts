@@ -38,6 +38,12 @@ export function convertStatusFromBackend(status: string): ActivityStatus {
  * ตรวจสอบว่า status string เป็นค่าที่ valid หรือไม่
  */
 export function isValidActivityStatus(status: string): status is ActivityStatus {
-	const validStatuses: ActivityStatus[] = ['draft', 'published', 'ongoing', 'completed', 'cancelled'];
+	const validStatuses: ActivityStatus[] = [
+		'draft',
+		'published',
+		'ongoing',
+		'completed',
+		'cancelled'
+	];
 	return validStatuses.includes(status as ActivityStatus);
 }

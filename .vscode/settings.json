@@ -1,6 +1,10 @@
 {
-  "files.associations": {
-    "bun.lock": "text"
-  },
-  "typescript.preferences.importModuleSpecifier": "relative"
+	"files.associations": {
+		"bun.lock": "text"
+	},
+	"typescript.preferences.importModuleSpecifier": "relative",
+	"css.customData": [".vscode/tailwind.json"],
+	"css.validate": false,
+	"scss.validate": false,
+	"less.validate": false
 }

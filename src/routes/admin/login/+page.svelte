@@ -5,27 +5,40 @@
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
-	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card';
+	import {
+		Card,
+		CardContent,
+		CardDescription,
+		CardHeader,
+		CardTitle
+	} from '$lib/components/ui/card';
 	import { Alert, AlertDescription } from '$lib/components/ui/alert';
 	import * as Form from '$lib/components/ui/form';
 	import { Checkbox } from '$lib/components/ui/checkbox';
-	import { IconLoader, IconEye, IconEyeOff, IconShield, IconAlertTriangle, IconKey } from '@tabler/icons-svelte/icons';
+	import {
+		IconLoader,
+		IconEye,
+		IconEyeOff,
+		IconShield,
+		IconAlertTriangle,
+		IconKey
+	} from '@tabler/icons-svelte/icons';
 	import { toast } from 'svelte-sonner';
 
 	let { data } = $props();
 
 	const form = superForm(data.form, {
 		validators: zodClient(adminLoginSchema),
-    onResult: ({ result }) => {
-      if (result.type === 'failure') {
-        // Show server-provided message via toast only
-        const message = (result as any)?.data?.message || 'การเข้าสู่ระบบไม่สำเร็จ';
-        toast.error(message);
-      } else if (result.type === 'redirect') {
-        toast.success('เข้าสู่ระบบสำเร็จ');
-      }
-    }
-  });
+		onResult: ({ result }) => {
+			if (result.type === 'failure') {
+				// Show server-provided message via toast only
+				const message = (result as any)?.data?.message || 'การเข้าสู่ระบบไม่สำเร็จ';
+				toast.error(message);
+			} else if (result.type === 'redirect') {
+				toast.success('เข้าสู่ระบบสำเร็จ');
+			}
+		}
+	});
 
 	const { form: formData, enhance, errors, submitting } = form;
 
@@ -41,15 +54,15 @@
 	<meta name="description" content="Admin login portal for Trackivity system" />
 </svelte:head>
 
-<div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-blue-900 py-12 px-4 sm:px-6 lg:px-8">
-	<div class="max-w-md w-full space-y-8">
+<div
+	class="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 px-4 py-12 sm:px-6 lg:px-8 dark:from-gray-900 dark:to-blue-900"
+>
+	<div class="w-full max-w-md space-y-8">
 		<div class="text-center">
-			<div class="mx-auto h-16 w-16 bg-blue-600 rounded-full flex items-center justify-center mb-4">
+			<div class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-blue-600">
 				<IconShield class="h-8 w-8 text-white" />
 			</div>
-			<h1 class="text-3xl font-bold text-gray-900 dark:text-white">
-				Admin Portal
-			</h1>
+			<h1 class="text-3xl font-bold text-gray-900 dark:text-white">Admin Portal</h1>
 			<p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
 				เข้าสู่ระบบจัดการสำหรับผู้ดูแลระบบ
 			</p>
@@ -57,17 +70,15 @@
 
 		<Card class="w-full">
 			<CardHeader class="space-y-1">
-				<CardTitle class="text-2xl text-center flex items-center justify-center gap-2">
+				<CardTitle class="flex items-center justify-center gap-2 text-center text-2xl">
 					<IconKey class="h-5 w-5" />
 					Admin Login
 				</CardTitle>
-				<CardDescription class="text-center">
-					สำหรับผู้ดูแลระบบเท่านั้น
-				</CardDescription>
+				<CardDescription class="text-center">สำหรับผู้ดูแลระบบเท่านั้น</CardDescription>
 			</CardHeader>
 			<CardContent class="space-y-4">
 				<form method="POST" use:enhance class="space-y-4">
-    <!-- Inline error alert removed; rely on toast messages only -->
+					<!-- Inline error alert removed; rely on toast messages only -->
 
 					<Form.Field {form} name="email">
 						<Form.Control>
@@ -102,7 +113,7 @@
 									<button
 										type="button"
 										onclick={togglePasswordVisibility}
-										class="absolute inset-y-0 right-0 pr-3 flex items-center"
+										class="absolute inset-y-0 right-0 flex items-center pr-3"
 										tabindex="-1"
 									>
 										{#if showPassword}
@@ -126,20 +137,14 @@
 										bind:checked={$formData.remember_me}
 										disabled={$submitting}
 									/>
-									<Label for={props.id} class="text-sm">
-										จดจำการเข้าสู่ระบบ (30 วัน)
-									</Label>
+									<Label for={props.id} class="text-sm">จดจำการเข้าสู่ระบบ (30 วัน)</Label>
 								</div>
 							{/snippet}
 						</Form.Control>
 						<Form.FieldErrors />
 					</Form.Field>
 
-					<Button 
-						type="submit" 
-						class="w-full bg-blue-600 hover:bg-blue-700" 
-						disabled={$submitting}
-					>
+					<Button type="submit" class="w-full bg-blue-600 hover:bg-blue-700" disabled={$submitting}>
 						{#if $submitting}
 							<IconLoader class="mr-2 h-4 w-4 animate-spin" />
 							กำลังเข้าสู่ระบบ...
@@ -159,11 +164,14 @@
 							<span class="bg-background px-2 text-muted-foreground">หรือ</span>
 						</div>
 					</div>
-					
+
 					<div class="text-center">
 						<p class="text-sm text-gray-600 dark:text-gray-400">
-							นักเรียน? 
-							<a href="/login" class="font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400">
+							นักเรียน?
+							<a
+								href="/login"
+								class="font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400"
+							>
 								เข้าสู่ระบบนักเรียน
 							</a>
 						</p>
@@ -176,9 +184,9 @@
 						<IconAlertTriangle class="h-4 w-4" />
 						<AlertDescription>
 							<div class="space-y-2">
-								<p class="font-medium text-sm">Development Mode - Default Admin:</p>
-								<p class="text-xs font-mono">Email: admin@trackivity.local</p>
-								<p class="text-xs font-mono">Password: admin123!</p>
+								<p class="text-sm font-medium">Development Mode - Default Admin:</p>
+								<p class="font-mono text-xs">Email: admin@trackivity.local</p>
+								<p class="font-mono text-xs">Password: admin123!</p>
 								<p class="text-xs text-orange-600">⚠️ Change password after first login!</p>
 							</div>
 						</AlertDescription>

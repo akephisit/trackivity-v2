@@ -5,7 +5,11 @@
 	const { data } = $props<{
 		recentActivities: Activity[];
 		participationHistory: any[];
-		stats: { totalParticipations: number; thisMonthParticipations: number; upcomingActivities: number };
+		stats: {
+			totalParticipations: number;
+			thisMonthParticipations: number;
+			upcomingActivities: number;
+		};
 	}>();
 </script>
 
@@ -16,19 +20,17 @@
 </svelte:head>
 
 <!-- Welcome Banner for Mobile -->
-<div class="lg:hidden bg-gradient-to-r from-primary/10 to-secondary/10 rounded-lg p-4 mb-6">
-	<h2 class="text-lg font-semibold mb-1">
+<div class="mb-6 rounded-lg bg-gradient-to-r from-primary/10 to-secondary/10 p-4 lg:hidden">
+	<h2 class="mb-1 text-lg font-semibold">
 		ยินดีต้อนรับ, {$currentUser?.first_name}!
 	</h2>
-	<p class="text-sm text-muted-foreground">
-		ติดตามกิจกรรมและผลงานของคุณได้ที่นี่
-	</p>
+	<p class="text-sm text-muted-foreground">ติดตามกิจกรรมและผลงานของคุณได้ที่นี่</p>
 </div>
 
-<StudentDashboard 
-	{...{ 
-		recentActivities: data.recentActivities, 
-		participationHistory: data.participationHistory, 
-		stats: data.stats 
+<StudentDashboard
+	{...{
+		recentActivities: data.recentActivities,
+		participationHistory: data.participationHistory,
+		stats: data.stats
 	}}
 />

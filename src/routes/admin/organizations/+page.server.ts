@@ -9,15 +9,19 @@ import { eq, desc } from 'drizzle-orm';
 
 // Organization schemas
 const facultyCreateSchema = z.object({
-  name: z.string().min(1, 'กรุณากรอกชื่อหน่วยงาน'),
-  code: z.string().min(1, 'กรุณากรอกรหัสหน่วยงาน').max(10, 'รหัสหน่วยงานต้องไม่เกิน 10 ตัวอักษร'),
+	name: z.string().min(1, 'กรุณากรอกชื่อหน่วยงาน'),
+	code: z.string().min(1, 'กรุณากรอกรหัสหน่วยงาน').max(10, 'รหัสหน่วยงานต้องไม่เกิน 10 ตัวอักษร'),
 	description: z.string().optional(),
 	status: z.boolean().default(true)
 });
 
 const facultyUpdateSchema = z.object({
-  name: z.string().min(1, 'กรุณากรอกชื่อหน่วยงาน').optional(),
-  code: z.string().min(1, 'กรุณากรอกรหัสหน่วยงาน').max(10, 'รหัสหน่วยงานต้องไม่เกิน 10 ตัวอักษร').optional(),
+	name: z.string().min(1, 'กรุณากรอกชื่อหน่วยงาน').optional(),
+	code: z
+		.string()
+		.min(1, 'กรุณากรอกรหัสหน่วยงาน')
+		.max(10, 'รหัสหน่วยงานต้องไม่เกิน 10 ตัวอักษร')
+		.optional(),
 	description: z.string().optional(),
 	status: z.boolean().optional()
 });
@@ -25,24 +29,24 @@ const facultyUpdateSchema = z.object({
 export const load: PageServerLoad = async (event) => {
 	const { cookies, depends } = event;
 	depends('app:page-data');
-	
+
 	// Ensure user is authenticated as admin
 	const user = requireAdmin(event);
 
 	try {
-    // Fetch all organizations directly from database
-    const facultiesData = await db
-      .select({
-        id: organizations.id,
-        name: organizations.name,
-        code: organizations.code,
-        description: organizations.description,
-        status: organizations.status,
-        created_at: organizations.createdAt,
-        updated_at: organizations.updatedAt
-      })
-      .from(organizations)
-      .orderBy(desc(organizations.createdAt));
+		// Fetch all organizations directly from database
+		const facultiesData = await db
+			.select({
+				id: organizations.id,
+				name: organizations.name,
+				code: organizations.code,
+				description: organizations.description,
+				status: organizations.status,
+				created_at: organizations.createdAt,
+				updated_at: organizations.updatedAt
+			})
+			.from(organizations)
+			.orderBy(desc(organizations.createdAt));
 
 		// Create forms
 		const createForm = await superValidate(zod(facultyCreateSchema));
@@ -55,7 +59,7 @@ export const load: PageServerLoad = async (event) => {
 			user
 		};
 	} catch (error) {
-      console.error('Failed to load organizations data:', error);
+		console.error('Failed to load organizations data:', error);
 		return {
 			faculties: [],
 			createForm: await superValidate(zod(facultyCreateSchema)),
@@ -79,17 +83,17 @@ export const actions: Actions = {
 
 		try {
 			// Insert directly into database
-            await db.insert(organizations).values({
-                name: form.data.name,
-                code: form.data.code,
-                description: form.data.description || null,
-                status: form.data.status ?? true
-            });
+			await db.insert(organizations).values({
+				name: form.data.name,
+				code: form.data.code,
+				description: form.data.description || null,
+				status: form.data.status ?? true
+			});
 
 			return { form, success: true };
 		} catch (error) {
 			console.error('Failed to create faculty:', error);
-			return fail(500, { 
+			return fail(500, {
 				form,
 				error: 'เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์'
 			});
@@ -113,20 +117,21 @@ export const actions: Actions = {
 
 		try {
 			// Update directly in database
-            await db.update(organizations)
-              .set({
-                ...(form.data.name && { name: form.data.name }),
-                ...(form.data.code && { code: form.data.code }),
-                ...(form.data.description !== undefined && { description: form.data.description }),
-                ...(form.data.status !== undefined && { status: form.data.status }),
-                updatedAt: new Date()
-              })
-              .where(eq(organizations.id, facultyId));
+			await db
+				.update(organizations)
+				.set({
+					...(form.data.name && { name: form.data.name }),
+					...(form.data.code && { code: form.data.code }),
+					...(form.data.description !== undefined && { description: form.data.description }),
+					...(form.data.status !== undefined && { status: form.data.status }),
+					updatedAt: new Date()
+				})
+				.where(eq(organizations.id, facultyId));
 
 			return { form, success: true };
 		} catch (error) {
 			console.error('Failed to update faculty:', error);
-			return fail(500, { 
+			return fail(500, {
 				form,
 				error: 'เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์'
 			});
@@ -143,12 +148,12 @@ export const actions: Actions = {
 
 		try {
 			// Delete directly from database
-            await db.delete(organizations).where(eq(organizations.id, facultyId));
+			await db.delete(organizations).where(eq(organizations.id, facultyId));
 
 			return { success: true };
 		} catch (error) {
 			console.error('Failed to delete faculty:', error);
-			return fail(500, { 
+			return fail(500, {
 				error: 'เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์'
 			});
 		}
@@ -164,27 +169,28 @@ export const actions: Actions = {
 
 		try {
 			// Get current status first
-            const [currentFaculty] = await db
-              .select({ status: organizations.status })
-              .from(organizations)
-              .where(eq(organizations.id, facultyId));
+			const [currentFaculty] = await db
+				.select({ status: organizations.status })
+				.from(organizations)
+				.where(eq(organizations.id, facultyId));
 
 			if (!currentFaculty) {
-          return fail(404, { error: 'ไม่พบหน่วยงานที่ต้องการ' });
+				return fail(404, { error: 'ไม่พบหน่วยงานที่ต้องการ' });
 			}
 
 			// Toggle status
-            await db.update(organizations)
-              .set({ 
-                status: !currentFaculty.status,
-                updatedAt: new Date()
-              })
-              .where(eq(organizations.id, facultyId));
+			await db
+				.update(organizations)
+				.set({
+					status: !currentFaculty.status,
+					updatedAt: new Date()
+				})
+				.where(eq(organizations.id, facultyId));
 
 			return { success: true };
 		} catch (error) {
 			console.error('Failed to toggle faculty status:', error);
-			return fail(500, { 
+			return fail(500, {
 				error: 'เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์'
 			});
 		}

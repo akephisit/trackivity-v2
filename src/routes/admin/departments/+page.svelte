@@ -42,7 +42,6 @@
 	let { data } = $props();
 	let refreshing = $state(false);
 
-
 	// Department schemas
 	const departmentCreateSchema = z.object({
 		name: z.string().min(1, 'กรุณากรอกชื่อภาควิชา'),
@@ -51,7 +50,7 @@
 		head_name: z.string().optional(),
 		head_email: z.string().email('รูปแบบอีเมลไม่ถูกต้อง').optional().or(z.literal('')),
 		status: z.boolean().default(true),
-  organization_id: z.string().uuid('กรุณาเลือกหน่วยงานที่ถูกต้อง').optional()
+		organization_id: z.string().uuid('กรุณาเลือกหน่วยงานที่ถูกต้อง').optional()
 	});
 
 	// Forms
@@ -107,7 +106,6 @@
 
 	// Delete state
 	let departmentToDelete = $state<{ id: string; name: string } | null>(null);
-
 
 	// Toggle loading
 	let toggleLoading = $state<{ [key: string]: boolean }>({});
@@ -298,10 +296,6 @@
 		searchQuery = '';
 	}
 
-
-
-
-
 	function formatDateTime(dateString: string) {
 		return new Date(dateString).toLocaleDateString('th-TH', {
 			year: 'numeric',
@@ -314,7 +308,7 @@
 
 	// Get page title based on user role
 	let pageTitle = $derived(
-	data.userRole === 'OrganizationAdmin' && data.currentFaculty
+		data.userRole === 'OrganizationAdmin' && data.currentFaculty
 			? `จัดการภาควิชา - ${data.currentFaculty.name}`
 			: 'จัดการภาควิชา'
 	);
@@ -340,7 +334,7 @@
 			</h1>
 			<p class="mt-3 text-lg text-gray-600 dark:text-gray-400">
 				{#if data.userRole === 'OrganizationAdmin'}
-        จัดการภาควิชาในหน่วยงานของคุณ รวมถึงการเปิด-ปิดการใช้งาน
+					จัดการภาควิชาในหน่วยงานของคุณ รวมถึงการเปิด-ปิดการใช้งาน
 				{:else}
 					จัดการภาควิชาทั้งหมดในระบบ รวมถึงการเปิด-ปิดการใช้งาน
 				{/if}
@@ -360,7 +354,7 @@
 		<Card>
 			<CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
 				<CardTitle class="text-sm font-medium">ภาควิชาทั้งหมด</CardTitle>
-				<IconBuilding class="text-muted-foreground h-4 w-4" />
+				<IconBuilding class="h-4 w-4 text-muted-foreground" />
 			</CardHeader>
 			<CardContent>
 				<div class="text-2xl font-bold">{stats.total}</div>
@@ -429,19 +423,19 @@
 				<div class="flex-1">
 					<div class="relative">
 						<IconSearch
-							class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 transform text-gray-400"
+							class="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform text-gray-400"
 						/>
 						<Input
 							bind:value={searchQuery}
 							placeholder="ค้นหาภาควิชา, หัวหน้าภาค, หรือคำอธิบาย..."
-							class="pl-10 pr-10"
+							class="pr-10 pl-10"
 						/>
 						{#if searchQuery}
 							<Button
 								variant="ghost"
 								size="sm"
 								onclick={clearSearch}
-								class="absolute right-1 top-1/2 h-8 w-8 -translate-y-1/2 transform p-0"
+								class="absolute top-1/2 right-1 h-8 w-8 -translate-y-1/2 transform p-0"
 							>
 								<span class="sr-only">ล้างการค้นหา</span>
 								×
@@ -525,7 +519,7 @@
 									<Table.Head class="font-semibold">ชื่อภาควิชา</Table.Head>
 									<Table.Head class="font-semibold">รหัส</Table.Head>
 									{#if data.userRole === 'SuperAdmin'}
-              <Table.Head class="font-semibold">หน่วยงาน</Table.Head>
+										<Table.Head class="font-semibold">หน่วยงาน</Table.Head>
 									{/if}
 									<Table.Head class="font-semibold">หัวหน้าภาค</Table.Head>
 									<Table.Head class="text-center font-semibold">จำนวนนักศึกษา</Table.Head>
@@ -563,10 +557,10 @@
 										</Table.Cell>
 										{#if data.userRole === 'SuperAdmin'}
 											<Table.Cell class="py-4">
-											{#if department.organization}
-												<Badge variant="outline">
-													{department.organization.name}
-												</Badge>
+												{#if department.organization}
+													<Badge variant="outline">
+														{department.organization.name}
+													</Badge>
 												{:else}
 													<span class="text-gray-400">-</span>
 												{/if}
@@ -652,9 +646,7 @@
 													</Button>
 												</div>
 											{:else}
-												<div class="text-center text-sm text-gray-500">
-													-
-												</div>
+												<div class="text-center text-sm text-gray-500">-</div>
 											{/if}
 										</Table.Cell>
 									</Table.Row>
@@ -746,7 +738,7 @@
 				<Form.FieldErrors />
 			</Form.Field>
 
-				<Form.Field form={createForm} name="head_email">
+			<Form.Field form={createForm} name="head_email">
 				<Form.Control>
 					{#snippet children({ props })}
 						<Label for={props.id}>อีเมลหัวหน้าภาค (ไม่บังคับ)</Label>
@@ -762,24 +754,24 @@
 				<Form.FieldErrors />
 			</Form.Field>
 
-	{#if data.userRole !== 'OrganizationAdmin'}
+			{#if data.userRole !== 'OrganizationAdmin'}
 				<Form.Field form={createForm} name="organization_id">
 					<Form.Control>
 						{#snippet children({ props })}
-            <Label for={props.id}>หน่วยงาน</Label>
+							<Label for={props.id}>หน่วยงาน</Label>
 							<select
 								{...props}
 								bind:value={$createFormData.organization_id}
-								class="w-full border rounded-md p-2 bg-background"
+								class="w-full rounded-md border bg-background p-2"
 								disabled={$createSubmitting}
 							>
-              <option value="" disabled selected>กรุณาเลือกหน่วยงาน</option>
+								<option value="" disabled selected>กรุณาเลือกหน่วยงาน</option>
 								{#if data.faculties}
 									{#each data.faculties as fac}
 										<option value={fac.id}>{fac.name}</option>
 									{/each}
 								{:else}
-                <option disabled>ไม่พบรายการหน่วยงาน</option>
+									<option disabled>ไม่พบรายการหน่วยงาน</option>
 								{/if}
 							</select>
 						{/snippet}
@@ -880,7 +872,8 @@
 					<strong class="text-red-600"
 						>หมายเหตุ: ไม่สามารถลบภาควิชาได้หากยังมีผู้ใช้หรือนักศึกษาที่สังกัดอยู่</strong
 					><br />
-					<span class="text-sm text-gray-600">กรุณาย้ายหรือลบผู้ใช้ทั้งหมดออกจากภาควิชานี้ก่อน</span><br />
+					<span class="text-sm text-gray-600">กรุณาย้ายหรือลบผู้ใช้ทั้งหมดออกจากภาควิชานี้ก่อน</span
+					><br />
 					การดำเนินการนี้ไม่สามารถยกเลิกได้
 				{:else}
 					กำลังโหลดข้อมูล...

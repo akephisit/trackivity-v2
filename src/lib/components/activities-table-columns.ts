@@ -1,14 +1,14 @@
-import type { ColumnDef } from "@tanstack/table-core";
-import type { Activity } from "$lib/types/activity.js";
-import { renderComponent, renderSnippet } from "$lib/components/ui/data-table/index.js";
-import { Badge } from "$lib/components/ui/badge/index.js";
-import { Button } from "$lib/components/ui/button/index.js";
-import { createRawSnippet } from "svelte";
+import type { ColumnDef } from '@tanstack/table-core';
+import type { Activity } from '$lib/types/activity.js';
+import { renderComponent, renderSnippet } from '$lib/components/ui/data-table/index.js';
+import { Badge } from '$lib/components/ui/badge/index.js';
+import { Button } from '$lib/components/ui/button/index.js';
+import { createRawSnippet } from 'svelte';
 
 export const activityColumns: ColumnDef<Activity>[] = [
 	{
-		accessorKey: "name",
-		header: "ชื่อกิจกรรม",
+		accessorKey: 'name',
+		header: 'ชื่อกิจกรรม',
 		cell: ({ row }) => {
 			const activity = row.original;
 			return renderSnippet(
@@ -23,8 +23,8 @@ export const activityColumns: ColumnDef<Activity>[] = [
 		}
 	},
 	{
-		accessorKey: "organizer",
-		header: "หน่วยงานที่จัด",
+		accessorKey: 'organizer',
+		header: 'หน่วยงานที่จัด',
 		cell: ({ row }) => {
 			const activity = row.original;
 			return renderSnippet(
@@ -40,14 +40,15 @@ export const activityColumns: ColumnDef<Activity>[] = [
 		}
 	},
 	{
-		accessorKey: "participantCount",
-		header: () => renderSnippet(
-			createRawSnippet(() => ({
-				render: () => '<div class="text-center">จำนวนคน</div>'
-			}))
-		),
+		accessorKey: 'participantCount',
+		header: () =>
+			renderSnippet(
+				createRawSnippet(() => ({
+					render: () => '<div class="text-center">จำนวนคน</div>'
+				}))
+			),
 		cell: ({ row }) => {
-			const count = row.getValue("participantCount") as number;
+			const count = row.getValue('participantCount') as number;
 			const safeCount = count ?? 0;
 			return renderSnippet(
 				createRawSnippet(() => ({
@@ -61,31 +62,34 @@ export const activityColumns: ColumnDef<Activity>[] = [
 		}
 	},
 	{
-		accessorKey: "status",
-		header: "สถานะ",
+		accessorKey: 'status',
+		header: 'สถานะ',
 		cell: ({ row }) => {
-			const status = (row.getValue("status") as Activity['status']) || 'draft';
-			const variant = status === 'completed' ? 'default' : 
-			              status === 'ongoing' ? 'secondary' : 'outline';
-			
+			const status = (row.getValue('status') as Activity['status']) || 'draft';
+			const variant =
+				status === 'completed' ? 'default' : status === 'ongoing' ? 'secondary' : 'outline';
+
 			// Map status to Thai labels
 			const statusLabels = {
-				'draft': 'ร่าง',
-				'published': 'เผยแพร่แล้ว',
-				'ongoing': 'กำลังดำเนินการ',
-				'completed': 'เสร็จสิ้น',
-				'cancelled': 'ยกเลิก'
+				draft: 'ร่าง',
+				published: 'เผยแพร่แล้ว',
+				ongoing: 'กำลังดำเนินการ',
+				completed: 'เสร็จสิ้น',
+				cancelled: 'ยกเลิก'
 			};
-			
+
 			const label = statusLabels[status] || status || 'ไม่ระบุสถานะ';
-			
+
 			return renderSnippet(
 				createRawSnippet(() => ({
 					render: () => `
 						<div class="flex items-center gap-2">
 							<div class="w-2 h-2 rounded-full ${
-								status === 'completed' ? 'bg-green-500' :
-								status === 'ongoing' ? 'bg-yellow-500' : 'bg-gray-400'
+								status === 'completed'
+									? 'bg-green-500'
+									: status === 'ongoing'
+										? 'bg-yellow-500'
+										: 'bg-gray-400'
 							}"></div>
 							<span class="text-sm font-medium">${label}</span>
 						</div>
@@ -95,10 +99,10 @@ export const activityColumns: ColumnDef<Activity>[] = [
 		}
 	},
 	{
-		accessorKey: "createdAt",
-		header: "วันที่สร้าง",
+		accessorKey: 'createdAt',
+		header: 'วันที่สร้าง',
 		cell: ({ row }) => {
-			const dateValue = row.getValue("createdAt") as string;
+			const dateValue = row.getValue('createdAt') as string;
 			const activity = row.original;
 			const safeDateValue = dateValue || activity.created_at || new Date().toISOString();
 			const date = new Date(safeDateValue);
@@ -106,11 +110,15 @@ export const activityColumns: ColumnDef<Activity>[] = [
 				createRawSnippet(() => ({
 					render: () => `
 						<div class="text-sm text-muted-foreground">
-							${isNaN(date.getTime()) ? 'ไม่ระบุวันที่' : date.toLocaleDateString('th-TH', {
-								year: 'numeric',
-								month: 'short',
-								day: 'numeric'
-							})}
+							${
+								isNaN(date.getTime())
+									? 'ไม่ระบุวันที่'
+									: date.toLocaleDateString('th-TH', {
+											year: 'numeric',
+											month: 'short',
+											day: 'numeric'
+										})
+							}
 						</div>
 					`
 				}))
@@ -118,8 +126,8 @@ export const activityColumns: ColumnDef<Activity>[] = [
 		}
 	},
 	{
-		id: "actions",
-		header: "",
+		id: 'actions',
+		header: '',
 		cell: ({ row }) => {
 			return renderSnippet(
 				createRawSnippet(() => ({

@@ -16,8 +16,8 @@ const departmentCreateSchema = z.object({
 	head_name: z.string().optional(),
 	head_email: z.string().email('รูปแบบอีเมลไม่ถูกต้อง').optional().or(z.literal('')),
 	status: z.boolean().default(true),
-// สำหรับ SuperAdmin ต้องเลือกหน่วยงาน
-  organization_id: z.string().uuid('รหัสหน่วยงานไม่ถูกต้อง').optional()
+	// สำหรับ SuperAdmin ต้องเลือกหน่วยงาน
+	organization_id: z.string().uuid('รหัสหน่วยงานไม่ถูกต้อง').optional()
 });
 
 const departmentUpdateSchema = z.object({
@@ -30,122 +30,122 @@ const departmentUpdateSchema = z.object({
 });
 
 export const load: PageServerLoad = async (event) => {
-    const { cookies, depends, parent } = event;
+	const { cookies, depends, parent } = event;
 	depends('app:page-data');
-	
+
 	// Ensure user is authenticated as admin
 	const user = requireAdmin(event);
 	const admin_role = user.admin_role;
 
 	// For SuperAdmin, show all departments; for FacultyAdmin, show only their faculty's departments
 	let apiEndpoint = `/api/departments`;
-    if (admin_role?.admin_level === 'OrganizationAdmin' && (admin_role as any).organization_id) {
+	if (admin_role?.admin_level === 'OrganizationAdmin' && (admin_role as any).organization_id) {
 		apiEndpoint = `/api/organizations/${(admin_role as any).organization_id}/departments`;
 	}
 
-    try {
-        // Fetch departments directly from database and map to typed Department
-        let departmentsData: Department[];
-        if (admin_role?.admin_level === 'OrganizationAdmin' && (admin_role as any).organization_id) {
-            const rows = await db
-                .select({
-                    id: departments.id,
-                    name: departments.name,
-                    code: departments.code,
-                    organization_id: departments.organizationId,
-                    description: departments.description,
-                    status: departments.status,
-                    created_at: departments.createdAt,
-                    updated_at: departments.updatedAt
-                })
-                .from(departments)
-                .where(eq(departments.organizationId, (admin_role as any).organization_id))
-                .orderBy(desc(departments.createdAt));
+	try {
+		// Fetch departments directly from database and map to typed Department
+		let departmentsData: Department[];
+		if (admin_role?.admin_level === 'OrganizationAdmin' && (admin_role as any).organization_id) {
+			const rows = await db
+				.select({
+					id: departments.id,
+					name: departments.name,
+					code: departments.code,
+					organization_id: departments.organizationId,
+					description: departments.description,
+					status: departments.status,
+					created_at: departments.createdAt,
+					updated_at: departments.updatedAt
+				})
+				.from(departments)
+				.where(eq(departments.organizationId, (admin_role as any).organization_id))
+				.orderBy(desc(departments.createdAt));
 
-            departmentsData = rows.map((d) => ({
-                ...d,
-                description: d.description || undefined,
-                created_at: d.created_at?.toISOString() || new Date().toISOString(),
-                updated_at: d.updated_at?.toISOString() || new Date().toISOString()
-            }));
-        } else {
-            // SuperAdmin - get all departments with organization info
-            const rows = await db
-                .select({
-                    id: departments.id,
-                    name: departments.name,
-                    code: departments.code,
-                    organization_id: departments.organizationId,
-                    description: departments.description,
-                    status: departments.status,
-                    created_at: departments.createdAt,
-                    updated_at: departments.updatedAt,
-                    organization_name: organizations.name
-                })
-                .from(departments)
-                .leftJoin(organizations, eq(departments.organizationId, organizations.id))
-                .orderBy(desc(departments.createdAt));
+			departmentsData = rows.map((d) => ({
+				...d,
+				description: d.description || undefined,
+				created_at: d.created_at?.toISOString() || new Date().toISOString(),
+				updated_at: d.updated_at?.toISOString() || new Date().toISOString()
+			}));
+		} else {
+			// SuperAdmin - get all departments with organization info
+			const rows = await db
+				.select({
+					id: departments.id,
+					name: departments.name,
+					code: departments.code,
+					organization_id: departments.organizationId,
+					description: departments.description,
+					status: departments.status,
+					created_at: departments.createdAt,
+					updated_at: departments.updatedAt,
+					organization_name: organizations.name
+				})
+				.from(departments)
+				.leftJoin(organizations, eq(departments.organizationId, organizations.id))
+				.orderBy(desc(departments.createdAt));
 
-            departmentsData = rows.map((d) => ({
-                ...d,
-                description: d.description || undefined,
-                created_at: d.created_at?.toISOString() || new Date().toISOString(),
-                updated_at: d.updated_at?.toISOString() || new Date().toISOString()
-            }));
-        }
+			departmentsData = rows.map((d) => ({
+				...d,
+				description: d.description || undefined,
+				created_at: d.created_at?.toISOString() || new Date().toISOString(),
+				updated_at: d.updated_at?.toISOString() || new Date().toISOString()
+			}));
+		}
 
-        // For OrganizationAdmin, get their organization info
-        let currentFaculty: Organization | null = null;
-        if (admin_role?.admin_level === 'OrganizationAdmin' && (admin_role as any).organization_id) {
-            const facRows = await db
-                .select({
-                    id: organizations.id,
-                    name: organizations.name,
-                    code: organizations.code,
-                    description: organizations.description,
-                    status: organizations.status,
-                    created_at: organizations.createdAt,
-                    updated_at: organizations.updatedAt
-                })
-                .from(organizations)
-                .where(eq(organizations.id, (admin_role as any).organization_id))
-                .limit(1);
+		// For OrganizationAdmin, get their organization info
+		let currentFaculty: Organization | null = null;
+		if (admin_role?.admin_level === 'OrganizationAdmin' && (admin_role as any).organization_id) {
+			const facRows = await db
+				.select({
+					id: organizations.id,
+					name: organizations.name,
+					code: organizations.code,
+					description: organizations.description,
+					status: organizations.status,
+					created_at: organizations.createdAt,
+					updated_at: organizations.updatedAt
+				})
+				.from(organizations)
+				.where(eq(organizations.id, (admin_role as any).organization_id))
+				.limit(1);
 
-            if (facRows.length > 0) {
-                const f = facRows[0];
-                currentFaculty = {
-                    ...f,
-                    description: f.description || undefined,
-                    created_at: f.created_at?.toISOString() || new Date().toISOString(),
-                    updated_at: f.updated_at?.toISOString() || new Date().toISOString()
-                };
-            }
-        }
+			if (facRows.length > 0) {
+				const f = facRows[0];
+				currentFaculty = {
+					...f,
+					description: f.description || undefined,
+					created_at: f.created_at?.toISOString() || new Date().toISOString(),
+					updated_at: f.updated_at?.toISOString() || new Date().toISOString()
+				};
+			}
+		}
 
-        // If SuperAdmin, load organizations list for selection
-        let facultiesList: Organization[] | null = null;
-        if (admin_role?.admin_level === 'SuperAdmin') {
-            const facRows = await db
-                .select({
-                    id: organizations.id,
-                    name: organizations.name,
-                    code: organizations.code,
-                    description: organizations.description,
-                    status: organizations.status,
-                    created_at: organizations.createdAt,
-                    updated_at: organizations.updatedAt
-                })
-                .from(organizations)
-                .where(eq(organizations.status, true))
-                .orderBy(organizations.name);
+		// If SuperAdmin, load organizations list for selection
+		let facultiesList: Organization[] | null = null;
+		if (admin_role?.admin_level === 'SuperAdmin') {
+			const facRows = await db
+				.select({
+					id: organizations.id,
+					name: organizations.name,
+					code: organizations.code,
+					description: organizations.description,
+					status: organizations.status,
+					created_at: organizations.createdAt,
+					updated_at: organizations.updatedAt
+				})
+				.from(organizations)
+				.where(eq(organizations.status, true))
+				.orderBy(organizations.name);
 
-            facultiesList = facRows.map((f) => ({
-                ...f,
-                description: f.description || undefined,
-                created_at: f.created_at?.toISOString() || new Date().toISOString(),
-                updated_at: f.updated_at?.toISOString() || new Date().toISOString()
-            }));
-        }
+			facultiesList = facRows.map((f) => ({
+				...f,
+				description: f.description || undefined,
+				created_at: f.created_at?.toISOString() || new Date().toISOString(),
+				updated_at: f.updated_at?.toISOString() || new Date().toISOString()
+			}));
+		}
 
 		// Create forms
 		const createForm = await superValidate(zod(departmentCreateSchema));
@@ -173,15 +173,18 @@ export const load: PageServerLoad = async (event) => {
 };
 
 export const actions: Actions = {
-    create: async (event) => {
-        const { request } = event;
+	create: async (event) => {
+		const { request } = event;
 
 		const user = requireAdmin(event);
 		const admin_role = user.admin_role;
 
 		// Only SuperAdmin and OrganizationAdmin can create departments
-		if (admin_role?.admin_level !== 'SuperAdmin' && admin_role?.admin_level !== 'OrganizationAdmin') {
-			return fail(403, { 
+		if (
+			admin_role?.admin_level !== 'SuperAdmin' &&
+			admin_role?.admin_level !== 'OrganizationAdmin'
+		) {
+			return fail(403, {
 				error: 'คุณไม่มีสิทธิ์ในการสร้างภาควิชา'
 			});
 		}
@@ -193,50 +196,53 @@ export const actions: Actions = {
 		}
 
 		// Determine the API endpoint based on user role
-        // Determine target organization
-        let targetOrganizationId: string;
-        if (admin_role?.admin_level === 'OrganizationAdmin' && (admin_role as any).organization_id) {
-            targetOrganizationId = (admin_role as any).organization_id as string;
-        } else {
-            // SuperAdmin must select an organization in the form
-            const selected = (form.data as any).organization_id as string | undefined;
-            if (!selected) {
-                return fail(400, { form, error: 'กรุณาเลือกหน่วยงาน' });
-            }
-            targetOrganizationId = selected;
-        }
+		// Determine target organization
+		let targetOrganizationId: string;
+		if (admin_role?.admin_level === 'OrganizationAdmin' && (admin_role as any).organization_id) {
+			targetOrganizationId = (admin_role as any).organization_id as string;
+		} else {
+			// SuperAdmin must select an organization in the form
+			const selected = (form.data as any).organization_id as string | undefined;
+			if (!selected) {
+				return fail(400, { form, error: 'กรุณาเลือกหน่วยงาน' });
+			}
+			targetOrganizationId = selected;
+		}
 
-        const apiEndpoint = `/api/organizations/${targetOrganizationId}/departments`;
+		const apiEndpoint = `/api/organizations/${targetOrganizationId}/departments`;
 
 		try {
-            // Insert department directly into database
-            await db.insert(departments).values({
-                name: form.data.name,
-                code: form.data.code,
-                organizationId: targetOrganizationId,
-                description: form.data.description || null,
-                status: form.data.status
-            });
-            
-            return { form, success: true };
+			// Insert department directly into database
+			await db.insert(departments).values({
+				name: form.data.name,
+				code: form.data.code,
+				organizationId: targetOrganizationId,
+				description: form.data.description || null,
+				status: form.data.status
+			});
+
+			return { form, success: true };
 		} catch (error) {
 			console.error('Failed to create department:', error);
-			return fail(500, { 
+			return fail(500, {
 				form,
 				error: 'เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์'
 			});
 		}
 	},
 
-    update: async (event) => {
-        const { request } = event;
+	update: async (event) => {
+		const { request } = event;
 
 		const user = requireAdmin(event);
 		const admin_role = user.admin_role;
 
 		// Only SuperAdmin and OrganizationAdmin can update departments
-		if (admin_role?.admin_level !== 'SuperAdmin' && admin_role?.admin_level !== 'OrganizationAdmin') {
-			return fail(403, { 
+		if (
+			admin_role?.admin_level !== 'SuperAdmin' &&
+			admin_role?.admin_level !== 'OrganizationAdmin'
+		) {
+			return fail(403, {
 				error: 'คุณไม่มีสิทธิ์ในการแก้ไขภาควิชา'
 			});
 		}
@@ -252,21 +258,22 @@ export const actions: Actions = {
 		}
 
 		try {
-            // Update department directly in database
-            await db.update(departments)
-                .set({
-                    ...(form.data.name && { name: form.data.name }),
-                    ...(form.data.code && { code: form.data.code }),
-                    ...(form.data.description !== undefined && { description: form.data.description }),
-                    ...(form.data.status !== undefined && { status: form.data.status }),
-                    updatedAt: new Date()
-                })
-                .where(eq(departments.id, departmentId));
+			// Update department directly in database
+			await db
+				.update(departments)
+				.set({
+					...(form.data.name && { name: form.data.name }),
+					...(form.data.code && { code: form.data.code }),
+					...(form.data.description !== undefined && { description: form.data.description }),
+					...(form.data.status !== undefined && { status: form.data.status }),
+					updatedAt: new Date()
+				})
+				.where(eq(departments.id, departmentId));
 
 			return { form, success: true };
 		} catch (error) {
 			console.error('Failed to update department:', error);
-			return fail(500, { 
+			return fail(500, {
 				form,
 				error: 'เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์'
 			});
@@ -280,8 +287,11 @@ export const actions: Actions = {
 		const admin_role = user.admin_role;
 
 		// Only SuperAdmin and OrganizationAdmin can delete departments
-		if (admin_role?.admin_level !== 'SuperAdmin' && admin_role?.admin_level !== 'OrganizationAdmin') {
-			return fail(403, { 
+		if (
+			admin_role?.admin_level !== 'SuperAdmin' &&
+			admin_role?.admin_level !== 'OrganizationAdmin'
+		) {
+			return fail(403, {
 				error: 'คุณไม่มีสิทธิ์ในการลบภาควิชา'
 			});
 		}
@@ -289,28 +299,31 @@ export const actions: Actions = {
 		const formData = await request.formData();
 		const departmentId = formData.get('departmentId') as string;
 
-        try {
-            // Delete department directly from database
-            await db.delete(departments).where(eq(departments.id, departmentId));
+		try {
+			// Delete department directly from database
+			await db.delete(departments).where(eq(departments.id, departmentId));
 
 			return { success: true };
 		} catch (error) {
 			console.error('Failed to delete department:', error);
-			return fail(500, { 
+			return fail(500, {
 				error: 'เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์'
 			});
 		}
 	},
 
-		toggleStatus: async (event) => {
+	toggleStatus: async (event) => {
 		const { request } = event;
 
 		const user = requireAdmin(event);
 		const admin_role = user.admin_role;
 
 		// Only SuperAdmin and OrganizationAdmin can toggle department status
-		if (admin_role?.admin_level !== 'SuperAdmin' && admin_role?.admin_level !== 'OrganizationAdmin') {
-			return fail(403, { 
+		if (
+			admin_role?.admin_level !== 'SuperAdmin' &&
+			admin_role?.admin_level !== 'OrganizationAdmin'
+		) {
+			return fail(403, {
 				error: 'คุณไม่มีสิทธิ์ในการเปลี่ยนสถานะภาควิชา'
 			});
 		}
@@ -318,32 +331,32 @@ export const actions: Actions = {
 		const formData = await request.formData();
 		const departmentId = formData.get('departmentId') as string;
 
-        try {
-            // Get current status first
-            const [currentDepartment] = await db
-                .select({ status: departments.status })
-                .from(departments)
-                .where(eq(departments.id, departmentId));
+		try {
+			// Get current status first
+			const [currentDepartment] = await db
+				.select({ status: departments.status })
+				.from(departments)
+				.where(eq(departments.id, departmentId));
 
-            if (!currentDepartment) {
-                return fail(404, { error: 'ไม่พบภาควิชาที่ต้องการ' });
-            }
+			if (!currentDepartment) {
+				return fail(404, { error: 'ไม่พบภาควิชาที่ต้องการ' });
+			}
 
-            // Toggle status
-            await db.update(departments)
-                .set({ 
-                    status: !currentDepartment.status,
-                    updatedAt: new Date()
-                })
-                .where(eq(departments.id, departmentId));
+			// Toggle status
+			await db
+				.update(departments)
+				.set({
+					status: !currentDepartment.status,
+					updatedAt: new Date()
+				})
+				.where(eq(departments.id, departmentId));
 
 			return { success: true };
 		} catch (error) {
 			console.error('Failed to toggle department status:', error);
-			return fail(500, { 
+			return fail(500, {
 				error: 'เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์'
 			});
 		}
-	},
-
+	}
 };

@@ -224,17 +224,17 @@
 						<div class="space-y-4">
 							<div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
 								<div>
-									<span class="text-muted-foreground text-sm">ชื่อ</span>
+									<span class="text-sm text-muted-foreground">ชื่อ</span>
 									<p class="font-medium">{$currentUser.first_name}</p>
 								</div>
 								<div>
-									<span class="text-muted-foreground text-sm">นามสกุล</span>
+									<span class="text-sm text-muted-foreground">นามสกุล</span>
 									<p class="font-medium">{$currentUser.last_name}</p>
 								</div>
 							</div>
 
 							<div>
-								<span class="text-muted-foreground mb-1 flex items-center gap-1 text-sm">
+								<span class="mb-1 flex items-center gap-1 text-sm text-muted-foreground">
 									<IconMail class="size-3" />
 									อีเมล
 								</span>
@@ -242,7 +242,7 @@
 							</div>
 
 							<div>
-								<span class="text-muted-foreground mb-1 flex items-center gap-1 text-sm">
+								<span class="mb-1 flex items-center gap-1 text-sm text-muted-foreground">
 									<IconPhone class="size-3" />
 									เบอร์โทรศัพท์
 								</span>
@@ -250,7 +250,7 @@
 							</div>
 
 							<div>
-								<span class="text-muted-foreground mb-1 flex items-center gap-1 text-sm">
+								<span class="mb-1 flex items-center gap-1 text-sm text-muted-foreground">
 									<IconMapPin class="size-3" />
 									ที่อยู่
 								</span>
@@ -271,20 +271,20 @@
 				</CardHeader>
 				<CardContent class="space-y-4">
 					<div>
-						<span class="text-muted-foreground text-sm">รหัสนักศึกษา</span>
+						<span class="text-sm text-muted-foreground">รหัสนักศึกษา</span>
 						<p class="text-lg font-medium">{$currentUser.student_id}</p>
 					</div>
 
 					{#if $currentUser.organization_name}
 						<div>
-							<span class="text-muted-foreground text-sm">หน่วยงาน</span>
+							<span class="text-sm text-muted-foreground">หน่วยงาน</span>
 							<p class="font-medium">{$currentUser.organization_name}</p>
 						</div>
 					{/if}
 
 					{#if $currentUser.department_name}
 						<div>
-							<span class="text-muted-foreground text-sm">ภาควิชา</span>
+							<span class="text-sm text-muted-foreground">ภาควิชา</span>
 							<p class="font-medium">{$currentUser.department_name}</p>
 						</div>
 					{/if}
@@ -292,7 +292,7 @@
 					<Separator />
 
 					<div>
-						<span class="text-muted-foreground mb-1 flex items-center gap-1 text-sm">
+						<span class="mb-1 flex items-center gap-1 text-sm text-muted-foreground">
 							<IconCalendar class="size-3" />
 							วันที่สมัครสมาชิก
 						</span>
@@ -301,7 +301,7 @@
 
 					{#if $currentUser.updated_at}
 						<div>
-							<span class="text-muted-foreground text-sm">อัพเดตล่าสุด</span>
+							<span class="text-sm text-muted-foreground">อัพเดตล่าสุด</span>
 							<p class="text-sm">{formatDate($currentUser.updated_at)}</p>
 						</div>
 					{/if}
@@ -321,24 +321,24 @@
 				<div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
 					<div class="rounded-lg border p-4 text-center">
 						<Badge variant="default" class="mb-2">ใช้งานปกติ</Badge>
-						<p class="text-muted-foreground text-sm">สถานะบัญชี</p>
+						<p class="text-sm text-muted-foreground">สถานะบัญชี</p>
 					</div>
 
 					<div class="rounded-lg border p-4 text-center">
 						<Badge variant="secondary" class="mb-2">นักศึกษา</Badge>
-						<p class="text-muted-foreground text-sm">ระดับผู้ใช้</p>
+						<p class="text-sm text-muted-foreground">ระดับผู้ใช้</p>
 					</div>
 
 					<div class="rounded-lg border p-4 text-center">
 						<Badge variant="outline" class="mb-2">
 							{$currentUser.permissions?.length || 0}
 						</Badge>
-						<p class="text-muted-foreground text-sm">สิทธิ์การใช้งาน</p>
+						<p class="text-sm text-muted-foreground">สิทธิ์การใช้งาน</p>
 					</div>
 
 					<div class="rounded-lg border p-4 text-center">
 						<Badge variant="outline" class="mb-2">เข้ารหัสแล้ว</Badge>
-						<p class="text-muted-foreground text-sm">ความปลอดภัย</p>
+						<p class="text-sm text-muted-foreground">ความปลอดภัย</p>
 					</div>
 				</div>
 			</CardContent>
@@ -348,10 +348,10 @@
 		<Card class="border-muted bg-muted/30">
 			<CardContent class="p-4">
 				<div class="flex items-start gap-3">
-					<IconShield class="text-muted-foreground mt-0.5 size-5 flex-shrink-0" />
+					<IconShield class="mt-0.5 size-5 flex-shrink-0 text-muted-foreground" />
 					<div class="space-y-1">
 						<h3 class="text-sm font-medium">ข้อมูลส่วนบุคคล</h3>
-						<p class="text-muted-foreground text-xs">
+						<p class="text-xs text-muted-foreground">
 							ข้อมูลส่วนบุคคลของคุณได้รับการป้องกันตามนีสยประปิสย์ของมหาวิทยาลัย
 							เราจะไม่เปิดเผยข้อมูลของคุณให้บุคคลที่สามโดยไม่ได้รับความยินยอมจากคุณ
 						</p>

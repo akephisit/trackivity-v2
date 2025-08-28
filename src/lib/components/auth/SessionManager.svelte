@@ -5,17 +5,30 @@
 	import { authService, currentUser } from '$lib/stores/auth';
 	import { Button } from '$lib/components/ui/button';
 	import { Badge } from '$lib/components/ui/badge';
-	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card';
+	import {
+		Card,
+		CardContent,
+		CardDescription,
+		CardHeader,
+		CardTitle
+	} from '$lib/components/ui/card';
 	import { Alert, AlertDescription } from '$lib/components/ui/alert';
-	import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '$lib/components/ui/dialog';
-	import { 
-		IconDeviceDesktop, 
-		IconDeviceMobile, 
-		IconDeviceTablet, 
-		IconClock, 
-		IconMapPin, 
-		IconTrash, 
-		IconShield, 
+	import {
+		Dialog,
+		DialogContent,
+		DialogDescription,
+		DialogHeader,
+		DialogTitle,
+		DialogTrigger
+	} from '$lib/components/ui/dialog';
+	import {
+		IconDeviceDesktop,
+		IconDeviceMobile,
+		IconDeviceTablet,
+		IconClock,
+		IconMapPin,
+		IconTrash,
+		IconShield,
 		IconRefresh,
 		IconAlertTriangle,
 		IconCalendar,
@@ -36,11 +49,11 @@
 		await loadSessions();
 	});
 
-	// Load user sessions  
+	// Load user sessions
 	async function loadSessions() {
 		loading = true;
 		error = '';
-		
+
 		try {
 			// Session management disabled in v2 - placeholder
 			sessions = [];
@@ -55,13 +68,13 @@
 	// Revoke a specific session
 	async function revokeSession(sessionId: string) {
 		if (revoking.has(sessionId)) return;
-		
+
 		revoking.add(sessionId);
 		revoking = new Set(revoking); // Trigger reactivity
-		
+
 		try {
 			// Session management disabled in v2 - placeholder
-			sessions = sessions.filter(s => s.id !== sessionId);
+			sessions = sessions.filter((s) => s.id !== sessionId);
 			dispatch('sessionRevoked', { sessionId });
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Failed to revoke session';
@@ -75,7 +88,7 @@
 	// Extend current session
 	async function extendCurrentSession() {
 		extending = true;
-		
+
 		try {
 			// Session management disabled in v2 - placeholder
 			dispatch('sessionExtended');
@@ -90,7 +103,7 @@
 	// Get device icon based on type
 	function getDeviceIcon(deviceInfo: Record<string, any>) {
 		const deviceType = deviceInfo.device_type?.toLowerCase() || 'unknown';
-		
+
 		switch (deviceType) {
 			case 'mobile':
 				return IconDeviceMobile;
@@ -108,7 +121,7 @@
 		const deviceType = deviceInfo.device_type || 'Unknown';
 		const os = deviceInfo.os;
 		const browser = deviceInfo.browser;
-		
+
 		if (os && browser) {
 			return `${deviceType} - ${os} (${browser})`;
 		} else if (os) {
@@ -116,7 +129,7 @@
 		} else if (browser) {
 			return `${deviceType} - ${browser}`;
 		}
-		
+
 		return deviceType;
 	}
 
@@ -141,9 +154,9 @@
 	// Format relative time
 	function formatRelativeTime(dateString: string): string {
 		try {
-			return formatDistanceToNow(new Date(dateString), { 
-				addSuffix: true, 
-				locale: th 
+			return formatDistanceToNow(new Date(dateString), {
+				addSuffix: true,
+				locale: th
 			});
 		} catch {
 			return 'ไม่ทราบ';
@@ -188,22 +201,15 @@
 					<IconShield class="h-5 w-5" />
 					การจัดการเซสชัน
 				</CardTitle>
-				<CardDescription>
-					จัดการเซสชันการเข้าสู่ระบบของคุณในอุปกรณ์ต่างๆ
-				</CardDescription>
+				<CardDescription>จัดการเซสชันการเข้าสู่ระบบของคุณในอุปกรณ์ต่างๆ</CardDescription>
 			</div>
 			<div class="flex gap-2">
 				<Button variant="outline" size="sm" onclick={loadSessions} disabled={loading}>
-					<IconRefresh class="h-4 w-4 mr-2 {loading ? 'animate-spin' : ''}" />
+					<IconRefresh class="mr-2 h-4 w-4 {loading ? 'animate-spin' : ''}" />
 					รีเฟรช
 				</Button>
-				<Button 
-					variant="outline" 
-					size="sm" 
-					onclick={extendCurrentSession}
-					disabled={extending}
-				>
-					<IconClock class="h-4 w-4 mr-2" />
+				<Button variant="outline" size="sm" onclick={extendCurrentSession} disabled={extending}>
+					<IconClock class="mr-2 h-4 w-4" />
 					ขยายเซสชัน
 				</Button>
 			</div>
@@ -220,33 +226,41 @@
 
 		{#if loading}
 			<div class="flex items-center justify-center py-8">
-				<IconRefresh class="h-6 w-6 animate-spin mr-2" />
+				<IconRefresh class="mr-2 h-6 w-6 animate-spin" />
 				<span>กำลังโหลดเซสชัน...</span>
 			</div>
 		{:else if sessions.length === 0}
-			<div class="text-center py-8 text-gray-500">
-				<IconShield class="h-12 w-12 mx-auto mb-4 opacity-50" />
+			<div class="py-8 text-center text-gray-500">
+				<IconShield class="mx-auto mb-4 h-12 w-12 opacity-50" />
 				<p>ไม่พบเซสชันที่ใช้งานอยู่</p>
 			</div>
 		{:else}
 			<div class="space-y-3">
 				{#each sessions as session (session.session_id)}
-					<Card class="border-l-4 {isCurrentSession(session.session_id) ? 'border-l-blue-500 bg-blue-50/50' : isExpired(session.expires_at) ? 'border-l-red-500' : isExpiringSoon(session.expires_at) ? 'border-l-yellow-500' : 'border-l-gray-300'}">
+					<Card
+						class="border-l-4 {isCurrentSession(session.session_id)
+							? 'border-l-blue-500 bg-blue-50/50'
+							: isExpired(session.expires_at)
+								? 'border-l-red-500'
+								: isExpiringSoon(session.expires_at)
+									? 'border-l-yellow-500'
+									: 'border-l-gray-300'}"
+					>
 						<CardContent class="p-4">
 							<div class="flex items-start justify-between">
-								<div class="flex items-start space-x-3 flex-1">
+								<div class="flex flex-1 items-start space-x-3">
 									<!-- Device Icon -->
 									<div class="mt-1">
-										<svelte:component 
-											this={getDeviceIcon(session.device_info)} 
-											class="h-5 w-5 text-gray-600" 
+										<svelte:component
+											this={getDeviceIcon(session.device_info)}
+											class="h-5 w-5 text-gray-600"
 										/>
 									</div>
 
 									<!-- Session Details -->
-									<div class="flex-1 min-w-0">
-										<div class="flex items-center gap-2 mb-2">
-											<h4 class="font-medium text-sm truncate">
+									<div class="min-w-0 flex-1">
+										<div class="mb-2 flex items-center gap-2">
+											<h4 class="truncate text-sm font-medium">
 												{getDeviceDisplayName(session.device_info)}
 											</h4>
 											<Badge variant={getSessionBadgeVariant(session)} class="text-xs">
@@ -274,7 +288,13 @@
 
 											<div class="flex items-center gap-1">
 												<IconCalendar class="h-3 w-3" />
-												<span class="{isExpired(session.expires_at) ? 'text-red-600 font-medium' : isExpiringSoon(session.expires_at) ? 'text-yellow-600 font-medium' : ''}">
+												<span
+													class={isExpired(session.expires_at)
+														? 'font-medium text-red-600'
+														: isExpiringSoon(session.expires_at)
+															? 'font-medium text-yellow-600'
+															: ''}
+												>
 													หมดอายุ: {formatAbsoluteTime(session.expires_at)}
 												</span>
 											</div>
@@ -288,17 +308,17 @@
 										<Dialog>
 											<DialogTrigger>
 												{#snippet child({ props })}
-													<Button 
+													<Button
 														{...props}
-														variant="outline" 
-														size="sm" 
-														class="text-red-600 hover:text-red-700 hover:bg-red-50"
+														variant="outline"
+														size="sm"
+														class="text-red-600 hover:bg-red-50 hover:text-red-700"
 														disabled={revoking.has(session.session_id)}
 													>
 														{#if revoking.has(session.session_id)}
-															<IconRefresh class="h-3 w-3 mr-1 animate-spin" />
+															<IconRefresh class="mr-1 h-3 w-3 animate-spin" />
 														{:else}
-															<IconTrash class="h-3 w-3 mr-1" />
+															<IconTrash class="mr-1 h-3 w-3" />
 														{/if}
 														ยกเลิก
 													</Button>
@@ -308,21 +328,20 @@
 												<DialogHeader>
 													<DialogTitle>ยืนยันการยกเลิกเซสชัน</DialogTitle>
 													<DialogDescription>
-														คุณแน่ใจหรือไม่ที่จะยกเลิกเซสชันนี้? การดำเนินการนี้จะทำให้อุปกรณ์นี้ออกจากระบบทันที
+														คุณแน่ใจหรือไม่ที่จะยกเลิกเซสชันนี้?
+														การดำเนินการนี้จะทำให้อุปกรณ์นี้ออกจากระบบทันที
 													</DialogDescription>
 												</DialogHeader>
 												<div class="flex justify-end space-x-2">
-													<Button variant="outline" size="sm">
-														ยกเลิก
-													</Button>
-													<Button 
-														variant="destructive" 
+													<Button variant="outline" size="sm">ยกเลิก</Button>
+													<Button
+														variant="destructive"
 														size="sm"
 														onclick={() => revokeSession(session.session_id)}
 														disabled={revoking.has(session.session_id)}
 													>
 														{#if revoking.has(session.session_id)}
-															<IconRefresh class="h-3 w-3 mr-1 animate-spin" />
+															<IconRefresh class="mr-1 h-3 w-3 animate-spin" />
 														{/if}
 														ยืนยัน
 													</Button>
@@ -330,13 +349,9 @@
 											</DialogContent>
 										</Dialog>
 									{:else if isCurrentSession(session.session_id)}
-										<Badge variant="default" class="text-xs">
-											เซสชันปัจจุบัน
-										</Badge>
+										<Badge variant="default" class="text-xs">เซสชันปัจจุบัน</Badge>
 									{:else}
-										<Badge variant="destructive" class="text-xs">
-											หมดอายุแล้ว
-										</Badge>
+										<Badge variant="destructive" class="text-xs">หมดอายุแล้ว</Badge>
 									{/if}
 								</div>
 							</div>
@@ -346,27 +361,27 @@
 			</div>
 
 			<!-- Session Statistics -->
-			<div class="mt-6 pt-4 border-t">
-				<div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+			<div class="mt-6 border-t pt-4">
+				<div class="grid grid-cols-2 gap-4 text-center md:grid-cols-4">
 					<div>
 						<div class="text-2xl font-bold text-blue-600">{sessions.length}</div>
 						<div class="text-sm text-gray-600">เซสชันทั้งหมด</div>
 					</div>
 					<div>
 						<div class="text-2xl font-bold text-green-600">
-							{sessions.filter(s => !isExpired(s.expires_at)).length}
+							{sessions.filter((s) => !isExpired(s.expires_at)).length}
 						</div>
 						<div class="text-sm text-gray-600">ใช้งานได้</div>
 					</div>
 					<div>
 						<div class="text-2xl font-bold text-yellow-600">
-							{sessions.filter(s => isExpiringSoon(s.expires_at)).length}
+							{sessions.filter((s) => isExpiringSoon(s.expires_at)).length}
 						</div>
 						<div class="text-sm text-gray-600">กำลังจะหมดอายุ</div>
 					</div>
 					<div>
 						<div class="text-2xl font-bold text-red-600">
-							{sessions.filter(s => isExpired(s.expires_at)).length}
+							{sessions.filter((s) => isExpired(s.expires_at)).length}
 						</div>
 						<div class="text-sm text-gray-600">หมดอายุแล้ว</div>
 					</div>

@@ -1,6 +1,12 @@
 <script lang="ts">
 	import { Button } from '$lib/components/ui/button';
-	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card';
+	import {
+		Card,
+		CardContent,
+		CardDescription,
+		CardHeader,
+		CardTitle
+	} from '$lib/components/ui/card';
 	import { IconShield, IconHome, IconArrowLeft } from '@tabler/icons-svelte/icons';
 	import { goto } from '$app/navigation';
 
@@ -13,11 +19,15 @@
 	<title>ไม่มีสิทธิ์เข้าถึง - Admin Panel</title>
 </svelte:head>
 
-<div class="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
-	<div class="max-w-md w-full">
+<div
+	class="flex min-h-screen items-center justify-center bg-gray-50 px-4 py-12 sm:px-6 lg:px-8 dark:bg-gray-900"
+>
+	<div class="w-full max-w-md">
 		<Card class="text-center">
 			<CardHeader class="pb-4">
-				<div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-red-100 dark:bg-red-900/20 mb-4">
+				<div
+					class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/20"
+				>
 					<IconShield class="h-8 w-8 text-red-600 dark:text-red-400" />
 				</div>
 				<CardTitle class="text-2xl font-bold text-gray-900 dark:text-white">
@@ -28,24 +38,28 @@
 				</CardDescription>
 			</CardHeader>
 			<CardContent class="space-y-4">
-				<div class="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
+				<div
+					class="rounded-lg border border-yellow-200 bg-yellow-50 p-4 dark:border-yellow-800 dark:bg-yellow-900/20"
+				>
 					<p class="text-sm text-yellow-800 dark:text-yellow-200">
 						<strong>เหตุผลที่เป็นไปได้:</strong>
 					</p>
-					<ul class="text-sm text-yellow-700 dark:text-yellow-300 mt-2 space-y-1 list-disc list-inside">
+					<ul
+						class="mt-2 list-inside list-disc space-y-1 text-sm text-yellow-700 dark:text-yellow-300"
+					>
 						<li>คุณไม่ได้เป็นผู้ดูแลระบบ</li>
 						<li>บัญชีของคุณไม่มีสิทธิ์ที่จำเป็น</li>
 						<li>Session ของคุณอาจหมดอายุแล้ว</li>
 					</ul>
 				</div>
 
-				<div class="flex flex-col sm:flex-row gap-3">
+				<div class="flex flex-col gap-3 sm:flex-row">
 					<Button onclick={goBack} variant="outline" class="flex-1">
-						<IconArrowLeft class="h-4 w-4 mr-2" />
+						<IconArrowLeft class="mr-2 h-4 w-4" />
 						กลับไปหน้าก่อนหน้า
 					</Button>
 					<Button onclick={() => goto('/')} class="flex-1">
-						<IconHome class="h-4 w-4 mr-2" />
+						<IconHome class="mr-2 h-4 w-4" />
 						กลับสู่หน้าแรก
 					</Button>
 				</div>
