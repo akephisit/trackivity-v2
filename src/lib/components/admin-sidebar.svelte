@@ -16,7 +16,8 @@
 		IconQrcode,
 		IconCalendarEvent
 	} from '@tabler/icons-svelte/icons';
-	import { AdminLevel } from '$lib/types/admin';
+    // Use string literal admin level to avoid enum mismatch across modules
+    type AdminLevel = 'SuperAdmin' | 'FacultyAdmin' | 'RegularAdmin';
 	import { mode, setMode } from 'mode-watcher';
 	import { toast } from 'svelte-sonner';
 	import type { ComponentProps } from "svelte";
@@ -71,7 +72,7 @@
 		];
 
 		// เพิ่มรายการเมนูตามระดับแอดมิน
-		if (adminLevel === AdminLevel.SuperAdmin) {
+		if (adminLevel === 'SuperAdmin') {
 			baseItems.push(
 				{
 					title: 'จัดการผู้ใช้',
@@ -95,7 +96,7 @@
 					description: 'จัดการผู้ดูแลระบบ'
 				}
 			);
-		} else if (adminLevel === AdminLevel.FacultyAdmin) {
+		} else if (adminLevel === 'FacultyAdmin') {
 			baseItems.push(
 				{
 					title: 'จัดการภาควิชา',
@@ -161,9 +162,9 @@
 	}
 
 	function getRoleDisplayName(level?: AdminLevel, facultyName?: string) {
-		if (level === AdminLevel.SuperAdmin) {
+		if (level === 'SuperAdmin') {
 			return 'ซุปเปอร์แอดมิน';
-		} else if (level === AdminLevel.FacultyAdmin) {
+		} else if (level === 'FacultyAdmin') {
 			return facultyName ? `แอดมินหน่วยงาน${facultyName}` : 'แอดมินหน่วยงาน';
 		}
 		return 'แอดมิน';
@@ -251,7 +252,7 @@
 		</Sidebar.Group>
 
 		<!-- Quick Actions for Faculty Admin -->
-		{#if admin_role?.admin_level === AdminLevel.FacultyAdmin}
+			{#if admin_role?.admin_level === 'FacultyAdmin'}
 			<Sidebar.Group>
 				<Sidebar.GroupLabel>การดำเนินการด่วน</Sidebar.GroupLabel>
 				<Sidebar.GroupContent>
