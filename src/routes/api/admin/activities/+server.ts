@@ -1,10 +1,10 @@
 import type { RequestHandler } from './$types';
 import { json } from '@sveltejs/kit';
-import { requireFacultyAdmin } from '$lib/server/auth-utils';
+import { requireOrganizationAdmin } from '$lib/server/auth-utils';
 import { db, activities } from '$lib/server/db';
 
 export const POST: RequestHandler = async (event) => {
-  const user = await requireFacultyAdmin(event);
+  const user = await requireOrganizationAdmin(event);
 
   let body: any;
   try {
@@ -35,7 +35,7 @@ export const POST: RequestHandler = async (event) => {
 
     const hours = Number(body.hours) || 1;
 
-    const facultyId = user.admin_role?.admin_level === 'FacultyAdmin' ? user.admin_role?.faculty_id ?? null : null;
+    const organizationId = user.admin_role?.admin_level === 'OrganizationAdmin' ? user.admin_role?.organization_id ?? null : null;
 
     const [inserted] = await db
       .insert(activities)
@@ -54,7 +54,7 @@ export const POST: RequestHandler = async (event) => {
         hours,
         maxParticipants,
         // status defaults to 'draft' per schema
-        facultyId: facultyId,
+        organizationId: organizationId,
         createdBy: user.user_id
       })
       .returning({ id: activities.id });

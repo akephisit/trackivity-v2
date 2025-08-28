@@ -255,7 +255,7 @@ export const columnVisibilityPresets = {
 export const userColumnAccessors = {
     search: (user: User) => `${user.first_name} ${user.last_name} ${user.email} ${user.student_id || ''} ${user.employee_id || ''}`,
     status: (user: User) => user.status,
-    faculty: (user: User) => user.faculty_id || '',
+    faculty: (user: User) => user.organization_id || '',
     department: (user: User) => user.department_id || '',
     email_verified: (user: User) => !!user.email_verified_at ? 'verified' : 'unverified',
 };

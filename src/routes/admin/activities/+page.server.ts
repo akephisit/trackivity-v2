@@ -1,4 +1,4 @@
-import { requireFacultyAdmin } from '$lib/server/auth-utils';
+import { requireOrganizationAdmin } from '$lib/server/auth-utils';
 import { error, fail } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 import { AdminLevel } from '$lib/types/admin';
@@ -7,18 +7,18 @@ import { eq, desc } from 'drizzle-orm';
 
 export const load: PageServerLoad = async (event) => {
 	// ตรวจสอบสิทธิ์ - เฉพาะ FacultyAdmin หรือ SuperAdmin
-	const user = await requireFacultyAdmin(event);
-	const adminLevel = user.admin_role?.admin_level;
-	const facultyId = user.admin_role?.faculty_id;
+    const user = await requireOrganizationAdmin(event);
+    const adminLevel = user.admin_role?.admin_level;
+    const organizationId = user.admin_role?.organization_id;
 
 	try {
 		// ตรวจสอบสิทธิ์: SuperAdmin ดูทั้งหมด / FacultyAdmin ต้องมี faculty_id
-		if (adminLevel !== AdminLevel.SuperAdmin && adminLevel !== AdminLevel.FacultyAdmin) {
-			throw error(403, 'ไม่มีสิทธิ์เข้าถึงข้อมูลกิจกรรม');
-		}
-		if (adminLevel === AdminLevel.FacultyAdmin && !facultyId) {
-			throw error(403, 'Faculty admin ต้องมี faculty_id');
-		}
+        if (adminLevel !== AdminLevel.SuperAdmin && adminLevel !== AdminLevel.OrganizationAdmin) {
+            throw error(403, 'ไม่มีสิทธิ์เข้าถึงข้อมูลกิจกรรม');
+        }
+        if (adminLevel === AdminLevel.OrganizationAdmin && !organizationId) {
+            throw error(403, 'Organization admin ต้องมี organization_id');
+        }
 
 			// Query activities directly from database
 			const baseQuery = db
@@ -35,7 +35,7 @@ export const load: PageServerLoad = async (event) => {
 					max_participants: activities.maxParticipants,
 					hours: activities.hours,
 					status: activities.status,
-					faculty_id: activities.facultyId,
+                    organization_id: activities.organizationId,
 					created_by: activities.createdBy,
 					created_at: activities.createdAt,
 					updated_at: activities.updatedAt,
@@ -44,9 +44,9 @@ export const load: PageServerLoad = async (event) => {
 				.from(activities);
 
 			// Apply faculty filtering for FacultyAdmin
-			const filteredQuery = (adminLevel === AdminLevel.FacultyAdmin && facultyId)
-				? baseQuery.where(eq(activities.facultyId, facultyId))
-				: baseQuery;
+            const filteredQuery = (adminLevel === AdminLevel.OrganizationAdmin && organizationId)
+                ? baseQuery.where(eq(activities.organizationId, organizationId))
+                : baseQuery;
 
 			const rawActivities = await filteredQuery.orderBy(desc(activities.createdAt));
 		
@@ -63,7 +63,7 @@ export const load: PageServerLoad = async (event) => {
 				max_participants: activity.max_participants,
 				hours: activity.hours,
 				require_score: false, // Not in current schema
-				faculty_id: activity.faculty_id,
+                organization_id: activity.organization_id,
 				created_by: activity.created_by,
 				created_at: activity.created_at,
 				updated_at: activity.updated_at,
@@ -78,10 +78,10 @@ export const load: PageServerLoad = async (event) => {
 		return {
 			activities: activitiesData,
 			user,
-			adminLevel,
-			facultyId,
-			canCreateActivity: adminLevel === AdminLevel.SuperAdmin || adminLevel === AdminLevel.FacultyAdmin
-		};
+            adminLevel,
+            organizationId,
+            canCreateActivity: adminLevel === AdminLevel.SuperAdmin || adminLevel === AdminLevel.OrganizationAdmin
+        };
 
 	} catch (err) {
 		console.error('Error loading activities:', err);
@@ -94,11 +94,11 @@ export const load: PageServerLoad = async (event) => {
 		// สำหรับ error อื่นๆ ให้ส่งค่าเริ่มต้นแทนการ throw
 		return {
 			activities: [],
-			user,
-			adminLevel,
-			facultyId,
-			canCreateActivity: adminLevel === AdminLevel.SuperAdmin || adminLevel === AdminLevel.FacultyAdmin
-		};
+            user,
+            adminLevel,
+            organizationId,
+            canCreateActivity: adminLevel === AdminLevel.SuperAdmin || adminLevel === AdminLevel.OrganizationAdmin
+        };
 	}
 };
 

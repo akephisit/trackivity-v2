@@ -51,7 +51,7 @@
 		head_name: z.string().optional(),
 		head_email: z.string().email('รูปแบบอีเมลไม่ถูกต้อง').optional().or(z.literal('')),
 		status: z.boolean().default(true),
-  faculty_id: z.string().uuid('กรุณาเลือกหน่วยงานที่ถูกต้อง').optional()
+  organization_id: z.string().uuid('กรุณาเลือกหน่วยงานที่ถูกต้อง').optional()
 	});
 
 	// Forms
@@ -158,7 +158,7 @@
 			head_name: '',
 			head_email: '',
 			status: true,
-			faculty_id: undefined
+			organization_id: undefined
 		};
 		createDialogOpen = true;
 	}
@@ -314,7 +314,7 @@
 
 	// Get page title based on user role
 	let pageTitle = $derived(
-		data.userRole === 'FacultyAdmin' && data.currentFaculty
+	data.userRole === 'OrganizationAdmin' && data.currentFaculty
 			? `จัดการภาควิชา - ${data.currentFaculty.name}`
 			: 'จัดการภาควิชา'
 	);
@@ -332,14 +332,14 @@
 				id="department-management-heading"
 				class="text-4xl font-bold text-gray-900 dark:text-white"
 			>
-				{#if data.userRole === 'FacultyAdmin' && data.currentFaculty}
+				{#if data.userRole === 'OrganizationAdmin' && data.currentFaculty}
 					จัดการภาควิชา - {data.currentFaculty.name}
 				{:else}
 					จัดการภาควิชา
 				{/if}
 			</h1>
 			<p class="mt-3 text-lg text-gray-600 dark:text-gray-400">
-				{#if data.userRole === 'FacultyAdmin'}
+				{#if data.userRole === 'OrganizationAdmin'}
         จัดการภาควิชาในหน่วยงานของคุณ รวมถึงการเปิด-ปิดการใช้งาน
 				{:else}
 					จัดการภาควิชาทั้งหมดในระบบ รวมถึงการเปิด-ปิดการใช้งาน
@@ -612,7 +612,7 @@
 											{formatDateTime(department.created_at)}
 										</Table.Cell>
 										<Table.Cell class="py-4 text-right">
-											{#if data.userRole === 'SuperAdmin' || data.userRole === 'FacultyAdmin'}
+											{#if data.userRole === 'SuperAdmin' || data.userRole === 'OrganizationAdmin'}
 												<div class="flex items-center justify-end gap-1">
 													<Button
 														variant="ghost"
@@ -762,14 +762,14 @@
 				<Form.FieldErrors />
 			</Form.Field>
 
-			{#if data.userRole !== 'FacultyAdmin'}
-				<Form.Field form={createForm} name="faculty_id">
+	{#if data.userRole !== 'OrganizationAdmin'}
+				<Form.Field form={createForm} name="organization_id">
 					<Form.Control>
 						{#snippet children({ props })}
             <Label for={props.id}>หน่วยงาน</Label>
 							<select
 								{...props}
-								bind:value={$createFormData.faculty_id}
+								bind:value={$createFormData.organization_id}
 								class="w-full border rounded-md p-2 bg-background"
 								disabled={$createSubmitting}
 							>

@@ -1,7 +1,7 @@
 import type { Activity } from '../types/activity.js';
 
-export const mockActivities: Activity[] = [
-	{
+	export const mockActivities: Activity[] = [
+		{
 		id: '1',
 		title: 'งานวันคุ้มครองผู้บริโภค',
 		description: 'กิจกรรมเพื่อสร้างความเข้าใจในการคุ้มครองผู้บริโภค',
@@ -11,8 +11,8 @@ export const mockActivities: Activity[] = [
 		max_participants: 200,
 		current_participants: 150,
 		status: 'completed',
-		faculty_id: '1',
-    faculty_name: 'หน่วยงานเศรษฐศาสตร์',
+		organization_id: '1',
+    organization_name: 'หน่วยงานเศรษฐศาสตร์',
 		created_by: 'user1',
 		created_by_name: 'อาจารย์สมชาย ใจดี',
 		created_at: '2024-01-15T10:00:00.000Z',
@@ -31,8 +31,8 @@ export const mockActivities: Activity[] = [
 		max_participants: 300,
 		current_participants: 280,
 		status: 'ongoing',
-		faculty_id: '2',
-    faculty_name: 'หน่วยงานวิศวกรรมศาสตร์',
+		organization_id: '2',
+    organization_name: 'หน่วยงานวิศวกรรมศาสตร์',
 		created_by: 'user2',
 		created_by_name: 'ผศ.ดร.สมหญิง วิชาการ',
 		created_at: '2024-02-01T09:00:00.000Z',

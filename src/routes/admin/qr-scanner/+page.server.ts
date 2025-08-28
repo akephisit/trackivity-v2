@@ -1,6 +1,6 @@
 import type { PageServerLoad } from './$types';
 import { requireAdmin } from '$lib/server/auth-utils';
-import { db, activities, faculties } from '$lib/server/db';
+import { db, activities, organizations } from '$lib/server/db';
 import { and, eq } from 'drizzle-orm';
 
 export const load: PageServerLoad = async (event) => {
@@ -11,13 +11,13 @@ export const load: PageServerLoad = async (event) => {
 
   // Build admin info block
   let facultyName: string | undefined = undefined;
-  const facultyId = user.admin_role?.faculty_id || undefined;
+  const facultyId = (user.admin_role as any)?.organization_id || undefined;
   if (facultyId) {
     try {
       const rows = await db
-        .select({ id: faculties.id, name: faculties.name })
-        .from(faculties)
-        .where(eq(faculties.id, facultyId));
+        .select({ id: organizations.id, name: organizations.name })
+        .from(organizations)
+        .where(eq(organizations.id, facultyId));
       facultyName = rows[0]?.name;
     } catch (e) {
       // Best effort only; keep facultyName undefined on error
@@ -26,8 +26,8 @@ export const load: PageServerLoad = async (event) => {
   }
 
   // Query only ongoing activities; if FacultyAdmin, scope by faculty
-  const whereClause = (user.admin_role?.admin_level === 'FacultyAdmin' && facultyId)
-    ? and(eq(activities.status, 'ongoing'), eq(activities.facultyId, facultyId))
+  const whereClause = (user.admin_role?.admin_level === 'OrganizationAdmin' && facultyId)
+    ? and(eq(activities.status, 'ongoing'), eq(activities.organizationId, facultyId))
     : eq(activities.status, 'ongoing');
 
   const rows = await db
@@ -44,7 +44,7 @@ export const load: PageServerLoad = async (event) => {
       max_participants: activities.maxParticipants,
       hours: activities.hours,
       status: activities.status,
-      faculty_id: activities.facultyId,
+      faculty_id: activities.organizationId,
       organizer: activities.organizer
     })
     .from(activities)

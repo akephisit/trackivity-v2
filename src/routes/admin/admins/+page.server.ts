@@ -136,7 +136,7 @@ export const actions: Actions = {
 				switch (level) {
 					case 'SuperAdmin':
 						return ['ManageUsers', 'ManageAdmins', 'ManageActivities', 'ViewDashboard', 'ManageFaculties', 'ManageSessions'];
-					case 'FacultyAdmin':
+					case 'OrganizationAdmin':
 						return ['ViewDashboard', 'ManageActivities', 'ManageUsers'];
 					default:
 						return ['ViewDashboard'];
@@ -144,12 +144,12 @@ export const actions: Actions = {
 			};
 
 			// Map AdminLevel to DB enum string
-			const toDbAdminLevel = (level: AdminLevel): 'super_admin' | 'faculty_admin' | 'regular_admin' => {
+			const toDbAdminLevel = (level: AdminLevel): 'super_admin' | 'organization_admin' | 'regular_admin' => {
 				switch (level) {
 					case AdminLevel.SuperAdmin:
 						return 'super_admin';
-					case AdminLevel.FacultyAdmin:
-						return 'faculty_admin';
+					case AdminLevel.OrganizationAdmin:
+						return 'organization_admin';
 					case AdminLevel.RegularAdmin:
 					default:
 						return 'regular_admin';
@@ -192,7 +192,7 @@ export const actions: Actions = {
 			await db.insert(adminRoles).values({
 				userId: newUser.id,
 				adminLevel: toDbAdminLevel(form.data.admin_level),
-				facultyId: form.data.admin_level === AdminLevel.FacultyAdmin ? form.data.faculty_id || null : null,
+				organizationId: form.data.admin_level === AdminLevel.OrganizationAdmin ? (form.data as any).organization_id || null : null,
 				permissions: perms,
 				isEnabled: true
 			});

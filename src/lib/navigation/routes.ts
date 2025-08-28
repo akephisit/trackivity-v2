@@ -68,21 +68,21 @@ export const ROUTES: RouteConfig[] = [
     path: '/admin/scanner',
     title: 'สแกน QR Code',
     permissions: ['ScanQRCodes'],
-    admin_levels: ['RegularAdmin', 'FacultyAdmin', 'SuperAdmin'],
+    admin_levels: ['RegularAdmin', 'OrganizationAdmin', 'SuperAdmin'],
     icon: 'qr_code_scanner'
   },
   {
     path: '/admin/assigned-activities',
     title: 'กิจกรรมที่รับผิดชอบ',
     permissions: ['ViewAssignedActivities'],
-    admin_levels: ['RegularAdmin', 'FacultyAdmin', 'SuperAdmin'],
+    admin_levels: ['RegularAdmin', 'OrganizationAdmin', 'SuperAdmin'],
     icon: 'assignment'
   },
   {
     path: '/admin/sessions',
     title: 'เซสชันของฉัน',
     permissions: ['ViewPersonalSessions'],
-    admin_levels: ['RegularAdmin', 'FacultyAdmin', 'SuperAdmin'],
+    admin_levels: ['RegularAdmin', 'OrganizationAdmin', 'SuperAdmin'],
     icon: 'devices'
   },
 
@@ -91,42 +91,42 @@ export const ROUTES: RouteConfig[] = [
     path: '/admin/organization',
     title: 'จัดการหน่วยงาน',
     permissions: ['ViewOrganizationUsers', 'ManageOrganizationActivities'],
-    admin_levels: ['FacultyAdmin', 'SuperAdmin'],
+    admin_levels: ['OrganizationAdmin', 'SuperAdmin'],
     icon: 'school',
     children: [
       {
         path: '/admin/organization/dashboard',
         title: 'แดชบอร์ดหน่วยงาน',
         permissions: ['ViewOrganizationAnalytics'],
-        admin_levels: ['FacultyAdmin', 'SuperAdmin'],
+        admin_levels: ['OrganizationAdmin', 'SuperAdmin'],
         icon: 'analytics'
       },
       {
         path: '/admin/organization/students',
         title: 'จัดการนักศึกษา',
         permissions: ['ViewOrganizationUsers', 'CreateOrganizationUsers'],
-        admin_levels: ['FacultyAdmin', 'SuperAdmin'],
+        admin_levels: ['OrganizationAdmin', 'SuperAdmin'],
         icon: 'group'
       },
       {
         path: '/admin/organization/activities',
         title: 'จัดการกิจกรรม',
         permissions: ['ManageOrganizationActivities'],
-        admin_levels: ['FacultyAdmin', 'SuperAdmin'],
+        admin_levels: ['OrganizationAdmin', 'SuperAdmin'],
         icon: 'event'
       },
       {
         path: '/admin/organization/reports',
         title: 'รายงาน',
         permissions: ['ViewOrganizationAnalytics'],
-        admin_levels: ['FacultyAdmin', 'SuperAdmin'],
+        admin_levels: ['OrganizationAdmin', 'SuperAdmin'],
         icon: 'assessment'
       },
       {
         path: '/admin/organization/sessions',
         title: 'จัดการเซสชัน',
         permissions: ['ViewOrganizationSessions', 'ManageOrganizationSessions'],
-        admin_levels: ['FacultyAdmin', 'SuperAdmin'],
+        admin_levels: ['OrganizationAdmin', 'SuperAdmin'],
         icon: 'security'
       }
     ]
@@ -334,7 +334,7 @@ export class PermissionRouter {
   getDefaultRoute(): string {
     if (this.adminLevel === 'SuperAdmin') {
       return '/admin/system/dashboard';
-    } else if (this.adminLevel === 'FacultyAdmin') {
+    } else if (this.adminLevel === 'OrganizationAdmin') {
       return '/admin/organization/dashboard';
     } else if (this.adminLevel === 'RegularAdmin') {
       return '/admin/scanner';

@@ -1,11 +1,11 @@
 import type { RequestHandler } from './$types';
 import { json } from '@sveltejs/kit';
-import { requireFacultyAdmin } from '$lib/server/auth-utils';
+import { requireOrganizationAdmin } from '$lib/server/auth-utils';
 import { db, activities } from '$lib/server/db';
 import { eq } from 'drizzle-orm';
 
 export const GET: RequestHandler = async (event) => {
-  const user = await requireFacultyAdmin(event);
+  const user = await requireOrganizationAdmin(event);
   const { id } = event.params;
   if (!id) return json({ success: false, error: 'Missing id' }, { status: 400 });
 
@@ -27,7 +27,7 @@ export const GET: RequestHandler = async (event) => {
         hours: activities.hours,
         max_participants: activities.maxParticipants,
         status: activities.status,
-        faculty_id: activities.facultyId,
+        organization_id: activities.organizationId,
         created_by: activities.createdBy,
         created_at: activities.createdAt,
         updated_at: activities.updatedAt
@@ -40,8 +40,8 @@ export const GET: RequestHandler = async (event) => {
 
     const row = rows[0];
 
-    // Faculty admin can access only their faculty's activities (if faculty is assigned)
-    if (user.admin_role?.admin_level === 'FacultyAdmin' && row.faculty_id && user.admin_role?.faculty_id && row.faculty_id !== user.admin_role.faculty_id) {
+    // Organization admin can access only their organization's activities (if org is assigned)
+    if (user.admin_role?.admin_level === 'OrganizationAdmin' && row.organization_id && user.admin_role?.organization_id && row.organization_id !== user.admin_role.organization_id) {
       return json({ success: false, error: 'ไม่มีสิทธิ์เข้าถึง' }, { status: 403 });
     }
 

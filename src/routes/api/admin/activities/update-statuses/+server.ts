@@ -1,6 +1,6 @@
 import type { RequestHandler } from './$types';
 import { json } from '@sveltejs/kit';
-import { requireFacultyAdmin } from '$lib/server/auth-utils';
+import { requireOrganizationAdmin } from '$lib/server/auth-utils';
 import { db, activities } from '$lib/server/db';
 import { and, eq } from 'drizzle-orm';
 
@@ -11,11 +11,11 @@ function computeStatus(now: Date, startDate: Date, endDate: Date): 'draft' | 'pu
 }
 
 export const POST: RequestHandler = async (event) => {
-  const user = await requireFacultyAdmin(event);
+  const user = await requireOrganizationAdmin(event);
   try {
-    // Load activities scoped by faculty for FacultyAdmin; all for SuperAdmin
-    const where = user.admin_role?.admin_level === 'FacultyAdmin' && user.admin_role?.faculty_id
-      ? eq(activities.facultyId, user.admin_role.faculty_id)
+    // Load activities scoped by organization for OrganizationAdmin; all for SuperAdmin
+    const where = user.admin_role?.admin_level === 'OrganizationAdmin' && user.admin_role?.organization_id
+      ? eq(activities.organizationId, user.admin_role.organization_id)
       : (undefined as any);
 
     const rows = await db
@@ -47,4 +47,3 @@ export const POST: RequestHandler = async (event) => {
     return json({ status: 'error', message: 'ไม่สามารถอัพเดตสถานะกิจกรรมได้' }, { status: 500 });
   }
 };
-

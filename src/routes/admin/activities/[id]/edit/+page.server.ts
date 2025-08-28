@@ -1,11 +1,11 @@
 import { error, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
-import { requireFacultyAdmin } from '$lib/server/auth-utils';
-import { db, activities, users, faculties, participations } from '$lib/server/db';
+import { requireOrganizationAdmin } from '$lib/server/auth-utils';
+import { db, activities, users, organizations, participations } from '$lib/server/db';
 import { eq } from 'drizzle-orm';
 
 export const load: PageServerLoad = async (event) => {
-  const user = await requireFacultyAdmin(event);
+  const user = await requireOrganizationAdmin(event);
   const { params } = event;
 
   if (!params.id) throw error(400, 'ไม่พบรหัสกิจกรรม');
@@ -29,7 +29,7 @@ export const load: PageServerLoad = async (event) => {
         hours: activities.hours,
         max_participants: activities.maxParticipants,
         status: activities.status,
-        faculty_id: activities.facultyId,
+        organization_id: activities.organizationId,
         created_by: activities.createdBy,
         created_at: activities.createdAt,
         updated_at: activities.updatedAt
@@ -60,7 +60,7 @@ export const load: PageServerLoad = async (event) => {
       max_participants: a.max_participants ?? undefined,
       current_participants: participationRows.length,
       status: a.status as any,
-      faculty_id: a.faculty_id || undefined,
+      organization_id: a.organization_id || undefined,
       faculty_name: undefined,
       created_by: a.created_by,
       created_by_name: '',
@@ -77,8 +77,8 @@ export const load: PageServerLoad = async (event) => {
       end_time_only: a.end_time_only as any
     };
 
-    // Fetch faculties for options
-    const facultiesList = await db.select({ id: faculties.id, name: faculties.name, code: faculties.code }).from(faculties);
+    // Fetch organizations for options
+    const facultiesList = await db.select({ id: organizations.id, name: organizations.name, code: organizations.code }).from(organizations);
 
     const eligible_organizations_selected: string[] = Array.isArray(a.eligible_organizations) ? (a.eligible_organizations as any) : [];
 
@@ -96,7 +96,7 @@ export const load: PageServerLoad = async (event) => {
 
 export const actions: Actions = {
   update: async (event) => {
-    await requireFacultyAdmin(event);
+    await requireOrganizationAdmin(event);
     const { params } = event;
     if (!params.id) return { error: 'ไม่พบรหัสกิจกรรม' } as const;
 

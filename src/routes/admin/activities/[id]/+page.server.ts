@@ -1,6 +1,6 @@
 import type { PageServerLoad, Actions } from './$types';
 import { requireAdmin } from '$lib/server/auth-utils';
-import { db, activities, participations, users, faculties } from '$lib/server/db';
+import { db, activities, participations, users, organizations } from '$lib/server/db';
 import { eq, count } from 'drizzle-orm';
 import { error, redirect } from '@sveltejs/kit';
 
@@ -27,16 +27,16 @@ export const load: PageServerLoad = async (event) => {
         hours: activities.hours,
         max_participants: activities.maxParticipants,
         status: activities.status,
-        faculty_id: activities.facultyId,
+        organization_id: activities.organizationId,
         created_by: activities.createdBy,
         created_at: activities.createdAt,
         updated_at: activities.updatedAt,
-        faculty_name: faculties.name,
+        organization_name: organizations.name,
         creator_first: users.firstName,
         creator_last: users.lastName
       })
       .from(activities)
-      .leftJoin(faculties, eq(activities.facultyId, faculties.id))
+      .leftJoin(organizations, eq(activities.organizationId, organizations.id))
       .leftJoin(users, eq(activities.createdBy, users.id))
       .where(eq(activities.id, params.id))
       .limit(1);
@@ -89,8 +89,8 @@ export const load: PageServerLoad = async (event) => {
       max_participants: a.max_participants ?? undefined,
       current_participants: participationRows.length,
       status: a.status as any,
-      faculty_id: a.faculty_id || undefined,
-      faculty_name: a.faculty_name || undefined,
+      organization_id: a.organization_id || undefined,
+      organization_name: a.organization_name || undefined,
       created_by: a.created_by,
       created_by_name: `${a.creator_first ?? ''} ${a.creator_last ?? ''}`.trim() || 'ระบบ',
       created_at: a.created_at?.toISOString?.() || new Date().toISOString(),
@@ -120,13 +120,13 @@ export const load: PageServerLoad = async (event) => {
       notes: p.notes || undefined
     }));
 
-    // Load all faculties for selection on edit page
+    // Load all organizations for selection on edit page
     let facultiesList: Array<{ id: string; name: string; code?: string }>; 
     try {
-      const rows = await db.select({ id: faculties.id, name: faculties.name, code: faculties.code }).from(faculties);
+      const rows = await db.select({ id: organizations.id, name: organizations.name, code: organizations.code }).from(organizations);
       facultiesList = rows as any;
     } catch (e) {
-      console.error('Error loading faculties list:', e);
+      console.error('Error loading organizations list:', e);
       facultiesList = [];
     }
 

@@ -71,7 +71,7 @@
 	// Admin Level options
 	const adminLevelOptions = [
 		{ value: AdminLevel.RegularAdmin, label: 'แอดมินทั่วไป' },
-		{ value: AdminLevel.FacultyAdmin, label: 'แอดมินหน่วยงาน' },
+		{ value: AdminLevel.OrganizationAdmin, label: 'แอดมินหน่วยงาน' },
 		{ value: AdminLevel.SuperAdmin, label: 'ซุปเปอร์แอดมิน' }
 	];
 
@@ -91,18 +91,18 @@
 			// Clear faculty selection when changing to SuperAdmin or RegularAdmin
 			if (selectedAdminLevel === AdminLevel.SuperAdmin || selectedAdminLevel === AdminLevel.RegularAdmin) {
 				selectedFaculty = undefined;
-				$formData.faculty_id = undefined;
-				console.log('Cleared faculty_id because admin_level is:', selectedAdminLevel);
+					$formData.organization_id = undefined;
+				console.log('Cleared organization_id because admin_level is:', selectedAdminLevel);
 			}
 		}
 	});
 	
 	// Separate effect for faculty changes
 	$effect(() => {
-		if (selectedAdminLevel === AdminLevel.FacultyAdmin && selectedFaculty !== undefined) {
-			// Update faculty_id when we have both FacultyAdmin level and selected faculty
-			$formData.faculty_id = selectedFaculty;
-			console.log('Updated formData.faculty_id to:', selectedFaculty, 'for FacultyAdmin');
+		if (selectedAdminLevel === AdminLevel.OrganizationAdmin && selectedFaculty !== undefined) {
+			// Update organization_id when we have both OrganizationAdmin level and selected organization
+			$formData.organization_id = selectedFaculty;
+			console.log('Updated formData.organization_id to:', selectedFaculty, 'for OrganizationAdmin');
 		}
 	});
 
@@ -116,9 +116,10 @@
 
 
 	function getFacultyName(admin: AdminRole): string {
-		if (!admin.faculty_id) return '-';
-		if (admin.faculty?.name) return admin.faculty.name;
-		const faculty = data.faculties.find(f => f.id === admin.faculty_id);
+		const orgId = (admin as any).organization_id as string | undefined;
+		if (!orgId) return '-';
+		if ((admin as any).organization?.name) return (admin as any).organization.name;
+		const faculty = (data.faculties as any[]).find((f: any) => f.id === orgId);
 		return faculty?.name || 'ไม่พบข้อมูล';
 	}
 
@@ -126,7 +127,7 @@
 		switch (adminLevel) {
 			case AdminLevel.SuperAdmin:
 				return 'ซุปเปอร์แอดมิน';
-			case AdminLevel.FacultyAdmin:
+			case AdminLevel.OrganizationAdmin:
 				return 'แอดมินหน่วยงาน';
 			case AdminLevel.RegularAdmin:
 				return 'แอดมินทั่วไป';
@@ -203,7 +204,7 @@
 			email: '',
 			password: '',
 			admin_level: AdminLevel.RegularAdmin, // This will be overridden when user selects
-			faculty_id: undefined,
+			organization_id: undefined,
 			permissions: []
 		};
 		console.log('Form reset with default admin_level:', AdminLevel.RegularAdmin);
@@ -217,7 +218,7 @@
 	function openEditDialog(admin: AdminRole) {
 			editingAdmin = admin;
 			editSelectedAdminLevel = admin.admin_level;
-			editSelectedFaculty = admin.faculty_id; // already string (UUID)
+			editSelectedFaculty = (admin as any).organization_id; // already string (UUID)
 			editSelectedPrefix = admin.user?.prefix;
 			editDialogOpen = true;
 		}
@@ -228,7 +229,7 @@
 			email: string;
 			prefix?: string;
 			admin_level: AdminLevel;
-			faculty_id?: string;
+			organization_id?: string;
 			permissions: string[];
 		}) {
 		try {
@@ -386,33 +387,33 @@
 		// Separate super admins
 		const superAdmins = uniqueAdmins.filter(admin => admin.admin_level === AdminLevel.SuperAdmin);
 		
-		// Group faculty admins AND regular admins by faculty
+		// Group organization admins AND regular admins by organization
 		const facultyAndRegularAdmins = uniqueAdmins.filter(admin => 
-			admin.admin_level === AdminLevel.FacultyAdmin || admin.admin_level === AdminLevel.RegularAdmin
+			admin.admin_level === AdminLevel.OrganizationAdmin || admin.admin_level === AdminLevel.RegularAdmin
 		);
 		const facultyGroups: { [key: string]: { faculty: { id: string; name: string } | null; admins: AdminRole[] } } = {};
 		
-		facultyAndRegularAdmins.forEach(admin => {
-			const facultyId = admin.faculty_id || 'unassigned';
-			const facultyName = admin.faculty?.name || getFacultyName(admin) || 'ไม่ได้มอบหมายหน่วยงาน';
+		facultyAndRegularAdmins.forEach((admin: any) => {
+			const facultyId = admin.organization_id || 'unassigned';
+			const facultyName = admin.organization?.name || getFacultyName(admin) || 'ไม่ได้มอบหมายหน่วยงาน';
 			
 			if (!facultyGroups[facultyId]) {
 				facultyGroups[facultyId] = {
-					faculty: admin.faculty_id ? 
-						{ id: admin.faculty_id, name: facultyName } : 
-						null,
+				faculty: admin.organization_id ? 
+					{ id: admin.organization_id, name: facultyName } : 
+					null,
 					admins: []
 				};
 			}
 			facultyGroups[facultyId].admins.push(admin);
 		});
 
-		// Sort admins within each faculty group: FacultyAdmin first, then RegularAdmin
+		// Sort admins within each org group: OrganizationAdmin first, then RegularAdmin
 		Object.values(facultyGroups).forEach(group => {
 			group.admins.sort((a, b) => {
-				// FacultyAdmin (0) comes before RegularAdmin (1)
-				const orderA = a.admin_level === AdminLevel.FacultyAdmin ? 0 : 1;
-				const orderB = b.admin_level === AdminLevel.FacultyAdmin ? 0 : 1;
+				// OrganizationAdmin (0) comes before RegularAdmin (1)
+				const orderA = a.admin_level === AdminLevel.OrganizationAdmin ? 0 : 1;
+				const orderB = b.admin_level === AdminLevel.OrganizationAdmin ? 0 : 1;
 				
 				if (orderA !== orderB) {
 					return orderA - orderB;
@@ -961,8 +962,8 @@
 				<Form.FieldErrors />
 			</Form.Field>
 
-			{#if selectedAdminLevel === AdminLevel.FacultyAdmin}
-				<Form.Field {form} name="faculty_id">
+			{#if selectedAdminLevel === AdminLevel.OrganizationAdmin}
+				<Form.Field {form} name="organization_id">
 					<Form.Control>
 						{#snippet children({ props })}
 							<Label for={props.id}>หน่วยงาน <span class="text-red-500">*</span></Label>
@@ -988,13 +989,13 @@
 									{/each}
 								</Select.Content>
 							</Select.Root>
-							{#if selectedAdminLevel === AdminLevel.FacultyAdmin && !selectedFaculty}
+							{#if selectedAdminLevel === AdminLevel.OrganizationAdmin && !selectedFaculty}
 							<p class="text-sm text-red-600 mt-1">กรุณาเลือกหน่วยงานสำหรับแอดมินระดับหน่วยงาน</p>
 							{/if}
 							<!-- Debug info -->
-							{#if selectedAdminLevel === AdminLevel.FacultyAdmin}
+							{#if selectedAdminLevel === AdminLevel.OrganizationAdmin}
 								<div class="text-xs text-gray-500 mt-1 p-2 bg-gray-50 rounded border">
-									Debug: selectedFaculty = {selectedFaculty}, formData.faculty_id = {$formData.faculty_id}
+									Debug: selectedFaculty = {selectedFaculty}, formData.organization_id = {$formData.organization_id}
 								</div>
 							{/if}
 						{/snippet}
@@ -1026,8 +1027,8 @@
 			<input type="hidden" name="prefix" bind:value={$formData.prefix} />
 			<input type="hidden" name="first_name" bind:value={$formData.first_name} />
 			<input type="hidden" name="last_name" bind:value={$formData.last_name} />
-			{#if $formData.faculty_id}
-				<input type="hidden" name="faculty_id" bind:value={$formData.faculty_id} />
+			{#if $formData.organization_id}
+				<input type="hidden" name="organization_id" bind:value={$formData.organization_id} />
 			{/if}
 
 			<!-- Debug section for development -->
@@ -1037,7 +1038,7 @@
 				<div>Selected Faculty: {selectedFaculty}</div>
 				<div>Selected Prefix: {selectedPrefix}</div>
 				<div>Form Data Admin Level: {$formData.admin_level}</div>
-				<div>Form Data Faculty ID: {$formData.faculty_id}</div>
+				<div>Form Data Organization ID: {$formData.organization_id}</div>
 				<div>Form Data Prefix: {$formData.prefix}</div>
 				<div>Form Data First Name: {$formData.first_name}</div>
 				<div>Form Data Last Name: {$formData.last_name}</div>
@@ -1049,7 +1050,7 @@
 				</Button>
 				<Button 
 					type="submit" 
-					disabled={$submitting || (selectedAdminLevel === AdminLevel.FacultyAdmin && !selectedFaculty)}
+					disabled={$submitting || (selectedAdminLevel === AdminLevel.OrganizationAdmin && !selectedFaculty)}
 					onclick={() => {
 						console.log('=== FORM SUBMISSION DEBUG ===');
 						console.log('selectedAdminLevel:', selectedAdminLevel);
@@ -1057,7 +1058,7 @@
 						console.log('selectedPrefix:', selectedPrefix);
 						console.log('$formData:', $formData);
 						console.log('admin_level in formData:', $formData.admin_level);
-						console.log('faculty_id in formData:', $formData.faculty_id);
+						console.log('organization_id in formData:', $formData.organization_id);
 						console.log('prefix in formData:', $formData.prefix);
 						console.log('first_name in formData:', $formData.first_name);
 						console.log('last_name in formData:', $formData.last_name);
@@ -1142,7 +1143,7 @@
 					</Select.Root>
 				</div>
 
-				{#if editSelectedAdminLevel === AdminLevel.FacultyAdmin}
+				{#if editSelectedAdminLevel === AdminLevel.OrganizationAdmin}
 					<div class="space-y-2">
 						<Label>หน่วยงาน</Label>
 						<Select.Root type="single" bind:value={editSelectedFaculty}>
@@ -1174,7 +1175,7 @@
 										last_name: editingAdmin.user.last_name,
 										email: editingAdmin.user.email,
 										admin_level: editSelectedAdminLevel,
-										faculty_id: editSelectedFaculty,
+										organization_id: editSelectedFaculty,
 										permissions: editingAdmin.permissions || []
 									});
 								}

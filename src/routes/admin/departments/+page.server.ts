@@ -40,13 +40,13 @@ export const load: PageServerLoad = async (event) => {
 	// For SuperAdmin, show all departments; for FacultyAdmin, show only their faculty's departments
 	let apiEndpoint = `/api/departments`;
     if (admin_role?.admin_level === 'OrganizationAdmin' && (admin_role as any).organization_id) {
-		apiEndpoint = `/api/organizations/${admin_role.faculty_id}/departments`;
+		apiEndpoint = `/api/organizations/${(admin_role as any).organization_id}/departments`;
 	}
 
     try {
         // Fetch departments directly from database and map to typed Department
         let departmentsData: Department[];
-        if (admin_role?.admin_level === 'FacultyAdmin' && admin_role.faculty_id) {
+        if (admin_role?.admin_level === 'OrganizationAdmin' && (admin_role as any).organization_id) {
             const rows = await db
                 .select({
                     id: departments.id,
@@ -179,8 +179,8 @@ export const actions: Actions = {
 		const user = requireAdmin(event);
 		const admin_role = user.admin_role;
 
-		// Only SuperAdmin and FacultyAdmin can create departments
-		if (admin_role?.admin_level !== 'SuperAdmin' && admin_role?.admin_level !== 'FacultyAdmin') {
+		// Only SuperAdmin and OrganizationAdmin can create departments
+		if (admin_role?.admin_level !== 'SuperAdmin' && admin_role?.admin_level !== 'OrganizationAdmin') {
 			return fail(403, { 
 				error: 'คุณไม่มีสิทธิ์ในการสร้างภาควิชา'
 			});
@@ -234,8 +234,8 @@ export const actions: Actions = {
 		const user = requireAdmin(event);
 		const admin_role = user.admin_role;
 
-		// Only SuperAdmin and FacultyAdmin can update departments
-		if (admin_role?.admin_level !== 'SuperAdmin' && admin_role?.admin_level !== 'FacultyAdmin') {
+		// Only SuperAdmin and OrganizationAdmin can update departments
+		if (admin_role?.admin_level !== 'SuperAdmin' && admin_role?.admin_level !== 'OrganizationAdmin') {
 			return fail(403, { 
 				error: 'คุณไม่มีสิทธิ์ในการแก้ไขภาควิชา'
 			});
@@ -279,8 +279,8 @@ export const actions: Actions = {
 		const user = requireAdmin(event);
 		const admin_role = user.admin_role;
 
-		// Only SuperAdmin and FacultyAdmin can delete departments
-		if (admin_role?.admin_level !== 'SuperAdmin' && admin_role?.admin_level !== 'FacultyAdmin') {
+		// Only SuperAdmin and OrganizationAdmin can delete departments
+		if (admin_role?.admin_level !== 'SuperAdmin' && admin_role?.admin_level !== 'OrganizationAdmin') {
 			return fail(403, { 
 				error: 'คุณไม่มีสิทธิ์ในการลบภาควิชา'
 			});
@@ -308,8 +308,8 @@ export const actions: Actions = {
 		const user = requireAdmin(event);
 		const admin_role = user.admin_role;
 
-		// Only SuperAdmin and FacultyAdmin can toggle department status
-		if (admin_role?.admin_level !== 'SuperAdmin' && admin_role?.admin_level !== 'FacultyAdmin') {
+		// Only SuperAdmin and OrganizationAdmin can toggle department status
+		if (admin_role?.admin_level !== 'SuperAdmin' && admin_role?.admin_level !== 'OrganizationAdmin') {
 			return fail(403, { 
 				error: 'คุณไม่มีสิทธิ์ในการเปลี่ยนสถานะภาควิชา'
 			});
