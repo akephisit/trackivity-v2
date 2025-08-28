@@ -23,23 +23,22 @@
 	import { enhance } from '$app/forms';
     import { toast } from 'svelte-sonner';
 
-	const { data, form } = $props<{ 
-		data: { 
-			activity: Activity; 
-			faculties: any[];
-			departments: any[];
-			user: any;
-		}; 
-		form?: { error?: string; formData?: any; } 
-	}>();
-	
-	const { activity, faculties, departments } = data;
+    const { data, form } = $props<{ 
+        data: { 
+            activity: Activity; 
+            faculties: any[];
+            user: any;
+        }; 
+        form?: { error?: string; formData?: any; } 
+    }>();
+    
+    const { activity, faculties } = data;
 	// user is available in data but not currently used
 
 	let submitting = $state(false);
 	let selectedStatus = $state(activity.status);
 	let selectedFaculty = $state(activity.faculty_id || '');
-	let selectedDepartment = $state(''); // For future use
+    // No department selection in edit page per requirement
 
 	// Format datetime for input fields
 	function formatDateTimeForInput(dateString: string): string {
@@ -315,26 +314,7 @@
 					</div>
 				{/if}
 
-				<!-- Department Assignment (Future feature) -->
-				{#if departments.length > 0}
-					<div class="space-y-2">
-						<Label for="department_id">สาขาวิชา</Label>
-						<Select type="single" name="department_id" bind:value={selectedDepartment}>
-							<SelectTrigger>
-								{selectedDepartment ? departments.find((d: any) => d.id === selectedDepartment)?.name || 'เลือกสาขาวิชา (ไม่บังคับ)' : 'เลือกสาขาวิชา (ไม่บังคับ)'}
-							</SelectTrigger>
-							<SelectContent>
-								<SelectItem value="">ไม่ระบุสาขาวิชา</SelectItem>
-								{#each departments as department}
-									<SelectItem value={department.id}>{department.name}</SelectItem>
-								{/each}
-							</SelectContent>
-						</Select>
-						<p class="text-sm text-muted-foreground">
-							เลือกสาขาวิชาที่เกี่ยวข้องกับกิจกรรมนี้ (ไม่บังคับ)
-						</p>
-					</div>
-				{/if}
+                    <!-- No department selection on edit page -->
 
 				<!-- Admin Info -->
 				<Alert>
