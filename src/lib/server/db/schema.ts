@@ -112,7 +112,7 @@ export const activities = pgTable('activities', {
   activityType: activityType('activity_type'),
   academicYear: varchar('academic_year', { length: 20 }).notNull(),
   organizer: varchar('organizer', { length: 255 }).notNull(),
-  eligibleFaculties: jsonb('eligible_faculties').notNull().default(sql`'[]'`),
+  eligibleOrganizations: jsonb('eligible_organizations').notNull().default(sql`'[]'`),
   startDate: date('start_date').notNull(),
   endDate: date('end_date').notNull(),
   startTimeOnly: time('start_time_only').notNull(),
@@ -132,7 +132,7 @@ export const activities = pgTable('activities', {
     academicYearIdx: index('idx_activities_academic_year').on(table.academicYear),
     activityTypeIdx: index('idx_activities_activity_type').on(table.activityType),
     startDateIdx: index('idx_activities_start_date').on(table.startDate),
-    eligibleFacultiesIdx: index('idx_activities_eligible_faculties').using('gin', table.eligibleFaculties),
+    eligibleOrganizationsIdx: index('idx_activities_eligible_organizations').using('gin', table.eligibleOrganizations),
   };
 });
 

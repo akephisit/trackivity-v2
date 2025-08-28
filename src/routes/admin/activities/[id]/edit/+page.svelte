@@ -43,7 +43,7 @@ import * as Select from '$lib/components/ui/select';
 	}));
 
 	// Initial selected values from server
-	let selectedEligibleValues = $state<string[]>(data.eligible_faculties_selected || []);
+	let selectedEligibleValues = $state<string[]>(data.eligible_organizations_selected || []);
 	let selectedEligible = $derived(
 		selectedEligibleValues.map((id: string) => {
 			const opt = facultyOptions.find((o) => o.value === id);
@@ -229,6 +229,20 @@ import * as Select from '$lib/components/ui/select';
 					/>
 				</div>
 
+				<!-- Organizer (หน่วยงานผู้จัด) -->
+				<div class="space-y-2">
+					<Label for="organizer">หน่วยงานผู้จัด *</Label>
+					<Input
+						id="organizer"
+						name="organizer"
+						type="text"
+						required
+						placeholder="เช่น สภานักศึกษา, กองกิจการนิสิต"
+						value={form?.formData?.organizer || activity.organizer || ''}
+						class="text-base"
+					/>
+				</div>
+
 				<!-- Date and Time -->
 				<div class="grid gap-4 md:grid-cols-2">
 					<div class="space-y-2">
@@ -258,8 +272,8 @@ import * as Select from '$lib/components/ui/select';
 
 				<!-- Eligible Faculties -->
 				<div class="space-y-2">
-					<Label for="eligible_faculties">คณะที่สามารถเข้าร่วมได้ *</Label>
-						<input type="hidden" name="eligible_faculties" value={selectedEligibleValues.join(',')} />
+					<Label for="eligible_organizations">หน่วยงานที่สามารถเข้าร่วมได้ *</Label>
+					<input type="hidden" name="eligible_organizations" value={selectedEligibleValues.join(',')} />
 					<Select.Root 
 						type="multiple" 
 						bind:value={selectedEligibleValues as any} 
@@ -270,12 +284,12 @@ import * as Select from '$lib/components/ui/select';
 							}}
 					>
 						<Select.Trigger>
-							{#if selectedEligible.length === 0}
-								เลือกคณะที่สามารถเข้าร่วมได้
+								{#if selectedEligible.length === 0}
+									เลือกหน่วยงานที่สามารถเข้าร่วมได้
 							{:else if selectedEligible.length === 1}
 								{selectedEligible[0].label}
-							{:else}
-								เลือกแล้ว {selectedEligible.length} คณะ
+								{:else}
+									เลือกแล้ว {selectedEligible.length} หน่วยงาน
 							{/if}
 						</Select.Trigger>
 						<Select.Content>
@@ -364,26 +378,7 @@ import * as Select from '$lib/components/ui/select';
 					{/if}
 				</div>
 
-				<!-- Faculty Assignment -->
-				{#if faculties.length > 0}
-					<div class="space-y-2">
-						<Label for="faculty_id">คณะ</Label>
-							<Select.Root type="single" bind:value={selectedFaculty}>
-								<Select.Trigger>
-									{selectedFaculty ? faculties.find((f: any) => f.id === selectedFaculty)?.name || 'เลือกคณะ (ไม่บังคับ)' : 'เลือกคณะ (ไม่บังคับ)'}
-								</Select.Trigger>
-								<Select.Content>
-									<Select.Item value="">ไม่ระบุคณะ</Select.Item>
-									{#each faculties as faculty}
-										<Select.Item value={faculty.id}>{faculty.name}</Select.Item>
-									{/each}
-								</Select.Content>
-							</Select.Root>
-						<p class="text-sm text-muted-foreground">
-							เลือกคณะที่เกี่ยวข้องกับกิจกรรมนี้ (ไม่บังคับ)
-						</p>
-					</div>
-				{/if}
+					<!-- Faculty assignment removed in favor of organization (หน่วยงาน) -->
 
                     <!-- No department selection on edit page -->
 
@@ -421,12 +416,6 @@ import * as Select from '$lib/components/ui/select';
 						<div>
 							<Label>ชั่วโมงกิจกรรม</Label>
 							<p class="text-sm text-muted-foreground">{activity.hours}</p>
-						</div>
-					{/if}
-					{#if activity.organizer}
-						<div>
-							<Label>ผู้จัด</Label>
-							<p class="text-sm text-muted-foreground">{activity.organizer}</p>
 						</div>
 					{/if}
 				</div>

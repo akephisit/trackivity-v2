@@ -20,10 +20,10 @@ export const POST: RequestHandler = async (event) => {
   }
 
   try {
-    const eligibleFaculties: string[] = Array.isArray(body.eligible_faculties)
-      ? body.eligible_faculties
-      : typeof body.eligible_faculties === 'string'
-        ? String(body.eligible_faculties)
+    const eligibleOrganizations: string[] = Array.isArray(body.eligible_organizations)
+      ? body.eligible_organizations
+      : typeof body.eligible_organizations === 'string'
+        ? String(body.eligible_organizations)
             .split(',')
             .map((s) => s.trim())
             .filter((s) => s !== '')
@@ -46,7 +46,7 @@ export const POST: RequestHandler = async (event) => {
         activityType: body.activity_type,
         academicYear: body.academic_year,
         organizer: body.organizer,
-        eligibleFaculties: eligibleFaculties as any,
+        eligibleOrganizations: eligibleOrganizations as any,
         startDate: body.start_date,
         endDate: body.end_date,
         startTimeOnly: body.start_time,
@@ -65,4 +65,3 @@ export const POST: RequestHandler = async (event) => {
     return json({ success: false, error: 'เกิดข้อผิดพลาดในการสร้างกิจกรรม' }, { status: 500 });
   }
 };
-

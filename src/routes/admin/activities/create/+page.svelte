@@ -43,10 +43,10 @@
 			.regex(/^\d+$/, 'ชั่วโมงต้องเป็นจำนวนเต็ม')
 			.refine((v) => parseInt(v) > 0, 'ชั่วโมงต้องมากกว่า 0'),
 		organizer: z.string().min(1, 'กรุณากรอกหน่วยงานที่จัดกิจกรรม').max(255, 'ชื่อหน่วยงานต้องไม่เกิน 255 ตัวอักษร'),
-		eligible_faculties: z.string().min(1, 'กรุณาเลือกคณะที่สามารถเข้าร่วมได้').refine(value => {
-			const faculties = value.split(',').filter(f => f.trim() !== '');
-			return faculties.length > 0;
-		}, 'กรุณาเลือกอย่างน้อย 1 คณะ'),
+		eligible_organizations: z.string().min(1, 'กรุณาเลือกหน่วยงานที่สามารถเข้าร่วมได้').refine(value => {
+			const items = value.split(',').filter(f => f.trim() !== '');
+			return items.length > 0;
+		}, 'กรุณาเลือกอย่างน้อย 1 หน่วยงาน'),
 		academic_year: z.string().min(1, 'กรุณาเลือกปีการศึกษา')
 	});
 
@@ -333,11 +333,11 @@
 
 							<!-- Eligible Faculties -->
 							<div>
-								<Form.Field {form} name="eligible_faculties">
+								<Form.Field {form} name="eligible_organizations">
 									<Form.Control>
 										{#snippet children({ props })}
-											<Label for={props.id} class="text-base font-medium">คณะที่สามารถเข้าร่วมได้ *</Label>
-											<input type="hidden" name="eligible_faculties" bind:value={$formData.eligible_faculties} />
+											<Label for={props.id} class="text-base font-medium">หน่วยงานที่สามารถเข้าร่วมได้ *</Label>
+											<input type="hidden" name="eligible_organizations" bind:value={$formData.eligible_organizations} />
 											<Select.Root 
 												type="multiple" 
 												bind:value={selectedFaculties as any} 
@@ -348,18 +348,18 @@
 															const option = facultyOptions.find((opt: any) => opt.value === value);
 															return option ? { value: option.value, label: option.label } : { value, label: value };
 														});
-														$formData.eligible_faculties = values.join(',');
-														console.log('Updated eligible_faculties:', $formData.eligible_faculties);
+														$formData.eligible_organizations = values.join(',');
+														console.log('Updated eligible_organizations:', $formData.eligible_organizations);
 													}
 												}}
 											>
 												<Select.Trigger>
 													{#if selectedFaculties.length === 0}
-														เลือกคณะที่สามารถเข้าร่วมได้
+														เลือกหน่วยงานที่สามารถเข้าร่วมได้
 													{:else if selectedFaculties.length === 1}
 														{selectedFaculties[0].label}
 													{:else}
-														เลือกแล้ว {selectedFaculties.length} คณะ
+														เลือกแล้ว {selectedFaculties.length} หน่วยงาน
 													{/if}
 												</Select.Trigger>
 												<Select.Content>
@@ -381,20 +381,20 @@
 											</Select.Root>
 											{#if selectedFaculties.length > 0}
 												<div class="flex flex-wrap gap-1 mt-2">
-													{#each selectedFaculties as faculty}
-														<span class="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-800 text-sm rounded-md">
+														{#each selectedFaculties as faculty}
+															<span class="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-800 text-sm rounded-md">
 															{faculty.label}
 															<button 
 																type="button"
 																onclick={() => {
 																	selectedFaculties = selectedFaculties.filter(f => f.value !== faculty.value);
-																	$formData.eligible_faculties = selectedFaculties.map(f => f.value).join(',');
-																}}
-																class="text-blue-600 hover:text-blue-800"
-															>
-																×
-															</button>
-														</span>
+																	$formData.eligible_organizations = selectedFaculties.map(f => f.value).join(',');
+															}}
+															class="text-blue-600 hover:text-blue-800"
+														>
+															×
+														</button>
+													</span>
 													{/each}
 												</div>
 											{/if}

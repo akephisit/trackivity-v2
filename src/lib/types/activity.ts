@@ -92,7 +92,7 @@ export interface ActivityFormData {
 	max_participants?: number;
 	hours: number;
 	organizer: string;
-	eligible_faculties: string;
+	eligible_organizations: string;
 	academic_year: string;
 }
 

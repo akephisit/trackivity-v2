@@ -19,7 +19,7 @@ export const load: PageServerLoad = async (event) => {
         activity_type: activities.activityType,
         academic_year: activities.academicYear,
         organizer: activities.organizer,
-        eligible_faculties: activities.eligibleFaculties,
+        eligible_organizations: activities.eligibleOrganizations,
         start_date: activities.startDate,
         end_date: activities.endDate,
         start_time_only: activities.startTimeOnly,
@@ -131,7 +131,7 @@ export const load: PageServerLoad = async (event) => {
     }
 
     // Eligible faculties (array of UUIDs) from activity
-    const eligible_faculties_selected: string[] = Array.isArray(a.eligible_faculties) ? (a.eligible_faculties as any) : [];
+    const eligible_organizations_selected: string[] = Array.isArray(a.eligible_organizations) ? (a.eligible_organizations as any) : [];
 
     return {
       user,
@@ -139,7 +139,7 @@ export const load: PageServerLoad = async (event) => {
       participations: participationsList,
       participationStats,
       faculties: facultiesList,
-      eligible_faculties_selected
+      eligible_organizations_selected
     };
   } catch (e) {
     console.error('Error loading activity details from database:', e);

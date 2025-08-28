@@ -21,7 +21,7 @@ export const load: PageServerLoad = async (event) => {
         activity_type: activities.activityType,
         academic_year: activities.academicYear,
         organizer: activities.organizer,
-        eligible_faculties: activities.eligibleFaculties,
+        eligible_organizations: activities.eligibleOrganizations,
         start_date: activities.startDate,
         end_date: activities.endDate,
         start_time_only: activities.startTimeOnly,
@@ -80,13 +80,13 @@ export const load: PageServerLoad = async (event) => {
     // Fetch faculties for options
     const facultiesList = await db.select({ id: faculties.id, name: faculties.name, code: faculties.code }).from(faculties);
 
-    const eligible_faculties_selected: string[] = Array.isArray(a.eligible_faculties) ? (a.eligible_faculties as any) : [];
+    const eligible_organizations_selected: string[] = Array.isArray(a.eligible_organizations) ? (a.eligible_organizations as any) : [];
 
     return {
       user,
       activity,
       faculties: facultiesList,
-      eligible_faculties_selected
+      eligible_organizations_selected
     };
   } catch (e) {
     console.error('Edit activity load error:', e);
@@ -109,8 +109,10 @@ export const actions: Actions = {
     const endTime = (fd.get('end_time') || '').toString();
     const maxParticipantsRaw = (fd.get('max_participants') || '').toString();
     const status = (fd.get('status') || '').toString();
-    const facultyIdRaw = (fd.get('faculty_id') || '').toString();
-    const eligibleRaw = (fd.get('eligible_faculties') || '').toString();
+    // FacultyId is deprecated in UI; preserve existing value server-side
+    // const facultyIdRaw = (fd.get('faculty_id') || '').toString();
+    const eligibleRaw = (fd.get('eligible_organizations') || '').toString();
+    const organizer = (fd.get('organizer') || '').toString().trim();
 
     if (!title || !location || !startTime || !endTime) {
       return { error: 'ข้อมูลไม่ครบถ้วน' } as const;
@@ -130,8 +132,7 @@ export const actions: Actions = {
     }
 
     const maxParticipants = maxParticipantsRaw ? Number(maxParticipantsRaw) : null;
-    const facultyId = facultyIdRaw || null;
-    const eligibleFaculties = eligibleRaw
+    const eligibleOrganizations = eligibleRaw
       ? eligibleRaw.split(',').map((s) => s.trim()).filter((s) => s !== '')
       : [];
 
@@ -148,8 +149,9 @@ export const actions: Actions = {
           endTimeOnly: endTimeStr,
           maxParticipants,
           status: status as any,
-          facultyId,
-          eligibleFaculties: eligibleFaculties as any,
+          // preserve facultyId
+          organizer,
+          eligibleOrganizations: eligibleOrganizations as any,
           updatedAt: new Date()
         })
         .where(eq(activities.id, params.id));
@@ -161,4 +163,3 @@ export const actions: Actions = {
     }
   }
 };
-

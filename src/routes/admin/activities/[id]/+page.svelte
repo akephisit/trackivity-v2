@@ -59,7 +59,7 @@
 
 	// Eligible faculties names mapped from server-provided IDs and faculties list
 	const eligibleFacultyNames = $derived(() => {
-		const ids: string[] = (data as any).eligible_faculties_selected || [];
+		const ids: string[] = (data as any).eligible_organizations_selected || [];
 		const list: any[] = (data as any).faculties || [];
 		return ids
 			.map((id: string) => list.find((f) => f.id === id)?.name)
@@ -369,23 +369,23 @@
 					</div>
 				</div>
 
-				<!-- Faculty -->
-				{#if activity.faculty_name}
+				<!-- Organization (หน่วยงานผู้จัด) -->
+				{#if activity.organizer}
 					<div class="flex items-start gap-3">
 						<IconBuildingBank class="size-5 mt-0.5 text-muted-foreground flex-shrink-0" />
 						<div>
-							<p class="font-medium">คณะ</p>
-							<p class="text-sm text-muted-foreground">{activity.faculty_name}</p>
+							<p class="font-medium">หน่วยงานผู้จัด</p>
+							<p class="text-sm text-muted-foreground">{activity.organizer}</p>
 						</div>
 					</div>
 				{/if}
 
-				<!-- Eligible Faculties -->
+				<!-- Eligible Organizations -->
 				{#if eligibleFacultyNames.length > 0}
 					<div class="flex items-start gap-3">
 						<IconBuildingBank class="size-5 mt-0.5 text-muted-foreground flex-shrink-0" />
 						<div>
-							<p class="font-medium">คณะที่สามารถเข้าร่วมได้</p>
+							<p class="font-medium">หน่วยงานที่สามารถเข้าร่วมได้</p>
 							<div class="flex flex-wrap gap-1">
 								{#each eligibleFacultyNames as name}
 									<Badge variant="secondary">{name}</Badge>
@@ -448,15 +448,7 @@
 						</div>
 					</div>
 				{/if}
-				{#if activity.organizer}
-					<div class="flex items-start gap-3">
-						<IconUserHeart class="size-5 mt-0.5 text-muted-foreground flex-shrink-0" />
-						<div>
-							<p class="font-medium">ผู้จัด</p>
-							<p class="text-sm text-muted-foreground">{activity.organizer}</p>
-						</div>
-					</div>
-				{/if}
+				<!-- Removed duplicate organizer block to avoid repetition -->
 			</div>
 
 			<Separator />

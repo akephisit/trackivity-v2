@@ -31,10 +31,10 @@ const activityCreateSchema = z.object({
 		.regex(/^\d+$/, 'ชั่วโมงต้องเป็นจำนวนเต็ม')
 		.refine((v) => parseInt(v) > 0, 'ชั่วโมงต้องมากกว่า 0'),
 	organizer: z.string().min(1, 'กรุณากรอกหน่วยงานที่จัดกิจกรรม').max(255, 'ชื่อหน่วยงานต้องไม่เกิน 255 ตัวอักษร'),
-	eligible_faculties: z.string().min(1, 'กรุณาเลือกคณะที่สามารถเข้าร่วมได้').refine(value => {
-		const faculties = value.split(',').filter(f => f.trim() !== '');
-		return faculties.length > 0;
-	}, 'กรุณาเลือกอย่างน้อย 1 คณะ'),
+	eligible_organizations: z.string().min(1, 'กรุณาเลือกหน่วยงานที่สามารถเข้าร่วมได้').refine(value => {
+		const items = value.split(',').filter(f => f.trim() !== '');
+		return items.length > 0;
+	}, 'กรุณาเลือกอย่างน้อย 1 หน่วยงาน'),
 	academic_year: z.string().min(1, 'กรุณาเลือกปีการศึกษา')
 }).refine(data => {
 	const startDate = new Date(data.start_date);
@@ -78,7 +78,7 @@ export const load: PageServerLoad = async (event) => {
 		max_participants: '',
 		hours: '1',
 		organizer: '',
-		eligible_faculties: '',
+		eligible_organizations: '',
 		academic_year: ''
 	};
 
@@ -134,10 +134,10 @@ export const actions: Actions = {
 		}
 
 		try {
-			// แปลง eligible_faculties จาก string เป็น array of UUIDs
-			const eligibleFacultiesArray = form.data.eligible_faculties 
-				? form.data.eligible_faculties.split(',').filter(f => f.trim() !== '') 
-				: [];
+		// แปลง eligible_organizations จาก string เป็น array of UUIDs
+		const eligibleOrganizationsArray = form.data.eligible_organizations 
+			? form.data.eligible_organizations.split(',').filter(f => f.trim() !== '') 
+			: [];
 
 			// เตรียมข้อมูลสำหรับส่งไป API
 			const activityData: any = {
@@ -152,7 +152,7 @@ export const actions: Actions = {
 				max_participants: form.data.max_participants ? parseInt(form.data.max_participants) : null,
 				hours: form.data.hours ? parseInt(form.data.hours) : 1,
 				organizer: form.data.organizer,
-				eligible_faculties: eligibleFacultiesArray,
+				eligible_organizations: eligibleOrganizationsArray,
 				academic_year: form.data.academic_year
 			};
 

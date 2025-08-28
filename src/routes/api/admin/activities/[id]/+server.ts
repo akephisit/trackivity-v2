@@ -19,7 +19,7 @@ export const GET: RequestHandler = async (event) => {
         activity_type: activities.activityType,
         academic_year: activities.academicYear,
         organizer: activities.organizer,
-        eligible_faculties: activities.eligibleFaculties,
+        eligible_organizations: activities.eligibleOrganizations,
         start_date: activities.startDate,
         end_date: activities.endDate,
         start_time_only: activities.startTimeOnly,
@@ -51,4 +51,3 @@ export const GET: RequestHandler = async (event) => {
     return json({ success: false, error: 'เกิดข้อผิดพลาดในการโหลดข้อมูล' }, { status: 500 });
   }
 };
-
