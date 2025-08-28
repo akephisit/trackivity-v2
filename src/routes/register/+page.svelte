@@ -60,19 +60,19 @@ let facultyOptions = $derived((data.organizations || []).map((org: any) => ({
 
 	// Handle faculty selection
 	$effect(() => {
-		if (selectedFaculty && selectedFaculty.trim() !== '') {
-			$formData.faculty_id = selectedFaculty;
-			// Reset department when faculty changes
-			selectedDepartment = '';
-			$formData.department_id = '';
-			// Load departments for selected faculty
-			loadDepartments(selectedFaculty);
-		} else {
-			$formData.faculty_id = '';
-			selectedDepartment = '';
-			$formData.department_id = '';
-			departments = [];
-		}
+    if (selectedFaculty && selectedFaculty.trim() !== '') {
+        $formData.organization_id = selectedFaculty;
+        // Reset department when faculty changes
+        selectedDepartment = '';
+        $formData.department_id = '';
+        // Load departments for selected faculty
+        loadDepartments(selectedFaculty);
+    } else {
+        $formData.organization_id = '';
+        selectedDepartment = '';
+        $formData.department_id = '';
+        departments = [];
+    }
 	});
 
 	// Handle department selection

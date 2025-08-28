@@ -218,7 +218,7 @@ export const organizationAnalytics = pgTable('organization_analytics', {
 export const departmentAnalytics = pgTable('department_analytics', {
   id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
   departmentId: uuid('department_id').notNull().references(() => departments.id, { onDelete: 'cascade' }),
-  facultyId: uuid('faculty_id').notNull().references(() => faculties.id, { onDelete: 'cascade' }),
+  organizationId: uuid('organization_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
   totalStudents: integer('total_students').default(0),
   activeStudents: integer('active_students').default(0),
   totalActivities: integer('total_activities').default(0),
@@ -229,14 +229,14 @@ export const departmentAnalytics = pgTable('department_analytics', {
 }, (table) => {
   return {
     departmentIdIdx: index('idx_department_analytics_department_id').on(table.departmentId),
-    facultyIdIdx: index('idx_department_analytics_faculty_id').on(table.facultyId),
+    organizationIdIdx: index('idx_department_analytics_organization_id').on(table.organizationId),
   };
 });
 
 // System analytics table
 export const systemAnalytics = pgTable('system_analytics', {
   id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
-  totalFaculties: integer('total_faculties').default(0),
+  totalOrganizations: integer('total_organizations').default(0),
   totalDepartments: integer('total_departments').default(0),
   totalUsers: integer('total_users').default(0),
   totalActivities: integer('total_activities').default(0),
