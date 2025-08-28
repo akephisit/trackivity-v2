@@ -162,8 +162,8 @@ export const actions: Actions = {
     }
     try {
       await db.delete(activities).where(eq(activities.id, params.id));
-      // Redirect back to activities list
-      throw redirect(302, '/admin/activities');
+      // Redirect back to activities list with flash flag
+      throw redirect(302, '/admin/activities?deleted=1');
     } catch (e) {
       // Allow SvelteKit Redirect objects to pass through
       if (e && typeof e === 'object' && 'status' in (e as any) && 'location' in (e as any)) {

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Button } from '$lib/components/ui/button';
+		import { Button } from '$lib/components/ui/button';
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card';
 	import * as Table from '$lib/components/ui/table';
 	import { Badge } from '$lib/components/ui/badge';
@@ -15,7 +15,8 @@
 		IconAward,
 		IconRefresh
 	} from '@tabler/icons-svelte/icons';
-	import { goto, invalidateAll } from '$app/navigation';
+		import { goto, invalidateAll } from '$app/navigation';
+		import { page } from '$app/stores';
 	import { toast } from 'svelte-sonner';
 	import * as AlertDialog from '$lib/components/ui/alert-dialog';
 
@@ -75,7 +76,7 @@
 		return variants[type] || 'outline';
 	}
 
-	function getActivityStatus(activity: Activity): { label: string; variant: "default" | "secondary" | "destructive" | "outline" } {
+		function getActivityStatus(activity: any): { label: string; variant: "default" | "secondary" | "destructive" | "outline" } {
 		// ใช้สถานะจากฐานข้อมูลแทนการคำนวณเอง
 		const status = activity.status;
 		
@@ -113,9 +114,19 @@
 		goto(`/admin/activities/${activityId}`);
 	}
 
-	function editActivity(activityId: string) {
-		goto(`/admin/activities/${activityId}/edit`);
-	}
+		function editActivity(activityId: string) {
+			goto(`/admin/activities/${activityId}/edit`);
+		}
+
+		// Show toast when redirected after deletion
+		$effect(() => {
+			const deleted = $page.url.searchParams.get('deleted');
+			if (deleted === '1') {
+				toast.success('ลบกิจกรรมสำเร็จ');
+				// Clean up query param to avoid repeated toasts
+				goto('/admin/activities', { replaceState: true, noScroll: true });
+			}
+		});
 
 	let deleteDialogOpen = $state(false);
 	let activityToDelete: { id: string; name: string } | null = $state(null);
@@ -350,7 +361,7 @@
 										<Table.Cell class="py-4">
 											<div class="flex items-center gap-1 text-sm">
 												<IconClock class="h-3 w-3" />
-												<span>{formatTime(activity.start_time || activity.start_time_only)} - {formatTime(activity.end_time || activity.end_time_only)}</span>
+													<span>{formatTime(activity.start_time)} - {formatTime(activity.end_time)}</span>
 											</div>
 										</Table.Cell>
 										<Table.Cell class="py-4">
@@ -399,7 +410,7 @@
 													<Button
 														variant="ghost"
 														size="sm"
-														onclick={() => confirmDelete(activity.id, activity.activity_name || activity.name || activity.title)}
+															onclick={() => confirmDelete(activity.id, (activity as any).activity_name || (activity as any).name || (activity as any).title)}
 														class="text-red-600 hover:text-red-700 hover:bg-red-50"
 														title="ลบ"
 													>
