@@ -192,11 +192,15 @@ export const actions: Actions = {
             }
 
             await db.update(activities).set(payload).where(eq(activities.id, params.id));
-        
-                throw redirect(302, `/admin/activities/${params.id}`);
         } catch (e) {
-                console.error('Update activity error:', e);
-                return { error: 'อัปเดตกิจกรรมไม่สำเร็จ' } as const;
+            // Allow SvelteKit Redirect objects to pass through
+            if (e && typeof e === 'object' && 'status' in (e as any) && 'location' in (e as any)) {
+                throw e as any;
+            }
+            console.error('Update activity error:', e);
+            return { error: 'อัปเดตกิจกรรมไม่สำเร็จ' } as const;
         }
+        
+        throw redirect(302, `/admin/activities/${params.id}`);
         }
 };
