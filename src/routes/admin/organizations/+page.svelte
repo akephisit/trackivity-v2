@@ -538,9 +538,13 @@
 				<Form.Control>
 					{#snippet children({ props })}
 						<Label for={props.id}>ประเภทหน่วยงาน</Label>
-						<Select.Root bind:selected={$createFormData.organizationType} disabled={$createSubmitting}>
+						<Select.Root 
+							type="single"
+							bind:value={$createFormData.organizationType}
+							disabled={$createSubmitting}
+						>
 							<Select.Trigger class="w-full">
-								<Select.Value placeholder="เลือกประเภทหน่วยงาน" />
+								{$createFormData.organizationType === 'faculty' ? 'คณะ' : $createFormData.organizationType === 'office' ? 'หน่วยงาน' : 'เลือกประเภทหน่วยงาน'}
 							</Select.Trigger>
 							<Select.Content>
 								<Select.Item value="faculty">คณะ</Select.Item>
@@ -624,9 +628,12 @@
 
 				<div class="space-y-2">
 					<Label>ประเภทหน่วยงาน</Label>
-					<Select.Root bind:selected={editFormData.organizationType}>
+					<Select.Root 
+						type="single"
+						bind:value={editFormData.organizationType}
+					>
 						<Select.Trigger class="w-full">
-							<Select.Value placeholder="เลือกประเภทหน่วยงาน" />
+							{editFormData.organizationType === 'faculty' ? 'คณะ' : editFormData.organizationType === 'office' ? 'หน่วยงาน' : 'เลือกประเภทหน่วยงาน'}
 						</Select.Trigger>
 						<Select.Content>
 							<Select.Item value="faculty">คณะ</Select.Item>
