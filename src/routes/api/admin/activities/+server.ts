@@ -67,10 +67,14 @@ export const POST: RequestHandler = async (event) => {
       return json({ success: false, error: 'ไม่พบหน่วยงานผู้จัดที่เลือก' }, { status: 400 });
     }
 
-		const organizationId =
-			user.admin_role?.admin_level === 'OrganizationAdmin'
-				? (user.admin_role?.organization_id ?? null)
-				: null;
+    let organizationId =
+      user.admin_role?.admin_level === 'OrganizationAdmin'
+        ? (user.admin_role?.organization_id ?? null)
+        : null;
+    // If SuperAdmin creates and didn't set owner, default owner to organizer
+    if (!organizationId) {
+      organizationId = organizerId;
+    }
 
     const [inserted] = await db
       .insert(activities)

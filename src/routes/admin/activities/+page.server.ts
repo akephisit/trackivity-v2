@@ -3,7 +3,7 @@ import { error, fail } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 import { AdminLevel } from '$lib/types/admin';
 import { db, activities, organizations } from '$lib/server/db';
-import { eq, desc } from 'drizzle-orm';
+import { eq, or, desc } from 'drizzle-orm';
 
 export const load: PageServerLoad = async (event) => {
 	// ตรวจสอบสิทธิ์ - เฉพาะ FacultyAdmin หรือ SuperAdmin
@@ -48,7 +48,9 @@ export const load: PageServerLoad = async (event) => {
 		// Apply faculty filtering for FacultyAdmin
 		const filteredQuery =
 			adminLevel === AdminLevel.OrganizationAdmin && organizationId
-				? baseQuery.where(eq(activities.organizationId, organizationId))
+				? baseQuery.where(
+					or(eq(activities.organizationId, organizationId), eq(activities.organizerId, organizationId))
+				  )
 				: baseQuery;
 
 		const rawActivities = await filteredQuery.orderBy(desc(activities.createdAt));
