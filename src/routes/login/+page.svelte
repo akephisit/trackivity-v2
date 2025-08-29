@@ -30,7 +30,8 @@
 		validators: zodClient(loginSchema),
 		onResult: ({ result }) => {
 			if (result.type === 'failure') {
-				toast.error('เข้าสู่ระบบไม่สำเร็จ');
+				const message = (result as any)?.data?.message || 'เข้าสู่ระบบไม่สำเร็จ';
+				toast.error(message);
 			} else if (result.type === 'redirect') {
 				toast.success('เข้าสู่ระบบสำเร็จ');
 			}
@@ -140,13 +141,6 @@
 						<Form.FieldErrors />
 					</Form.Field>
 
-					{#if $errors.student_id && $errors.student_id.includes('รหัสนักศึกษาหรือรหัสผ่านไม่ถูกต้อง')}
-						<Alert variant="destructive">
-							<AlertDescription>
-								รหัสนักศึกษาหรือรหัสผ่านไม่ถูกต้อง กรุณาตรวจสอบและลองใหม่อีกครั้ง
-							</AlertDescription>
-						</Alert>
-					{/if}
 
 					<Button type="submit" class="w-full" disabled={$submitting}>
 						{#if $submitting}

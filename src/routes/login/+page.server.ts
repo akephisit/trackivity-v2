@@ -68,7 +68,7 @@ export const actions: Actions = {
 			const redirectTo =
 				url.searchParams.get('redirectTo') || (user.admin_role ? '/admin' : '/student');
 			throw redirect(303, redirectTo);
-		} catch (error) {
+		} catch (error: any) {
 			// Handle redirect errors (normal flow)
 			if (
 				error &&
@@ -80,16 +80,24 @@ export const actions: Actions = {
 			}
 
 			// Handle other errors
-			console.error('[Auth] Login form error:', error);
-			const message = (error as any)?.message || 'Connection error. Please try again.';
-			form.errors.student_id = [message];
-			const status =
-				(error as any)?.code === 'AUTH_ERROR'
-					? 401
-					: (error as any)?.code === 'VALIDATION_ERROR'
-						? 400
-						: 500;
-			return fail(status, { form });
+			const code =
+				error && typeof error === 'object' && 'code' in error ? (error as any).code : undefined;
+			let message = 'เกิดข้อผิดพลาดในการเชื่อมต่อ กรุณาลองใหม่';
+			let status = 500;
+			
+			if (code === 'PASSWORD_DISABLED') {
+				message = 'บัญชีนี้ปิดการเข้าสู่ระบบด้วยรหัสผ่าน กรุณาติดต่อผู้ดูแลหรือใช้วิธีอื่น';
+				status = 403;
+			} else if (code === 'AUTH_ERROR') {
+				message = 'รหัสนักศึกษาหรือรหัสผ่านไม่ถูกต้อง';
+				status = 401;
+			} else if (code === 'VALIDATION_ERROR') {
+				message = 'ข้อมูลไม่ครบถ้วน กรุณากรอกรหัสนักศึกษาและรหัสผ่าน';
+				status = 400;
+			}
+			
+			console.error('[Auth] Login form error:', { code, message });
+			return fail(status, { form, message });
 		}
 	}
 };
