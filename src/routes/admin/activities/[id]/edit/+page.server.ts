@@ -110,10 +110,10 @@ export const load: PageServerLoad = async (event) => {
 };
 
 export const actions: Actions = {
-	update: async (event) => {
-		await requireOrganizationAdmin(event);
-		const { params } = event;
-		if (!params.id) return { error: 'ไม่พบรหัสกิจกรรม' } as const;
+    update: async (event) => {
+        const user = await requireOrganizationAdmin(event);
+        const { params } = event;
+        if (!params.id) return { error: 'ไม่พบรหัสกิจกรรม' } as const;
 
 		const fd = await event.request.formData();
 
@@ -147,37 +147,56 @@ export const actions: Actions = {
 		}
 
 		const maxParticipants = maxParticipantsRaw ? Number(maxParticipantsRaw) : null;
-		const eligibleOrganizations = eligibleRaw
-			? eligibleRaw
-					.split(',')
-					.map((s) => s.trim())
-					.filter((s) => s !== '')
-			: [];
+        const eligibleOrganizations = eligibleRaw
+            ? eligibleRaw
+                    .split(',')
+                    .map((s) => s.trim())
+                    .filter((s) => s !== '')
+            : [];
 
-    try {
-      await db
-        .update(activities)
-        .set({
-          title,
-          description: description || '',
-          location,
-          startDate: startDateStr,
-          endDate: endDateStr,
-          startTimeOnly: startTimeStr,
-          endTimeOnly: endTimeStr,
-          maxParticipants,
-          status: status as any,
-          // preserve facultyId
-          organizerId: organizerId || undefined,
-          eligibleOrganizations: eligibleOrganizations as any,
-          updatedAt: new Date()
-        })
-        .where(eq(activities.id, params.id));
+        // Permission: only SuperAdmin can change organizer_id
+        const isSuperAdmin = (user as any)?.admin_role?.admin_level === 'SuperAdmin';
 
-			throw redirect(302, `/admin/activities/${params.id}`);
-		} catch (e) {
-			console.error('Update activity error:', e);
-			return { error: 'อัปเดตกิจกรรมไม่สำเร็จ' } as const;
-		}
-	}
+        // Load current organizer_id to prevent unauthorized change
+        let currentOrganizerId: string | null = null;
+        try {
+            const cur = await db
+                .select({ organizer_id: activities.organizerId })
+                .from(activities)
+                .where(eq(activities.id, params.id))
+                .limit(1);
+            currentOrganizerId = (cur[0]?.organizer_id as any) ?? null;
+        } catch {}
+
+        try {
+            const payload: any = {
+                title,
+                description: description || '',
+                location,
+                startDate: startDateStr,
+                endDate: endDateStr,
+                startTimeOnly: startTimeStr,
+                endTimeOnly: endTimeStr,
+                maxParticipants,
+                status: status as any,
+                eligibleOrganizations: eligibleOrganizations as any,
+                updatedAt: new Date()
+            };
+
+            if (isSuperAdmin) {
+                if (organizerId) payload.organizerId = organizerId;
+            } else {
+                if (organizerId && currentOrganizerId && organizerId !== currentOrganizerId) {
+                    return { error: 'เฉพาะ SuperAdmin เท่านั้นที่แก้หน่วยงานผู้จัดได้' } as const;
+                }
+            }
+
+            await db.update(activities).set(payload).where(eq(activities.id, params.id));
+        
+                throw redirect(302, `/admin/activities/${params.id}`);
+        } catch (e) {
+                console.error('Update activity error:', e);
+                return { error: 'อัปเดตกิจกรรมไม่สำเร็จ' } as const;
+        }
+        }
 };

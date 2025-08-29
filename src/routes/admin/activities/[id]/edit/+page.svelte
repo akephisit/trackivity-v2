@@ -44,6 +44,7 @@
 
 	// Organizer selection state
 	let selectedOrganizerId = $state((form as any)?.formData?.organizer_id || activity.organizer_id || '');
+	const isSuperAdmin = (data?.user?.admin_role?.admin_level === 'SuperAdmin');
 
 	// Initial selected values from server
 	let selectedEligibleValues = $state<string[]>(data.eligible_organizations_selected || []);
@@ -239,6 +240,7 @@
 					<Select.Root
 						type="single"
 						bind:value={selectedOrganizerId as any}
+						disabled={!isSuperAdmin}
 					>
 						<Select.Trigger>
 							{#if selectedOrganizerId}
