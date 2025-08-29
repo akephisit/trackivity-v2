@@ -500,6 +500,7 @@
 					}}
 					class="flex items-center gap-4"
 				>
+					<input type="hidden" name="status" value={selectedStatus} />
 					<div class="flex-1">
 						<Select.Root type="single" bind:value={selectedStatus}>
 							<Select.Trigger class="w-full">
