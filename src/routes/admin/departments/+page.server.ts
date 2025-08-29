@@ -103,6 +103,7 @@ export const load: PageServerLoad = async (event) => {
 					name: organizations.name,
 					code: organizations.code,
 					description: organizations.description,
+					organizationType: organizations.organizationType,
 					status: organizations.status,
 					created_at: organizations.createdAt,
 					updated_at: organizations.updatedAt
@@ -122,7 +123,7 @@ export const load: PageServerLoad = async (event) => {
 			}
 		}
 
-		// If SuperAdmin, load organizations list for selection
+		// If SuperAdmin, load faculty-type organizations list for selection
 		let facultiesList: Organization[] | null = null;
 		if (admin_role?.admin_level === 'SuperAdmin') {
 			const facRows = await db
@@ -131,12 +132,13 @@ export const load: PageServerLoad = async (event) => {
 					name: organizations.name,
 					code: organizations.code,
 					description: organizations.description,
+					organizationType: organizations.organizationType,
 					status: organizations.status,
 					created_at: organizations.createdAt,
 					updated_at: organizations.updatedAt
 				})
 				.from(organizations)
-				.where(eq(organizations.status, true))
+				.where(and(eq(organizations.status, true), eq(organizations.organizationType, 'faculty')))
 				.orderBy(organizations.name);
 
 			facultiesList = facRows.map((f) => ({
@@ -209,9 +211,30 @@ export const actions: Actions = {
 			targetOrganizationId = selected;
 		}
 
-		const apiEndpoint = `/api/organizations/${targetOrganizationId}/departments`;
-
 		try {
+			// Verify the target organization is of type 'faculty'
+			const [targetOrg] = await db
+				.select({
+					id: organizations.id,
+					organizationType: organizations.organizationType,
+					status: organizations.status
+				})
+				.from(organizations)
+				.where(eq(organizations.id, targetOrganizationId))
+				.limit(1);
+
+			if (!targetOrg) {
+				return fail(400, { form, error: 'ไม่พบหน่วยงานที่เลือก' });
+			}
+
+			if (!targetOrg.status) {
+				return fail(400, { form, error: 'หน่วยงานที่เลือกไม่ได้เปิดใช้งาน' });
+			}
+
+			if (targetOrg.organizationType !== 'faculty') {
+				return fail(400, { form, error: 'สามารถสร้างภาควิชาได้เฉพาะคณะเท่านั้น' });
+			}
+
 			// Insert department directly into database
 			await db.insert(departments).values({
 				name: form.data.name,

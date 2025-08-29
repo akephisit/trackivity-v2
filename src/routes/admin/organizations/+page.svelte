@@ -20,6 +20,7 @@
 	import * as Table from '$lib/components/ui/table';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Switch } from '$lib/components/ui/switch';
+	import * as Select from '$lib/components/ui/select';
 	import {
 		IconLoader,
 		IconPlus,
@@ -42,6 +43,7 @@
 		name: z.string().min(1, 'กรุณากรอกชื่อหน่วยงาน'),
 		code: z.string().min(1, 'กรุณากรอกรหัสหน่วยงาน').max(10, 'รหัสหน่วยงานต้องไม่เกิน 10 ตัวอักษร'),
 		description: z.string().optional(),
+		organizationType: z.enum(['faculty', 'office']).default('faculty'),
 		status: z.boolean().default(true)
 	});
 
@@ -89,6 +91,7 @@
 		name: '',
 		code: '',
 		description: '',
+		organizationType: 'faculty' as 'faculty' | 'office',
 		status: true
 	});
 
@@ -110,6 +113,7 @@
 			name: '',
 			code: '',
 			description: '',
+			organizationType: 'faculty',
 			status: true
 		};
 		createDialogOpen = true;
@@ -121,6 +125,7 @@
 			name: faculty.name,
 			code: faculty.code,
 			description: faculty.description || '',
+			organizationType: faculty.organizationType || 'faculty',
 			status: faculty.status
 		};
 		editDialogOpen = true;
@@ -352,6 +357,7 @@
 								<Table.Row class="bg-gray-50 dark:bg-gray-800">
 									<Table.Head class="font-semibold">ชื่อหน่วยงาน</Table.Head>
 									<Table.Head class="font-semibold">รหัส</Table.Head>
+									<Table.Head class="font-semibold">ประเภท</Table.Head>
 									<Table.Head class="font-semibold">คำอธิบาย</Table.Head>
 									<Table.Head class="font-semibold">สถานะ</Table.Head>
 									<Table.Head class="font-semibold">วันที่สร้าง</Table.Head>
@@ -378,6 +384,16 @@
 										<Table.Cell class="py-4">
 											<Badge variant="outline" class="font-mono">
 												{faculty.code}
+											</Badge>
+										</Table.Cell>
+										<Table.Cell class="py-4">
+											<Badge 
+												variant={faculty.organizationType === 'faculty' ? 'default' : 'secondary'}
+												class={faculty.organizationType === 'faculty' 
+													? 'bg-blue-100 text-blue-800 hover:bg-blue-100' 
+													: 'bg-purple-100 text-purple-800 hover:bg-purple-100'}
+											>
+												{faculty.organizationType === 'faculty' ? 'คณะ' : 'หน่วยงาน'}
 											</Badge>
 										</Table.Cell>
 										<Table.Cell class="max-w-xs py-4">
@@ -518,6 +534,29 @@
 				<Form.FieldErrors />
 			</Form.Field>
 
+			<Form.Field form={createForm} name="organizationType">
+				<Form.Control>
+					{#snippet children({ props })}
+						<Label for={props.id}>ประเภทหน่วยงาน</Label>
+						<Select.Root bind:selected={$createFormData.organizationType} disabled={$createSubmitting}>
+							<Select.Trigger class="w-full">
+								<Select.Value placeholder="เลือกประเภทหน่วยงาน" />
+							</Select.Trigger>
+							<Select.Content>
+								<Select.Item value="faculty">คณะ</Select.Item>
+								<Select.Item value="office">หน่วยงาน</Select.Item>
+							</Select.Content>
+						</Select.Root>
+						<p class="text-sm text-gray-600 mt-1">
+							{$createFormData.organizationType === 'faculty' 
+								? 'คณะ: สามารถเพิ่มสาขาวิชาได้ และนักเรียนสามารถสมัครได้' 
+								: 'หน่วยงาน: ไม่สามารถเพิ่มสาขาวิชาได้ และนักเรียนไม่สามารถสมัครได้'}
+						</p>
+					{/snippet}
+				</Form.Control>
+				<Form.FieldErrors />
+			</Form.Field>
+
 			<Form.Field form={createForm} name="status">
 				<Form.Control>
 					{#snippet children({ props })}
@@ -581,6 +620,24 @@
 						placeholder="คำอธิบายเพิ่มเติมเกี่ยวกับหน่วยงาน"
 						rows={3}
 					/>
+				</div>
+
+				<div class="space-y-2">
+					<Label>ประเภทหน่วยงาน</Label>
+					<Select.Root bind:selected={editFormData.organizationType}>
+						<Select.Trigger class="w-full">
+							<Select.Value placeholder="เลือกประเภทหน่วยงาน" />
+						</Select.Trigger>
+						<Select.Content>
+							<Select.Item value="faculty">คณะ</Select.Item>
+							<Select.Item value="office">หน่วยงาน</Select.Item>
+						</Select.Content>
+					</Select.Root>
+					<p class="text-sm text-gray-600">
+						{editFormData.organizationType === 'faculty' 
+							? 'คณะ: สามารถเพิ่มสาขาวิชาได้ และนักเรียนสามารถสมัครได้' 
+							: 'หน่วยงาน: ไม่สามารถเพิ่มสาขาวิชาได้ และนักเรียนไม่สามารถสมัครได้'}
+					</p>
 				</div>
 
 				<div class="flex items-center space-x-2">

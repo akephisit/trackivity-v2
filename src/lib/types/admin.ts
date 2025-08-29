@@ -41,6 +41,7 @@ export interface Organization {
 	name: string;
 	code: string;
 	description?: string;
+	organizationType?: 'faculty' | 'office';
 	status: boolean;
 	created_at: string;
 	updated_at: string;

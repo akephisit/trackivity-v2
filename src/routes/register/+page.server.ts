@@ -21,7 +21,7 @@ export const load: PageServerLoad = async (event) => {
 		}
 	}
 
-	// โหลดรายการหน่วยงานจากฐานข้อมูลโดยตรง
+	// โหลดรายการหน่วยงานจากฐานข้อมูลโดยตรง (เฉพาะคณะเท่านั้น)
 	let organizationsList: Organization[] = [];
 
 	try {
@@ -31,6 +31,7 @@ export const load: PageServerLoad = async (event) => {
 				name: organizations.name,
 				code: organizations.code,
 				description: organizations.description,
+				organizationType: organizations.organizationType,
 				status: organizations.status,
 				created_at: organizations.createdAt,
 				updated_at: organizations.updatedAt
@@ -39,15 +40,18 @@ export const load: PageServerLoad = async (event) => {
 			.where(eq(organizations.status, true))
 			.orderBy(organizations.name);
 
-		organizationsList = result.map((o) => ({
-			id: o.id,
-			name: o.name,
-			code: o.code,
-			description: o.description || undefined,
-			status: !!o.status,
-			created_at: o.created_at?.toISOString() || new Date().toISOString(),
-			updated_at: o.updated_at?.toISOString() || new Date().toISOString()
-		}));
+		// Filter only faculty type organizations for student registration
+		organizationsList = result
+			.filter((o) => o.organizationType === 'faculty')
+			.map((o) => ({
+				id: o.id,
+				name: o.name,
+				code: o.code,
+				description: o.description || undefined,
+				status: !!o.status,
+				created_at: o.created_at?.toISOString() || new Date().toISOString(),
+				updated_at: o.updated_at?.toISOString() || new Date().toISOString()
+			}));
 	} catch (error) {
 		console.error('Failed to load organizations from database:', error);
 		throw new Error('ไม่สามารถโหลดข้อมูลหน่วยงานได้ กรุณาลองใหม่อีกครั้ง');

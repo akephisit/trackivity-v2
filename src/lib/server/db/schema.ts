@@ -58,6 +58,10 @@ export const notificationStatus = pgEnum('notification_status', [
 	'failed',
 	'delivered'
 ]);
+export const organizationType = pgEnum('organization_type', [
+	'faculty',  // คณะ - can have departments and allow student registration
+	'office'    // หน่วยงาน - no departments, no student registration
+]);
 
 // ===== CORE TABLES =====
 
@@ -71,13 +75,15 @@ export const organizations = pgTable(
 		name: varchar('name', { length: 255 }).notNull(),
 		code: varchar('code', { length: 10 }).notNull().unique(),
 		description: text('description'),
+		organizationType: organizationType('organization_type').notNull().default('faculty'),
 		status: boolean('status').notNull().default(true),
 		createdAt: timestamp('created_at', { withTimezone: true }).default(sql`NOW()`),
 		updatedAt: timestamp('updated_at', { withTimezone: true }).default(sql`NOW()`)
 	},
 	(table) => {
 		return {
-			statusIdx: index('idx_organizations_status').on(table.status)
+			statusIdx: index('idx_organizations_status').on(table.status),
+			organizationTypeIdx: index('idx_organizations_organization_type').on(table.organizationType)
 		};
 	}
 );

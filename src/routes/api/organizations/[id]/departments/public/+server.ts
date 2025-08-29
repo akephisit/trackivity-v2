@@ -1,5 +1,5 @@
 import { json, type RequestHandler } from '@sveltejs/kit';
-import { db, departments } from '$lib/server/db';
+import { db, departments, organizations } from '$lib/server/db';
 import { and, eq } from 'drizzle-orm';
 
 // Public endpoint: list active departments for an organization
@@ -13,6 +13,48 @@ export const GET: RequestHandler = async ({ params }) => {
 					error: { code: 'VALIDATION_ERROR', message: 'organization_id is required' }
 				},
 				{ status: 400 }
+			);
+		}
+
+		// First check if the organization exists and is of type 'faculty'
+		const [organization] = await db
+			.select({
+				id: organizations.id,
+				organizationType: organizations.organizationType,
+				status: organizations.status
+			})
+			.from(organizations)
+			.where(eq(organizations.id, organizationId))
+			.limit(1);
+
+		if (!organization) {
+			return json(
+				{
+					success: false,
+					error: { code: 'NOT_FOUND', message: 'Organization not found' }
+				},
+				{ status: 404 }
+			);
+		}
+
+		if (!organization.status) {
+			return json(
+				{
+					success: false,
+					error: { code: 'INACTIVE_ORGANIZATION', message: 'Organization is inactive' }
+				},
+				{ status: 400 }
+			);
+		}
+
+		// Only allow departments for faculty-type organizations
+		if (organization.organizationType !== 'faculty') {
+			return json(
+				{
+					success: false,
+					error: { code: 'ACCESS_DENIED', message: 'Departments are only available for faculty organizations' }
+				},
+				{ status: 403 }
 			);
 		}
 

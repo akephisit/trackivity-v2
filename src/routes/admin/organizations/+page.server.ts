@@ -12,6 +12,7 @@ const facultyCreateSchema = z.object({
 	name: z.string().min(1, 'กรุณากรอกชื่อหน่วยงาน'),
 	code: z.string().min(1, 'กรุณากรอกรหัสหน่วยงาน').max(10, 'รหัสหน่วยงานต้องไม่เกิน 10 ตัวอักษร'),
 	description: z.string().optional(),
+	organizationType: z.enum(['faculty', 'office']).default('faculty'),
 	status: z.boolean().default(true)
 });
 
@@ -23,6 +24,7 @@ const facultyUpdateSchema = z.object({
 		.max(10, 'รหัสหน่วยงานต้องไม่เกิน 10 ตัวอักษร')
 		.optional(),
 	description: z.string().optional(),
+	organizationType: z.enum(['faculty', 'office']).optional(),
 	status: z.boolean().optional()
 });
 
@@ -41,6 +43,7 @@ export const load: PageServerLoad = async (event) => {
 				name: organizations.name,
 				code: organizations.code,
 				description: organizations.description,
+				organizationType: organizations.organizationType,
 				status: organizations.status,
 				created_at: organizations.createdAt,
 				updated_at: organizations.updatedAt
@@ -87,6 +90,7 @@ export const actions: Actions = {
 				name: form.data.name,
 				code: form.data.code,
 				description: form.data.description || null,
+				organizationType: form.data.organizationType || 'faculty',
 				status: form.data.status ?? true
 			});
 
@@ -123,6 +127,7 @@ export const actions: Actions = {
 					...(form.data.name && { name: form.data.name }),
 					...(form.data.code && { code: form.data.code }),
 					...(form.data.description !== undefined && { description: form.data.description }),
+					...(form.data.organizationType && { organizationType: form.data.organizationType }),
 					...(form.data.status !== undefined && { status: form.data.status }),
 					updatedAt: new Date()
 				})
