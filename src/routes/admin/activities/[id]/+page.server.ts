@@ -2,6 +2,7 @@ import type { PageServerLoad, Actions } from './$types';
 import { requireAdmin } from '$lib/server/auth-utils';
 import { db, activities, participations, users, organizations } from '$lib/server/db';
 import { eq, count } from 'drizzle-orm';
+import { alias } from 'drizzle-orm/pg-core';
 import { error, redirect } from '@sveltejs/kit';
 
 export const load: PageServerLoad = async (event) => {
@@ -10,36 +11,41 @@ export const load: PageServerLoad = async (event) => {
 
 	try {
 		// Load activity details (with faculty and creator)
-		const activityRows = await db
-			.select({
-				id: activities.id,
-				title: activities.title,
-				description: activities.description,
-				location: activities.location,
-				activity_type: activities.activityType,
-				academic_year: activities.academicYear,
-				organizer: activities.organizer,
-				eligible_organizations: activities.eligibleOrganizations,
-				start_date: activities.startDate,
-				end_date: activities.endDate,
-				start_time_only: activities.startTimeOnly,
-				end_time_only: activities.endTimeOnly,
-				hours: activities.hours,
-				max_participants: activities.maxParticipants,
-				status: activities.status,
-				organization_id: activities.organizationId,
-				created_by: activities.createdBy,
-				created_at: activities.createdAt,
-				updated_at: activities.updatedAt,
-				organization_name: organizations.name,
-				creator_first: users.firstName,
-				creator_last: users.lastName
-			})
-			.from(activities)
-			.leftJoin(organizations, eq(activities.organizationId, organizations.id))
-			.leftJoin(users, eq(activities.createdBy, users.id))
-			.where(eq(activities.id, params.id))
-			.limit(1);
+    const orgOwner = alias(organizations, 'org_owner');
+    const orgOrganizer = alias(organizations, 'org_organizer');
+
+    const activityRows = await db
+      .select({
+        id: activities.id,
+        title: activities.title,
+        description: activities.description,
+        location: activities.location,
+        activity_type: activities.activityType,
+        academic_year: activities.academicYear,
+        organizer_id: activities.organizerId,
+        organizer_name: orgOrganizer.name,
+        eligible_organizations: activities.eligibleOrganizations,
+        start_date: activities.startDate,
+        end_date: activities.endDate,
+        start_time_only: activities.startTimeOnly,
+        end_time_only: activities.endTimeOnly,
+        hours: activities.hours,
+        max_participants: activities.maxParticipants,
+        status: activities.status,
+        organization_id: activities.organizationId,
+        created_by: activities.createdBy,
+        created_at: activities.createdAt,
+        updated_at: activities.updatedAt,
+        organization_name: orgOwner.name,
+        creator_first: users.firstName,
+        creator_last: users.lastName
+      })
+      .from(activities)
+      .leftJoin(orgOwner, eq(activities.organizationId, orgOwner.id))
+      .leftJoin(orgOrganizer, eq(activities.organizerId, orgOrganizer.id))
+      .leftJoin(users, eq(activities.createdBy, users.id))
+      .where(eq(activities.id, params.id))
+      .limit(1);
 
 		if (activityRows.length === 0) {
 			throw error(404, 'ไม่พบกิจกรรมที่ระบุ');
@@ -85,32 +91,33 @@ export const load: PageServerLoad = async (event) => {
 				? new Date(`${a.end_date}T${a.end_time_only}`).toISOString()
 				: (a.end_date as any);
 
-		const activity = {
-			id: a.id,
-			title: a.title,
-			description: a.description || '',
-			location: a.location || '',
-			start_time: startIso,
-			end_time: endIso,
-			max_participants: a.max_participants ?? undefined,
-			current_participants: participationRows.length,
-			status: a.status as any,
-			organization_id: a.organization_id || undefined,
-			organization_name: a.organization_name || undefined,
-			created_by: a.created_by,
-			created_by_name: `${a.creator_first ?? ''} ${a.creator_last ?? ''}`.trim() || 'ระบบ',
-			created_at: a.created_at?.toISOString?.() || new Date().toISOString(),
-			updated_at: a.updated_at?.toISOString?.() || new Date().toISOString(),
-			is_registered: false,
-			activity_type: a.activity_type || undefined,
-			hours: a.hours ?? undefined,
-			organizer: a.organizer ?? undefined,
-			academic_year: a.academic_year ?? undefined,
-			start_date: a.start_date as any,
-			end_date: a.end_date as any,
-			start_time_only: a.start_time_only as any,
-			end_time_only: a.end_time_only as any
-		};
+    const activity = {
+      id: a.id,
+      title: a.title,
+      description: a.description || '',
+      location: a.location || '',
+      start_time: startIso,
+      end_time: endIso,
+      max_participants: a.max_participants ?? undefined,
+      current_participants: participationRows.length,
+      status: a.status as any,
+      organization_id: a.organization_id || undefined,
+      organization_name: a.organization_name || undefined,
+      created_by: a.created_by,
+      created_by_name: `${a.creator_first ?? ''} ${a.creator_last ?? ''}`.trim() || 'ระบบ',
+      created_at: a.created_at?.toISOString?.() || new Date().toISOString(),
+      updated_at: a.updated_at?.toISOString?.() || new Date().toISOString(),
+      is_registered: false,
+      activity_type: a.activity_type || undefined,
+      hours: a.hours ?? undefined,
+      organizer: a.organizer_name ?? undefined,
+      organizer_id: a.organizer_id ?? undefined,
+      academic_year: a.academic_year ?? undefined,
+      start_date: a.start_date as any,
+      end_date: a.end_date as any,
+      start_time_only: a.start_time_only as any,
+      end_time_only: a.end_time_only as any
+    };
 
 		const participationsList = participationRows.map((p) => ({
 			id: p.id,

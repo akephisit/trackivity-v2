@@ -61,10 +61,7 @@
 			.min(1, 'กรุณากรอกจำนวนชั่วโมง')
 			.regex(/^\d+$/, 'ชั่วโมงต้องเป็นจำนวนเต็ม')
 			.refine((v) => parseInt(v) > 0, 'ชั่วโมงต้องมากกว่า 0'),
-		organizer: z
-			.string()
-			.min(1, 'กรุณากรอกหน่วยงานที่จัดกิจกรรม')
-			.max(255, 'ชื่อหน่วยงานต้องไม่เกิน 255 ตัวอักษร'),
+		organizer_id: z.string().min(1, 'กรุณาเลือกหน่วยงานที่จัดกิจกรรม'),
 		eligible_organizations: z
 			.string()
 			.min(1, 'กรุณาเลือกหน่วยงานที่สามารถเข้าร่วมได้')
@@ -314,21 +311,33 @@
 								</Form.Field>
 							</div>
 
-							<!-- Organizer -->
+			<!-- Organizer (select from organizations) -->
 							<div>
-								<Form.Field {form} name="organizer">
+								<Form.Field {form} name="organizer_id">
 									<Form.Control>
 										{#snippet children({ props })}
 											<Label for={props.id} class="text-base font-medium"
 												>หน่วยงานที่จัดกิจกรรม *</Label
 											>
-											<Input
-												{...props}
-												bind:value={$formData.organizer}
-												placeholder="เช่น หน่วยงานวิทยาศาสตร์"
+											<input type="hidden" name="organizer_id" bind:value={$formData.organizer_id} />
+											<Select.Root
+												type="single"
+												bind:value={$formData.organizer_id as any}
 												disabled={$submitting}
-												class="text-base"
-											/>
+											>
+												<Select.Trigger>
+														{#if $formData.organizer_id}
+															{facultyOptions.find((o: { value: string; label: string }) => o.value === $formData.organizer_id)?.label || 'เลือกหน่วยงานผู้จัด'}
+													{:else}
+														เลือกหน่วยงานผู้จัด
+													{/if}
+												</Select.Trigger>
+												<Select.Content>
+													{#each facultyOptions as option}
+														<Select.Item value={option.value}>{option.label}</Select.Item>
+													{/each}
+												</Select.Content>
+											</Select.Root>
 										{/snippet}
 									</Form.Control>
 									<Form.FieldErrors />

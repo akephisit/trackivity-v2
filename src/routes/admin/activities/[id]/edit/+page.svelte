@@ -42,6 +42,9 @@
 		label: f.name
 	}));
 
+	// Organizer selection state
+	let selectedOrganizerId = $state((form as any)?.formData?.organizer_id || activity.organizer_id || '');
+
 	// Initial selected values from server
 	let selectedEligibleValues = $state<string[]>(data.eligible_organizations_selected || []);
 	let selectedEligible = $derived(
@@ -231,16 +234,25 @@
 
 				<!-- Organizer (หน่วยงานผู้จัด) -->
 				<div class="space-y-2">
-					<Label for="organizer">หน่วยงานผู้จัด *</Label>
-					<Input
-						id="organizer"
-						name="organizer"
-						type="text"
-						required
-						placeholder="เช่น สภานักศึกษา, กองกิจการนิสิต"
-						value={form?.formData?.organizer || activity.organizer || ''}
-						class="text-base"
-					/>
+					<Label for="organizer_id">หน่วยงานผู้จัด *</Label>
+					<input type="hidden" name="organizer_id" bind:value={selectedOrganizerId} />
+					<Select.Root
+						type="single"
+						bind:value={selectedOrganizerId as any}
+					>
+						<Select.Trigger>
+							{#if selectedOrganizerId}
+								{(facultyOptions.find((o) => o.value === selectedOrganizerId) || {}).label || 'เลือกหน่วยงานผู้จัด'}
+							{:else}
+								เลือกหน่วยงานผู้จัด
+							{/if}
+						</Select.Trigger>
+						<Select.Content>
+							{#each facultyOptions as option}
+								<Select.Item value={option.value}>{option.label}</Select.Item>
+							{/each}
+						</Select.Content>
+					</Select.Root>
 				</div>
 
 				<!-- Date and Time -->

@@ -1,6 +1,7 @@
 import type { PageServerLoad } from './$types';
 import { requireAdmin } from '$lib/server/auth-utils';
 import { db, activities, organizations } from '$lib/server/db';
+import { alias } from 'drizzle-orm/pg-core';
 import { and, eq } from 'drizzle-orm';
 
 export const load: PageServerLoad = async (event) => {
@@ -31,25 +32,28 @@ export const load: PageServerLoad = async (event) => {
 			? and(eq(activities.status, 'ongoing'), eq(activities.organizationId, facultyId))
 			: eq(activities.status, 'ongoing');
 
-	const rows = await db
-		.select({
-			id: activities.id,
-			title: activities.title,
-			description: activities.description,
-			start_date: activities.startDate,
-			end_date: activities.endDate,
-			start_time: activities.startTimeOnly,
-			end_time: activities.endTimeOnly,
-			activity_type: activities.activityType,
-			location: activities.location,
-			max_participants: activities.maxParticipants,
-			hours: activities.hours,
-			status: activities.status,
-			faculty_id: activities.organizationId,
-			organizer: activities.organizer
-		})
-		.from(activities)
-		.where(whereClause);
+  const orgOrganizer = alias(organizations, 'org_organizer');
+  const rows = await db
+    .select({
+      id: activities.id,
+      title: activities.title,
+      description: activities.description,
+      start_date: activities.startDate,
+      end_date: activities.endDate,
+      start_time: activities.startTimeOnly,
+      end_time: activities.endTimeOnly,
+      activity_type: activities.activityType,
+      location: activities.location,
+      max_participants: activities.maxParticipants,
+      hours: activities.hours,
+      status: activities.status,
+      faculty_id: activities.organizationId,
+      organizer_id: activities.organizerId,
+      organizer: orgOrganizer.name
+    })
+    .from(activities)
+    .leftJoin(orgOrganizer, eq(activities.organizerId, orgOrganizer.id))
+    .where(whereClause);
 
 	const admin = {
 		first_name: user.first_name,

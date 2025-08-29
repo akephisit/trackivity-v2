@@ -2,6 +2,7 @@ import { error, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 import { requireOrganizationAdmin } from '$lib/server/auth-utils';
 import { db, activities, users, organizations, participations } from '$lib/server/db';
+import { alias } from 'drizzle-orm/pg-core';
 import { eq } from 'drizzle-orm';
 
 export const load: PageServerLoad = async (event) => {
@@ -12,31 +13,34 @@ export const load: PageServerLoad = async (event) => {
 
 	try {
 		// Load activity core fields including eligible faculties
-		const rows = await db
-			.select({
-				id: activities.id,
-				title: activities.title,
-				description: activities.description,
-				location: activities.location,
-				activity_type: activities.activityType,
-				academic_year: activities.academicYear,
-				organizer: activities.organizer,
-				eligible_organizations: activities.eligibleOrganizations,
-				start_date: activities.startDate,
-				end_date: activities.endDate,
-				start_time_only: activities.startTimeOnly,
-				end_time_only: activities.endTimeOnly,
-				hours: activities.hours,
-				max_participants: activities.maxParticipants,
-				status: activities.status,
-				organization_id: activities.organizationId,
-				created_by: activities.createdBy,
-				created_at: activities.createdAt,
-				updated_at: activities.updatedAt
-			})
-			.from(activities)
-			.where(eq(activities.id, params.id))
-			.limit(1);
+    const orgOrganizer = alias(organizations, 'org_organizer');
+    const rows = await db
+      .select({
+        id: activities.id,
+        title: activities.title,
+        description: activities.description,
+        location: activities.location,
+        activity_type: activities.activityType,
+        academic_year: activities.academicYear,
+        organizer_id: activities.organizerId,
+        organizer_name: orgOrganizer.name,
+        eligible_organizations: activities.eligibleOrganizations,
+        start_date: activities.startDate,
+        end_date: activities.endDate,
+        start_time_only: activities.startTimeOnly,
+        end_time_only: activities.endTimeOnly,
+        hours: activities.hours,
+        max_participants: activities.maxParticipants,
+        status: activities.status,
+        organization_id: activities.organizationId,
+        created_by: activities.createdBy,
+        created_at: activities.createdAt,
+        updated_at: activities.updatedAt
+      })
+      .from(activities)
+      .leftJoin(orgOrganizer, eq(activities.organizerId, orgOrganizer.id))
+      .where(eq(activities.id, params.id))
+      .limit(1);
 
 		if (rows.length === 0) throw error(404, 'ไม่พบกิจกรรมที่ระบุ');
 		const a = rows[0];
@@ -56,32 +60,33 @@ export const load: PageServerLoad = async (event) => {
 				? new Date(`${a.end_date}T${a.end_time_only}`).toISOString()
 				: (a.end_date as any);
 
-		const activity = {
-			id: a.id,
-			title: a.title,
-			description: a.description || '',
-			location: a.location || '',
-			start_time: startIso,
-			end_time: endIso,
-			max_participants: a.max_participants ?? undefined,
-			current_participants: participationRows.length,
-			status: a.status as any,
-			organization_id: a.organization_id || undefined,
-			faculty_name: undefined,
-			created_by: a.created_by,
-			created_by_name: '',
-			created_at: a.created_at?.toISOString?.() || new Date().toISOString(),
-			updated_at: a.updated_at?.toISOString?.() || new Date().toISOString(),
-			is_registered: false,
-			activity_type: a.activity_type || undefined,
-			hours: a.hours ?? undefined,
-			organizer: a.organizer ?? undefined,
-			academic_year: a.academic_year ?? undefined,
-			start_date: a.start_date as any,
-			end_date: a.end_date as any,
-			start_time_only: a.start_time_only as any,
-			end_time_only: a.end_time_only as any
-		};
+    const activity = {
+      id: a.id,
+      title: a.title,
+      description: a.description || '',
+      location: a.location || '',
+      start_time: startIso,
+      end_time: endIso,
+      max_participants: a.max_participants ?? undefined,
+      current_participants: participationRows.length,
+      status: a.status as any,
+      organization_id: a.organization_id || undefined,
+      faculty_name: undefined,
+      created_by: a.created_by,
+      created_by_name: '',
+      created_at: a.created_at?.toISOString?.() || new Date().toISOString(),
+      updated_at: a.updated_at?.toISOString?.() || new Date().toISOString(),
+      is_registered: false,
+      activity_type: a.activity_type || undefined,
+      hours: a.hours ?? undefined,
+      organizer: a.organizer_name ?? undefined,
+      organizer_id: a.organizer_id ?? undefined,
+      academic_year: a.academic_year ?? undefined,
+      start_date: a.start_date as any,
+      end_date: a.end_date as any,
+      start_time_only: a.start_time_only as any,
+      end_time_only: a.end_time_only as any
+    };
 
 		// Fetch organizations for options
 		const facultiesList = await db
@@ -122,13 +127,13 @@ export const actions: Actions = {
 		// FacultyId is deprecated in UI; preserve existing value server-side
 		// const facultyIdRaw = (fd.get('faculty_id') || '').toString();
 		const eligibleRaw = (fd.get('eligible_organizations') || '').toString();
-		const organizer = (fd.get('organizer') || '').toString().trim();
+    	const organizerId = (fd.get('organizer_id') || '').toString().trim();
 
 		if (!title || !location || !startTime || !endTime) {
 			return { error: 'ข้อมูลไม่ครบถ้วน' } as const;
 		}
 
-		// Validate status
+    	// Validate status
 		const allowed = ['draft', 'published', 'ongoing', 'completed', 'cancelled'];
 		if (!allowed.includes(status)) {
 			return { error: 'สถานะไม่ถูกต้อง' } as const;
@@ -149,25 +154,25 @@ export const actions: Actions = {
 					.filter((s) => s !== '')
 			: [];
 
-		try {
-			await db
-				.update(activities)
-				.set({
-					title,
-					description: description || '',
-					location,
-					startDate: startDateStr,
-					endDate: endDateStr,
-					startTimeOnly: startTimeStr,
-					endTimeOnly: endTimeStr,
-					maxParticipants,
-					status: status as any,
-					// preserve facultyId
-					organizer,
-					eligibleOrganizations: eligibleOrganizations as any,
-					updatedAt: new Date()
-				})
-				.where(eq(activities.id, params.id));
+    try {
+      await db
+        .update(activities)
+        .set({
+          title,
+          description: description || '',
+          location,
+          startDate: startDateStr,
+          endDate: endDateStr,
+          startTimeOnly: startTimeStr,
+          endTimeOnly: endTimeStr,
+          maxParticipants,
+          status: status as any,
+          // preserve facultyId
+          organizerId: organizerId || undefined,
+          eligibleOrganizations: eligibleOrganizations as any,
+          updatedAt: new Date()
+        })
+        .where(eq(activities.id, params.id));
 
 			throw redirect(302, `/admin/activities/${params.id}`);
 		} catch (e) {

@@ -181,7 +181,10 @@ export const activities = pgTable(
 		location: varchar('location', { length: 255 }).notNull(),
 		activityType: activityType('activity_type'),
 		academicYear: varchar('academic_year', { length: 20 }).notNull(),
-		organizer: varchar('organizer', { length: 255 }).notNull(),
+		// organizerId replaces legacy text organizer; references organizations
+		organizerId: uuid('organizer_id')
+			.notNull()
+			.references(() => organizations.id, { onDelete: 'restrict' }),
 		eligibleOrganizations: jsonb('eligible_organizations')
 			.notNull()
 			.default(sql`'[]'`),
@@ -203,6 +206,7 @@ export const activities = pgTable(
 	},
 	(table) => {
 		return {
+			organizerIdIdx: index('idx_activities_organizer_id').on(table.organizerId),
 			organizationIdIdx: index('idx_activities_organization_id').on(table.organizationId),
 			createdByIdx: index('idx_activities_created_by').on(table.createdBy),
 			statusIdx: index('idx_activities_status').on(table.status),
