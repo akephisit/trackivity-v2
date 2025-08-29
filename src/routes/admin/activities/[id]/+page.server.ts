@@ -175,7 +175,9 @@ export const actions: Actions = {
 		if (!status) return { error: 'กรุณาเลือกสถานะ' } as const;
 
 		const allowed = ['draft', 'published', 'ongoing', 'completed', 'cancelled'];
-		if (!allowed.includes(status)) return { error: 'สถานะไม่ถูกต้อง' } as const;
+		if (!allowed.includes(status)) {
+			return { error: 'สถานะไม่ถูกต้อง' } as const;
+		}
 
 		try {
 			await db

@@ -192,6 +192,7 @@
 				}}
 				class="space-y-6"
 			>
+				<input type="hidden" name="status" value={selectedStatus} />
 				<!-- Title -->
 				<div class="space-y-2">
 					<Label for="title">ชื่อกิจกรรม *</Label>
