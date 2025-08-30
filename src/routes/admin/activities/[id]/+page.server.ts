@@ -36,6 +36,7 @@ export const load: PageServerLoad = async (event) => {
         created_by: activities.createdBy,
         created_at: activities.createdAt,
         updated_at: activities.updatedAt,
+        registration_open: activities.registrationOpen,
         organization_name: orgOwner.name,
         creator_first: users.firstName,
         creator_last: users.lastName
@@ -116,7 +117,8 @@ export const load: PageServerLoad = async (event) => {
       start_date: a.start_date as any,
       end_date: a.end_date as any,
       start_time_only: a.start_time_only as any,
-      end_time_only: a.end_time_only as any
+      end_time_only: a.end_time_only as any,
+      registration_open: (a as any).registration_open ?? true
     };
 
 		const participationsList = participationRows.map((p) => ({
@@ -189,7 +191,23 @@ export const actions: Actions = {
 			console.error('Update status error:', e);
 			return { error: 'อัปเดตสถานะไม่สำเร็จ' } as const;
 		}
-	},
+  },
+  toggleRegistration: async (event) => {
+    const user = requireAdmin(event);
+    const { params } = event;
+    if (!params.id) return { error: 'ไม่พบรหัสกิจกรรม' } as const;
+
+    const fd = await event.request.formData();
+    const open = fd.get('registration_open') === 'true' || fd.get('registration_open') === 'on' || fd.get('registration_open') === '1';
+
+    try {
+      await db.update(activities).set({ registrationOpen: open as any, updatedAt: new Date() }).where(eq(activities.id, params.id));
+      return { success: true } as const;
+    } catch (e) {
+      console.error('Toggle registration error:', e);
+      return { error: 'สลับสถานะการลงทะเบียนไม่สำเร็จ' } as const;
+    }
+  },
 	deleteActivity: async (event) => {
 		const user = requireAdmin(event);
 		const { params } = event;

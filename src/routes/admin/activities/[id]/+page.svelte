@@ -48,6 +48,7 @@
 	import { enhance } from '$app/forms';
 	import { invalidateAll } from '$app/navigation';
 	import { toast } from 'svelte-sonner';
+    import { Switch } from '$lib/components/ui/switch';
 
 	const { data, form } = $props<{
 		data: {
@@ -73,7 +74,39 @@
 
 	let showParticipations = $state(true);
 	let showStats = $state(true);
-	let updatingStatus = $state(false);
+    let updatingStatus = $state(false);
+    let registrationOpen = $state(!!activity.registration_open);
+    let regToggleBusy = $state(false);
+
+    async function onToggleRegistration(newVal: boolean) {
+        if (regToggleBusy) return;
+        regToggleBusy = true;
+        try {
+            const fd = new FormData();
+            fd.append('registration_open', newVal ? '1' : '0');
+            const res = await fetch('?/toggleRegistration', { method: 'POST', body: fd });
+            const result = await res.json().catch(() => ({}));
+            if (res.ok && (result.success === true || result.type === 'success')) {
+                toast.success(newVal ? 'เปิดให้นักศึกษาลงทะเบียนแล้ว' : 'ปิดรับลงทะเบียนแล้ว');
+            } else {
+                toast.error(result.error || 'อัปเดตไม่สำเร็จ');
+                registrationOpen = !newVal;
+            }
+        } catch (e) {
+            toast.error('เกิดข้อผิดพลาดในการเชื่อมต่อ');
+            registrationOpen = !newVal;
+        } finally {
+            regToggleBusy = false;
+        }
+    }
+
+    function handleRegistrationToggleClick() {
+        if (regToggleBusy) return;
+        const next = !registrationOpen;
+        // Optimistic UI update; revert on failure inside onToggleRegistration
+        registrationOpen = next;
+        onToggleRegistration(next);
+    }
 	let selectedStatus = $state(activity.status);
 
 	// Participant management states
@@ -289,6 +322,18 @@
 		</div>
 	</div>
 
+	<!-- Registration toggle quick control -->
+		<div
+			class="flex items-center gap-3 rounded-md border p-3 cursor-pointer"
+			role="button"
+			tabindex="0"
+			onclick={handleRegistrationToggleClick}
+			onkeydown={(e) => (e.key === 'Enter' || e.key === ' ') && handleRegistrationToggleClick()}
+		>
+			<Switch bind:checked={registrationOpen} class="pointer-events-none" />
+			<span class="text-sm">{registrationOpen ? 'เปิดให้นักศึกษาลงทะเบียน' : 'ปิดรับลงทะเบียน'}</span>
+		</div>
+
 	<!-- Quick Stats Cards -->
 	{#if showStats}
 		<div class="grid gap-4 md:grid-cols-4">
@@ -356,6 +401,11 @@
 					</Badge>
 				{/snippet}
 				{@render statusBadge()}
+
+				<!-- Registration open badge -->
+				<Badge variant={registrationOpen ? 'default' : 'outline'}>
+					{registrationOpen ? 'เปิดรับลงทะเบียน' : 'ปิดรับลงทะเบียน'}
+				</Badge>
 			</div>
 		</CardHeader>
 
