@@ -37,6 +37,13 @@ You can preview the production build with `npm run preview`.
 
 > To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
 
+## Environment Variables
+
+- Required (server runtime): `DATABASE_URL`, `JWT_SECRET`
+- Access pattern: server reads secrets via `$env/dynamic/private` at runtime.
+- DigitalOcean App Platform: set these in the app's Runtime environment, not only Build.
+- Local dev: copy `.env.example` to `.env` and fill values.
+
 ## Docker (Bun)
 
 Build and run a Bun-optimized container using the provided Dockerfile:

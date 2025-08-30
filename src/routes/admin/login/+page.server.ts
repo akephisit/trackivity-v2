@@ -1,4 +1,5 @@
 import { fail, redirect } from '@sveltejs/kit';
+import { dev } from '$app/environment';
 import { superValidate } from 'sveltekit-superforms';
 import { zod } from 'sveltekit-superforms/adapters';
 import { adminLoginSchema } from '$lib/schemas/auth';
@@ -26,7 +27,7 @@ export const load: PageServerLoad = async (event) => {
 	return {
 		form,
 		redirectTo: url.searchParams.get('redirectTo') || null,
-		isDevelopment: process.env.NODE_ENV === 'development'
+		isDevelopment: dev
 	};
 };
 
@@ -59,7 +60,7 @@ export const actions: Actions = {
 
 			cookies.set('session_token', token, {
 				httpOnly: true,
-				secure: process.env.NODE_ENV === 'production',
+				secure: !dev,
 				sameSite: 'lax',
 				// Session cookie when not remember_me (no maxAge)
 				...(form.data.remember_me ? { maxAge: 30 * 24 * 60 * 60 } : {}),

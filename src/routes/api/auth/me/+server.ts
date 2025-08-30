@@ -1,7 +1,7 @@
 import { json, type RequestHandler } from '@sveltejs/kit';
 import jwt from 'jsonwebtoken';
 import type { SessionUser, Permission } from '$lib/types';
-import { JWT_SECRET } from '$env/static/private';
+import { env } from '$env/dynamic/private';
 import { db, users, departments, organizations } from '$lib/server/db';
 import { eq } from 'drizzle-orm';
 
@@ -43,7 +43,14 @@ export const GET: RequestHandler = async ({ cookies }) => {
 
 		// Verify and decode JWT
 		try {
-			const decoded = jwt.verify(token, JWT_SECRET) as JWTPayload;
+			const secret = env.JWT_SECRET;
+			if (!secret) {
+				return json({
+					success: false,
+					error: { code: 'SERVER_MISCONFIG', message: 'Server misconfiguration' }
+				});
+			}
+			const decoded = jwt.verify(token, secret) as JWTPayload;
 
 			// Check token expiration
 			if (decoded.exp && Date.now() >= decoded.exp * 1000) {

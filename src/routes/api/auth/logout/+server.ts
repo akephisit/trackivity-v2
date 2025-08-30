@@ -1,4 +1,5 @@
 import { json, type RequestHandler } from '@sveltejs/kit';
+import { dev } from '$app/environment';
 
 /**
  * User logout endpoint
@@ -10,7 +11,7 @@ export const POST: RequestHandler = async ({ cookies }) => {
 		cookies.delete('session_token', {
 			path: '/',
 			httpOnly: true,
-			secure: process.env.NODE_ENV === 'production',
+			secure: !dev,
 			sameSite: 'lax'
 		});
 
@@ -28,7 +29,7 @@ export const POST: RequestHandler = async ({ cookies }) => {
 		cookies.delete('session_token', {
 			path: '/',
 			httpOnly: true,
-			secure: process.env.NODE_ENV === 'production',
+			secure: !dev,
 			sameSite: 'lax'
 		});
 
