@@ -1,43 +1,14 @@
 services:
   db:
-    image: postgres:16
+    image: postgres
     restart: always
     ports:
-      - "5433:5432"
+      - 5433:5432
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: Phlslt2571Ake
       POSTGRES_DB: trackivity
     volumes:
       - pgdata:/var/lib/postgresql/data
-
-  app:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      args:
-        # Used at build-time because the app uses $env/static/private
-        DATABASE_URL: postgresql://postgres:Phlslt2571Ake@db:5432/trackivity
-        JWT_SECRET: trackivity_super_secret_jwt_key_2024_secure_auth_system
-    environment:
-      NODE_ENV: production
-    depends_on:
-      - db
-    ports:
-      - "3000:3000"
-
-  migrate:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      target: builder
-    working_dir: /app
-    environment:
-      DATABASE_URL: postgresql://postgres:Phlslt2571Ake@db:5432/trackivity
-    depends_on:
-      - db
-    command: ["bun", "x", "drizzle-kit", "push"]
-    profiles: ["migrate"]
-
 volumes:
   pgdata:
