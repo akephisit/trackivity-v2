@@ -2,9 +2,10 @@ import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
 import * as schema from './schema';
 import { env } from '$env/dynamic/private';
-// Create connection
-const connectionString = env.DATABASE_URL;
-if (!connectionString) {
+import { building } from '$app/environment';
+// Create connection; avoid throwing during SvelteKit build
+const connectionString = env.DATABASE_URL || (building ? 'postgres://user:pass@localhost:5432/dummy' : '');
+if (!connectionString && !building) {
     throw new Error('DATABASE_URL is not set in environment');
 }
 const client = postgres(connectionString, {
