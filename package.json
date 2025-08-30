@@ -74,13 +74,15 @@
 	},
 	"dependencies": {
 		"@sveltejs/adapter-node": "^5.3.1",
+		"@types/bcrypt": "^5.0.2",
+		"@types/jsonwebtoken": "^9.0.10",
+		"@types/qrcode": "^1.5.5",
 		"bcrypt": "^5.1.1",
 		"date-fns": "^4.1.0",
 		"drizzle-orm": "^0.40.1",
-		"jsqr": "^1.4.0",
 		"jsonwebtoken": "^9.0.2",
+		"jsqr": "^1.4.0",
 		"postgres": "^3.4.7",
-		"@types/bcrypt": "^5.0.2",
-		"@types/jsonwebtoken": "^9.0.10"
+		"qrcode": "^1.5.4"
 	}
 }

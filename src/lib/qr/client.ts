@@ -7,6 +7,7 @@ import { browser } from '$app/environment';
 import { writable, type Writable, get } from 'svelte/store';
 import { apiClient } from '$lib/api/client';
 import type { QRCode, QRScanResult, SessionUser } from '$lib/types';
+import QRCodeGenerator from 'qrcode';
 
 // ===== QR CODE CONFIGURATION =====
 interface QRConfig {
@@ -111,90 +112,60 @@ class CryptoHelper {
 
 // ===== QR CODE GENERATOR =====
 export class QRGenerator {
-	private canvas: HTMLCanvasElement | null = null;
-	private ctx: CanvasRenderingContext2D | null = null;
 	private config: QRConfig;
 
 	constructor(config: Partial<QRConfig> = {}) {
 		this.config = { ...DEFAULT_QR_CONFIG, ...config };
-
-		if (browser) {
-			this.setupCanvas();
-		}
 	}
 
-	private setupCanvas(): void {
-		this.canvas = document.createElement('canvas');
-		this.canvas.width = this.config.size;
-		this.canvas.height = this.config.size;
-		this.ctx = this.canvas.getContext('2d');
-	}
-
-	// Simple QR Code generation (basic implementation)
-	// For production, consider using a library like 'qrcode' or 'qrious'
-	generateQRCodeDataURL(data: string): string {
-		if (!this.canvas || !this.ctx) {
-			throw new Error('Canvas not initialized');
+	// Generate QR Code using the qrcode library
+	async generateQRCodeDataURL(data: string): Promise<string> {
+		if (!browser) {
+			throw new Error('QR generation not available on server');
 		}
 
-		// Clear canvas
-		this.ctx.fillStyle = this.config.backgroundColor;
-		this.ctx.fillRect(0, 0, this.config.size, this.config.size);
-
-		// This is a simplified QR code generation
-		// In production, use a proper QR code library
-		const qrData = this.generateQRMatrix(data);
-		this.drawQRMatrix(qrData);
-
-		return this.canvas.toDataURL('image/png');
-	}
-
-	private generateQRMatrix(data: string): boolean[][] {
-		// Simplified QR matrix generation
-		// This is a placeholder - use a proper QR library in production
-		const size = 21; // Standard QR code size for version 1
-		const matrix: boolean[][] = [];
-
-		for (let i = 0; i < size; i++) {
-			matrix[i] = [];
-			for (let j = 0; j < size; j++) {
-				// Generate pseudo-random pattern based on data
-				const hash = this.simpleHash(data + i + j);
-				matrix[i][j] = hash % 2 === 0;
-			}
-		}
-
-		return matrix;
-	}
-
-	private simpleHash(str: string): number {
-		let hash = 0;
-		for (let i = 0; i < str.length; i++) {
-			const char = str.charCodeAt(i);
-			hash = (hash << 5) - hash + char;
-			hash = hash & hash; // Convert to 32-bit integer
-		}
-		return Math.abs(hash);
-	}
-
-	private drawQRMatrix(matrix: boolean[][]): void {
-		if (!this.ctx) return;
-
-		const moduleSize = (this.config.size - 2 * this.config.margin) / matrix.length;
-
-		this.ctx.fillStyle = this.config.color;
-
-		for (let i = 0; i < matrix.length; i++) {
-			for (let j = 0; j < matrix[i].length; j++) {
-				if (matrix[i][j]) {
-					this.ctx.fillRect(
-						this.config.margin + j * moduleSize,
-						this.config.margin + i * moduleSize,
-						moduleSize,
-						moduleSize
-					);
+		try {
+			// Generate QR code as data URL using the qrcode library
+			const qrCodeDataURL = await QRCodeGenerator.toDataURL(data, {
+				width: this.config.size,
+				margin: this.config.margin,
+				errorCorrectionLevel: this.config.errorCorrectionLevel,
+				color: {
+					dark: this.config.color,
+					light: this.config.backgroundColor
 				}
-			}
+			});
+
+			return qrCodeDataURL;
+		} catch (error) {
+			console.error('[QR] Failed to generate QR code:', error);
+			throw new Error('Failed to generate QR code');
+		}
+	}
+
+	// Generate QR Code as SVG string
+	async generateQRCodeSVG(data: string): Promise<string> {
+		if (!browser) {
+			throw new Error('QR generation not available on server');
+		}
+
+		try {
+			// Generate QR code as SVG using the qrcode library
+			const qrCodeSVG = await QRCodeGenerator.toString(data, {
+				type: 'svg',
+				width: this.config.size,
+				margin: this.config.margin,
+				errorCorrectionLevel: this.config.errorCorrectionLevel,
+				color: {
+					dark: this.config.color,
+					light: this.config.backgroundColor
+				}
+			});
+
+			return qrCodeSVG;
+		} catch (error) {
+			console.error('[QR] Failed to generate QR code SVG:', error);
+			throw new Error('Failed to generate QR code SVG');
 		}
 	}
 }
@@ -325,14 +296,17 @@ export class QRClient {
 
 				console.log('[QR] Successfully parsed API response:', qrCode);
 
-				// If backend supplies SVG, prefer it over placeholder canvas
+				// If backend supplies SVG, prefer it over client-generated QR code
 				if (payload.qr_svg && typeof payload.qr_svg === 'string') {
 					const svgDataUrl = `data:image/svg+xml;utf8,${encodeURIComponent(payload.qr_svg)}`;
 					this.qrCode.set(qrCode);
 					this.qrDataURL.set(svgDataUrl);
 					this.status.set('ready');
 					this.scheduleRefresh();
+					console.log('[QR] Using server-generated SVG QR code');
 					return;
+				} else {
+					console.log('[QR] Server did not provide SVG, generating client-side');
 				}
 			} catch (apiError) {
 				// Fallback to offline generation
@@ -342,8 +316,8 @@ export class QRClient {
 				qrCode = await this.generateOfflineQRCode(sessionId || undefined, user);
 			}
 
-			// Generate visual QR code
-			const qrDataURL = this.generator.generateQRCodeDataURL(qrCode.qr_data);
+			// Generate visual QR code using the real qrcode library
+			const qrDataURL = await this.generator.generateQRCodeDataURL(qrCode.qr_data);
 
 			// Update stores
 			this.qrCode.set(qrCode);

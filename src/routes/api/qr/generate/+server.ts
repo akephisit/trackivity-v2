@@ -1,5 +1,6 @@
 import { json, type RequestHandler } from '@sveltejs/kit';
 import { getAuthenticatedUser } from '$lib/server/auth-utils';
+import QRCode from 'qrcode';
 
 function iso(ts: number) {
 	return new Date(ts).toISOString();
@@ -36,6 +37,24 @@ export const POST: RequestHandler = async (event) => {
 		const qr_data = btoa(JSON.stringify(payload));
 		const signature = randomHex(16);
 
+		// Generate QR code SVG for better scalability
+		let qr_svg = '';
+		try {
+			qr_svg = await QRCode.toString(qr_data, {
+				type: 'svg',
+				width: 256,
+				margin: 2,
+				errorCorrectionLevel: 'M',
+				color: {
+					dark: '#000000',
+					light: '#ffffff'
+				}
+			});
+		} catch (error) {
+			console.error('[QR] Failed to generate server-side QR SVG:', error);
+			// Continue without SVG - client will generate it
+		}
+
 		return json({
 			success: true,
 			data: {
@@ -43,10 +62,12 @@ export const POST: RequestHandler = async (event) => {
 				user_id: user.user_id,
 				qr_data,
 				signature,
+				qr_svg: qr_svg || undefined, // Include SVG if generated successfully
 				created_at: iso(now),
 				expires_at: iso(now + expiresInMs),
 				is_active: true,
-				usage_count: 0
+				usage_count: 0,
+				device_fingerprint: 'server-generated'
 			}
 		});
 	} catch (error) {
