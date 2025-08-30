@@ -1,26 +1,24 @@
 <script lang="ts">
 	import type { Activity } from '$lib/types/activity';
 	import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
-	import { Button } from '$lib/components/ui/button';
-	import { Badge } from '$lib/components/ui/badge';
-	import { Skeleton } from '$lib/components/ui/skeleton';
-	import { Alert, AlertDescription } from '$lib/components/ui/alert';
-	import { Tabs, TabsList, TabsTrigger } from '$lib/components/ui/tabs';
-	import { Input } from '$lib/components/ui/input';
-	import {
-		IconCalendarEvent,
-		IconClock,
-		IconUsers,
-		IconMapPin,
-		IconSearch,
-		IconFilter,
-		IconAlertCircle,
-		IconChevronRight,
-		IconEdit,
-		IconUser
-	} from '@tabler/icons-svelte';
+    import { Button } from '$lib/components/ui/button';
+    import { Badge } from '$lib/components/ui/badge';
+    import { Skeleton } from '$lib/components/ui/skeleton';
+    import { Alert, AlertDescription } from '$lib/components/ui/alert';
+    import { Tabs, TabsList, TabsTrigger } from '$lib/components/ui/tabs';
+    import { Input } from '$lib/components/ui/input';
+    import {
+        IconCalendarEvent,
+        IconClock,
+        IconUsers,
+        IconMapPin,
+        IconSearch,
+        IconFilter,
+        IconAlertCircle,
+        IconChevronRight,
+        IconUser
+    } from '@tabler/icons-svelte';
     import { goto } from '$app/navigation';
-    import { hasPermission } from '$lib/stores/auth';
 
 	const { data } = $props<{ data: { activities: Activity[] } }>();
 	let activities: Activity[] = $state(data?.activities ?? []);
@@ -185,10 +183,7 @@
 		goto(`/student/activities/${activityId}`);
 	}
 
-    function goToEditActivity(activityId: string, event: Event) {
-        event.stopPropagation();
-        goto(`/student/activities/${activityId}/edit`);
-    }
+    // Edit functionality is not available for students; handled in admin only
 </script>
 
 <svelte:head>
@@ -299,16 +294,7 @@
 													{getActivityTypeText(activity.activity_type)}
 												</Badge>
 											{/if}
-                                {#if $hasPermission('ManageOrganizationActivities')}
-                                    <Button
-                                        size="sm"
-                                        variant="ghost"
-                                        onclick={(e) => goToEditActivity(activity.id, e)}
-                                        class="h-6 w-6 p-1 opacity-0 transition-opacity group-hover:opacity-100"
-                                    >
-                                        <IconEdit class="size-3" />
-                                    </Button>
-                                {/if}
+                                    <!-- Edit is not available for students -->
 										</div>
 									</div>
 									{#if activity.description}

@@ -31,6 +31,7 @@ export const load: PageServerLoad = async (event) => {
             organizer_name: organizations.name,
             creator_first_name: dbUsers.firstName,
             creator_last_name: dbUsers.lastName
+            registration_open: activities.registrationOpen
         })
         .from(activities)
         .leftJoin(organizations, eq(activities.organizerId, organizations.id))
@@ -79,7 +80,8 @@ export const load: PageServerLoad = async (event) => {
         is_registered: false,
         organization_id: row.organization_id || row.organizer_id || undefined,
         organization_name: row.organizer_name || undefined,
-        faculty_name: row.organizer_name || undefined
+        faculty_name: row.organizer_name || undefined,
+        registration_open: row.registration_open ?? true
     };
 
     // โหลดรายชื่อผู้เข้าร่วมและสรุปสถานะของผู้ใช้ปัจจุบัน

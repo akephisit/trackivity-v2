@@ -1,31 +1,29 @@
 <script lang="ts">
 	import type { Activity, Participation } from '$lib/types/activity';
-	import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
-	import { Button } from '$lib/components/ui/button';
-	import { Badge } from '$lib/components/ui/badge';
-	import { Alert, AlertDescription } from '$lib/components/ui/alert';
-	import { Separator } from '$lib/components/ui/separator';
-	import {
-		Table,
-		TableBody,
-		TableCell,
-		TableHead,
-		TableHeader,
-		TableRow
-	} from '$lib/components/ui/table';
-	import {
-		IconClock,
-		IconUsers,
-		IconMapPin,
-		IconArrowLeft,
-		IconEdit,
-		IconUserCheck,
-		IconInfoCircle,
-		IconBuildingBank,
-		IconUser
-	} from '@tabler/icons-svelte';
+    import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
+    import { Button } from '$lib/components/ui/button';
+    import { Badge } from '$lib/components/ui/badge';
+    import { Alert, AlertDescription } from '$lib/components/ui/alert';
+    import { Separator } from '$lib/components/ui/separator';
+    import {
+        Table,
+        TableBody,
+        TableCell,
+        TableHead,
+        TableHeader,
+        TableRow
+    } from '$lib/components/ui/table';
+    import {
+        IconClock,
+        IconUsers,
+        IconMapPin,
+        IconArrowLeft,
+        IconUserCheck,
+        IconInfoCircle,
+        IconBuildingBank,
+        IconUser
+    } from '@tabler/icons-svelte';
     import { goto } from '$app/navigation';
-    import { hasPermission } from '$lib/stores/auth';
 
 	const { data } = $props<{ data: { activity: Activity; participations: Participation[] } }>();
 	const { activity, participations } = data;
@@ -164,9 +162,7 @@
 		showParticipations = !showParticipations;
 	}
 
-	function goToEdit() {
-		goto(`/student/activities/${activity.id}/edit`);
-	}
+    // Students cannot edit activities; edits are in admin only
 
 	function goBack() {
 		goto('/student/activities');
@@ -190,10 +186,7 @@
 			<p class="text-muted-foreground">รายละเอียดกิจกรรม</p>
 		</div>
     {#if $hasPermission('ManageOrganizationActivities')}
-        <Button variant="outline" size="sm" onclick={goToEdit}>
-            <IconEdit class="mr-2 size-4" />
-            แก้ไข
-        </Button>
+        <!-- Edit button removed for students -->
     {/if}
 	</div>
 
@@ -325,24 +318,24 @@
 							{/if}
 						</AlertDescription>
 					</Alert>
-				{:else if activity.status === 'published' || activity.status === 'ongoing'}
-					{#if activity.max_participants && activity.current_participants >= activity.max_participants}
-						<Alert variant="destructive">
-							<IconInfoCircle class="size-4" />
-							<AlertDescription>กิจกรรมนี้มีผู้เข้าร่วมครบแล้ว</AlertDescription>
-						</Alert>
-					{:else}
-						<Button onclick={registerForActivity} disabled={registering} class="w-full sm:w-auto">
-							<IconUserCheck class="mr-2 size-4" />
-							{registering ? 'กำลังลงทะเบียน...' : 'ลงทะเบียนเข้าร่วม'}
-						</Button>
-					{/if}
-				{:else}
-					<Alert>
-						<IconInfoCircle class="size-4" />
-						<AlertDescription>กิจกรรมนี้ยังไม่เปิดให้ลงทะเบียน</AlertDescription>
-					</Alert>
-				{/if}
+    {:else if activity.status === 'published' && activity.registration_open}
+        {#if activity.max_participants && activity.current_participants >= activity.max_participants}
+            <Alert variant="destructive">
+                <IconInfoCircle class="size-4" />
+                <AlertDescription>กิจกรรมนี้มีผู้เข้าร่วมครบแล้ว</AlertDescription>
+            </Alert>
+        {:else}
+            <Button onclick={registerForActivity} disabled={registering} class="w-full sm:w-auto">
+                <IconUserCheck class="mr-2 size-4" />
+                {registering ? 'กำลังลงทะเบียน...' : 'ลงทะเบียนเข้าร่วม'}
+            </Button>
+        {/if}
+    {:else}
+        <Alert>
+            <IconInfoCircle class="size-4" />
+            <AlertDescription>กิจกรรมนี้ไม่เปิดให้ลงทะเบียน</AlertDescription>
+        </Alert>
+    {/if}
 			</div>
 
 			<!-- Participations Section (if available) -->

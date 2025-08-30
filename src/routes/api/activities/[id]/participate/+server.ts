@@ -25,7 +25,8 @@ export const POST: RequestHandler = async ({ params, locals }) => {
       .select({
         id: activities.id,
         status: activities.status,
-        max_participants: activities.maxParticipants
+        max_participants: activities.maxParticipants,
+        registration_open: activities.registrationOpen
       })
       .from(activities)
       .where(eq(activities.id, activityId))
@@ -39,9 +40,10 @@ export const POST: RequestHandler = async ({ params, locals }) => {
     }
 
     const act = actRows[0];
-    if (act.status !== 'published' && act.status !== 'ongoing') {
+    // อนุญาตให้ลงทะเบียนได้เฉพาะสถานะเผยแพร่ และเปิดรับลงทะเบียนเท่านั้น
+    if (act.status !== 'published' || !act.registration_open) {
       return json(
-        { success: false, error: { code: 'NOT_OPEN', message: 'Activity is not open for registration' } },
+        { success: false, error: { code: 'NOT_OPEN', message: 'กิจกรรมนี้ไม่เปิดให้ลงทะเบียน' } },
         { status: 400 }
       );
     }
@@ -83,4 +85,3 @@ export const POST: RequestHandler = async ({ params, locals }) => {
     );
   }
 };
-
