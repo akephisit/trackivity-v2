@@ -1,0 +1,30 @@
+# Dependencies and caches
+node_modules
+.svelte-kit
+.bun
+
+# Local dev/build artifacts
+build
+dist
+.vite
+.vite-temp
+
+# VCS and editor
+.git
+.gitignore
+.vscode
+
+# Env files (use docker env/compose instead)
+.env
+.env.*
+!.env.example
+!build/.env.example
+
+# Docker files themselves
+Dockerfile
+docker-compose.*
+
+# Misc
+README.md
+*.log
+
