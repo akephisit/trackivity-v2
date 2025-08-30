@@ -7,6 +7,7 @@
 	import { Textarea } from '$lib/components/ui/textarea';
 	import { Alert, AlertDescription } from '$lib/components/ui/alert';
 	import * as Select from '$lib/components/ui/select';
+	import { Switch } from '$lib/components/ui/switch';
 	import {
 		IconArrowLeft,
 		IconDeviceFloppy,
@@ -407,9 +408,10 @@
 				</div>
 
 				<!-- Registration toggle -->
+				<input type="hidden" name="registration_open" value={registrationOpen ? '1' : '0'} />
 				<div class="flex items-center gap-3">
-					<input id="registration_open" name="registration_open" type="checkbox" bind:checked={registrationOpen} />
-					<Label for="registration_open">เปิดให้นักศึกษาลงทะเบียน (ใช้ได้เฉพาะสถานะ "เผยแพร่แล้ว")</Label>
+					<Switch bind:checked={registrationOpen} />
+					<Label>เปิดให้นักศึกษาลงทะเบียน (ใช้ได้เฉพาะสถานะ "เผยแพร่แล้ว")</Label>
 				</div>
 
 				<!-- Faculty assignment removed in favor of organization (หน่วยงาน) -->

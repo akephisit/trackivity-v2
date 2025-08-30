@@ -126,7 +126,8 @@ export const actions: Actions = {
 		const endTime = (fd.get('end_time') || '').toString();
 		const maxParticipantsRaw = (fd.get('max_participants') || '').toString();
         const status = (fd.get('status') || '').toString();
-        const registrationOpen = !!fd.get('registration_open');
+        const regRaw = (fd.get('registration_open') || '').toString().toLowerCase();
+        const registrationOpen = regRaw === '1' || regRaw === 'true' || regRaw === 'on';
 		// FacultyId is deprecated in UI; preserve existing value server-side
 		// const facultyIdRaw = (fd.get('faculty_id') || '').toString();
 		const eligibleRaw = (fd.get('eligible_organizations') || '').toString();
