@@ -30,7 +30,7 @@ export const load: PageServerLoad = async (event) => {
             organization_id: activities.organizationId,
             organizer_name: organizations.name,
             creator_first_name: dbUsers.firstName,
-            creator_last_name: dbUsers.lastName
+            creator_last_name: dbUsers.lastName,
             registration_open: activities.registrationOpen
         })
         .from(activities)

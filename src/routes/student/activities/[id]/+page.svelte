@@ -185,9 +185,7 @@
 			<h1 class="text-2xl font-bold lg:text-3xl">{activity.title}</h1>
 			<p class="text-muted-foreground">รายละเอียดกิจกรรม</p>
 		</div>
-    {#if $hasPermission('ManageOrganizationActivities')}
-        <!-- Edit button removed for students -->
-    {/if}
+    <!-- Edit button removed for students -->
 	</div>
 
 	<!-- Activity Details Card -->

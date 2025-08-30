@@ -35,6 +35,9 @@
 	let selectedFaculty = $state(activity.faculty_id || '');
 	// No department selection in edit page per requirement
 
+	// Registration open toggle
+	let registrationOpen = $state(!!activity.registration_open);
+
 	// Eligible faculties selection (multi-select)
 	// Build options from provided faculties list (server now supplies it)
 	const facultyOptions = (Array.isArray(faculties) ? faculties : []).map((f: any) => ({
@@ -401,6 +404,12 @@
 							</p>
 						{/if}
 					{/if}
+				</div>
+
+				<!-- Registration toggle -->
+				<div class="flex items-center gap-3">
+					<input id="registration_open" name="registration_open" type="checkbox" bind:checked={registrationOpen} />
+					<Label for="registration_open">เปิดให้นักศึกษาลงทะเบียน (ใช้ได้เฉพาะสถานะ "เผยแพร่แล้ว")</Label>
 				</div>
 
 				<!-- Faculty assignment removed in favor of organization (หน่วยงาน) -->

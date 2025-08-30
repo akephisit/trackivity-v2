@@ -35,7 +35,8 @@ export const load: PageServerLoad = async (event) => {
         organization_id: activities.organizationId,
         created_by: activities.createdBy,
         created_at: activities.createdAt,
-        updated_at: activities.updatedAt
+        updated_at: activities.updatedAt,
+        registration_open: activities.registrationOpen
       })
       .from(activities)
       .leftJoin(orgOrganizer, eq(activities.organizerId, orgOrganizer.id))
@@ -85,7 +86,8 @@ export const load: PageServerLoad = async (event) => {
       start_date: a.start_date as any,
       end_date: a.end_date as any,
       start_time_only: a.start_time_only as any,
-      end_time_only: a.end_time_only as any
+      end_time_only: a.end_time_only as any,
+      registration_open: (a as any).registration_open ?? true
     };
 
 		// Fetch organizations for options
@@ -123,7 +125,8 @@ export const actions: Actions = {
 		const startTime = (fd.get('start_time') || '').toString(); // yyyy-MM-ddTHH:mm
 		const endTime = (fd.get('end_time') || '').toString();
 		const maxParticipantsRaw = (fd.get('max_participants') || '').toString();
-		const status = (fd.get('status') || '').toString();
+        const status = (fd.get('status') || '').toString();
+        const registrationOpen = !!fd.get('registration_open');
 		// FacultyId is deprecated in UI; preserve existing value server-side
 		// const facultyIdRaw = (fd.get('faculty_id') || '').toString();
 		const eligibleRaw = (fd.get('eligible_organizations') || '').toString();
@@ -180,7 +183,8 @@ export const actions: Actions = {
                 maxParticipants,
                 status: status as any,
                 eligibleOrganizations: eligibleOrganizations as any,
-                updatedAt: new Date()
+                updatedAt: new Date(),
+                registrationOpen: registrationOpen
             };
 
             if (isSuperAdmin) {
