@@ -61,7 +61,9 @@
 		form?: any;
 	}>();
 
-	const { activity, participations, participationStats } = data;
+	const activity = $derived(data.activity);
+	const participations = $derived(data.participations);
+	const participationStats = $derived(data.participationStats);
 
 	// Eligible faculties names mapped from server-provided IDs and faculties list
 	const eligibleFacultyNames = $derived(() => {
@@ -75,7 +77,10 @@
 	let showParticipations = $state(true);
 	let showStats = $state(true);
     let updatingStatus = $state(false);
-    let registrationOpen = $state(!!activity.registration_open);
+    let registrationOpen = $state(false);
+    $effect(() => {
+        registrationOpen = !!activity.registration_open;
+    });
     let regToggleBusy = $state(false);
 
     async function onToggleRegistration(newVal: boolean) {
@@ -107,7 +112,10 @@
         registrationOpen = next;
         onToggleRegistration(next);
     }
-	let selectedStatus = $state(activity.status);
+    let selectedStatus = $state('');
+    $effect(() => {
+        selectedStatus = activity.status;
+    });
 
 	// Participant management states
 	let editingParticipant: Participation | null = $state(null);
