@@ -15,10 +15,12 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        # Used at build-time because the app uses $env/static/private
+        DATABASE_URL: postgresql://postgres:Phlslt2571Ake@db:5432/trackivity
+        JWT_SECRET: trackivity_super_secret_jwt_key_2024_secure_auth_system
     environment:
       NODE_ENV: production
-      DATABASE_URL: postgresql://postgres:Phlslt2571Ake@db:5432/trackivity
-      JWT_SECRET: trackivity_super_secret_jwt_key_2024_secure_auth_system
     depends_on:
       - db
     ports:

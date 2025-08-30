@@ -3,13 +3,11 @@ import { db, users, departments, organizations } from '$lib/server/db';
 import { eq } from 'drizzle-orm';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
-import { env } from '$env/dynamic/private';
+import { JWT_SECRET } from '$env/static/private';
 
 function verifyToken(token: string) {
 	try {
-		const secret = env.JWT_SECRET;
-		if (!secret) return null;
-		return jwt.verify(token, secret) as any;
+		return jwt.verify(token, JWT_SECRET) as any;
 	} catch {
 		return null;
 	}

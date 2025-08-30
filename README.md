@@ -43,8 +43,8 @@ You can preview the production build with `npm run preview`.
   - `docker compose up --build`
 - Run DB migrations (one-off):
   - `docker compose run --rm migrate`
-- Runtime environment (set in `docker-compose.yml`):
+- Environment used at build-time:
   - `DATABASE_URL=postgresql://postgres:Phlslt2571Ake@db:5432/trackivity`
   - `JWT_SECRET=trackivity_super_secret_jwt_key_2024_secure_auth_system`
 
-Note: The server uses SvelteKit `$env/dynamic/private`, so you can change environment variables without rebuilding the image. Update `docker-compose.yml` and re-run `docker compose up`.
+Note: This project uses SvelteKit `$env/static/private`, so `DATABASE_URL` and `JWT_SECRET` are baked into the image at build time. To change them, rebuild the image or override build args in `docker-compose.yml`.
