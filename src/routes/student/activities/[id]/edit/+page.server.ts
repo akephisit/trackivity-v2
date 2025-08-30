@@ -1,11 +1,12 @@
 import type { PageServerLoad } from './$types';
-import { requireAuth } from '$lib/server/auth-utils';
+import { requirePermission } from '$lib/server/auth-utils';
 import { db, activities } from '$lib/server/db';
 import { eq } from 'drizzle-orm';
 import { error } from '@sveltejs/kit';
 
 export const load: PageServerLoad = async (event) => {
-	const user = requireAuth(event);
+	// Only users with ManageOrganizationActivities can access edit page
+	const user = requirePermission(event, 'ManageOrganizationActivities');
 	const { params } = event;
 
 	try {

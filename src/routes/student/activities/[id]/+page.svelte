@@ -24,7 +24,8 @@
 		IconBuildingBank,
 		IconUser
 	} from '@tabler/icons-svelte';
-	import { goto } from '$app/navigation';
+    import { goto } from '$app/navigation';
+    import { hasPermission } from '$lib/stores/auth';
 
 	const { data } = $props<{ data: { activity: Activity; participations: Participation[] } }>();
 	const { activity, participations } = data;
@@ -188,10 +189,12 @@
 			<h1 class="text-2xl font-bold lg:text-3xl">{activity.title}</h1>
 			<p class="text-muted-foreground">รายละเอียดกิจกรรม</p>
 		</div>
-		<Button variant="outline" size="sm" onclick={goToEdit}>
-			<IconEdit class="mr-2 size-4" />
-			แก้ไข
-		</Button>
+    {#if $hasPermission('ManageOrganizationActivities')}
+        <Button variant="outline" size="sm" onclick={goToEdit}>
+            <IconEdit class="mr-2 size-4" />
+            แก้ไข
+        </Button>
+    {/if}
 	</div>
 
 	<!-- Activity Details Card -->

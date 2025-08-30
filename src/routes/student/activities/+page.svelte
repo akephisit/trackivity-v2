@@ -18,7 +18,8 @@
 		IconChevronRight,
 		IconEdit
 	} from '@tabler/icons-svelte';
-	import { goto } from '$app/navigation';
+    import { goto } from '$app/navigation';
+    import { hasPermission } from '$lib/stores/auth';
 
 	const { data } = $props<{ data: { activities: Activity[] } }>();
 	let activities: Activity[] = $state(data?.activities ?? []);
@@ -183,10 +184,10 @@
 		goto(`/student/activities/${activityId}`);
 	}
 
-	function goToEditActivity(activityId: string, event: Event) {
-		event.stopPropagation();
-		goto(`/student/activities/${activityId}/edit`);
-	}
+    function goToEditActivity(activityId: string, event: Event) {
+        event.stopPropagation();
+        goto(`/student/activities/${activityId}/edit`);
+    }
 </script>
 
 <svelte:head>
@@ -297,14 +298,16 @@
 													{getActivityTypeText(activity.activity_type)}
 												</Badge>
 											{/if}
-											<Button
-												size="sm"
-												variant="ghost"
-												onclick={(e) => goToEditActivity(activity.id, e)}
-												class="h-6 w-6 p-1 opacity-0 transition-opacity group-hover:opacity-100"
-											>
-												<IconEdit class="size-3" />
-											</Button>
+                                {#if $hasPermission('ManageOrganizationActivities')}
+                                    <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        onclick={(e) => goToEditActivity(activity.id, e)}
+                                        class="h-6 w-6 p-1 opacity-0 transition-opacity group-hover:opacity-100"
+                                    >
+                                        <IconEdit class="size-3" />
+                                    </Button>
+                                {/if}
 										</div>
 									</div>
 									{#if activity.description}
