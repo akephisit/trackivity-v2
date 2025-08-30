@@ -42,6 +42,15 @@
 	let { data } = $props();
 	let refreshing = $state(false);
 
+	// Permissions for creating departments (UX guard)
+	const canCreateDepartments = $derived.by(() => {
+		if (data.userRole === 'SuperAdmin') return true;
+		if (data.userRole === 'OrganizationAdmin') {
+			return data.currentFaculty?.organizationType === 'faculty';
+		}
+		return false;
+	});
+
 	// Department schemas
 	const departmentCreateSchema = z.object({
 		name: z.string().min(1, 'กรุณากรอกชื่อภาควิชา'),
@@ -340,13 +349,15 @@
 				{/if}
 			</p>
 		</div>
-		<Button
-			onclick={openCreateDialog}
-			class="bg-blue-600 px-6 py-3 text-base font-medium text-white hover:bg-blue-700"
-		>
-			<IconPlus class="mr-2 h-5 w-5" />
-			เพิ่มภาควิชาใหม่
-		</Button>
+		{#if canCreateDepartments}
+			<Button
+				onclick={openCreateDialog}
+				class="bg-blue-600 px-6 py-3 text-base font-medium text-white hover:bg-blue-700"
+			>
+				<IconPlus class="mr-2 h-5 w-5" />
+				เพิ่มภาควิชาใหม่
+			</Button>
+		{/if}
 	</div>
 
 	<!-- Stats Cards -->
@@ -490,13 +501,15 @@
 					<IconBuilding class="mx-auto mb-6 h-16 w-16 opacity-50" />
 					<h3 class="mb-2 text-xl font-semibold">ยังไม่มีข้อมูลภาควิชาในระบบ</h3>
 					<p class="mb-6 text-gray-400">เริ่มต้นด้วยการเพิ่มภาควิชาแรก</p>
-					<Button
-						onclick={openCreateDialog}
-						class="bg-blue-600 px-6 py-3 text-white hover:bg-blue-700"
-					>
-						<IconPlus class="mr-2 h-5 w-5" />
-						เพิ่มภาควิชาแรก
-					</Button>
+					{#if canCreateDepartments}
+						<Button
+							onclick={openCreateDialog}
+							class="bg-blue-600 px-6 py-3 text-white hover:bg-blue-700"
+						>
+							<IconPlus class="mr-2 h-5 w-5" />
+							เพิ่มภาควิชาแรก
+						</Button>
+					{/if}
 				{/if}
 			</div>
 		{:else}
