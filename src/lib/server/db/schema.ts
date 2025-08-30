@@ -200,7 +200,7 @@ export const activities = pgTable(
 		endTimeOnly: time('end_time_only').notNull(),
 		hours: integer('hours').notNull(),
 		maxParticipants: integer('max_participants'),
-		registrationOpen: boolean('registration_open').notNull().default(true),
+        registrationOpen: boolean('registration_open').notNull().default(false),
 		status: activityStatus('status').notNull().default('draft'),
 		organizationId: uuid('organization_id').references(() => organizations.id, {
 			onDelete: 'set null'

@@ -87,7 +87,7 @@ export const load: PageServerLoad = async (event) => {
       end_date: a.end_date as any,
       start_time_only: a.start_time_only as any,
       end_time_only: a.end_time_only as any,
-      registration_open: (a as any).registration_open ?? true
+      registration_open: (a as any).registration_open ?? false
     };
 
 		// Fetch organizations for options

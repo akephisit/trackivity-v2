@@ -81,7 +81,7 @@ export const load: PageServerLoad = async (event) => {
         organization_id: row.organization_id || row.organizer_id || undefined,
         organization_name: row.organizer_name || undefined,
         faculty_name: row.organizer_name || undefined,
-        registration_open: row.registration_open ?? true
+        registration_open: row.registration_open ?? false
     };
 
     // โหลดรายชื่อผู้เข้าร่วมและสรุปสถานะของผู้ใช้ปัจจุบัน
