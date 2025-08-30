@@ -2,6 +2,8 @@ import { json, type RequestHandler } from '@sveltejs/kit';
 import jwt from 'jsonwebtoken';
 import type { SessionUser, Permission } from '$lib/types';
 import { JWT_SECRET } from '$env/static/private';
+import { db, users, departments, organizations } from '$lib/server/db';
+import { eq } from 'drizzle-orm';
 
 /**
  * JWT payload interface matching login endpoint
@@ -55,6 +57,7 @@ export const GET: RequestHandler = async ({ cookies }) => {
 				});
 			}
 
+
 			// Build permissions array based on admin status
 			const permissions: Permission[] = [];
 			if (decoded.is_admin) {
@@ -89,25 +92,44 @@ export const GET: RequestHandler = async ({ cookies }) => {
 				permissions.push('ViewPersonalQR', 'ViewPersonalHistory');
 			}
 
-			// Build consistent SessionUser response
+			// Enrich with live DB info to ensure fresh profile fields
+			const rows = await db
+				.select({
+					user: users,
+					dept: departments,
+					org: organizations
+				})
+				.from(users)
+				.leftJoin(departments, eq(users.departmentId, departments.id))
+				.leftJoin(organizations, eq(departments.organizationId, organizations.id))
+				.where(eq(users.id, decoded.user_id))
+				.limit(1);
+
+			const row = rows[0];
+			const u = row?.user;
+
 			const sessionUser: SessionUser = {
 				user_id: decoded.user_id,
 				student_id: decoded.student_id,
 				email: decoded.email,
 				first_name: decoded.first_name,
 				last_name: decoded.last_name,
-				department_id: decoded.department_id,
-				organization_id: decoded.organization_id,
-				session_id: token.slice(0, 16), // Use first 16 chars as session ID
+				department_id: decoded.department_id || u?.departmentId || undefined,
+				organization_id: decoded.organization_id || row?.org?.id || undefined,
+				organization_name: row?.org?.name || undefined,
+				department_name: row?.dept?.name || undefined,
+				session_id: token.slice(0, 16),
 				permissions,
 				expires_at: decoded.exp
 					? new Date(decoded.exp * 1000).toISOString()
 					: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+				created_at: u?.createdAt ? new Date(u.createdAt).toISOString() : undefined,
+				updated_at: u?.updatedAt ? new Date(u.updatedAt).toISOString() : undefined,
 				admin_role: decoded.is_admin
 					? {
 							id: `admin_${decoded.user_id}`,
 							admin_level: (decoded.admin_level as any) || 'RegularAdmin',
-							organization_id: decoded.organization_id,
+							organization_id: decoded.organization_id || row?.org?.id || undefined,
 							permissions,
 							created_at: new Date().toISOString(),
 							updated_at: new Date().toISOString()
@@ -115,10 +137,7 @@ export const GET: RequestHandler = async ({ cookies }) => {
 					: undefined
 			};
 
-			return json({
-				success: true,
-				data: sessionUser
-			});
+			return json({ success: true, data: sessionUser });
 		} catch (jwtError) {
 			console.debug('[Auth] JWT validation failed:', jwtError);
 			// Return 200 with error payload; client handles silently
