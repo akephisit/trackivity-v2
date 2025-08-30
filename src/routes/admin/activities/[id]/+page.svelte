@@ -617,7 +617,7 @@
 									<TableHead>รหัสนักศึกษา</TableHead>
 									<TableHead>สาขา</TableHead>
 									<TableHead>สถานะ</TableHead>
-									<TableHead>ลงทะเบียนเมื่อ</TableHead>
+										<TableHead>ลงทะเบียนล่วงหน้าเมื่อ</TableHead>
 									<TableHead>เช็คอิน</TableHead>
 									<TableHead>เช็คเอาต์</TableHead>
 									<TableHead class="text-right">การดำเนินการ</TableHead>
