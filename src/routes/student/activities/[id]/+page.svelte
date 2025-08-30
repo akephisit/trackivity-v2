@@ -82,13 +82,13 @@
 		}
 	}
 
-	function getParticipationStatusBadge(status: string): {
-		text: string;
-		variant: 'default' | 'secondary' | 'outline' | 'destructive';
-	} {
-		switch (status) {
-			case 'registered':
-				return { text: 'ลงทะเบียนแล้ว', variant: 'outline' };
+    function getParticipationStatusBadge(status: string): {
+        text: string;
+        variant: 'default' | 'secondary' | 'outline' | 'destructive';
+    } {
+        switch (status) {
+            case 'registered':
+                return { text: 'ลงทะเบียนล่วงหน้าแล้ว', variant: 'outline' };
 			case 'checked_in':
 				return { text: 'เช็คอินแล้ว', variant: 'secondary' };
 			case 'checked_out':
@@ -144,15 +144,15 @@
 					// Refresh the page to update registration status
 					window.location.reload();
 				} else {
-					alert(result.message || 'เกิดข้อผิดพลาดในการลงทะเบียน');
+            alert(result.message || 'เกิดข้อผิดพลาดในการลงทะเบียนล่วงหน้า');
 				}
 			} else {
 				const error = await response.json();
-				alert(error.message || 'เกิดข้อผิดพลาดในการลงทะเบียน');
+            alert(error.message || 'เกิดข้อผิดพลาดในการลงทะเบียนล่วงหน้า');
 			}
 		} catch (error) {
 			console.error('Registration error:', error);
-			alert('เกิดข้อผิดพลาดในการลงทะเบียน');
+        alert('เกิดข้อผิดพลาดในการลงทะเบียนล่วงหน้า');
 		} finally {
 			registering = false;
 		}
@@ -298,13 +298,13 @@
 
 			<!-- Registration Status and Actions -->
 			<div class="space-y-4">
-				<h3 class="text-lg font-semibold">สถานะการลงทะเบียน</h3>
+    <h3 class="text-lg font-semibold">สถานะการลงทะเบียนล่วงหน้า</h3>
 
 				{#if activity.is_registered}
 					<Alert>
 						<IconUserCheck class="size-4" />
 						<AlertDescription>
-							คุณได้ลงทะเบียนกิจกรรมนี้แล้ว
+                        คุณได้ลงทะเบียนล่วงหน้าสำหรับกิจกรรมนี้แล้ว
 							{#if activity.user_participation_status}
 								{#snippet participationBadge()}
 									{@const status = getParticipationStatusBadge(activity.user_participation_status)}
@@ -325,13 +325,13 @@
         {:else}
             <Button onclick={registerForActivity} disabled={registering} class="w-full sm:w-auto">
                 <IconUserCheck class="mr-2 size-4" />
-                {registering ? 'กำลังลงทะเบียน...' : 'ลงทะเบียนเข้าร่วม'}
+                {registering ? 'กำลังลงทะเบียนล่วงหน้า...' : 'ลงทะเบียนล่วงหน้า'}
             </Button>
         {/if}
     {:else}
         <Alert>
             <IconInfoCircle class="size-4" />
-            <AlertDescription>กิจกรรมนี้ไม่เปิดให้ลงทะเบียน</AlertDescription>
+            <AlertDescription>กิจกรรมนี้ไม่เปิดให้ลงทะเบียนล่วงหน้า</AlertDescription>
         </Alert>
     {/if}
 			</div>
@@ -357,7 +357,7 @@
 										<TableHead>รหัสนักศึกษา</TableHead>
 										<TableHead>สาขา</TableHead>
 										<TableHead>สถานะ</TableHead>
-										<TableHead>ลงทะเบียนเมื่อ</TableHead>
+                    <TableHead>ลงทะเบียนล่วงหน้าเมื่อ</TableHead>
 									</TableRow>
 								</TableHeader>
 								<TableBody>

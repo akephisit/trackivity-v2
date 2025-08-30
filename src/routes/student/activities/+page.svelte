@@ -354,9 +354,9 @@
 										{@render statusBadge()}
 
 										<div class="flex items-center gap-2">
-											{#if activity.is_registered}
-												<Badge variant="outline" class="text-xs">ลงทะเบียนแล้ว</Badge>
-											{/if}
+                                    {#if activity.is_registered}
+                                        <Badge variant="outline" class="text-xs">ลงทะเบียนล่วงหน้าแล้ว</Badge>
+                                    {/if}
 											<Button
 												size="sm"
 												variant="ghost"

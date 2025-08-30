@@ -87,7 +87,7 @@
             const res = await fetch('?/toggleRegistration', { method: 'POST', body: fd });
             const result = await res.json().catch(() => ({}));
             if (res.ok && (result.success === true || result.type === 'success')) {
-                toast.success(newVal ? 'เปิดให้นักศึกษาลงทะเบียนแล้ว' : 'ปิดรับลงทะเบียนแล้ว');
+                toast.success(newVal ? 'เปิดให้นักศึกษาลงทะเบียนล่วงหน้าแล้ว' : 'ปิดรับลงทะเบียนล่วงหน้าแล้ว');
             } else {
                 toast.error(result.error || 'อัปเดตไม่สำเร็จ');
                 registrationOpen = !newVal;
@@ -176,8 +176,8 @@
 		variant: 'default' | 'secondary' | 'outline' | 'destructive';
 	} {
 		switch (status) {
-			case 'registered':
-				return { text: 'ลงทะเบียนแล้ว', variant: 'outline' };
+            case 'registered':
+                return { text: 'ลงทะเบียนล่วงหน้าแล้ว', variant: 'outline' };
 			case 'checked_in':
 				return { text: 'เช็คอินแล้ว', variant: 'secondary' };
 			case 'checked_out':
@@ -236,7 +236,7 @@
 				'อีเมล',
 				'สาขา',
 				'สถานะ',
-				'ลงทะเบียนเมื่อ',
+            'ลงทะเบียนล่วงหน้าเมื่อ',
 				'เช็คอินเมื่อ',
 				'เช็คเอาต์เมื่อ',
 				'หมายเหตุ'
@@ -272,7 +272,7 @@
 	];
 
 	const participationStatusOptions: { value: ParticipationStatus; label: string }[] = [
-		{ value: 'registered', label: 'ลงทะเบียนแล้ว' },
+        { value: 'registered', label: 'ลงทะเบียนล่วงหน้าแล้ว' },
 		{ value: 'checked_in', label: 'เช็คอินแล้ว' },
 		{ value: 'checked_out', label: 'เช็คเอาต์แล้ว' },
 		{ value: 'completed', label: 'เสร็จสิ้น' }
@@ -331,7 +331,7 @@
 			onkeydown={(e) => (e.key === 'Enter' || e.key === ' ') && handleRegistrationToggleClick()}
 		>
 			<Switch bind:checked={registrationOpen} class="pointer-events-none" />
-			<span class="text-sm">{registrationOpen ? 'เปิดให้นักศึกษาลงทะเบียน' : 'ปิดรับลงทะเบียน'}</span>
+			<span class="text-sm">{registrationOpen ? 'เปิดให้นักศึกษาลงทะเบียนล่วงหน้า' : 'ปิดรับลงทะเบียนล่วงหน้า'}</span>
 		</div>
 
 	<!-- Quick Stats Cards -->
@@ -354,7 +354,7 @@
 
 			<Card>
 				<CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
-					<CardTitle class="text-sm font-medium">ลงทะเบียนแล้ว</CardTitle>
+					<CardTitle class="text-sm font-medium">ลงทะเบียนล่วงหน้าแล้ว</CardTitle>
 					<IconUserCheck class="h-4 w-4 text-blue-500" />
 				</CardHeader>
 				<CardContent>
@@ -404,7 +404,7 @@
 
 				<!-- Registration open badge -->
 				<Badge variant={registrationOpen ? 'default' : 'outline'}>
-					{registrationOpen ? 'เปิดรับลงทะเบียน' : 'ปิดรับลงทะเบียน'}
+					{registrationOpen ? 'เปิดรับลงทะเบียนล่วงหน้า' : 'ปิดรับลงทะเบียนล่วงหน้า'}
 				</Badge>
 			</div>
 		</CardHeader>

@@ -40,10 +40,10 @@ export const POST: RequestHandler = async ({ params, locals }) => {
     }
 
     const act = actRows[0];
-    // อนุญาตให้ลงทะเบียนได้เฉพาะสถานะเผยแพร่ และเปิดรับลงทะเบียนเท่านั้น
+    // อนุญาตให้ลงทะเบียนล่วงหน้าได้เฉพาะสถานะเผยแพร่ และเปิดรับลงทะเบียนล่วงหน้าเท่านั้น
     if (act.status !== 'published' || !act.registration_open) {
       return json(
-        { success: false, error: { code: 'NOT_OPEN', message: 'กิจกรรมนี้ไม่เปิดให้ลงทะเบียน' } },
+        { success: false, error: { code: 'NOT_OPEN', message: 'กิจกรรมนี้ไม่เปิดให้ลงทะเบียนล่วงหน้า' } },
         { status: 400 }
       );
     }
