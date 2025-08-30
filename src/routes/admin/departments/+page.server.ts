@@ -37,7 +37,7 @@ export const load: PageServerLoad = async (event) => {
 	const user = requireAdmin(event);
 	const admin_role = user.admin_role;
 
-	// For SuperAdmin, show all departments; for FacultyAdmin, show only their faculty's departments
+	// For SuperAdmin, show all departments; for OrganizationAdmin, show only their organization's departments
 	let apiEndpoint = `/api/departments`;
 	if (admin_role?.admin_level === 'OrganizationAdmin' && (admin_role as any).organization_id) {
 		apiEndpoint = `/api/organizations/${(admin_role as any).organization_id}/departments`;
@@ -121,6 +121,11 @@ export const load: PageServerLoad = async (event) => {
 					updated_at: f.updated_at?.toISOString() || new Date().toISOString()
 				};
 			}
+
+			// If organization type is 'office', block access to departments page
+			if (currentFaculty && currentFaculty.organizationType !== 'faculty') {
+				throw redirect(303, '/unauthorized');
+			}
 		}
 
 		// If SuperAdmin, load faculty-type organizations list for selection
@@ -181,7 +186,7 @@ export const actions: Actions = {
 		const user = requireAdmin(event);
 		const admin_role = user.admin_role;
 
-		// Only SuperAdmin and OrganizationAdmin can create departments
+		// Only SuperAdmin and OrganizationAdmin (faculty-type only) can create departments
 		if (
 			admin_role?.admin_level !== 'SuperAdmin' &&
 			admin_role?.admin_level !== 'OrganizationAdmin'
@@ -195,6 +200,19 @@ export const actions: Actions = {
 
 		if (!form.valid) {
 			return fail(400, { form });
+		}
+
+		// If OrganizationAdmin, verify their organization type is 'faculty'
+		if (admin_role?.admin_level === 'OrganizationAdmin' && (admin_role as any).organization_id) {
+			const rows = await db
+				.select({ organizationType: organizations.organizationType })
+				.from(organizations)
+				.where(eq(organizations.id, (admin_role as any).organization_id))
+				.limit(1);
+			const orgType = rows[0]?.organizationType;
+			if (orgType !== 'faculty') {
+				return fail(403, { error: 'หน่วยงานประเภทนี้ไม่สามารถสร้างภาควิชาได้' });
+			}
 		}
 
 		// Determine the API endpoint based on user role

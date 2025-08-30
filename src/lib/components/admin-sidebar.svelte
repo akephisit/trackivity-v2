@@ -22,16 +22,18 @@
 	import { toast } from 'svelte-sonner';
 	import type { ComponentProps } from 'svelte';
 
-	interface AdminSidebarProps extends ComponentProps<typeof Sidebar.Root> {
-		user?: any;
-		admin_role?: {
-			admin_level: AdminLevel;
-			faculty_id?: string;
-			role_name?: string;
-		};
-	}
+    interface AdminSidebarProps extends ComponentProps<typeof Sidebar.Root> {
+        user?: any;
+        admin_role?: {
+            admin_level: AdminLevel;
+            faculty_id?: string;
+            role_name?: string;
+            organization_id?: string;
+        };
+        organization?: { id: string; name: string; organizationType?: 'faculty' | 'office' };
+    }
 
-	let { user, admin_role, ...restProps }: AdminSidebarProps = $props();
+    let { user, admin_role, organization, ...restProps }: AdminSidebarProps = $props();
 
 	// Navigation items based on admin level
 	let navigationItems = $derived(getNavigationItems(admin_role?.admin_level));
@@ -47,7 +49,7 @@
 		description?: string;
 	}
 
-	function getNavigationItems(adminLevel?: AdminLevel): NavigationItem[] {
+    function getNavigationItems(adminLevel?: AdminLevel): NavigationItem[] {
 		const baseItems: NavigationItem[] = [
 			{
 				title: 'แดชบอร์ด',
@@ -96,31 +98,34 @@
 					description: 'จัดการผู้ดูแลระบบ'
 				}
 			);
-		} else if (adminLevel === 'OrganizationAdmin') {
-			baseItems.push(
-				{
-					title: 'จัดการภาควิชา',
-					href: '/admin/departments',
-					icon: IconBuildingStore,
-					active: page.url.pathname.startsWith('/admin/departments'),
-					description: 'จัดการสาขา/ภาควิชาในหน่วยงาน'
-				},
-				{
-					title: 'จัดการผู้ใช้หน่วยงาน',
-					href: '/admin/organization-users',
-					icon: IconUsers,
-					active: page.url.pathname.startsWith('/admin/organization-users'),
-					description: 'จัดการผู้ใช้ในหน่วยงาน'
-				},
-				{
-					title: 'จัดการแอดมินหน่วยงาน',
-					href: '/admin/organization-admins',
-					icon: IconUserCog,
-					active: page.url.pathname.startsWith('/admin/organization-admins'),
-					description: 'จัดการผู้ดูแลหน่วยงาน'
-				}
-			);
-		}
+        } else if (adminLevel === 'OrganizationAdmin') {
+            // Show departments menu only for faculty-type organizations
+            if (organization?.organizationType === 'faculty') {
+                baseItems.push({
+                    title: 'จัดการภาควิชา',
+                    href: '/admin/departments',
+                    icon: IconBuildingStore,
+                    active: page.url.pathname.startsWith('/admin/departments'),
+                    description: 'จัดการสาขา/ภาควิชาในหน่วยงาน'
+                });
+            }
+            baseItems.push(
+                {
+                    title: 'จัดการผู้ใช้หน่วยงาน',
+                    href: '/admin/organization-users',
+                    icon: IconUsers,
+                    active: page.url.pathname.startsWith('/admin/organization-users'),
+                    description: 'จัดการผู้ใช้ในหน่วยงาน'
+                },
+                {
+                    title: 'จัดการแอดมินหน่วยงาน',
+                    href: '/admin/organization-admins',
+                    icon: IconUserCog,
+                    active: page.url.pathname.startsWith('/admin/organization-admins'),
+                    description: 'จัดการผู้ดูแลหน่วยงาน'
+                }
+            );
+        }
 
 		baseItems.push({
 			title: 'ตั้งค่า',
