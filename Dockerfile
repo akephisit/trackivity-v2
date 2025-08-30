@@ -1,7 +1,7 @@
 # Multi-stage build for SvelteKit (adapter-bun)
 
 # 1) Builder: install deps and build
-FROM oven/bun:1.1 AS builder
+FROM oven/bun:1.2 AS builder
 WORKDIR /app
 
 # Copy lockfile and package manifest first for better caching
@@ -13,18 +13,12 @@ RUN bun install --frozen-lockfile
 # Copy the rest of the app
 COPY . .
 
-# Inject build-time env for SvelteKit's $env/static/private usage
-ARG DATABASE_URL=postgresql://postgres:password@db:5432/trackivity
-ARG JWT_SECRET=changeme-super-secret
-ENV DATABASE_URL=${DATABASE_URL}
-ENV JWT_SECRET=${JWT_SECRET}
-
 # Build the SvelteKit app (outputs to ./build with adapter-bun)
 RUN bun run build
 
 
 # 2) Runner: copy built output and run
-FROM oven/bun:1.1 AS runner
+FROM oven/bun:1.2 AS runner
 WORKDIR /app
 
 # Runtime env
@@ -38,4 +32,3 @@ WORKDIR /app/build
 
 EXPOSE 3000
 CMD ["bun", "run", "start"]
-
