@@ -538,6 +538,8 @@
 				<Form.Control>
 					{#snippet children({ props })}
 						<Label for={props.id}>ประเภทหน่วยงาน</Label>
+						<!-- Hidden input to ensure superforms serializes selected value -->
+						<input type="hidden" name={props.name} value={$createFormData.organizationType} />
 						<Select.Root 
 							type="single"
 							bind:value={$createFormData.organizationType}
