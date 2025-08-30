@@ -16,7 +16,8 @@
 		IconFilter,
 		IconAlertCircle,
 		IconChevronRight,
-		IconEdit
+		IconEdit,
+		IconUser
 	} from '@tabler/icons-svelte';
     import { goto } from '$app/navigation';
     import { hasPermission } from '$lib/stores/auth';
