@@ -131,7 +131,7 @@
 
 	<div class="flex">
 		<!-- Desktop Sidebar -->
-		<aside class="hidden min-h-screen w-64 flex-col border-r bg-card lg:flex">
+		<aside class="hidden h-screen w-64 flex-col overflow-hidden border-r bg-card lg:flex">
 			<!-- Logo -->
 			<div class="border-b p-6">
 				<h1 class="text-xl font-bold text-foreground">Trackivity</h1>
@@ -139,7 +139,7 @@
 			</div>
 
 			<!-- Navigation -->
-			<nav class="flex-1 space-y-2 px-4 py-6">
+			<nav class="flex-1 overflow-y-auto space-y-2 px-4 py-6">
 				{#each navItems as item}
 					<a
 						href={item.href}
@@ -158,7 +158,7 @@
 
 			<!-- User Info -->
 			{#if $currentUser}
-				<div class="border-t p-4">
+				<div class="border-t p-4 shrink-0">
 					<div class="space-y-2">
 						<p class="text-sm font-medium">
 							{$currentUser.first_name}
@@ -200,7 +200,7 @@
 		<!-- Mobile Sidebar -->
 		<aside
 			class={cn(
-				'fixed top-0 left-0 z-50 min-h-screen w-64 transform flex-col border-r bg-card transition-transform duration-300 lg:hidden',
+				'fixed top-0 left-0 z-50 h-screen w-64 transform flex flex-col overflow-hidden border-r bg-card transition-transform duration-300 lg:hidden',
 				mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
 			)}
 		>
@@ -216,7 +216,7 @@
 			</div>
 
 			<!-- Navigation -->
-			<nav class="flex-1 space-y-2 px-4 py-6">
+			<nav class="flex-1 overflow-y-auto space-y-2 px-4 py-6">
 				{#each navItems as item}
 					<a
 						href={item.href}
@@ -236,7 +236,7 @@
 
 			<!-- User Info -->
 			{#if $currentUser}
-				<div class="border-t p-4">
+				<div class="border-t p-4 shrink-0">
 					<div class="space-y-2">
 						<p class="text-sm font-medium">
 							{$currentUser.first_name}
