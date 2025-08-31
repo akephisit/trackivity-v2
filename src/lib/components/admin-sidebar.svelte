@@ -146,7 +146,7 @@
 
 			if (response.ok) {
 				toast.success('ออกจากระบบสำเร็จ');
-				goto('/login');
+				goto('/');
 			} else {
 				toast.error('เกิดข้อผิดพลาดในการออกจากระบบ');
 			}

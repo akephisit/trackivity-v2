@@ -15,9 +15,11 @@
 		IconX
 	} from '@tabler/icons-svelte';
 	import { page } from '$app/stores';
+	import { toast } from 'svelte-sonner';
 
 	let { children } = $props();
 	let mobileMenuOpen = $state(false);
+	let isLoggingOut = $state(false);
 
 	// Navigation items for students
 	const navItems = [
@@ -39,7 +41,7 @@
 			await auth.validateSession();
 
 			unsubscribe = isAuthenticated.subscribe((authenticated) => {
-				if (!authenticated) {
+				if (!authenticated && !isLoggingOut) {
 					goto('/login');
 					return;
 				}
@@ -77,7 +79,9 @@
 
 	async function handleLogout() {
 		const { auth } = await import('$lib/stores/auth');
-		await auth.logout();
+		isLoggingOut = true;
+		toast.success('ออกจากระบบสำเร็จ');
+		await auth.logout('/');
 	}
 </script>
 

@@ -50,8 +50,9 @@
 		IconBuilding
 	} from '@tabler/icons-svelte';
 
-	import { auth } from '$lib/stores/auth';
-	import { goto } from '$app/navigation';
+    import { auth } from '$lib/stores/auth';
+    import { goto } from '$app/navigation';
+    import { toast } from 'svelte-sonner';
 
 	// Reactive navigation items based on user permissions
 	$: navigationItems =
@@ -115,10 +116,10 @@
 		}
 	}
 
-	async function handleLogout() {
-		await auth.logout();
-		goto('/login');
-	}
+    async function handleLogout() {
+        toast.success('ออกจากระบบสำเร็จ');
+        await auth.logout('/');
+    }
 
 	function getUserInitials(user: any): string {
 		if (user?.first_name && user?.last_name) {

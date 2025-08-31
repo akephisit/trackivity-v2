@@ -126,7 +126,7 @@ function createAuthStore() {
 		 * Log out user and clear session
 		 * Clears httpOnly JWT cookie and resets auth state
 		 */
-		async logout(redirectTo = '/login') {
+        async logout(redirectTo = '/') {
 			update((state) => ({ ...state, isLoading: true }));
 
 			try {

@@ -30,8 +30,9 @@
 		IconSettings
 	} from '@tabler/icons-svelte';
 
-	import { auth } from '$lib/stores/auth';
-	import { goto } from '$app/navigation';
+    import { auth } from '$lib/stores/auth';
+    import { goto } from '$app/navigation';
+    import { toast } from 'svelte-sonner';
 
 	// Component props
 	export let children: any;
@@ -77,11 +78,11 @@
 		mobileMenuOpen = false;
 	}
 
-	async function handleLogout() {
-		closeMobileMenu();
-		await auth.logout();
-		goto('/login');
-	}
+    async function handleLogout() {
+        closeMobileMenu();
+        toast.success('ออกจากระบบสำเร็จ');
+        await auth.logout('/');
+    }
 
 	function getUserInitials(user: any): string {
 		if (user?.first_name && user?.last_name) {
