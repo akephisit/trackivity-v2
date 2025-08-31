@@ -11,10 +11,13 @@
 		IconUser,
 		IconHistory,
 		IconLogout,
+		IconSun,
+		IconMoon,
 		IconMenu,
 		IconX
 	} from '@tabler/icons-svelte';
 	import { page } from '$app/stores';
+    import { mode, setMode } from 'mode-watcher';
 	import { toast } from 'svelte-sonner';
 
 	let { children } = $props();
@@ -83,6 +86,10 @@
 		toast.success('ออกจากระบบสำเร็จ');
 		await auth.logout('/');
 	}
+
+	function toggleTheme() {
+		setMode(mode.current === 'light' ? 'dark' : 'light');
+	}
 </script>
 
 <div class="min-h-screen bg-background">
@@ -105,6 +112,15 @@
 					<span class="text-sm text-muted-foreground">
 						{$currentUser.first_name}
 					</span>
+					<Button variant="ghost" size="sm" onclick={toggleTheme} class="p-2">
+						{#if mode.current === 'light'}
+							<IconMoon class="size-4" />
+							<span class="ml-1">โหมดมืด</span>
+						{:else}
+							<IconSun class="size-4" />
+							<span class="ml-1">โหมดสว่าง</span>
+						{/if}
+					</Button>
 					<Button variant="ghost" size="sm" onclick={handleLogout} class="p-2">
 						<IconLogout class="size-4" />
 					</Button>
@@ -151,6 +167,15 @@
 						<p class="text-xs text-muted-foreground">
 							รหัส: {$currentUser.student_id}
 						</p>
+						<Button variant="ghost" size="sm" onclick={toggleTheme} class="w-full justify-start">
+							{#if mode.current === 'light'}
+								<IconMoon class="mr-2 size-4" />
+								โหมดมืด
+							{:else}
+								<IconSun class="mr-2 size-4" />
+								โหมดสว่าง
+							{/if}
+						</Button>
 						<Button variant="ghost" size="sm" onclick={handleLogout} class="w-full justify-start">
 							<IconLogout class="mr-2 size-4" />
 							ออกจากระบบ
@@ -220,6 +245,15 @@
 						<p class="text-xs text-muted-foreground">
 							รหัส: {$currentUser.student_id}
 						</p>
+						<Button variant="ghost" size="sm" onclick={toggleTheme} class="w-full justify-start">
+							{#if mode.current === 'light'}
+								<IconMoon class="mr-2 size-4" />
+								โหมดมืด
+							{:else}
+								<IconSun class="mr-2 size-4" />
+								โหมดสว่าง
+							{/if}
+						</Button>
 						<Button variant="ghost" size="sm" onclick={handleLogout} class="w-full justify-start">
 							<IconLogout class="mr-2 size-4" />
 							ออกจากระบบ
