@@ -1,5 +1,4 @@
 import { fail, redirect } from '@sveltejs/kit';
-import { dev } from '$app/environment';
 import { superValidate } from 'sveltekit-superforms';
 import { zod } from 'sveltekit-superforms/adapters';
 import { loginSchema } from '$lib/schemas/auth';
@@ -60,7 +59,7 @@ export const actions: Actions = {
 
 			cookies.set('session_token', token, {
 				httpOnly: true,
-				secure: !dev,
+				secure: process.env.NODE_ENV === 'production',
 				sameSite: 'lax',
 				...(form.data.remember_me ? { maxAge: 30 * 24 * 60 * 60 } : {}),
 				path: '/'

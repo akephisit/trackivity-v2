@@ -3,17 +3,15 @@ import { db, users, departments, organizations } from '$lib/server/db';
 import { eq, like, and, sql } from 'drizzle-orm';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
-import { env } from '$env/dynamic/private';
+import { JWT_SECRET } from '$env/static/private';
 
 // Helper function to verify JWT and get user info
 function verifyToken(token: string) {
-    try {
-		const secret = env.JWT_SECRET;
-		if (!secret) return null;
-		return jwt.verify(token, secret) as any;
-    } catch {
-        return null;
-    }
+	try {
+		return jwt.verify(token, JWT_SECRET) as any;
+	} catch {
+		return null;
+	}
 }
 
 export const GET = async ({ url, cookies }: { url: any; cookies: any }) => {

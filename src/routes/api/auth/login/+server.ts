@@ -1,5 +1,4 @@
 import { json, type RequestHandler } from '@sveltejs/kit';
-import { dev } from '$app/environment';
 import type { LoginRequest } from '$lib/types';
 import { authenticateAndIssueToken } from '$lib/server/auth-service';
 
@@ -23,7 +22,7 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
 		// Set secure HTTP-only cookie
 		cookies.set('session_token', token, {
 			httpOnly: true,
-			secure: !dev,
+			secure: process.env.NODE_ENV === 'production',
 			sameSite: 'lax',
 			...(remember_me ? { maxAge: 30 * 24 * 60 * 60 } : {}),
 			path: '/'
@@ -43,9 +42,10 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
 				error: {
 					code: (error as any)?.code || 'INTERNAL_ERROR',
 					message: (error as any)?.message || 'An unexpected error occurred during login',
-					details: dev
-						? { error: error instanceof Error ? error.message : 'Unknown error' }
-						: undefined
+					details:
+						process.env.NODE_ENV === 'development'
+							? { error: error instanceof Error ? error.message : 'Unknown error' }
+							: undefined
 				}
 			},
 			{ status: 500 }
