@@ -180,7 +180,7 @@
 					<div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
 						{#each data.activities.openRegistration as activity}
 							<Card.Root 
-								onclick={() => goto(`/activities/${activity.id}`)}
+								onclick={() => goto(`/student/activities/${activity.id}`)}
 								class="hover:shadow-lg transition-shadow cursor-pointer border-green-200 bg-green-50/50"
 							>
 								<Card.Content class="p-6">
@@ -251,7 +251,7 @@
 					<div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
 						{#each data.activities.upcoming as activity}
 							<Card.Root 
-								onclick={() => goto(`/activities/${activity.id}`)}
+								onclick={() => goto(`/student/activities/${activity.id}`)}
 								class="hover:shadow-lg transition-shadow cursor-pointer border-purple-200 bg-purple-50/50"
 							>
 								<Card.Content class="p-6">
@@ -324,7 +324,7 @@
 					<div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
 						{#each data.activities.recent as activity}
 							<Card.Root 
-								onclick={() => goto(`/activities/${activity.id}`)}
+								onclick={() => goto(`/student/activities/${activity.id}`)}
 								class="hover:shadow-lg transition-shadow cursor-pointer border-blue-200 bg-blue-50/50"
 							>
 								<Card.Content class="p-6">
@@ -395,7 +395,7 @@
 					<div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
 						{#each data.activities.popular as activity}
 							<Card.Root 
-								onclick={() => goto(`/activities/${activity.id}`)}
+								onclick={() => goto(`/student/activities/${activity.id}`)}
 								class="hover:shadow-lg transition-shadow cursor-pointer border-orange-200 bg-orange-50/50"
 							>
 								<Card.Content class="p-6">
