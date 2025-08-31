@@ -29,6 +29,7 @@
 	import { toast } from 'svelte-sonner';
 	import type { Department } from '$lib/types/admin';
 	import { BasicPrefixOptions } from '$lib/schemas/auth';
+    import MetaTags from '$lib/components/seo/MetaTags.svelte';
 
 	let { data } = $props();
 
@@ -130,10 +131,7 @@
 	}
 </script>
 
-<svelte:head>
-	<title>สมัครสมาชิก - Trackivity</title>
-	<meta name="description" content="สมัครสมาชิกสำหรับนักศึกษา" />
-</svelte:head>
+<MetaTags title="สมัครสมาชิก" description="สมัครสมาชิกสำหรับนักศึกษา" />
 
 <div class="register-container min-h-screen overflow-y-auto bg-gray-50 dark:bg-gray-900">
 	<div class="flex min-h-screen flex-col lg:flex-row">

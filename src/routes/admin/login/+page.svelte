@@ -47,12 +47,10 @@
 	function togglePasswordVisibility() {
 		showPassword = !showPassword;
 	}
+    import MetaTags from '$lib/components/seo/MetaTags.svelte';
 </script>
 
-<svelte:head>
-	<title>Admin Login - Trackivity</title>
-	<meta name="description" content="Admin login portal for Trackivity system" />
-</svelte:head>
+<MetaTags title="เข้าสู่ระบบผู้ดูแลระบบ" description="Admin login portal for Trackivity system" />
 
 <div
 	class="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 px-4 py-12 sm:px-6 lg:px-8 dark:from-gray-900 dark:to-blue-900"

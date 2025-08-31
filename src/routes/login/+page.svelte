@@ -44,12 +44,10 @@
 	function togglePasswordVisibility() {
 		showPassword = !showPassword;
 	}
+    import MetaTags from '$lib/components/seo/MetaTags.svelte';
 </script>
 
-<svelte:head>
-	<title>เข้าสู่ระบบ - Trackivity</title>
-	<meta name="description" content="เข้าสู่ระบบสำหรับนักเรียน" />
-</svelte:head>
+<MetaTags title="เข้าสู่ระบบ" description="เข้าสู่ระบบสำหรับนักศึกษา" />
 
 <div
 	class="flex min-h-screen items-center justify-center bg-gray-50 px-4 py-12 sm:px-6 lg:px-8 dark:bg-gray-900"

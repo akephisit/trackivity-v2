@@ -30,6 +30,7 @@
 	import { AdminLevel } from '$lib/types/admin';
 	import { BarChart } from 'layerchart';
 	import { scaleBand } from 'd3-scale';
+    import MetaTags from '$lib/components/seo/MetaTags.svelte';
 
 	let { data } = $props();
 
@@ -167,6 +168,8 @@
 		return new Date(dateString).toLocaleString('th-TH');
 	}
 </script>
+
+<MetaTags title="แดชบอร์ดแอดมิน" description="ภาพรวมสถิติและการจัดการระบบ" />
 
 <svelte:head>
 	<title>แดชบอร์ด - Admin Panel</title>

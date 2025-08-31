@@ -21,6 +21,7 @@
 	import { auth } from '$lib/stores/auth';
 	import { goto, invalidateAll } from '$app/navigation';
 	import { mode, setMode } from 'mode-watcher';
+    import MetaTags from '$lib/components/seo/MetaTags.svelte';
 
 	let { data }: { data: PageData } = $props();
 
@@ -41,23 +42,11 @@
 	}
 </script>
 
-<svelte:head>
-	<title>Trackivity — ระบบติดตามกิจกรรม</title>
-	<meta name="title" content="Trackivity — ระบบติดตามกิจกรรม" />
-	<meta name="description" content="จัดการและติดตามกิจกรรมทั้งหมดของมหาวิทยาลัยในที่เดียว" />
-
-	<meta property="og:type" content="website" />
-	<meta property="og:site_name" content="Trackivity" />
-	<meta property="og:title" content="Trackivity — ระบบติดตามกิจกรรม" />
-	<meta property="og:description" content="จัดการและติดตามกิจกรรมทั้งหมดของมหาวิทยาลัยในที่เดียว" />
-	<meta property="og:locale" content="th_TH" />
-	<meta property="og:image" content="/favicon.svg" />
-
-	<meta name="twitter:card" content="summary_large_image" />
-	<meta name="twitter:title" content="Trackivity — ระบบติดตามกิจกรรม" />
-	<meta name="twitter:description" content="จัดการและติดตามกิจกรรมทั้งหมดของมหาวิทยาลัยในที่เดียว" />
-	<meta name="twitter:image" content="/favicon.svg" />
-</svelte:head>
+<MetaTags
+    title="ระบบติดตามกิจกรรม"
+    description="จัดการและติดตามกิจกรรมทั้งหมดของมหาวิทยาลัยในที่เดียว"
+    type="website"
+/>
 
 <div class="min-h-screen bg-background">
 	<!-- Header -->

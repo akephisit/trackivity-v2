@@ -5,6 +5,7 @@
     import { Badge } from '$lib/components/ui/badge';
     import { Alert, AlertDescription } from '$lib/components/ui/alert';
     import { Separator } from '$lib/components/ui/separator';
+    import MetaTags from '$lib/components/seo/MetaTags.svelte';
     import {
         Table,
         TableBody,
@@ -169,10 +170,11 @@
 	}
 </script>
 
-<svelte:head>
-	<title>{activity.title} - รายละเอียดกิจกรรม</title>
-	<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-</svelte:head>
+<MetaTags
+  title={`${activity.title} — รายละเอียดกิจกรรม`}
+  description={activity.description || 'รายละเอียดกิจกรรมจากระบบติดตามกิจกรรม'}
+  type="article"
+/>
 
 <div class="space-y-6">
 	<!-- Header -->

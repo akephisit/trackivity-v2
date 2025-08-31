@@ -2,6 +2,7 @@
 	import StudentDashboard from '$lib/components/dashboard/StudentDashboard.svelte';
 	import { currentUser } from '$lib/stores/auth';
 	import type { Activity } from '$lib/types';
+    import MetaTags from '$lib/components/seo/MetaTags.svelte';
 	const { data } = $props<{
 		recentActivities: Activity[];
 		participationHistory: any[];
@@ -13,11 +14,7 @@
 	}>();
 </script>
 
-<svelte:head>
-	<title>Dashboard - Trackivity Student</title>
-	<meta name="description" content="Student dashboard for activity tracking" />
-	<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-</svelte:head>
+<MetaTags title="แดชบอร์ดนักศึกษา" description="ติดตามกิจกรรมและผลงานของคุณ" />
 
 <!-- Welcome Banner for Mobile -->
 <div class="mb-6 rounded-lg bg-gradient-to-r from-primary/10 to-secondary/10 p-4 lg:hidden">

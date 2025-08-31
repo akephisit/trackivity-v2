@@ -7,6 +7,7 @@
     import { Alert, AlertDescription } from '$lib/components/ui/alert';
     import { Tabs, TabsList, TabsTrigger } from '$lib/components/ui/tabs';
     import { Input } from '$lib/components/ui/input';
+    import MetaTags from '$lib/components/seo/MetaTags.svelte';
     import {
         IconCalendarEvent,
         IconClock,
@@ -180,10 +181,11 @@
     // Edit functionality is not available for students; handled in admin only
 </script>
 
-<svelte:head>
-	<title>กิจกรรม - Trackivity Student</title>
-	<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-</svelte:head>
+<MetaTags
+    title="กิจกรรมทั้งหมด"
+    description="เรียกดูกิจกรรมทั้งหมดที่เปิดให้ลงทะเบียนและกำลังจะมาถึง"
+    type="website"
+/>
 
 <div class="space-y-6">
 	<!-- Header -->
