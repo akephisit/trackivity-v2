@@ -12,14 +12,21 @@
 		IconArrowRight,
 		IconTrendingUp,
 		IconCalendarEvent,
-		IconUserPlus
+		IconUserPlus,
+		IconSun,
+		IconMoon
 	} from '@tabler/icons-svelte/icons';
 	import type { PageData } from './$types';
 	import { toast } from 'svelte-sonner';
 	import { auth } from '$lib/stores/auth';
 	import { goto, invalidateAll } from '$app/navigation';
+	import { mode, setMode } from 'mode-watcher';
 
 	let { data }: { data: PageData } = $props();
+
+	function toggleTheme() {
+		setMode(mode.current === 'light' ? 'dark' : 'light');
+	}
 
 	async function handleLogout() {
 		try {
@@ -62,6 +69,20 @@
 					</div>
 					{#if data.user}
 						<div class="flex items-center gap-2">
+							<Button
+								onclick={toggleTheme}
+								variant="outline"
+								size="sm"
+								class="flex items-center gap-2"
+							>
+								{#if mode.current === 'light'}
+									<IconMoon class="h-4 w-4" />
+									<span class="hidden sm:inline">โหมดมืด</span>
+								{:else}
+									<IconSun class="h-4 w-4" />
+									<span class="hidden sm:inline">โหมดสว่าง</span>
+								{/if}
+							</Button>
 							{#if data.user.admin_role}
 								<Button href="/admin" variant="outline" size="sm" class="flex items-center gap-2">
 									<IconUser class="h-4 w-4" />
@@ -84,10 +105,26 @@
 							</Button>
 						</div>
 					{:else}
-						<Button href="/login" variant="outline" size="sm" class="flex items-center gap-2">
-							<IconUser class="h-4 w-4" />
-							เข้าสู่ระบบ
-						</Button>
+						<div class="flex items-center gap-2">
+							<Button
+								onclick={toggleTheme}
+								variant="outline"
+								size="sm"
+								class="flex items-center gap-2"
+							>
+								{#if mode.current === 'light'}
+									<IconMoon class="h-4 w-4" />
+									<span class="hidden sm:inline">โหมดมืด</span>
+								{:else}
+									<IconSun class="h-4 w-4" />
+									<span class="hidden sm:inline">โหมดสว่าง</span>
+								{/if}
+							</Button>
+							<Button href="/login" variant="outline" size="sm" class="flex items-center gap-2">
+								<IconUser class="h-4 w-4" />
+								เข้าสู่ระบบ
+							</Button>
+						</div>
 					{/if}
 				</div>
 			</div>
