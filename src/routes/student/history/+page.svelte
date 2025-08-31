@@ -1,7 +1,5 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
-	import { apiClient, isApiSuccess } from '$lib/api/client';
-	import type { ActivityParticipation } from '$lib/types';
+    import type { ActivityParticipation } from '$lib/types';
 	import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Skeleton } from '$lib/components/ui/skeleton';
@@ -18,10 +16,11 @@
 		IconAward
 	} from '@tabler/icons-svelte';
 
-	let participationHistory: ActivityParticipation[] = $state([]);
-	let filteredHistory: ActivityParticipation[] = $state([]);
-	let loading = $state(true);
-	let error: string | null = $state(null);
+let { data } = $props<{ data: { history: ActivityParticipation[] } }>();
+let participationHistory: ActivityParticipation[] = $state(data?.history || []);
+let filteredHistory: ActivityParticipation[] = $state([]);
+let loading = $state(true);
+let error: string | null = $state(null);
 	let searchQuery = $state('');
 	let sortBy = $state('recent'); // recent, oldest, activity_name
 	let filterBy = $state('all'); // all, this_month, last_month, this_year
@@ -34,31 +33,10 @@
 		uniqueActivities: 0
 	});
 
-	onMount(async () => {
-		await loadParticipationHistory();
-	});
-
-	async function loadParticipationHistory() {
-		try {
-			loading = true;
-			error = null;
-
-			// TODO: Replace with actual API endpoint when available
-			// const response = await apiClient.getUserParticipations({ per_page: 100 });
-
-			// Mock data for now
-			const mockData: ActivityParticipation[] = [];
-
-			participationHistory = mockData;
-			filteredHistory = mockData;
-			calculateStats(mockData);
-		} catch (err) {
-			console.error('Failed to load participation history:', err);
-			error = 'ไม่สามารถโหลดประวัติการเข้าร่วมได้';
-		} finally {
-			loading = false;
-		}
-	}
+// Initialize from server data
+loading = false;
+filteredHistory = participationHistory;
+calculateStats(participationHistory);
 
 	function calculateStats(data: ActivityParticipation[]) {
 		const now = new Date();
@@ -79,11 +57,11 @@
 		// Search filter
 		if (searchQuery.trim()) {
 			const query = searchQuery.toLowerCase();
-			filtered = filtered.filter(
-				(p) =>
-					p.activity?.name.toLowerCase().includes(query) ||
-					p.activity?.description?.toLowerCase().includes(query)
-			);
+        filtered = filtered.filter((p) => {
+            const name = (p.activity?.name || (p as any).activity?.title || '').toLowerCase();
+            const desc = (p.activity?.description || '').toLowerCase();
+            return name.includes(query) || desc.includes(query);
+        });
 		}
 
 		// Time filter
@@ -316,7 +294,7 @@
 								<div class="flex flex-col justify-between gap-2 sm:flex-row sm:items-start">
 									<div class="space-y-1">
 										<h3 class="text-base font-medium">
-											{participation.activity?.name || 'ไม่ระบุชื่อกิจกรรม'}
+                                    {participation.activity?.name || (participation as any).activity?.title || 'ไม่ระบุชื่อกิจกรรม'}
 										</h3>
 										{#if participation.activity?.description}
 											<p class="line-clamp-2 text-sm text-muted-foreground">
@@ -324,11 +302,11 @@
 											</p>
 										{/if}
 									</div>
-									{#if participation.activity?.activity_type}
-										<Badge variant={getActivityBadgeVariant(participation.activity.activity_type)}>
-											{getActivityTypeText(participation.activity.activity_type)}
-										</Badge>
-									{/if}
+                            {#if participation.activity?.activity_type}
+                                <Badge variant={getActivityBadgeVariant(participation.activity.activity_type)}>
+                                    {getActivityTypeText(participation.activity.activity_type)}
+                            </Badge>
+                            {/if}
 								</div>
 
 								<!-- Details -->
