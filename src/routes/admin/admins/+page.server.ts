@@ -349,6 +349,17 @@ export const actions: Actions = {
 
 			await db.update(users).set(setObj).where(eq(users.id, targetUserId));
 
+			// อัปเดต organization_id ในตาราง adminRoles หากมีการส่งมา
+			if (updateData.organization_id !== undefined) {
+				await db
+					.update(adminRoles)
+					.set({
+						organizationId: updateData.organization_id || null,
+						updatedAt: new Date()
+					})
+					.where(eq(adminRoles.userId, targetUserId));
+			}
+
 			return {
 				success: true,
 				message: 'อัพเดตข้อมูลแอดมินสำเร็จ'
