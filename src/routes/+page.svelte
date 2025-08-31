@@ -17,7 +17,7 @@
 	import type { PageData } from './$types';
 	import { toast } from 'svelte-sonner';
 	import { auth } from '$lib/stores/auth';
-    import { goto } from '$app/navigation';
+	import { goto, invalidateAll } from '$app/navigation';
 
 	let { data }: { data: PageData } = $props();
 
@@ -25,6 +25,8 @@
 		try {
 			toast.success('ออกจากระบบสำเร็จ');
 			await auth.logout('/');
+			// Ensure server data refreshes so header updates
+			await invalidateAll();
 		} catch (error) {
 			console.error('Logout error:', error);
 			toast.error('เกิดข้อผิดพลาดในการออกจากระบบ');
