@@ -13,7 +13,6 @@
         IconUsers,
         IconMapPin,
         IconSearch,
-        IconFilter,
         IconAlertCircle,
         IconChevronRight
     } from '@tabler/icons-svelte';
@@ -27,7 +26,6 @@
 	let searchQuery = $state('');
 	let selectedTab = $state('all');
 	let selectedFilter = $state('upcoming');
-	let showFilters = $state(false);
 
 	function filterActivities() {
 		let filtered = activities;
@@ -177,9 +175,6 @@
 		}
 	}
 
-	function toggleFilters() {
-		showFilters = !showFilters;
-	}
 
 	function resetFilters() {
 		searchQuery = '';
@@ -201,20 +196,13 @@
 
 <div class="space-y-6">
 	<!-- Header -->
-	<div class="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-		<div>
-			<h1 class="text-2xl font-bold lg:text-3xl">กิจกรรมทั้งหมด</h1>
-			<p class="text-muted-foreground">ดูและติดตามกิจกรรมต่างๆ ที่มีอยู่ในระบบ</p>
-		</div>
-
-		<Button variant="outline" size="sm" onclick={toggleFilters} class="sm:hidden">
-			<IconFilter class="mr-2 size-4" />
-			ตัวกรอง
-		</Button>
+	<div>
+		<h1 class="text-2xl font-bold lg:text-3xl">กิจกรรมทั้งหมด</h1>
+		<p class="text-muted-foreground">ดูและติดตามกิจกรรมต่างๆ ที่มีอยู่ในระบบ</p>
 	</div>
 
 	<!-- Search and Filters -->
-	<div class={`space-y-4 ${showFilters ? 'block' : 'hidden sm:block'}`}>
+	<div class="space-y-4">
 		<!-- Search -->
 		<div class="relative">
 			<IconSearch
