@@ -17,6 +17,9 @@ FROM base AS runtime
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=build /app/build ./build
 COPY package.json ./
+COPY scripts/ ./scripts/
+COPY drizzle.config.ts ./
+COPY src/lib/server/db/ ./src/lib/server/db/
 
 EXPOSE 3000
-CMD ["bun", "run", "build/index.js"]
+CMD ["sh", "-c", "./scripts/init-db.sh && bun run build/index.js"]
