@@ -14,6 +14,9 @@ const config = {
 		adapter: adapter(),
 		alias: {
 			'@/*': './path/to/lib/*'
+		},
+		csrf: {
+			checkOrigin: process.env.NODE_ENV === 'development' ? false : ['https://trackivity-frontend-ddd8j.ondigitalocean.app']
 		}
 	}
 };
