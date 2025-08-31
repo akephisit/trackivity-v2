@@ -45,25 +45,16 @@
 			filtered = filtered.filter((activity) => activity.is_eligible);
 		}
 
-		// Filter by sub-filter (time-based)
-		const now = new Date();
+		// Filter by sub-filter (status-based)
 		switch (selectedFilter) {
 			case 'upcoming':
-				filtered = filtered.filter(
-					(activity) => new Date(activity.start_time || activity.start_date || '') > now
-				);
+				filtered = filtered.filter((activity) => activity.status === 'published');
 				break;
 			case 'ongoing':
-				filtered = filtered.filter(
-					(activity) =>
-						new Date(activity.start_time || activity.start_date || '') <= now &&
-						new Date(activity.end_time || activity.end_date || '') >= now
-				);
+				filtered = filtered.filter((activity) => activity.status === 'ongoing');
 				break;
 			case 'completed':
-				filtered = filtered.filter(
-					(activity) => new Date(activity.end_time || activity.end_date || '') < now
-				);
+				filtered = filtered.filter((activity) => activity.status === 'completed');
 				break;
 		}
 
