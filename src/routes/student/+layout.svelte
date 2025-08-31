@@ -129,7 +129,8 @@
 
 	<div class="flex">
 		<!-- Desktop Sidebar -->
-		<aside class="hidden h-screen w-64 flex-col overflow-hidden border-r bg-card lg:flex">
+		<div class="hidden lg:block sticky top-0 h-screen w-64 border-r bg-card">
+			<aside class="relative h-full flex flex-col overflow-hidden">
 			<!-- Logo -->
 			<div class="border-b p-6">
 				<h1 class="text-xl font-bold text-foreground">Trackivity</h1>
@@ -137,7 +138,7 @@
 			</div>
 
 			<!-- Navigation -->
-			<nav class="flex-1 overflow-y-auto space-y-2 px-4 py-6">
+			<nav class="flex-1 overflow-y-auto space-y-2 px-4 py-6 pb-28">
 				{#each navItems as item}
 					<a
 						href={item.href}
@@ -156,7 +157,7 @@
 
 			<!-- User Info -->
 			{#if $currentUser}
-				<div class="border-t p-4 shrink-0">
+				<div class="absolute bottom-0 left-0 right-0 border-t p-4 shrink-0 bg-card">
 					<div class="space-y-2">
 						<p class="text-sm font-medium">
 							{$currentUser.first_name}
@@ -181,7 +182,8 @@
 					</div>
 				</div>
 			{/if}
-		</aside>
+			</aside>
+		</div>
 
 		<!-- Mobile Menu Overlay -->
 		{#if mobileMenuOpen}
