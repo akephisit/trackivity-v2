@@ -8,6 +8,7 @@ RUN bun install --frozen-lockfile
 FROM base AS build
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+ENV DATABASE_URL="postgresql://placeholder:placeholder@localhost:5432/placeholder"
 RUN bun run prepare && bun run build
 
 FROM base AS runtime
