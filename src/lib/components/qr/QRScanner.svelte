@@ -78,6 +78,9 @@
 	let scanHistory = $state<ScannedUser[]>([]);
 	let isProcessingScan = $state(false);
 
+	// Scan mode: check-in or check-out
+	let scanMode = $state<'checkin' | 'checkout'>('checkin');
+
 	// Reactive effect
 	$effect(() => {
 		if (browser && isActive && activity_id && cameraStatus === 'idle') {
@@ -489,36 +492,36 @@
 		lastScanTime = now;
 
 		try {
-			const response = await fetch(`/api/activities/${activity_id}/checkin`, {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json'
-				},
-				credentials: 'include',
-				body: JSON.stringify({ qr_data: qrData })
-			});
+				const response = await fetch(`/api/activities/${activity_id}/${scanMode}`, {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json'
+					},
+					credentials: 'include',
+					body: JSON.stringify({ qr_data: qrData })
+				});
 
 			const result = await response.json();
 
 			if (response.ok && result.success === true) {
-				const scanResult: ScanResult = {
-					success: true,
-					message: result.message || 'สแกนสำเร็จ',
-					user_name: result.data?.user_name,
-					student_id: result.data?.student_id,
-					participation_status: result.data?.participation_status,
-					checked_in_at: result.data?.checked_in_at
-				};
+					const scanResult: ScanResult = {
+						success: true,
+						message: result.message || 'สแกนสำเร็จ',
+						user_name: result.data?.user_name,
+						student_id: result.data?.student_id,
+						participation_status: result.data?.participation_status,
+						checked_in_at: result.data?.checked_in_at || result.data?.checked_out_at
+					};
 
 				// Add to history
 				if (scanResult.user_name && scanResult.student_id) {
-					const historyItem: ScannedUser = {
-						user_name: scanResult.user_name,
-						student_id: scanResult.student_id,
-						participation_status: scanResult.participation_status || 'checked_in',
-						checked_in_at: scanResult.checked_in_at || new Date().toISOString(),
-						timestamp: now
-					};
+						const historyItem: ScannedUser = {
+							user_name: scanResult.user_name,
+							student_id: scanResult.student_id,
+							participation_status: scanResult.participation_status || (scanMode === 'checkin' ? 'checked_in' : 'checked_out'),
+							checked_in_at: scanResult.checked_in_at || new Date().toISOString(),
+							timestamp: now
+						};
 
 					scanHistory = [historyItem, ...scanHistory.slice(0, maxHistoryItems - 1)];
 				}
@@ -580,6 +583,9 @@
 			case 'checked_in':
 			case 'checkedin':
 				return 'default';
+			case 'checked_out':
+			case 'checkedout':
+				return 'secondary';
 			case 'registered':
 				return 'secondary';
 			default:
@@ -592,6 +598,9 @@
 			case 'checked_in':
 			case 'checkedin':
 				return 'เข้าร่วมแล้ว';
+			case 'checked_out':
+			case 'checkedout':
+				return 'ออกจากกิจกรรมแล้ว';
 			case 'registered':
 				return 'ลงทะเบียนแล้ว';
 			default:
@@ -775,7 +784,27 @@
 			{/if}
 
 			<!-- Control Buttons -->
-			<div class="flex justify-center gap-2">
+			<div class="flex flex-col items-center gap-3">
+				<!-- Mode toggle -->
+				<div class="inline-flex overflow-hidden rounded-md border bg-background">
+					<button
+						class={`px-3 py-2 text-sm ${scanMode === 'checkin' ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'}`}
+						onclick={() => (scanMode = 'checkin')}
+						type="button"
+					>
+						เช็คอิน
+					</button>
+					<button
+						class={`px-3 py-2 text-sm ${scanMode === 'checkout' ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'}`}
+						onclick={() => (scanMode = 'checkout')}
+						type="button"
+					>
+						เช็คเอาท์
+					</button>
+				</div>
+
+				<!-- Camera controls -->
+				<div class="flex justify-center gap-2">
 				{#if cameraStatus === 'idle' || cameraStatus === 'error'}
 					<Button onclick={startCamera} disabled={!activity_id}>
 						<IconCamera class="mr-2 size-4" />
@@ -795,6 +824,7 @@
 						สแกนด้วยตนเอง
 					</Button>
 				{/if}
+				</div>
 			</div>
 
 			<!-- Scanner Info -->
