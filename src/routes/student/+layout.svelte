@@ -115,10 +115,8 @@
 					<Button variant="ghost" size="sm" onclick={toggleTheme} class="p-2">
 						{#if mode.current === 'light'}
 							<IconMoon class="size-4" />
-							<span class="ml-1">โหมดมืด</span>
 						{:else}
 							<IconSun class="size-4" />
-							<span class="ml-1">โหมดสว่าง</span>
 						{/if}
 					</Button>
 					<Button variant="ghost" size="sm" onclick={handleLogout} class="p-2">
