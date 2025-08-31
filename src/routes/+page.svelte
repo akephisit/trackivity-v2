@@ -182,14 +182,6 @@
 							<Card.Root 
 								onclick={() => goto(`/activities/${activity.id}`)}
 								class="hover:shadow-lg transition-shadow cursor-pointer border-green-200 bg-green-50/50"
-								role="button"
-								tabindex={0}
-								onkeydown={(e) => {
-									if (e.key === 'Enter' || e.key === ' ') {
-										e.preventDefault();
-										goto(`/activities/${activity.id}`);
-									}
-								}}
 							>
 								<Card.Content class="p-6">
 									<div class="space-y-4">
@@ -261,14 +253,6 @@
 							<Card.Root 
 								onclick={() => goto(`/activities/${activity.id}`)}
 								class="hover:shadow-lg transition-shadow cursor-pointer border-purple-200 bg-purple-50/50"
-								role="button"
-								tabindex={0}
-								onkeydown={(e) => {
-									if (e.key === 'Enter' || e.key === ' ') {
-										e.preventDefault();
-										goto(`/activities/${activity.id}`);
-									}
-								}}
 							>
 								<Card.Content class="p-6">
 									<div class="space-y-4">
@@ -342,14 +326,6 @@
 							<Card.Root 
 								onclick={() => goto(`/activities/${activity.id}`)}
 								class="hover:shadow-lg transition-shadow cursor-pointer border-blue-200 bg-blue-50/50"
-								role="button"
-								tabindex={0}
-								onkeydown={(e) => {
-									if (e.key === 'Enter' || e.key === ' ') {
-										e.preventDefault();
-										goto(`/activities/${activity.id}`);
-									}
-								}}
 							>
 								<Card.Content class="p-6">
 									<div class="space-y-4">
@@ -421,14 +397,6 @@
 							<Card.Root 
 								onclick={() => goto(`/activities/${activity.id}`)}
 								class="hover:shadow-lg transition-shadow cursor-pointer border-orange-200 bg-orange-50/50"
-								role="button"
-								tabindex={0}
-								onkeydown={(e) => {
-									if (e.key === 'Enter' || e.key === ' ') {
-										e.preventDefault();
-										goto(`/activities/${activity.id}`);
-									}
-								}}
 							>
 								<Card.Content class="p-6">
 									<div class="space-y-4">
