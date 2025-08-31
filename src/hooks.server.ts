@@ -1,6 +1,6 @@
 import { type Handle, type HandleServerError, redirect } from '@sveltejs/kit';
 import jwt from 'jsonwebtoken';
-import { JWT_SECRET } from '$env/static/private';
+import { env } from '$env/dynamic/private';
 /**
  * JWT payload interface for type safety
  */
@@ -93,7 +93,7 @@ function isAdminProtected(pathname: string): boolean {
  */
 function validateJWTToken(token: string): JWTPayload | null {
 	try {
-		const decoded = jwt.verify(token, JWT_SECRET) as JWTPayload;
+		const decoded = jwt.verify(token, env.JWT_SECRET!) as JWTPayload;
 
 		// Check if token is expired
 		if (decoded.exp && Date.now() >= decoded.exp * 1000) {

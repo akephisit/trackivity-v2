@@ -3,7 +3,7 @@ import { eq } from 'drizzle-orm';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import type { SessionUser, Permission } from '$lib/types';
-import { JWT_SECRET } from '$env/static/private';
+import { env } from '$env/dynamic/private';
 const JWT_EXPIRES_IN = '7d';
 
 export interface AuthInput {
@@ -133,7 +133,7 @@ export async function authenticateAndIssueToken(input: AuthInput): Promise<AuthR
 
 	// Expiration: 30 days if remember_me, otherwise default 7 days
 	const expiresInSeconds = (remember_me ? 30 : 7) * 24 * 60 * 60;
-	const token = jwt.sign(payload, JWT_SECRET, { expiresIn: expiresInSeconds });
+	const token = jwt.sign(payload, env.JWT_SECRET!, { expiresIn: expiresInSeconds });
 	const expiresAt = new Date(Date.now() + expiresInSeconds * 1000);
 
 	const sessionUser: SessionUser = {

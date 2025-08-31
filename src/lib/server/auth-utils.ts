@@ -2,7 +2,7 @@ import { redirect } from '@sveltejs/kit';
 import jwt from 'jsonwebtoken';
 import type { RequestEvent } from '@sveltejs/kit';
 import type { SessionUser, AdminLevel, Permission } from '$lib/types';
-import { JWT_SECRET } from '$env/static/private';
+import { env } from '$env/dynamic/private';
 /**
  * JWT payload interface for server-side validation
  */
@@ -25,7 +25,7 @@ export interface JWTPayload {
  */
 export function validateJWTToken(token: string): JWTPayload | null {
 	try {
-		const decoded = jwt.verify(token, JWT_SECRET) as JWTPayload;
+		const decoded = jwt.verify(token, env.JWT_SECRET!) as JWTPayload;
 
 		// Check if token is expired
 		if (decoded.exp && Date.now() >= decoded.exp * 1000) {
