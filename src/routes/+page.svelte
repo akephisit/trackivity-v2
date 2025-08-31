@@ -51,7 +51,7 @@
 						</p>
 					{/if}
 				</div>
-				<div class="flex flex-col items-end gap-3 sm:flex-row sm:items-center">
+				<div class="flex flex-col items-start gap-3 sm:flex-row sm:items-center">
 					<div class="text-sm text-muted-foreground">
 						{new Date().toLocaleDateString('th-TH', {
 							year: 'numeric',
