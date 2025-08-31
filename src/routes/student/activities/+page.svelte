@@ -15,8 +15,7 @@
         IconSearch,
         IconFilter,
         IconAlertCircle,
-        IconChevronRight,
-        IconUser
+        IconChevronRight
     } from '@tabler/icons-svelte';
     import { goto } from '$app/navigation';
 
@@ -27,6 +26,7 @@
 	let error: string | null = $state(null);
 	let searchQuery = $state('');
 	let selectedTab = $state('all');
+	let selectedFilter = $state('upcoming');
 	let showFilters = $state(false);
 
 	function filterActivities() {
@@ -42,28 +42,30 @@
 			);
 		}
 
-		// Filter by tab
+		// Filter by main tab (all or eligible)
+		if (selectedTab === 'eligible') {
+			filtered = filtered.filter((activity) => activity.is_eligible);
+		}
+
+		// Filter by sub-filter (time-based)
 		const now = new Date();
-		switch (selectedTab) {
+		switch (selectedFilter) {
 			case 'upcoming':
 				filtered = filtered.filter(
 					(activity) => new Date(activity.start_time || activity.start_date || '') > now
 				);
 				break;
-			case 'active':
+			case 'ongoing':
 				filtered = filtered.filter(
 					(activity) =>
 						new Date(activity.start_time || activity.start_date || '') <= now &&
 						new Date(activity.end_time || activity.end_date || '') >= now
 				);
 				break;
-			case 'past':
+			case 'completed':
 				filtered = filtered.filter(
 					(activity) => new Date(activity.end_time || activity.end_date || '') < now
 				);
-				break;
-			default:
-				// 'all' - no additional filtering
 				break;
 		}
 
@@ -179,6 +181,12 @@
 		showFilters = !showFilters;
 	}
 
+	function resetFilters() {
+		searchQuery = '';
+		selectedTab = 'all';
+		selectedFilter = 'upcoming';
+	}
+
 	function goToActivity(activityId: string) {
 		goto(`/student/activities/${activityId}`);
 	}
@@ -215,16 +223,23 @@
 			<Input bind:value={searchQuery} placeholder="ค้นหากิจกรรม..." class="pl-9" />
 		</div>
 
-		<!-- Tabs -->
+		<!-- Main Tabs -->
 		<Tabs bind:value={selectedTab} class="w-full">
-			<TabsList class="grid w-full grid-cols-4">
-				<TabsTrigger value="all" class="text-xs sm:text-sm">ทั้งหมด</TabsTrigger>
-				<TabsTrigger value="upcoming" class="text-xs sm:text-sm">เร็วๆ นี้</TabsTrigger>
-				<TabsTrigger value="active" class="text-xs sm:text-sm">กำลังดำเนิน</TabsTrigger>
-				<TabsTrigger value="past" class="text-xs sm:text-sm">สิ้นสุดแล้ว</TabsTrigger>
+			<TabsList class="grid w-full grid-cols-2">
+				<TabsTrigger value="all" class="text-sm">ทั้งหมด</TabsTrigger>
+				<TabsTrigger value="eligible" class="text-sm">ที่สามารถเข้าร่วมได้</TabsTrigger>
 			</TabsList>
 
-			<div class="mt-6">
+			<!-- Sub-filters for each tab -->
+			<div class="mt-4">
+				<Tabs bind:value={selectedFilter} class="w-full">
+					<TabsList class="grid w-full grid-cols-3">
+						<TabsTrigger value="upcoming" class="text-xs sm:text-sm">เร็ว ๆ นี้</TabsTrigger>
+						<TabsTrigger value="ongoing" class="text-xs sm:text-sm">กำลังดำเนินการ</TabsTrigger>
+						<TabsTrigger value="completed" class="text-xs sm:text-sm">สิ้นสุดแล้ว</TabsTrigger>
+					</TabsList>
+
+					<div class="mt-6">
 				<!-- Error State -->
 				{#if error}
 					<Alert variant="destructive">
@@ -263,10 +278,7 @@
 						{#if searchQuery}
 							<Button
 								variant="outline"
-								onclick={() => {
-									searchQuery = '';
-									selectedTab = 'all';
-								}}
+								onclick={resetFilters}
 								class="mt-4"
 							>
 								ล้างการค้นหา
@@ -355,7 +367,9 @@
 
 										<div class="flex items-center gap-2">
                                     {#if activity.is_registered}
-                                        <Badge variant="outline" class="text-xs">ลงทะเบียนล่วงหน้าแล้ว</Badge>
+                                        <Badge variant="outline" class="text-xs">ลงทะเบียนแล้ว</Badge>
+                                    {:else if !activity.is_eligible}
+                                        <Badge variant="destructive" class="text-xs">ไม่สามารถเข้าร่วม</Badge>
                                     {/if}
 											<Button
 												size="sm"
@@ -380,6 +394,8 @@
 						{/if}
 					</div>
 				{/if}
+					</div>
+				</Tabs>
 			</div>
 		</Tabs>
 	</div>

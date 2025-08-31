@@ -23,6 +23,8 @@ export interface Activity {
 	updated_at: string;
 	is_registered: boolean;
 	user_participation_status?: ParticipationStatus;
+	is_eligible: boolean;
+	eligible_organizations: string[];
 	// Legacy fields for backward compatibility
 	activity_name?: string;
 	start_date?: string;
