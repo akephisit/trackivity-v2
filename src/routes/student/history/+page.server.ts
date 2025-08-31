@@ -8,7 +8,7 @@ export const load: PageServerLoad = async (event) => {
   event.depends('student:history');
 
   try {
-    const rows = await db
+    const rowsAll = await db
       .select({
         id: participations.id,
         activity_id: participations.activityId,
@@ -30,8 +30,12 @@ export const load: PageServerLoad = async (event) => {
       .leftJoin(activities, eq(participations.activityId, activities.id))
       .where(eq(participations.userId, user.user_id));
 
+    // Show only records that have both check-in and check-out
+    const rows = rowsAll.filter((r) => !!r.checked_in_at && !!r.checked_out_at);
+
     const history = rows.map((r) => {
-      const participated_at = (r.checked_in_at || r.registered_at || r.checked_out_at || new Date()).toISOString?.() || String(r.checked_in_at || r.registered_at || r.checked_out_at || new Date());
+      // Use check-out time as participation completion timestamp
+      const participated_at = (r.checked_out_at || r.checked_in_at || r.registered_at || new Date()).toISOString?.() || String(r.checked_out_at || r.checked_in_at || r.registered_at || new Date());
       return {
         id: r.id,
         activity_id: r.activity_id,
