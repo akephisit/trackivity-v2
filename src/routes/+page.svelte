@@ -172,7 +172,7 @@
 							<h2 class="text-2xl font-bold text-foreground">เปิดรับสมัครแล้ว</h2>
 							<p class="text-muted-foreground mt-1">กิจกรรมที่เปิดให้ลงทะเบียนเข้าร่วม</p>
 						</div>
-						<Button variant="outline" href="/activities?filter=registration">
+						<Button variant="outline" href="/student/activities">
 							ดูทั้งหมด
 							<IconArrowRight class="ml-2 h-4 w-4" />
 						</Button>
@@ -243,7 +243,7 @@
 							<h2 class="text-2xl font-bold text-foreground">กำลังจะมาถึง</h2>
 							<p class="text-muted-foreground mt-1">กิจกรรมที่จะจัดขึ้นในอนาคตอันใกล้</p>
 						</div>
-						<Button variant="outline" href="/activities?filter=upcoming">
+						<Button variant="outline" href="/student/activities">
 							ดูทั้งหมด
 							<IconArrowRight class="ml-2 h-4 w-4" />
 						</Button>
@@ -316,7 +316,7 @@
 							<h2 class="text-2xl font-bold text-foreground">กิจกรรมล่าสุด</h2>
 							<p class="text-muted-foreground mt-1">กิจกรรมที่เพิ่งเผยแพร่ใหม่</p>
 						</div>
-						<Button variant="outline" href="/activities?filter=recent">
+						<Button variant="outline" href="/student/activities">
 							ดูทั้งหมด
 							<IconArrowRight class="ml-2 h-4 w-4" />
 						</Button>
@@ -387,7 +387,7 @@
 							<h2 class="text-2xl font-bold text-foreground">กิจกรรมยอดนิยม</h2>
 							<p class="text-muted-foreground mt-1">กิจกรรมที่ได้รับความสนใจมากที่สุด</p>
 						</div>
-						<Button variant="outline" href="/activities?filter=popular">
+						<Button variant="outline" href="/student/activities">
 							ดูทั้งหมด
 							<IconArrowRight class="ml-2 h-4 w-4" />
 						</Button>
@@ -469,11 +469,11 @@
 							<IconUser class="h-5 w-5" />
 							เข้าสู่ระบบ
 						</Button>
-						<Button href="/activities" variant="outline" size="lg">
+						<Button href="/student/activities" variant="outline" size="lg">
 							เรียกดูกิจกรรมทั้งหมด
 						</Button>
 					{:else}
-						<Button href="/activities" size="lg">
+						<Button href="/student/activities" size="lg">
 							เรียกดูกิจกรรมทั้งหมด
 						</Button>
 						{#if data.user.admin_role}
