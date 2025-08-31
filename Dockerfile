@@ -11,8 +11,7 @@ RUN bun install
 # Copy source and build
 COPY . .
 ENV NODE_ENV=production
-# Ensure SvelteKit generates .svelte-kit and ambient types
-RUN bun run prepare && bun run build
+RUN bun run build
 
 # ----- Runner -----
 FROM oven/bun:1.2-alpine AS runner
@@ -33,3 +32,4 @@ EXPOSE 3000
 
 # SvelteKit adapter-bun outputs a start script inside build/package.json
 CMD ["bun", "start"]
+
