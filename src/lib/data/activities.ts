@@ -18,8 +18,11 @@ export const mockActivities: Activity[] = [
 		created_at: '2024-01-15T10:00:00.000Z',
 		updated_at: '2024-01-20T16:30:00.000Z',
 		is_registered: false,
+		is_eligible: true,
+		eligible_organizations: ['1'],
 		organizer: 'หน่วยงานเศรษฐศาสตร์',
-		organizerType: 'หน่วยงาน'
+		organizerType: 'หน่วยงาน',
+		activity_level: 'คณะ'
 	},
 	{
 		id: '2',
@@ -38,8 +41,11 @@ export const mockActivities: Activity[] = [
 		created_at: '2024-02-01T09:00:00.000Z',
 		updated_at: '2024-02-15T14:20:00.000Z',
 		is_registered: true,
+		is_eligible: true,
+		eligible_organizations: ['2'],
 		organizer: 'หน่วยงานวิศวกรรมศาสตร์',
-		organizerType: 'หน่วยงาน'
+		organizerType: 'หน่วยงาน',
+		activity_level: 'คณะ'
 	},
 	{
 		id: '3',
@@ -56,7 +62,10 @@ export const mockActivities: Activity[] = [
 		created_at: '2024-02-20T08:30:00.000Z',
 		updated_at: '2024-02-22T11:45:00.000Z',
 		is_registered: false,
+		is_eligible: true,
+		eligible_organizations: ['1', '2', '3'],
 		organizer: 'มหาวิทยาลัยเทคโนโลยีพระจอมเกล้าธนบุรี',
-		organizerType: 'มหาวิทยาลัย'
+		organizerType: 'มหาวิทยาลัย',
+		activity_level: 'มหาวิทยาลัย'
 	}
 ];

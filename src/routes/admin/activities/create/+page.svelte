@@ -69,7 +69,8 @@
 				const items = value.split(',').filter((f) => f.trim() !== '');
 				return items.length > 0;
 			}, 'กรุณาเลือกอย่างน้อย 1 หน่วยงาน'),
-		academic_year: z.string().min(1, 'กรุณาเลือกปีการศึกษา')
+		academic_year: z.string().min(1, 'กรุณาเลือกปีการศึกษา'),
+		activity_level: z.enum(['คณะ', 'มหาวิทยาลัย'])
 	});
 
 	// Form setup
@@ -133,10 +134,17 @@
 
 	const academicYearOptions = generateAcademicYearOptions();
 
+	// Activity level options
+	const activityLevelOptions = [
+		{ value: 'คณะ', label: 'คณะ', description: 'กิจกรรมระดับคณะ' },
+		{ value: 'มหาวิทยาลัย', label: 'มหาวิทยาลัย', description: 'กิจกรรมระดับมหาวิทยาลัย' }
+	];
+
 	// Selected values for selects
 	let selectedActivityType = $state<{ value: ActivityType; label: string } | undefined>(undefined);
 	let selectedFaculties = $state<{ value: string; label: string }[]>([]);
 	let selectedAcademicYear = $state<{ value: string; label: string } | undefined>(undefined);
+	let selectedActivityLevel = $state<{ value: string; label: string } | undefined>({ value: 'คณะ', label: 'คณะ' });
 
 	// Helper functions
 	function goBack() {
@@ -301,6 +309,51 @@
 													{#each academicYearOptions as option}
 														<Select.Item value={option.value}>
 															{option.label}
+														</Select.Item>
+													{/each}
+												</Select.Content>
+											</Select.Root>
+										{/snippet}
+									</Form.Control>
+									<Form.FieldErrors />
+								</Form.Field>
+							</div>
+
+							<!-- Activity Level -->
+							<div>
+								<Form.Field {form} name="activity_level">
+									<Form.Control>
+										{#snippet children({ props })}
+											<Label for={props.id} class="text-base font-medium">ระดับกิจกรรม *</Label>
+											<input
+												type="hidden"
+												name="activity_level"
+												bind:value={$formData.activity_level}
+											/>
+											<Select.Root
+												type="single"
+												bind:value={selectedActivityLevel as any}
+												disabled={$submitting}
+												onValueChange={(value) => {
+													if (value && (value === 'คณะ' || value === 'มหาวิทยาลัย')) {
+														const option = activityLevelOptions.find((opt) => opt.value === value);
+														if (option) {
+															selectedActivityLevel = { value: option.value, label: option.label };
+															$formData.activity_level = value;
+														}
+													}
+												}}
+											>
+												<Select.Trigger>
+													{selectedActivityLevel?.label ?? 'เลือกระดับกิจกรรม'}
+												</Select.Trigger>
+												<Select.Content>
+													{#each activityLevelOptions as option}
+														<Select.Item value={option.value}>
+															<div class="flex flex-col">
+																<span class="font-medium">{option.label}</span>
+																<span class="text-sm text-gray-500">{option.description}</span>
+															</div>
 														</Select.Item>
 													{/each}
 												</Select.Content>

@@ -1,6 +1,7 @@
 export type ActivityType = 'Academic' | 'Sports' | 'Cultural' | 'Social' | 'Other';
 export type ActivityStatus = 'draft' | 'published' | 'ongoing' | 'completed' | 'cancelled';
 export type ParticipationStatus = 'registered' | 'checked_in' | 'checked_out' | 'completed';
+export type ActivityLevel = 'คณะ' | 'มหาวิทยาลัย';
 
 // Updated to match backend API response structure
 export interface Activity {
@@ -41,6 +42,7 @@ export interface Activity {
 	participantCount?: number;
 	createdAt?: string;
 	updatedAt?: string;
+	activity_level?: ActivityLevel;
 }
 
 // For creating new activities

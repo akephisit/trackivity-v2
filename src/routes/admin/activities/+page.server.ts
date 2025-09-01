@@ -40,7 +40,8 @@ export const load: PageServerLoad = async (event) => {
         created_at: activities.createdAt,
         updated_at: activities.updatedAt,
         organizer_id: activities.organizerId,
-        organizer_name: organizations.name
+        organizer_name: organizations.name,
+        activity_level: activities.activityLevel
       })
       .from(activities)
       .leftJoin(organizations, eq(activities.organizerId, organizations.id));
@@ -79,7 +80,8 @@ export const load: PageServerLoad = async (event) => {
       organizer_name: activity.organizer_name,
       organizerType: 'หน่วยงาน',
       participantCount: 0, // TODO: Count from participations table
-      status: activity.status || 'รอดำเนินการ'
+      status: activity.status || 'รอดำเนินการ',
+      activity_level: activity.activity_level || 'คณะ'
     }));
 
 		return {

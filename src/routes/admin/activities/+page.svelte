@@ -84,6 +84,17 @@
 		return variants[type] || 'outline';
 	}
 
+	function getActivityLevelBadgeVariant(
+		level: string | undefined
+	): 'default' | 'secondary' | 'destructive' | 'outline' {
+		if (!level) return 'outline';
+		const variants: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
+			'คณะ': 'outline',
+			'มหาวิทยาลัย': 'default'
+		};
+		return variants[level] || 'outline';
+	}
+
 	function getActivityStatus(activity: any): {
 		label: string;
 		variant: 'default' | 'secondary' | 'destructive' | 'outline';
@@ -327,6 +338,7 @@
 								<Table.Row class="bg-gray-50 dark:bg-gray-800">
 									<Table.Head class="font-semibold">ชื่อกิจกรรม</Table.Head>
 									<Table.Head class="font-semibold">ประเภท</Table.Head>
+									<Table.Head class="font-semibold">ระดับ</Table.Head>
 									<Table.Head class="font-semibold">วันที่</Table.Head>
 									<Table.Head class="font-semibold">เวลา</Table.Head>
 									<Table.Head class="font-semibold">สถานที่</Table.Head>
@@ -359,6 +371,11 @@
 										<Table.Cell class="py-4">
 											<Badge variant={getActivityTypeBadgeVariant(activity.activity_type)}>
 												{getActivityTypeLabel(activity.activity_type)}
+											</Badge>
+										</Table.Cell>
+										<Table.Cell class="py-4">
+											<Badge variant={getActivityLevelBadgeVariant(activity.activity_level)}>
+												{activity.activity_level || 'คณะ'}
 											</Badge>
 										</Table.Cell>
 										<Table.Cell class="py-4">

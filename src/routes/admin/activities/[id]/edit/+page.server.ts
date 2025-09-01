@@ -36,7 +36,8 @@ export const load: PageServerLoad = async (event) => {
         created_by: activities.createdBy,
         created_at: activities.createdAt,
         updated_at: activities.updatedAt,
-        registration_open: activities.registrationOpen
+        registration_open: activities.registrationOpen,
+        activity_level: activities.activityLevel
       })
       .from(activities)
       .leftJoin(orgOrganizer, eq(activities.organizerId, orgOrganizer.id))
@@ -87,7 +88,8 @@ export const load: PageServerLoad = async (event) => {
       end_date: a.end_date as any,
       start_time_only: a.start_time_only as any,
       end_time_only: a.end_time_only as any,
-      registration_open: (a as any).registration_open ?? false
+      registration_open: (a as any).registration_open ?? false,
+      activity_level: a.activity_level ?? 'คณะ'
     };
 
 		// Fetch organizations for options
@@ -132,6 +134,7 @@ export const actions: Actions = {
 		// const facultyIdRaw = (fd.get('faculty_id') || '').toString();
 		const eligibleRaw = (fd.get('eligible_organizations') || '').toString();
     	const organizerId = (fd.get('organizer_id') || '').toString().trim();
+    	const activityLevel = (fd.get('activity_level') || '').toString().trim();
 
 		if (!title || !location || !startTime || !endTime) {
 			return { error: 'ข้อมูลไม่ครบถ้วน' } as const;
@@ -141,6 +144,11 @@ export const actions: Actions = {
 		const allowed = ['draft', 'published', 'ongoing', 'completed', 'cancelled'];
 		if (!allowed.includes(status)) {
 			return { error: 'สถานะไม่ถูกต้อง' } as const;
+		}
+
+		// Validate activity_level
+		if (activityLevel && !['คณะ', 'มหาวิทยาลัย'].includes(activityLevel)) {
+			return { error: 'ระดับกิจกรรมไม่ถูกต้อง' } as const;
 		}
 
 		// Parse datetimes into date + time
@@ -186,6 +194,11 @@ export const actions: Actions = {
                 eligibleOrganizations: eligibleOrganizations as any,
                 updatedAt: new Date(),
                 registrationOpen: registrationOpen
+            };
+
+            // Add activity_level to payload if provided
+            if (activityLevel) {
+                payload.activityLevel = activityLevel;
             };
 
             if (isSuperAdmin) {

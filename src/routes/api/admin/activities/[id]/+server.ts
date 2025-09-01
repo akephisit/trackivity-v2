@@ -31,7 +31,8 @@ export const GET: RequestHandler = async (event) => {
         organization_id: activities.organizationId,
         created_by: activities.createdBy,
         created_at: activities.createdAt,
-        updated_at: activities.updatedAt
+        updated_at: activities.updatedAt,
+        activity_level: activities.activityLevel
       })
       .from(activities)
       .leftJoin(organizations, eq(activities.organizerId, organizations.id))

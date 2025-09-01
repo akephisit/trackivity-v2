@@ -50,6 +50,15 @@
 	let selectedOrganizerId = $state((form as any)?.formData?.organizer_id || activity.organizer_id || '');
 	const isSuperAdmin = (data?.user?.admin_role?.admin_level === 'SuperAdmin');
 
+	// Activity level selection state
+	let selectedActivityLevel = $state((form as any)?.formData?.activity_level || activity.activity_level || 'คณะ');
+
+	// Activity level options
+	const activityLevelOptions = [
+		{ value: 'คณะ', label: 'คณะ', description: 'กิจกรรมระดับคณะ' },
+		{ value: 'มหาวิทยาลัย', label: 'มหาวิทยาลัย', description: 'กิจกรรมระดับมหาวิทยาลัย' }
+	];
+
 	// Initial selected values from server
 	let selectedEligibleValues = $state<string[]>(data.eligible_organizations_selected || []);
 	let selectedEligible = $derived(
@@ -257,6 +266,32 @@
 						<Select.Content>
 							{#each facultyOptions as option}
 								<Select.Item value={option.value}>{option.label}</Select.Item>
+							{/each}
+						</Select.Content>
+					</Select.Root>
+				</div>
+
+				<!-- Activity Level (ระดับกิจกรรม) -->
+				<div class="space-y-2">
+					<Label for="activity_level">ระดับกิจกรรม *</Label>
+					<input type="hidden" name="activity_level" bind:value={selectedActivityLevel} />
+					<Select.Root
+						type="single"
+						bind:value={selectedActivityLevel as any}
+						disabled={submitting}
+					>
+						<Select.Trigger>
+							{activityLevelOptions.find((opt) => opt.value === selectedActivityLevel)?.label ||
+								'เลือกระดับกิจกรรม'}
+						</Select.Trigger>
+						<Select.Content>
+							{#each activityLevelOptions as option}
+								<Select.Item value={option.value}>
+									<div class="flex flex-col">
+										<span class="font-medium">{option.label}</span>
+										<span class="text-sm text-gray-500">{option.description}</span>
+									</div>
+								</Select.Item>
 							{/each}
 						</Select.Content>
 					</Select.Root>

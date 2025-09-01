@@ -60,7 +60,10 @@ const activityCreateSchema = z
 				const items = value.split(',').filter((f) => f.trim() !== '');
 				return items.length > 0;
 			}, 'กรุณาเลือกอย่างน้อย 1 หน่วยงาน'),
-		academic_year: z.string().min(1, 'กรุณาเลือกปีการศึกษา')
+		academic_year: z.string().min(1, 'กรุณาเลือกปีการศึกษา'),
+		activity_level: z.enum(['คณะ', 'มหาวิทยาลัย'], {
+			errorMap: () => ({ message: 'กรุณาเลือกระดับกิจกรรม' })
+		})
 	})
 	.refine(
 		(data) => {
@@ -112,7 +115,8 @@ export const load: PageServerLoad = async (event) => {
 		hours: '1',
     organizer_id: '',
 		eligible_organizations: '',
-		academic_year: ''
+		academic_year: '',
+		activity_level: 'คณะ'
 	};
 
 	// ดึงข้อมูลหน่วยงานจากฐานข้อมูล
@@ -187,7 +191,8 @@ export const actions: Actions = {
         hours: form.data.hours ? parseInt(form.data.hours) : 1,
         organizer_id: form.data.organizer_id,
         eligible_organizations: eligibleOrganizationsArray,
-        academic_year: form.data.academic_year
+        academic_year: form.data.academic_year,
+        activity_level: form.data.activity_level
       };
 
 			// เรียก API ผ่าน internal route

@@ -24,7 +24,8 @@ export const POST: RequestHandler = async (event) => {
 		'location',
 		'hours',
     'organizer_id',
-    'academic_year'
+    'academic_year',
+    'activity_level'
   ];
 	const missing = required.filter((k) => !body[k] || String(body[k]).trim() === '');
 	if (missing.length > 0) {
@@ -76,6 +77,12 @@ export const POST: RequestHandler = async (event) => {
       organizationId = organizerId;
     }
 
+    // Validate activity_level
+    const activityLevel = body.activity_level;
+    if (!['คณะ', 'มหาวิทยาลัย'].includes(activityLevel)) {
+      return json({ success: false, error: 'ระดับกิจกรรมไม่ถูกต้อง ต้องเป็น "คณะ" หรือ "มหาวิทยาลัย"' }, { status: 400 });
+    }
+
     const [inserted] = await db
       .insert(activities)
       .values({
@@ -85,6 +92,7 @@ export const POST: RequestHandler = async (event) => {
         activityType: body.activity_type,
         academicYear: body.academic_year,
         organizerId: organizerId,
+        activityLevel: activityLevel,
         eligibleOrganizations: eligibleOrganizations as any,
         startDate: body.start_date,
         endDate: body.end_date,
