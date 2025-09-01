@@ -63,8 +63,8 @@ export const organizationType = pgEnum('organization_type', [
 	'office'    // หน่วยงาน - no departments, no student registration
 ]);
 export const activityLevel = pgEnum('activity_level', [
-	'คณะ',        // Faculty level activities
-	'มหาวิทยาลัย'  // University level activities
+	'faculty',    // คณะ - Faculty level activities  
+	'university'  // มหาวิทยาลัย - University level activities
 ]);
 
 // ===== CORE TABLES =====
@@ -195,8 +195,8 @@ export const activities = pgTable(
 		organizerId: uuid('organizer_id')
 			.notNull()
 			.references(() => organizations.id, { onDelete: 'restrict' }),
-		// Activity level - distinguishes between คณะ and มหาวิทยาลัย activities
-		activityLevel: activityLevel('activity_level').notNull().default('คณะ'),
+		// Activity level - distinguishes between faculty and university activities
+		activityLevel: activityLevel('activity_level').notNull().default('faculty'),
 		eligibleOrganizations: jsonb('eligible_organizations')
 			.notNull()
 			.default(sql`'[]'`),

@@ -89,7 +89,7 @@ export const load: PageServerLoad = async (event) => {
       start_time_only: a.start_time_only as any,
       end_time_only: a.end_time_only as any,
       registration_open: (a as any).registration_open ?? false,
-      activity_level: a.activity_level ?? 'คณะ'
+      activity_level: a.activity_level ?? 'faculty'
     };
 
 		// Fetch organizations for options
@@ -147,7 +147,7 @@ export const actions: Actions = {
 		}
 
 		// Validate activity_level
-		if (activityLevel && !['คณะ', 'มหาวิทยาลัย'].includes(activityLevel)) {
+		if (activityLevel && !['faculty', 'university'].includes(activityLevel)) {
 			return { error: 'ระดับกิจกรรมไม่ถูกต้อง' } as const;
 		}
 

@@ -79,8 +79,8 @@ export const POST: RequestHandler = async (event) => {
 
     // Validate activity_level
     const activityLevel = body.activity_level;
-    if (!['คณะ', 'มหาวิทยาลัย'].includes(activityLevel)) {
-      return json({ success: false, error: 'ระดับกิจกรรมไม่ถูกต้อง ต้องเป็น "คณะ" หรือ "มหาวิทยาลัย"' }, { status: 400 });
+    if (!['faculty', 'university'].includes(activityLevel)) {
+      return json({ success: false, error: 'ระดับกิจกรรมไม่ถูกต้อง ต้องเป็น "faculty" หรือ "university"' }, { status: 400 });
     }
 
     const [inserted] = await db

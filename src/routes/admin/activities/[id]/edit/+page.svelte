@@ -50,14 +50,11 @@
 	let selectedOrganizerId = $state((form as any)?.formData?.organizer_id || activity.organizer_id || '');
 	const isSuperAdmin = (data?.user?.admin_role?.admin_level === 'SuperAdmin');
 
-	// Activity level selection state
-	let selectedActivityLevel = $state((form as any)?.formData?.activity_level || activity.activity_level || 'คณะ');
+	// Import activity level options from utils
+	import { activityLevelOptions, getActivityLevelDisplayName } from '$lib/utils/activity';
 
-	// Activity level options
-	const activityLevelOptions = [
-		{ value: 'คณะ', label: 'คณะ', description: 'กิจกรรมระดับคณะ' },
-		{ value: 'มหาวิทยาลัย', label: 'มหาวิทยาลัย', description: 'กิจกรรมระดับมหาวิทยาลัย' }
-	];
+	// Activity level selection state - convert display value to storage value
+	let selectedActivityLevel = $state((form as any)?.formData?.activity_level || activity.activity_level || 'faculty');
 
 	// Initial selected values from server
 	let selectedEligibleValues = $state<string[]>(data.eligible_organizations_selected || []);

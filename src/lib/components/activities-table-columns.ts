@@ -4,6 +4,7 @@ import { renderComponent, renderSnippet } from '$lib/components/ui/data-table/in
 import { Badge } from '$lib/components/ui/badge/index.js';
 import { Button } from '$lib/components/ui/button/index.js';
 import { createRawSnippet } from 'svelte';
+import { getActivityLevelDisplayName } from '$lib/utils/activity';
 
 export const activityColumns: ColumnDef<Activity>[] = [
 	{
@@ -33,6 +34,31 @@ export const activityColumns: ColumnDef<Activity>[] = [
 						<div class="max-w-[200px]">
 							<div class="font-medium text-sm">${activity.organizer || 'ไม่ระบุผู้จัด'}</div>
 							<div class="text-xs text-muted-foreground">${activity.organizerType || ''}</div>
+						</div>
+					`
+				}))
+			);
+		}
+	},
+	{
+		accessorKey: 'activity_level',
+		header: 'ระดับกิจกรรม',
+		cell: ({ row }) => {
+			const activity = row.original;
+			const level = activity.activity_level || 'faculty';
+			const displayName = getActivityLevelDisplayName(level);
+			
+			return renderSnippet(
+				createRawSnippet(() => ({
+					render: () => `
+						<div class="flex items-center gap-2">
+							<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+								level === 'university' 
+									? 'bg-purple-100 text-purple-800' 
+									: 'bg-blue-100 text-blue-800'
+							}">
+								${displayName}
+							</span>
 						</div>
 					`
 				}))

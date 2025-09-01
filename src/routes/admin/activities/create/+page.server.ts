@@ -61,7 +61,7 @@ const activityCreateSchema = z
 				return items.length > 0;
 			}, 'กรุณาเลือกอย่างน้อย 1 หน่วยงาน'),
 		academic_year: z.string().min(1, 'กรุณาเลือกปีการศึกษา'),
-		activity_level: z.enum(['คณะ', 'มหาวิทยาลัย'], {
+		activity_level: z.enum(['faculty', 'university'], {
 			errorMap: () => ({ message: 'กรุณาเลือกระดับกิจกรรม' })
 		})
 	})
@@ -116,7 +116,7 @@ export const load: PageServerLoad = async (event) => {
     organizer_id: '',
 		eligible_organizations: '',
 		academic_year: '',
-		activity_level: 'คณะ'
+		activity_level: 'faculty'
 	};
 
 	// ดึงข้อมูลหน่วยงานจากฐานข้อมูล
