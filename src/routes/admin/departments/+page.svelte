@@ -31,13 +31,11 @@
 		IconUsers,
 		IconSearch,
 		IconFilter,
-		IconUserCheck,
-		IconUserPlus,
-		IconShield
+		IconUserCheck
 	} from '@tabler/icons-svelte/icons';
 	import { toast } from 'svelte-sonner';
 	import { invalidateAll, invalidate } from '$app/navigation';
-	import type { Department, ExtendedAdminRole } from '$lib/types/admin';
+	import type { Department } from '$lib/types/admin';
 
 	let { data } = $props();
 	let refreshing = $state(false);
@@ -690,6 +688,9 @@
 				</Alert>
 			{/if}
 
+			<!-- Hidden field for status -->
+			<input type="hidden" name="status" value={$createFormData.status} />
+
 			<Form.Field form={createForm} name="name">
 				<Form.Control>
 					{#snippet children({ props })}
@@ -793,10 +794,21 @@
 				</Form.Field>
 			{/if}
 
-			<div class="flex items-center space-x-2">
-				<Switch bind:checked={$createFormData.status} disabled={$createSubmitting} />
-				<Label>เปิดใช้งานทันทีหลังสร้าง</Label>
-			</div>
+			<Form.Field form={createForm} name="status">
+				<Form.Control>
+					{#snippet children({ props })}
+						<div class="flex items-center space-x-2">
+							<Switch 
+								{...props}
+								bind:checked={$createFormData.status} 
+								disabled={$createSubmitting} 
+							/>
+							<Label for={props.id}>เปิดใช้งานทันทีหลังสร้าง</Label>
+						</div>
+					{/snippet}
+				</Form.Control>
+				<Form.FieldErrors />
+			</Form.Field>
 
 			<Dialog.Footer>
 				<Button type="button" variant="outline" onclick={() => (createDialogOpen = false)}>

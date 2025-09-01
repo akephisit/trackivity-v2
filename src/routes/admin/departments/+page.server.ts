@@ -15,7 +15,11 @@ const departmentCreateSchema = z.object({
 	description: z.string().optional(),
 	head_name: z.string().optional(),
 	head_email: z.string().email('รูปแบบอีเมลไม่ถูกต้อง').optional().or(z.literal('')),
-	status: z.boolean().default(true),
+	status: z.preprocess((val) => {
+		if (val === 'true' || val === true) return true;
+		if (val === 'false' || val === false) return false;
+		return true; // default value
+	}, z.boolean()).default(true),
 	// สำหรับ SuperAdmin ต้องเลือกหน่วยงาน
 	organization_id: z.string().uuid('รหัสหน่วยงานไม่ถูกต้อง').optional()
 });
@@ -30,18 +34,12 @@ const departmentUpdateSchema = z.object({
 });
 
 export const load: PageServerLoad = async (event) => {
-	const { cookies, depends, parent } = event;
+	const { depends } = event;
 	depends('app:page-data');
 
 	// Ensure user is authenticated as admin
 	const user = requireAdmin(event);
 	const admin_role = user.admin_role;
-
-	// For SuperAdmin, show all departments; for OrganizationAdmin, show only their organization's departments
-	let apiEndpoint = `/api/departments`;
-	if (admin_role?.admin_level === 'OrganizationAdmin' && (admin_role as any).organization_id) {
-		apiEndpoint = `/api/organizations/${(admin_role as any).organization_id}/departments`;
-	}
 
 	try {
 		// Fetch departments directly from database and map to typed Department
