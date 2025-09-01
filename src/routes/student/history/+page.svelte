@@ -13,24 +13,34 @@
 		IconSearch,
 		IconAlertCircle,
 		IconTrendingUp,
-		IconAward
+		IconAward,
+		IconLogin,
+		IconLogout,
+		IconUserCheck,
+		IconHourglass,
+		IconBuildingStore,
+		IconCheck,
+		IconX,
+		IconClock2
 	} from '@tabler/icons-svelte';
 
-let { data } = $props<{ data: { history: ActivityParticipation[] } }>();
-let participationHistory: ActivityParticipation[] = $state(data?.history || []);
-let filteredHistory: ActivityParticipation[] = $state([]);
+let { data } = $props<{ data: { history: any[] } }>();
+let participationHistory: any[] = $state(data?.history || []);
+let filteredHistory: any[] = $state([]);
 let loading = $state(true);
 let error: string | null = $state(null);
 	let searchQuery = $state('');
-	let sortBy = $state('recent'); // recent, oldest, activity_name
-	let filterBy = $state('all'); // all, this_month, last_month, this_year
+	let sortBy = $state('recent'); // recent, oldest, activity_name, duration
+	let filterBy = $state('all'); // all, this_month, last_month, this_year, completed, in_progress
 
 	// Stats
 	let stats = $state({
 		total: 0,
 		thisMonth: 0,
 		thisYear: 0,
-		uniqueActivities: 0
+		uniqueActivities: 0,
+		totalHours: 0,
+		completedActivities: 0
 	});
 
 // Initialize from server data
@@ -38,16 +48,26 @@ loading = false;
 filteredHistory = participationHistory;
 calculateStats(participationHistory);
 
-	function calculateStats(data: ActivityParticipation[]) {
+	function calculateStats(data: any[]) {
 		const now = new Date();
 		const thisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 		const thisYear = new Date(now.getFullYear(), 0, 1);
+
+		const completedActivities = data.filter((p) => p.status === 'completed' || p.status === 'checked_out');
+		const totalHours = data.reduce((sum, p) => {
+			if (p.activity?.hours) {
+				return sum + (p.activity.hours || 0);
+			}
+			return sum;
+		}, 0);
 
 		stats = {
 			total: data.length,
 			thisMonth: data.filter((p) => new Date(p.participated_at) >= thisMonth).length,
 			thisYear: data.filter((p) => new Date(p.participated_at) >= thisYear).length,
-			uniqueActivities: new Set(data.map((p) => p.activity?.id)).size
+			uniqueActivities: new Set(data.map((p) => p.activity?.id)).size,
+			totalHours,
+			completedActivities: completedActivities.length
 		};
 	}
 
@@ -64,7 +84,7 @@ calculateStats(participationHistory);
         });
 		}
 
-		// Time filter
+		// Time and status filter
 		const now = new Date();
 		switch (filterBy) {
 			case 'this_month': {
@@ -86,6 +106,14 @@ calculateStats(participationHistory);
 				filtered = filtered.filter((p) => new Date(p.participated_at) >= thisYear);
 				break;
 			}
+			case 'completed': {
+				filtered = filtered.filter((p) => p.status === 'completed' || p.status === 'checked_out');
+				break;
+			}
+			case 'in_progress': {
+				filtered = filtered.filter((p) => p.status === 'registered' || p.status === 'checked_in');
+				break;
+			}
 		}
 
 		// Sort
@@ -102,6 +130,13 @@ calculateStats(participationHistory);
 				break;
 			case 'activity_name':
 				filtered.sort((a, b) => (a.activity?.name || '').localeCompare(b.activity?.name || ''));
+				break;
+			case 'duration':
+				filtered.sort((a, b) => {
+					const aDuration = a.participation_duration_minutes || 0;
+					const bDuration = b.participation_duration_minutes || 0;
+					return bDuration - aDuration;
+				});
 				break;
 		}
 
@@ -146,15 +181,72 @@ calculateStats(participationHistory);
 
 	function getActivityBadgeVariant(type: string): 'default' | 'secondary' | 'outline' {
 		switch (type) {
-			case 'lecture':
+			case 'Academic':
 				return 'default';
-			case 'workshop':
+			case 'Sports':
 				return 'secondary';
-			case 'exam':
+			case 'Cultural':
+				return 'outline';
+			case 'Social':
 				return 'outline';
 			default:
 				return 'outline';
 		}
+	}
+
+	function getParticipationStatusText(status: string): string {
+		const statusMap: Record<string, string> = {
+			registered: 'ลงทะเบียน',
+			checked_in: 'เช็คอิน',
+			checked_out: 'เช็คเอาท์',
+			completed: 'เสร็จสิ้น',
+			no_show: 'ไม่เข้าร่วม'
+		};
+		return statusMap[status] || status;
+	}
+
+	function getStatusBadgeVariant(status: string): 'default' | 'secondary' | 'outline' | 'destructive' {
+		switch (status) {
+			case 'completed':
+			case 'checked_out':
+				return 'default';
+			case 'checked_in':
+				return 'secondary';
+			case 'registered':
+				return 'outline';
+			case 'no_show':
+				return 'destructive';
+			default:
+				return 'outline';
+		}
+	}
+
+	function getStatusIcon(status: string) {
+		switch (status) {
+			case 'completed':
+			case 'checked_out':
+				return IconCheck;
+			case 'checked_in':
+				return IconLogin;
+			case 'registered':
+				return IconUserCheck;
+			case 'no_show':
+				return IconX;
+			default:
+				return IconClock2;
+		}
+	}
+
+	function formatDuration(minutes: number): string {
+		if (minutes < 60) {
+			return `${minutes} นาที`;
+		}
+		const hours = Math.floor(minutes / 60);
+		const remainingMinutes = minutes % 60;
+		if (remainingMinutes === 0) {
+			return `${hours} ชั่วโมง`;
+		}
+		return `${hours} ชม. ${remainingMinutes} นาที`;
 	}
 </script>
 
@@ -171,7 +263,7 @@ calculateStats(participationHistory);
 	</div>
 
 	<!-- Statistics -->
-	<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+	<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
 		<Card>
 			<CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
 				<CardTitle class="text-sm font-medium">ทั้งหมด</CardTitle>
@@ -180,6 +272,17 @@ calculateStats(participationHistory);
 			<CardContent>
 				<div class="text-2xl font-bold">{stats.total}</div>
 				<p class="text-xs text-muted-foreground">กิจกรรมที่เข้าร่วม</p>
+			</CardContent>
+		</Card>
+
+		<Card>
+			<CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
+				<CardTitle class="text-sm font-medium">เสร็จสิ้น</CardTitle>
+				<IconCheck class="size-4 text-muted-foreground" />
+			</CardHeader>
+			<CardContent>
+				<div class="text-2xl font-bold">{stats.completedActivities}</div>
+				<p class="text-xs text-muted-foreground">กิจกรรมที่เสร็จสิ้น</p>
 			</CardContent>
 		</Card>
 
@@ -215,6 +318,17 @@ calculateStats(participationHistory);
 				<p class="text-xs text-muted-foreground">กิจกรรมที่แตกต่าง</p>
 			</CardContent>
 		</Card>
+
+		<Card>
+			<CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
+				<CardTitle class="text-sm font-medium">รวมชั่วโมง</CardTitle>
+				<IconHourglass class="size-4 text-muted-foreground" />
+			</CardHeader>
+			<CardContent>
+				<div class="text-2xl font-bold">{stats.totalHours}</div>
+				<p class="text-xs text-muted-foreground">ชั่วโมงจากกิจกรรม</p>
+			</CardContent>
+		</Card>
 	</div>
 
 	<!-- Filters -->
@@ -231,18 +345,21 @@ calculateStats(participationHistory);
 		<div class="flex flex-col gap-3 sm:flex-row">
 			<select
 				bind:value={sortBy}
-				class="flex h-9 w-full items-center justify-between rounded-md border border-input bg-transparent px-3 py-2 text-sm whitespace-nowrap shadow-sm ring-offset-background placeholder:text-muted-foreground focus:ring-1 focus:ring-ring focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 sm:w-[180px]"
+				class="flex h-9 w-full items-center justify-between rounded-md border border-input bg-transparent px-3 py-2 text-sm whitespace-nowrap shadow-sm ring-offset-background placeholder:text-muted-foreground focus:ring-1 focus:ring-ring focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 sm:w-[200px]"
 			>
 				<option value="recent">ล่าสุดก่อน</option>
 				<option value="oldest">เก่าก่อน</option>
 				<option value="activity_name">ชื่อกิจกรรม</option>
+				<option value="duration">ระยะเวลาเข้าร่วม</option>
 			</select>
 
 			<select
 				bind:value={filterBy}
-				class="flex h-9 w-full items-center justify-between rounded-md border border-input bg-transparent px-3 py-2 text-sm whitespace-nowrap shadow-sm ring-offset-background placeholder:text-muted-foreground focus:ring-1 focus:ring-ring focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 sm:w-[180px]"
+				class="flex h-9 w-full items-center justify-between rounded-md border border-input bg-transparent px-3 py-2 text-sm whitespace-nowrap shadow-sm ring-offset-background placeholder:text-muted-foreground focus:ring-1 focus:ring-ring focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 sm:w-[200px]"
 			>
 				<option value="all">ทั้งหมด</option>
+				<option value="completed">เสร็จสิ้นแล้ว</option>
+				<option value="in_progress">กำลังดำเนินการ</option>
 				<option value="this_month">เดือนนี้</option>
 				<option value="last_month">เดือนที่แล้ว</option>
 				<option value="this_year">ปีนี้</option>
@@ -287,46 +404,108 @@ calculateStats(participationHistory);
 		{:else}
 			<div class="space-y-4">
 				{#each filteredHistory as participation}
+					{@const StatusIcon = getStatusIcon(participation.status)}
 					<Card class="transition-shadow hover:shadow-md">
 						<CardContent class="p-4">
-							<div class="space-y-3">
+							<div class="space-y-4">
 								<!-- Header -->
-								<div class="flex flex-col justify-between gap-2 sm:flex-row sm:items-start">
-									<div class="space-y-1">
-										<h3 class="text-base font-medium">
-                                    {participation.activity?.name || (participation as any).activity?.title || 'ไม่ระบุชื่อกิจกรรม'}
-										</h3>
-										{#if participation.activity?.description}
-											<p class="line-clamp-2 text-sm text-muted-foreground">
-												{participation.activity.description}
-											</p>
+								<div class="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
+									<div class="space-y-2">
+										<div class="flex items-start gap-3">
+											<div class="mt-1">
+												<StatusIcon class="size-5 text-muted-foreground" />
+											</div>
+											<div class="space-y-1 flex-1">
+												<h3 class="text-base font-medium leading-tight">
+													{participation.activity?.name || participation.activity?.title || 'ไม่ระบุชื่อกิจกรรม'}
+												</h3>
+												{#if participation.activity?.description}
+													<p class="line-clamp-2 text-sm text-muted-foreground">
+														{participation.activity.description}
+													</p>
+												{/if}
+												{#if participation.activity?.organizer_name}
+													<div class="flex items-center gap-1 text-xs text-muted-foreground">
+														<IconBuildingStore class="size-3" />
+														<span>{participation.activity.organizer_name}</span>
+													</div>
+												{/if}
+											</div>
+										</div>
+									</div>
+									<div class="flex flex-wrap gap-2 sm:flex-col sm:items-end">
+										<Badge variant={getStatusBadgeVariant(participation.status)}>
+											{getParticipationStatusText(participation.status)}
+										</Badge>
+										{#if participation.activity?.activity_type}
+											<Badge variant={getActivityBadgeVariant(participation.activity.activity_type)}>
+												{participation.activity.activity_type}
+											</Badge>
 										{/if}
 									</div>
-                            {#if participation.activity?.activity_type}
-                                <Badge variant={getActivityBadgeVariant(participation.activity.activity_type)}>
-                                    {getActivityTypeText(participation.activity.activity_type)}
-                            </Badge>
-                            {/if}
 								</div>
 
-								<!-- Details -->
-								<div class="grid grid-cols-1 gap-3 text-sm text-muted-foreground sm:grid-cols-2">
-									<div class="flex items-center gap-2">
-										<IconClock class="size-4 flex-shrink-0" />
-										<span>เข้าร่วมเมื่อ: {formatDateShort(participation.participated_at)}</span>
+								<!-- Timeline Details -->
+								<div class="border-l-2 border-muted pl-4 space-y-3">
+									<!-- Activity Schedule -->
+									<div class="grid grid-cols-1 gap-2 text-sm">
+										{#if participation.activity?.start_date}
+											<div class="flex items-center gap-2 text-muted-foreground">
+												<IconCalendarEvent class="size-4 flex-shrink-0" />
+												<span>กำหนดการ: {formatDate(participation.activity.start_date)}</span>
+												{#if participation.activity.start_time}
+													<span>- {participation.activity.start_time}</span>
+												{/if}
+											</div>
+										{/if}
+										
+										{#if participation.activity?.location}
+											<div class="flex items-center gap-2 text-muted-foreground">
+												<IconMapPin class="size-4 flex-shrink-0" />
+												<span class="truncate">สถานที่: {participation.activity.location}</span>
+											</div>
+										{/if}
 									</div>
 
-									{#if participation.qr_scan_location}
-										<div class="flex items-center gap-2">
-											<IconMapPin class="size-4 flex-shrink-0" />
-											<span class="truncate">สแกนที่: {participation.qr_scan_location}</span>
+									<!-- Participation Timeline -->
+									<div class="space-y-2">
+										{#if participation.registered_at}
+											<div class="flex items-center gap-2 text-sm text-muted-foreground">
+												<IconUserCheck class="size-4 flex-shrink-0" />
+												<span>ลงทะเบียน: {formatDateShort(participation.registered_at)}</span>
+											</div>
+										{/if}
+										
+										{#if participation.checked_in_at}
+											<div class="flex items-center gap-2 text-sm text-muted-foreground">
+												<IconLogin class="size-4 flex-shrink-0" />
+												<span>เช็คอิน: {formatDateShort(participation.checked_in_at)}</span>
+											</div>
+										{/if}
+										
+										{#if participation.checked_out_at}
+											<div class="flex items-center gap-2 text-sm text-muted-foreground">
+												<IconLogout class="size-4 flex-shrink-0" />
+												<span>เช็คเอาท์: {formatDateShort(participation.checked_out_at)}</span>
+											</div>
+										{/if}
+
+
+										{#if participation.activity?.hours}
+											<div class="flex items-center gap-2 text-sm text-muted-foreground">
+												<IconHourglass class="size-4 flex-shrink-0" />
+												<span>จำนวนชั่วโมงที่ได้: {participation.activity.hours} ชั่วโมง</span>
+											</div>
+										{/if}
+									</div>
+
+									<!-- Notes -->
+									{#if participation.notes}
+										<div class="pt-2 border-t text-sm">
+											<p class="text-muted-foreground">หมายเหตุ:</p>
+											<p class="text-foreground">{participation.notes}</p>
 										</div>
 									{/if}
-								</div>
-
-								<!-- Mobile: Full date -->
-								<div class="border-t pt-2 text-xs text-muted-foreground sm:hidden">
-									เวลาเต็ม: {formatDate(participation.participated_at)}
 								</div>
 							</div>
 						</CardContent>
