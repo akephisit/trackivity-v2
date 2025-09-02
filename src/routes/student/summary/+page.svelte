@@ -133,7 +133,7 @@
 
 	<!-- Report Header Card -->
 	<Card class="border-2 print-break-after">
-		<CardHeader class="bg-muted/30">
+		<CardHeader>
 			<div class="flex items-center gap-3">
 				<IconFileText class="size-6 text-primary" />
 				<div>
@@ -220,7 +220,7 @@
 	<!-- Progress Section -->
 	{#if data.activityRequirements && stats.progress}
 		<Card class="border-2 border-primary/20">
-			<CardHeader class="bg-primary/5">
+			<CardHeader>
 				<div class="flex items-center gap-3">
 					<IconTarget class="size-6 text-primary" />
 					<div>
