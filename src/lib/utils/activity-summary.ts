@@ -6,7 +6,6 @@
 export interface ActivityRequirements {
   requiredFacultyHours: number;
   requiredUniversityHours: number;
-  academicYear: string;
 }
 
 export interface ProgressInfo {
@@ -46,11 +45,6 @@ export interface ActivitySummaryStats {
     activities: number;
     hours: number;
     byType: Record<string, { count: number; hours: number }>;
-  };
-  periodInfo: {
-    startDate: string | null;
-    endDate: string | null;
-    academicYear: string;
   };
   completionRate: number;
   progress?: ProgressInfo;
@@ -111,10 +105,6 @@ export function calculateActivitySummary(participationHistory: ParticipationReco
     byType: {} as Record<string, { count: number; hours: number }>
   };
 
-  // Track period info
-  let startDate: string | null = null;
-  let endDate: string | null = null;
-
   // Process completed activities
   completedParticipations.forEach((participation) => {
     const activity = participation.activity;
@@ -126,13 +116,6 @@ export function calculateActivitySummary(participationHistory: ParticipationReco
 
     // Update total hours
     totalHours += hours;
-
-    // Update period tracking
-    const activityDate = activity.start_date || participation.participated_at;
-    if (activityDate) {
-      if (!startDate || activityDate < startDate) startDate = activityDate;
-      if (!endDate || activityDate > endDate) endDate = activityDate;
-    }
 
     // Process by activity level
     if (activityLevel === 'faculty') {
@@ -157,14 +140,6 @@ export function calculateActivitySummary(participationHistory: ParticipationReco
     }
   });
 
-  // Calculate academic year
-  const currentYear = new Date().getFullYear();
-  const currentMonth = new Date().getMonth();
-  // Thai academic year runs from June to May
-  const academicYear = currentMonth >= 5 ? 
-    `${currentYear}/${currentYear + 1}` : 
-    `${currentYear - 1}/${currentYear}`;
-
   // Calculate completion rate
   const completionRate = uniqueParticipations.length > 0 
     ? (completedParticipations.length / uniqueParticipations.length) * 100 
@@ -176,11 +151,6 @@ export function calculateActivitySummary(participationHistory: ParticipationReco
     totalHours,
     facultyLevel,
     universityLevel,
-    periodInfo: {
-      startDate,
-      endDate,
-      academicYear
-    },
     completionRate: Math.round(completionRate * 100) / 100
   };
 }

@@ -21,7 +21,6 @@
 		IconBuilding,
 		IconAward,
 		IconTrendingUp,
-		IconCalendar,
 		IconUser,
 		IconHourglass,
 		IconActivity,
@@ -163,13 +162,7 @@
 							<p class="text-sm text-muted-foreground">{data.userInfo.student_id}</p>
 						</div>
 					</div>
-					<div class="flex items-center gap-3">
-						<IconCalendar class="size-4 text-muted-foreground" />
-						<div>
-							<p class="text-sm font-medium">ปีการศึกษา</p>
-							<p class="text-sm text-muted-foreground">{stats.periodInfo.academicYear}</p>
-						</div>
-					</div>
+					<!-- Removed academic year display per request -->
 					<div class="flex items-center gap-3">
 						<IconFileText class="size-4 text-muted-foreground" />
 						<div>
@@ -355,7 +348,7 @@
 					<div class="flex items-start gap-2 text-blue-700 dark:text-blue-300">
 						<IconInfoCircle class="size-4 mt-0.5" />
 						<div>
-							<p class="text-sm font-medium">เกณฑ์การผ่านกิจกรรม ปีการศึกษา {data.activityRequirements.academicYear}</p>
+							<p class="text-sm font-medium">เกณฑ์การผ่านกิจกรรม</p>
 							<div class="mt-2 text-xs text-blue-600 dark:text-blue-400">
 								<p>• กิจกรรมระดับคณะ: อย่างน้อย {data.activityRequirements.requiredFacultyHours} ชั่วโมง</p>
 								<p>• กิจกรรมระดับมหาวิทยาลัย: อย่างน้อย {data.activityRequirements.requiredUniversityHours} ชั่วโมง</p>
@@ -592,12 +585,7 @@
 		<CardContent class="py-4 text-center text-sm text-muted-foreground">
 			<p>รายงานนี้สร้างขึ้นโดยระบบ Trackivity - Activity Tracking System</p>
 			<p>วันที่สร้างรายงาน: {reportDate}</p>
-			{#if stats.periodInfo.startDate && stats.periodInfo.endDate}
-				<p class="mt-1">
-					ช่วงเวลากิจกรรม: {new Date(stats.periodInfo.startDate).toLocaleDateString('th-TH')} - 
-					{new Date(stats.periodInfo.endDate).toLocaleDateString('th-TH')}
-				</p>
-			{/if}
+			<!-- Removed activity period range per request -->
 		</CardContent>
 	</Card>
 </div>
