@@ -22,6 +22,7 @@
 	// Import filtering component
 	import UserFilters from '$lib/components/user-management/UserFilters.svelte';
 	import { PrefixOptions } from '$lib/schemas/auth';
+	import { getRoleText, getRoleBadgeVariant } from '$lib/utils';
 
 	// Get data from server load function
 	let { data } = $props();
@@ -84,48 +85,6 @@
 		}
 	}
 
-	// Role badge colors and display text
-	function getRoleBadgeVariant(role: string) {
-		switch (role) {
-			case 'super_admin':
-				return 'destructive';
-			case 'faculty_admin':
-				return 'default';
-			case 'regular_admin':
-				return 'secondary';
-			case 'admin':
-				return 'destructive';
-			case 'faculty':
-				return 'default';
-			case 'staff':
-				return 'secondary';
-			case 'student':
-				return 'outline';
-			default:
-				return 'secondary';
-		}
-	}
-
-	function getRoleText(role: string): string {
-		switch (role) {
-			case 'super_admin':
-				return 'ซุปเปอร์แอดมิน';
-			case 'faculty_admin':
-				return 'แอดมินหน่วยงาน';
-			case 'regular_admin':
-				return 'แอดมินทั่วไป';
-			case 'admin':
-				return 'แอดมิน';
-			case 'faculty':
-				return 'อาจารย์';
-			case 'staff':
-				return 'เจ้าหน้าที่';
-			case 'student':
-				return 'นักศึกษา';
-			default:
-				return role;
-		}
-	}
 
 	// Format date
 	function formatDate(dateString: string) {

@@ -21,6 +21,7 @@
 	} from '@tabler/icons-svelte/icons';
 	import type { User } from '$lib/types/admin';
 	import { createEventDispatcher } from 'svelte';
+	import { getRoleText, getRoleBadgeVariant } from '$lib/utils';
 
 	const dispatch = createEventDispatcher<{
 		viewUser: User;
@@ -61,25 +62,6 @@
 		return formatDate(dateString);
 	}
 
-	function getRoleLabel(role: string): string {
-		const roleLabels = {
-			student: 'นักศึกษา',
-			faculty: 'อาจารย์',
-			staff: 'เจ้าหน้าที่',
-			admin: 'ผู้ดูแลระบบ'
-		};
-		return roleLabels[role as keyof typeof roleLabels] || role;
-	}
-
-	function getRoleVariant(role: string): 'default' | 'secondary' | 'destructive' | 'outline' {
-		const variants = {
-			student: 'outline' as const,
-			faculty: 'default' as const,
-			staff: 'secondary' as const,
-			admin: 'destructive' as const
-		};
-		return variants[role as keyof typeof variants] || 'outline';
-	}
 
 	function getStatusLabel(status: string): string {
 		const statusLabels = {
@@ -164,8 +146,8 @@
 
 <!-- Role Badge Component -->
 {#if role}
-	<Badge variant={getRoleVariant(role)} class="text-xs">
-		{getRoleLabel(role)}
+	<Badge variant={getRoleBadgeVariant(role)} class="text-xs">
+		{getRoleText(role)}
 	</Badge>
 {/if}
 
@@ -302,7 +284,7 @@
 				<DropdownMenu.SubContent>
 					{#if user.role !== 'student'}
 						<DropdownMenu.Item onclick={() => dispatch('updateRole', { user, role: 'student' })}>
-							นักศึกษา
+							นิสิต
 						</DropdownMenu.Item>
 					{/if}
 					{#if user.role !== 'faculty'}
