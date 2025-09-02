@@ -79,7 +79,9 @@
 		cameraPermission: 'unknown',
 		videoReady: false,
 		streamActive: false,
-		deviceOrientation: 'unknown'
+		deviceOrientation: 'unknown',
+		deviceType: 'unknown' as 'desktop' | 'mobile' | 'tablet' | 'unknown',
+		isDesktop: false
 	});
 
 	// QR Code validation state
@@ -131,7 +133,8 @@
 				}
 			}
 
-			// Set up orientation detection
+			// Set up device and orientation detection
+			setupDeviceDetection();
 			setupOrientationDetection();
 
 			if (isActive && activity_id && cameraStatus === 'idle') {
@@ -765,6 +768,81 @@
 		});
 	}
 
+	// Device type detection
+	function getDeviceType(): 'desktop' | 'mobile' | 'tablet' | 'unknown' {
+		if (typeof window === 'undefined') return 'unknown';
+
+		const userAgent = navigator.userAgent.toLowerCase();
+		const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+		const screenWidth = window.screen.width;
+		const screenHeight = window.screen.height;
+		const maxDimension = Math.max(screenWidth, screenHeight);
+		const minDimension = Math.min(screenWidth, screenHeight);
+
+		// Check for mobile user agents
+		const mobileUserAgents = [
+			'android',
+			'webos',
+			'iphone',
+			'ipad',
+			'ipod',
+			'blackberry',
+			'iemobile',
+			'opera mini'
+		];
+
+		const isMobileUA = mobileUserAgents.some((device) => userAgent.includes(device));
+
+		// Desktop detection: Large screen + no mobile UA + mouse/keyboard interaction
+		if (
+			maxDimension >= 1024 &&
+			minDimension >= 768 &&
+			!isMobileUA &&
+			(!isTouchDevice || (isTouchDevice && maxDimension >= 1366))
+		) {
+			return 'desktop';
+		}
+
+		// Tablet detection: Medium screen or iPad
+		if (
+			(minDimension >= 768 && maxDimension >= 1024) ||
+			userAgent.includes('ipad') ||
+			(userAgent.includes('android') && !userAgent.includes('mobile'))
+		) {
+			return 'tablet';
+		}
+
+		// Mobile detection: Small screen or mobile UA
+		if (isMobileUA || maxDimension < 768) {
+			return 'mobile';
+		}
+
+		// Additional desktop check: pointer precision
+		if (window.matchMedia && window.matchMedia('(pointer: fine)').matches) {
+			return 'desktop';
+		}
+
+		return 'unknown';
+	}
+
+	// Setup device detection
+	function setupDeviceDetection() {
+		if (typeof window === 'undefined') return;
+
+		debugInfo.deviceType = getDeviceType();
+		debugInfo.isDesktop = debugInfo.deviceType === 'desktop';
+
+		console.log('Device detection:', {
+			type: debugInfo.deviceType,
+			isDesktop: debugInfo.isDesktop,
+			userAgent: navigator.userAgent,
+			screenSize: `${window.screen.width}x${window.screen.height}`,
+			windowSize: `${window.innerWidth}x${window.innerHeight}`,
+			touchDevice: 'ontouchstart' in window || navigator.maxTouchPoints > 0,
+			pointerFine: window.matchMedia && window.matchMedia('(pointer: fine)').matches
+		});
+	}
+
 	// Device orientation detection
 	function getDeviceOrientation(): 'portrait' | 'landscape' {
 		if (typeof window === 'undefined') return 'portrait';
@@ -793,9 +871,10 @@
 				debugInfo.deviceOrientation = newOrientation;
 				console.log('Orientation changed to:', newOrientation);
 
-				// If camera is active, restart it with new constraints
-				if (cameraStatus === 'active' && stream) {
-					console.log('Restarting camera for orientation change');
+				// For mobile/tablet devices, restart camera with new constraints
+				// For desktop, orientation changes are less relevant since we use fixed landscape
+				if (!debugInfo.isDesktop && cameraStatus === 'active' && stream) {
+					console.log('Restarting camera for orientation change on mobile/tablet');
 					stopCamera();
 					setTimeout(() => {
 						if (isActive) {
@@ -821,23 +900,64 @@
 	 * Gets camera stream with retry mechanism for better reliability
 	 */
 	async function getCameraStreamWithRetry(): Promise<MediaStream> {
-		// Get current orientation for camera constraints
-		const isPortrait = getDeviceOrientation() === 'portrait';
+		// Determine camera constraints based on device type and orientation
+		const deviceType = debugInfo.deviceType;
+		const isDesktop = debugInfo.isDesktop;
+		const orientation = getDeviceOrientation();
+		
+		console.log('Camera constraints calculation:', {
+			deviceType,
+			isDesktop,
+			orientation
+		});
 
-		// Request camera permissions with orientation-aware constraints
-		const constraints = {
-			video: {
-				facingMode: { ideal: 'environment' }, // Prefer back camera but allow front if needed
-				width: isPortrait
-					? { min: 320, ideal: 720, max: 1080 }
-					: { min: 480, ideal: 1280, max: 1920 },
-				height: isPortrait
-					? { min: 480, ideal: 1280, max: 1920 }
-					: { min: 320, ideal: 720, max: 1080 },
-				frameRate: { ideal: 30, max: 60 }
-			},
-			audio: false
-		};
+		let constraints: MediaStreamConstraints;
+
+		if (isDesktop) {
+			// Desktop: Always use landscape-oriented constraints for better QR scanning
+			constraints = {
+				video: {
+					facingMode: { ideal: 'user' }, // Desktop usually has front-facing camera
+					width: { min: 640, ideal: 1280, max: 1920 },
+					height: { min: 480, ideal: 720, max: 1080 },
+					frameRate: { ideal: 30, max: 60 },
+					aspectRatio: { ideal: 16 / 9 } // Force landscape aspect ratio
+				},
+				audio: false
+			};
+		} else if (deviceType === 'tablet') {
+			// Tablet: Use orientation to determine constraints
+			const isPortrait = orientation === 'portrait';
+			constraints = {
+				video: {
+					facingMode: { ideal: 'environment' }, // Prefer back camera
+					width: isPortrait
+						? { min: 480, ideal: 720, max: 1080 }
+						: { min: 720, ideal: 1280, max: 1920 },
+					height: isPortrait
+						? { min: 640, ideal: 1280, max: 1920 }
+						: { min: 480, ideal: 720, max: 1080 },
+					frameRate: { ideal: 30, max: 60 }
+				},
+				audio: false
+			};
+		} else {
+			// Mobile: Use orientation-based constraints
+			const isPortrait = orientation === 'portrait';
+			constraints = {
+				video: {
+					facingMode: { ideal: 'environment' }, // Prefer back camera for mobile
+					width: isPortrait
+						? { min: 320, ideal: 720, max: 1080 }
+						: { min: 480, ideal: 1280, max: 1920 },
+					height: isPortrait
+						? { min: 480, ideal: 1280, max: 1920 }
+						: { min: 320, ideal: 720, max: 1080 },
+					frameRate: { ideal: 30, max: 60 }
+				},
+				audio: false
+			};
+		}
 
 		console.log('Requesting camera with constraints:', constraints);
 
@@ -1006,10 +1126,11 @@
 			<!-- Camera Preview -->
 			<div class="relative">
 				<div
-					class="relative overflow-hidden rounded-lg border-2 border-dashed bg-muted {debugInfo.deviceOrientation ===
-					'portrait'
-						? 'aspect-[3/4]'
-						: 'aspect-video'} max-h-[600px] min-h-[300px]"
+					class="relative overflow-hidden rounded-lg border-2 border-dashed bg-muted {debugInfo.isDesktop
+						? 'aspect-video' 
+						: debugInfo.deviceOrientation === 'portrait'
+							? 'aspect-[3/4]'
+							: 'aspect-video'} max-h-[600px] min-h-[300px] {debugInfo.isDesktop ? 'max-w-2xl mx-auto' : ''}"
 					id="video-container"
 				>
 					{#if cameraStatus === 'active' || cameraStatus === 'requesting'}
@@ -1065,6 +1186,8 @@
 						{#if import.meta.env.DEV}
 							<div class="absolute top-2 left-2 z-30 rounded bg-black/70 p-2 text-xs text-white">
 								Status: {cameraStatus}<br />
+								Device: {debugInfo.deviceType} ({debugInfo.isDesktop ? 'Desktop' : 'Mobile/Tablet'})<br />
+								Orientation: {debugInfo.deviceOrientation}<br />
 								Stream: {debugInfo.streamActive ? 'Yes' : 'No'}<br />
 								Video: {videoElement?.videoWidth || 0}x{videoElement?.videoHeight || 0}<br />
 								Element: {videoElement?.offsetWidth || 0}x{videoElement?.offsetHeight || 0}<br />
@@ -1239,14 +1362,16 @@
 						<p class="mb-1 text-xs font-semibold">Debug Info:</p>
 						<div class="space-y-1 text-xs">
 							<p>Camera Status: {cameraStatus}</p>
+							<p>Device Type: {debugInfo.deviceType} ({debugInfo.isDesktop ? 'Desktop' : 'Mobile/Tablet'})</p>
+							<p>Orientation: {debugInfo.deviceOrientation}</p>
 							<p>Request In Progress: {cameraRequestInProgress}</p>
 							<p>Retry Count: {retryCount}/{maxRetries}</p>
 							<p>Video Ready: {debugInfo.videoReady}</p>
 							<p>Stream Active: {debugInfo.streamActive}</p>
-							<p>Orientation: {debugInfo.deviceOrientation}</p>
 							<p>Invalid Scans: {invalidScansCount}</p>
 							{#if videoElement}
 								<p>Video Size: {videoElement.videoWidth}x{videoElement.videoHeight}</p>
+								<p>Element Size: {videoElement.offsetWidth}x{videoElement.offsetHeight}</p>
 							{/if}
 						</div>
 					</div>
