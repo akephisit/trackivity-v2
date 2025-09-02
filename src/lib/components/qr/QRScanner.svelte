@@ -70,8 +70,14 @@
 		hasCamera: false,
 		cameraPermission: 'unknown',
 		videoReady: false,
-		streamActive: false
+		streamActive: false,
+		deviceOrientation: 'unknown'
 	});
+
+	// QR Code validation state
+	let invalidScansCount = $state(0);
+	let lastInvalidScanTime = 0;
+	let recentScannedCodes = new Set<string>();
 
 	// Scanner state
 	let cameraStatus = $state<'idle' | 'requesting' | 'active' | 'error'>('idle');
@@ -117,6 +123,9 @@
 				}
 			}
 
+			// Set up orientation detection
+			setupOrientationDetection();
+
 			if (isActive && activity_id && cameraStatus === 'idle') {
 				console.log('onMount: Starting camera');
 				startCamera();
@@ -156,12 +165,19 @@
 		onStatusChange?.(cameraStatus);
 
 		try {
-			// Request camera permissions with mobile-optimized constraints
+			// Get current orientation for camera constraints
+			const isPortrait = getDeviceOrientation() === 'portrait';
+			
+			// Request camera permissions with orientation-aware constraints
 			const constraints = {
 				video: {
 					facingMode: { ideal: 'environment' }, // Prefer back camera but allow front if needed
-					width: { min: 320, ideal: 1280, max: 1920 },
-					height: { min: 240, ideal: 720, max: 1080 },
+					width: isPortrait 
+						? { min: 320, ideal: 720, max: 1080 }
+						: { min: 480, ideal: 1280, max: 1920 },
+					height: isPortrait 
+						? { min: 480, ideal: 1280, max: 1920 }
+						: { min: 320, ideal: 720, max: 1080 },
 					frameRate: { ideal: 30, max: 60 }
 				},
 				audio: false
@@ -461,7 +477,7 @@
 		// Use jsQR to detect QR codes in the image data
 		try {
 			const code = jsQR(imageData.data, imageData.width, imageData.height, {
-				inversionAttempts: 'dontInvert'
+				inversionAttempts: 'attemptBoth'
 			});
 
 			if (code) {
@@ -469,8 +485,14 @@
 				const now = Date.now();
 				if (now - lastScanTime < scanCooldown) return;
 
-				// Found QR code, process it
-				await processQRCode(code.data);
+				// Validate that this is actually a proper QR code for our system
+				if (isValidQRCode(code.data)) {
+					// Found valid QR code, process it
+					await processQRCode(code.data);
+				} else {
+					// Invalid QR code or barcode detected
+					handleInvalidCode(code.data, now);
+				}
 			}
 		} catch (err) {
 			console.error('jsQR detection error:', err);
@@ -492,6 +514,14 @@
 		lastScanTime = now;
 
 		try {
+				// Double-check QR code validity before sending to server
+				if (!isValidQRCode(qrData)) {
+					const errorMessage = 'รูปแบบ QR Code ไม่ถูกต้อง';
+					toast.error(errorMessage);
+					onError?.(errorMessage);
+					return;
+				}
+
 				const response = await fetch(`/api/activities/${activity_id}/${scanMode}`, {
 					method: 'POST',
 					headers: {
@@ -607,6 +637,140 @@
 				return status;
 		}
 	}
+
+	// QR Code validation function
+	function isValidQRCode(qrData: string): boolean {
+		if (!qrData || typeof qrData !== 'string') {
+			return false;
+		}
+
+		// Check if it's too short to be a valid QR code
+		if (qrData.length < 10) {
+			return false;
+		}
+
+		// Try to parse as Base64 encoded JSON (our expected format)
+		try {
+			// Use atob for browser compatibility instead of Buffer
+			const decoded = typeof window !== 'undefined' ? atob(qrData) : Buffer.from(qrData, 'base64').toString('utf-8');
+			const obj = JSON.parse(decoded);
+			// Check if it has required fields
+			if (obj && typeof obj === 'object' && obj.uid) {
+				return true;
+			}
+		} catch {
+			// Try parsing as direct JSON
+			try {
+				const obj = JSON.parse(qrData);
+				if (obj && typeof obj === 'object' && obj.uid) {
+					return true;
+				}
+			} catch {
+				// Not valid JSON
+			}
+		}
+
+		// Check for common barcode patterns that are NOT QR codes
+		if (isLikelyBarcode(qrData)) {
+			return false;
+		}
+
+		return false;
+	}
+
+	// Function to detect common barcode patterns
+	function isLikelyBarcode(data: string): boolean {
+		// Common barcode patterns:
+		// 1. Only digits (UPC, EAN)
+		if (/^\d+$/.test(data)) {
+			return true;
+		}
+
+		// 2. Simple alphanumeric patterns without structure
+		if (/^[A-Z0-9]+$/.test(data) && data.length < 20) {
+			return true;
+		}
+
+		// 3. Common barcode prefixes
+		const barcodePatterns = [
+			/^\d{12,13}$/, // UPC/EAN
+			/^[A-Z]{2}\d+$/, // Some product codes
+			/^\d{1,4}-\d{4,6}-\d{1,6}$/, // Hyphenated numbers
+		];
+
+		return barcodePatterns.some(pattern => pattern.test(data));
+	}
+
+	// Handle invalid codes (barcodes, etc.)
+	function handleInvalidCode(data: string, timestamp: number) {
+		// Prevent spam of invalid scan notifications
+		if (timestamp - lastInvalidScanTime < 3000) {
+			return;
+		}
+
+		lastInvalidScanTime = timestamp;
+		invalidScansCount++;
+
+		// Show a helpful message
+		const message = isLikelyBarcode(data) 
+			? 'ตรวจพบบาร์โค้ด กรุณาสแกน QR Code เท่านั้น'
+			: 'รูปแบบ QR Code ไม่ถูกต้อง';
+
+		toast.warning(message);
+		console.log('Invalid code detected:', { data, isLikelyBarcode: isLikelyBarcode(data), length: data.length });
+	}
+
+	// Device orientation detection
+	function getDeviceOrientation(): 'portrait' | 'landscape' {
+		if (typeof window === 'undefined') return 'portrait';
+		
+		// Use screen orientation API if available
+		if (screen.orientation) {
+			return screen.orientation.angle === 0 || screen.orientation.angle === 180 
+				? 'portrait' 
+				: 'landscape';
+		}
+		
+		// Fallback to window dimensions
+		return window.innerHeight > window.innerWidth ? 'portrait' : 'landscape';
+	}
+
+	// Setup orientation change detection
+	function setupOrientationDetection() {
+		if (typeof window === 'undefined') return;
+
+		debugInfo.deviceOrientation = getDeviceOrientation();
+
+		// Listen for orientation changes
+		const handleOrientationChange = () => {
+			const newOrientation = getDeviceOrientation();
+			if (newOrientation !== debugInfo.deviceOrientation) {
+				debugInfo.deviceOrientation = newOrientation;
+				console.log('Orientation changed to:', newOrientation);
+				
+				// If camera is active, restart it with new constraints
+				if (cameraStatus === 'active' && stream) {
+					console.log('Restarting camera for orientation change');
+					stopCamera();
+					setTimeout(() => {
+						if (isActive) {
+							startCamera();
+						}
+					}, 500);
+				}
+			}
+		};
+
+		// Listen for both orientationchange and resize
+		window.addEventListener('orientationchange', handleOrientationChange);
+		window.addEventListener('resize', handleOrientationChange);
+
+		// Clean up listeners on destroy
+		return () => {
+			window.removeEventListener('orientationchange', handleOrientationChange);
+			window.removeEventListener('resize', handleOrientationChange);
+		};
+	}
 </script>
 
 <div class="space-y-4">
@@ -650,14 +814,14 @@
 			<!-- Camera Preview -->
 			<div class="relative">
 				<div
-					class="relative aspect-video overflow-hidden rounded-lg border-2 border-dashed bg-muted"
+					class="relative overflow-hidden rounded-lg border-2 border-dashed bg-muted {debugInfo.deviceOrientation === 'portrait' ? 'aspect-[3/4]' : 'aspect-video'} min-h-[300px] max-h-[600px]"
 					id="video-container"
 				>
 					{#if cameraStatus === 'active' || cameraStatus === 'requesting'}
 						<!-- svelte-ignore a11y_media_has_caption -->
 						<video
 							bind:this={videoElement}
-							class="absolute inset-0 h-full w-full bg-black object-cover"
+							class="absolute inset-0 h-full w-full bg-black object-cover transition-transform duration-300"
 							playsinline={true}
 							muted={true}
 							autoplay={true}
@@ -844,6 +1008,8 @@
 							<p>Camera Status: {cameraStatus}</p>
 							<p>Video Ready: {debugInfo.videoReady}</p>
 							<p>Stream Active: {debugInfo.streamActive}</p>
+							<p>Orientation: {debugInfo.deviceOrientation}</p>
+							<p>Invalid Scans: {invalidScansCount}</p>
 							{#if videoElement}
 								<p>Video Size: {videoElement.videoWidth}x{videoElement.videoHeight}</p>
 							{/if}
