@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { Activity } from '$lib/types/activity';
+	import { getActivityTypeDisplayName } from '$lib/utils/activity';
 	import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
     import { Button } from '$lib/components/ui/button';
     import { Badge } from '$lib/components/ui/badge';
@@ -120,16 +121,6 @@
 		}
 	}
 
-	function getActivityTypeText(type: string): string {
-		const types: Record<string, string> = {
-			Academic: 'วิชาการ',
-			Sports: 'กีฬา',
-			Cultural: 'วัฒนธรรม',
-			Social: 'สังคม',
-			Other: 'อื่นๆ'
-		};
-		return types[type] || type;
-	}
 
 	function getActivityStatus(activity: Activity): {
 		text: string;
@@ -284,7 +275,7 @@
 										<div class="flex items-center gap-2">
 											{#if activity.activity_type}
 												<Badge variant={getActivityBadgeVariant(activity.activity_type)}>
-													{getActivityTypeText(activity.activity_type)}
+													{getActivityTypeDisplayName(activity.activity_type)}
 												</Badge>
 											{/if}
                                     <!-- Edit is not available for students -->

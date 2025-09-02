@@ -5,6 +5,7 @@
 		ParticipationStatus,
 		ActivityStatus
 	} from '$lib/types/activity';
+	import { getActivityTypeDisplayName } from '$lib/utils/activity';
 	import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
 	import { Button } from '$lib/components/ui/button';
 	import { Badge } from '$lib/components/ui/badge';
@@ -512,7 +513,7 @@
 						<IconCategory class="mt-0.5 size-5 flex-shrink-0 text-muted-foreground" />
 						<div>
 							<p class="font-medium">ประเภทกิจกรรม</p>
-							<p class="text-sm text-muted-foreground">{activity.activity_type}</p>
+							<p class="text-sm text-muted-foreground">{getActivityTypeDisplayName(activity.activity_type)}</p>
 						</div>
 					</div>
 				{/if}

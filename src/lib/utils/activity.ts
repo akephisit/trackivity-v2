@@ -85,6 +85,79 @@ export function isValidActivityLevel(level: string): boolean {
 }
 
 /**
+ * แปลงค่า ActivityType จากรูปแบบ English เป็น Thai สำหรับแสดงผล
+ * English: 'Academic' | 'Sports' | 'Cultural' | 'Social' | 'Other'
+ * Thai: 'วิชาการ' | 'กีฬา' | 'วัฒนธรรม' | 'สังคม' | 'อื่นๆ'
+ */
+export function getActivityTypeDisplayName(type: string): string {
+	const typeMapping: Record<string, string> = {
+		Academic: 'วิชาการ',
+		Sports: 'กีฬา',
+		Cultural: 'วัฒนธรรม',
+		Social: 'สังคม',
+		Other: 'อื่นๆ'
+	};
+
+	return typeMapping[type] || type;
+}
+
+/**
+ * แปลงค่า ActivityType จากรูปแบบ Thai เป็น English สำหรับจัดเก็บ
+ * Thai: 'วิชาการ' | 'กีฬา' | 'วัฒนธรรม' | 'สังคม' | 'อื่นๆ'
+ * English: 'Academic' | 'Sports' | 'Cultural' | 'Social' | 'Other'
+ */
+export function convertActivityTypeFromThai(thaiType: string): string {
+	const typeMapping: Record<string, string> = {
+		'วิชาการ': 'Academic',
+		'กีฬา': 'Sports',
+		'วัฒนธรรม': 'Cultural',
+		'สังคม': 'Social',
+		'อื่นๆ': 'Other'
+	};
+
+	return typeMapping[thaiType] || 'Other'; // Default to Other
+}
+
+/**
+ * ตรวจสอบว่า activity type string เป็นค่าที่ valid หรือไม่
+ */
+export function isValidActivityType(type: string): boolean {
+	const validTypes = ['Academic', 'Sports', 'Cultural', 'Social', 'Other'];
+	return validTypes.includes(type);
+}
+
+/**
+ * รายการตัวเลือก ActivityType พร้อม label ภาษาไทย
+ */
+export const activityTypeOptions = [
+	{ 
+		value: 'Academic' as const, 
+		label: 'วิชาการ', 
+		description: 'กิจกรรมทางการศึกษาและการเรียนรู้' 
+	},
+	{ 
+		value: 'Sports' as const, 
+		label: 'กีฬา', 
+		description: 'กิจกรรมกีฬาและการออกกำลังกาย' 
+	},
+	{ 
+		value: 'Cultural' as const, 
+		label: 'วัฒนธรรม', 
+		description: 'กิจกรรมด้านศิลปะและวัฒนธรรม' 
+	},
+	{ 
+		value: 'Social' as const, 
+		label: 'สังคม', 
+		description: 'กิจกรรมเพื่อสังคมและการพัฒนาชุมชน' 
+	},
+	{ 
+		value: 'Other' as const, 
+		label: 'อื่นๆ', 
+		description: 'กิจกรรมประเภทอื่นๆ' 
+	}
+];
+
+/**
  * รายการตัวเลือก ActivityLevel พร้อม label ภาษาไทย
  */
 export const activityLevelOptions = [

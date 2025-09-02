@@ -2,13 +2,13 @@
 	import { currentUser } from '$lib/stores/auth';
 	import { useQRCode } from '$lib/qr/client';
 	import type { Activity, ActivityParticipation } from '$lib/types';
+	import { getActivityTypeDisplayName } from '$lib/utils/activity';
 
 	import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
 	import { Button } from '$lib/components/ui/button';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Skeleton } from '$lib/components/ui/skeleton';
 	import { Alert, AlertDescription } from '$lib/components/ui/alert';
-	import QRCodeGenerator from '$lib/components/qr/QRCodeGenerator.svelte';
 
 	import {
 		IconQrcode,
@@ -75,17 +75,6 @@
 		}
 	}
 
-	function getActivityTypeText(type: string): string {
-		const types: Record<string, string> = {
-			lecture: 'บรรยาย',
-			workshop: 'ปฏิบัติการ',
-			seminar: 'สัมมนา',
-			exam: 'สอบ',
-			meeting: 'ประชุม',
-			event: 'งาน'
-		};
-		return types[type] || type;
-	}
 </script>
 
 <div class="space-y-6">
@@ -245,7 +234,7 @@
 								<div class="flex items-start justify-between">
 									<h4 class="text-sm font-medium">{activity.name}</h4>
 									<Badge variant={getActivityBadgeVariant(activity.activity_type)}>
-										{getActivityTypeText(activity.activity_type)}
+										{getActivityTypeDisplayName(activity.activity_type)}
 									</Badge>
 								</div>
 

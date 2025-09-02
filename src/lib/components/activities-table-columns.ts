@@ -4,7 +4,7 @@ import { renderComponent, renderSnippet } from '$lib/components/ui/data-table/in
 import { Badge } from '$lib/components/ui/badge/index.js';
 import { Button } from '$lib/components/ui/button/index.js';
 import { createRawSnippet } from 'svelte';
-import { getActivityLevelDisplayName } from '$lib/utils/activity';
+import { getActivityLevelDisplayName, getActivityTypeDisplayName } from '$lib/utils/activity';
 
 export const activityColumns: ColumnDef<Activity>[] = [
 	{
@@ -35,6 +35,50 @@ export const activityColumns: ColumnDef<Activity>[] = [
 							<div class="font-medium text-sm">${activity.organizer || 'ไม่ระบุผู้จัด'}</div>
 							<div class="text-xs text-muted-foreground">${activity.organizerType || ''}</div>
 						</div>
+					`
+				}))
+			);
+		}
+	},
+	{
+		accessorKey: 'activity_type',
+		header: 'ประเภทกิจกรรม',
+		cell: ({ row }) => {
+			const activity = row.original;
+			const type = activity.activity_type;
+			
+			if (!type) {
+				return renderSnippet(
+					createRawSnippet(() => ({
+						render: () => `
+							<span class="text-muted-foreground text-sm">-</span>
+						`
+					}))
+				);
+			}
+
+			const displayName = getActivityTypeDisplayName(type);
+			const variantMap: Record<string, string> = {
+				'Academic': 'default',
+				'Sports': 'secondary', 
+				'Cultural': 'outline',
+				'Social': 'default',
+				'Other': 'secondary'
+			};
+			const variant = variantMap[type] || 'outline';
+			
+			return renderSnippet(
+				createRawSnippet(() => ({
+					render: () => `
+						<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+							variant === 'default' 
+								? 'bg-primary/10 text-primary' 
+								: variant === 'secondary'
+									? 'bg-secondary text-secondary-foreground'
+									: 'bg-muted text-muted-foreground border'
+						}">
+							${displayName}
+						</span>
 					`
 				}))
 			);

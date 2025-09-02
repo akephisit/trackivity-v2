@@ -23,7 +23,7 @@
 		IconSchool,
 		IconBuilding
 	} from '@tabler/icons-svelte';
-	import { getActivityLevelDisplayName } from '$lib/utils/activity';
+	import { getActivityLevelDisplayName, getActivityTypeDisplayName } from '$lib/utils/activity';
 
 let { data } = $props<{ data: { history: any[] } }>();
 let participationHistory: any[] = $state(data?.history || []);
@@ -519,7 +519,7 @@ calculateStats(participationHistory);
 										{/if}
 										{#if participation.activity?.activity_type}
 											<Badge variant={getActivityBadgeVariant(participation.activity.activity_type)}>
-												{participation.activity.activity_type}
+												{getActivityTypeDisplayName(participation.activity.activity_type)}
 											</Badge>
 										{/if}
 									</div>

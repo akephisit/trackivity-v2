@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { Activity, ActivityStatus } from '$lib/types/activity';
+	import { getActivityTypeDisplayName } from '$lib/utils/activity';
 	import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
@@ -471,7 +472,7 @@
 					{#if activity.activity_type}
 						<div>
 							<Label>ประเภทกิจกรรม</Label>
-							<p class="text-sm text-muted-foreground">{activity.activity_type}</p>
+							<p class="text-sm text-muted-foreground">{getActivityTypeDisplayName(activity.activity_type)}</p>
 						</div>
 					{/if}
 					{#if activity.academic_year}

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { Activity, Participation } from '$lib/types/activity';
+	import { getActivityTypeDisplayName } from '$lib/utils/activity';
     import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
     import { Button } from '$lib/components/ui/button';
     import { Badge } from '$lib/components/ui/badge';
@@ -101,16 +102,6 @@
 		}
 	}
 
-	function getActivityTypeText(type: string): string {
-		const types: Record<string, string> = {
-			Academic: 'วิชาการ',
-			Sports: 'กีฬา',
-			Cultural: 'วัฒนธรรม',
-			Social: 'สังคม',
-			Other: 'อื่นๆ'
-		};
-		return types[type] || type;
-	}
 
 	function getActivityBadgeVariant(type: string): 'default' | 'secondary' | 'outline' {
 		switch (type) {
@@ -255,7 +246,7 @@
 						<div>
 							<p class="font-medium">ประเภทกิจกรรม</p>
 							<Badge variant={getActivityBadgeVariant(activity.activity_type)} class="text-xs">
-								{getActivityTypeText(activity.activity_type)}
+								{getActivityTypeDisplayName(activity.activity_type)}
 							</Badge>
 						</div>
 					</div>

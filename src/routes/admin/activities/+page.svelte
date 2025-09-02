@@ -26,7 +26,7 @@
 	import { toast } from 'svelte-sonner';
 	import * as AlertDialog from '$lib/components/ui/alert-dialog';
 
-	import { getActivityLevelDisplayName } from '$lib/utils/activity';
+	import { getActivityLevelDisplayName, getActivityTypeDisplayName } from '$lib/utils/activity';
 
 	let { data } = $props();
 
@@ -58,17 +58,6 @@
 		return timeString;
 	}
 
-	function getActivityTypeLabel(type: string | undefined): string {
-		if (!type) return 'ไม่ระบุ';
-		const labels: Record<string, string> = {
-			Academic: 'วิชาการ',
-			Sports: 'กีฬา',
-			Cultural: 'วัฒนธรรม',
-			Social: 'สังคม',
-			Other: 'อื่นๆ'
-		};
-		return labels[type] || type;
-	}
 
 	function getActivityTypeBadgeVariant(
 		type: string | undefined
@@ -370,7 +359,7 @@
 										</Table.Cell>
 										<Table.Cell class="py-4">
 											<Badge variant={getActivityTypeBadgeVariant(activity.activity_type)}>
-												{getActivityTypeLabel(activity.activity_type)}
+												{getActivityTypeDisplayName(activity.activity_type || '')}
 											</Badge>
 										</Table.Cell>
 										<Table.Cell class="py-4">
