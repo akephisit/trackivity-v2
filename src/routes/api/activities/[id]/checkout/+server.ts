@@ -19,73 +19,222 @@ function decodeQR(qr_data: string): { uid?: string; sid?: string; ts?: number; e
 export const POST: RequestHandler = async ({ params, request, locals }) => {
   try {
     if (!locals.user) {
-      return json({ success: false, error: { code: 'AUTH_ERROR', message: 'Authentication required' } }, { status: 401 });
+      return json({ 
+        success: false, 
+        error: { 
+          code: 'AUTH_ERROR', 
+          message: 'ต้องการการยืนยันตัวตน', 
+          category: 'error' 
+        } 
+      }, { status: 401 });
     }
 
     const activityId = params.id;
     const { qr_data } = await request.json().catch(() => ({ qr_data: '' }));
 
     if (!activityId || !qr_data) {
-      return json({ success: false, error: { code: 'VALIDATION_ERROR', message: 'Missing activity or QR data' } }, { status: 400 });
+      return json({ 
+        success: false, 
+        error: { 
+          code: 'VALIDATION_ERROR', 
+          message: 'ข้อมูลไม่ครบถ้วน', 
+          category: 'error' 
+        } 
+      }, { status: 400 });
     }
 
-    const actRows = await db.select({ id: activities.id, status: activities.status }).from(activities).where(eq(activities.id, activityId)).limit(1);
+    // Fetch comprehensive activity information
+    const actRows = await db
+      .select({ 
+        id: activities.id, 
+        status: activities.status,
+        title: activities.title
+      })
+      .from(activities)
+      .where(eq(activities.id, activityId))
+      .limit(1);
+      
     if (actRows.length === 0) {
-      return json({ success: false, error: { code: 'NOT_FOUND', message: 'Activity not found' } }, { status: 404 });
+      return json({ 
+        success: false, 
+        error: { 
+          code: 'ACTIVITY_NOT_FOUND', 
+          message: 'ไม่พบกิจกรรมที่ระบุ', 
+          category: 'error' 
+        } 
+      }, { status: 404 });
     }
+
+    const activity = actRows[0];
 
     // Allow checkout when ongoing or completed
-    if (!(actRows[0].status === 'ongoing' || actRows[0].status === 'completed')) {
-      return json({ success: false, error: { code: 'INVALID_STATUS', message: 'สถานะกิจกรรมไม่รองรับการเช็คเอาท์' } }, { status: 400 });
+    if (!(activity.status === 'ongoing' || activity.status === 'completed')) {
+      return json({ 
+        success: false, 
+        error: { 
+          code: 'INVALID_CHECKOUT_STATUS', 
+          message: 'ไม่สามารถเช็คเอาท์ได้ในขณะนี้', 
+          category: 'restricted',
+          details: { activityStatus: activity.status }
+        } 
+      }, { status: 400 });
     }
 
     const payload = decodeQR(qr_data);
     if (!payload?.uid) {
-      return json({ success: false, error: { code: 'QR_INVALID', message: 'QR ไม่ถูกต้อง' } }, { status: 400 });
+      return json({ 
+        success: false, 
+        error: { 
+          code: 'QR_INVALID', 
+          message: 'QR Code ไม่ถูกต้อง หรือเสียหาย', 
+          category: 'error' 
+        } 
+      }, { status: 400 });
     }
+    
     if (payload.exp && Date.now() > payload.exp) {
-      return json({ success: false, error: { code: 'QR_EXPIRED', message: 'QR Code หมดอายุ' } }, { status: 400 });
+      return json({ 
+        success: false, 
+        error: { 
+          code: 'QR_EXPIRED', 
+          message: 'QR Code หมดอายุแล้ว', 
+          category: 'restricted' 
+        } 
+      }, { status: 400 });
     }
 
     const userRows = await db
-      .select({ id: users.id, studentId: users.studentId, firstName: users.firstName, lastName: users.lastName })
+      .select({ 
+        id: users.id, 
+        studentId: users.studentId, 
+        firstName: users.firstName, 
+        lastName: users.lastName,
+        status: users.status
+      })
       .from(users)
       .where(eq(users.id, payload.uid))
       .limit(1);
+      
     if (userRows.length === 0) {
-      return json({ success: false, error: { code: 'USER_NOT_FOUND', message: 'ไม่พบนักศึกษาในระบบ' } }, { status: 404 });
+      return json({ 
+        success: false, 
+        error: { 
+          code: 'STUDENT_NOT_FOUND', 
+          message: 'ไม่พบนักศึกษาในระบบ', 
+          category: 'error' 
+        } 
+      }, { status: 404 });
     }
+    
     const u = userRows[0];
+    
+    // Check user account status
+    if (u.status !== 'active') {
+      let userStatusMessage = '';
+      switch (u.status) {
+        case 'inactive':
+          userStatusMessage = 'บัญชีนักศึกษาไม่ได้ใช้งาน';
+          break;
+        case 'suspended':
+          userStatusMessage = 'บัญชีนักศึกษาถูกระงับ';
+          break;
+        default:
+          userStatusMessage = 'สถานะบัญชีนักศึกษาไม่ถูกต้อง';
+      }
+      
+      return json({ 
+        success: false, 
+        error: { 
+          code: 'STUDENT_ACCOUNT_INACTIVE', 
+          message: userStatusMessage, 
+          category: 'restricted',
+          details: { userStatus: u.status }
+        } 
+      }, { status: 400 });
+    }
 
-    // Require existing participation
+    // Check existing participation
     const existing = await db
-      .select({ id: participations.id, status: participations.status })
+      .select({ 
+        id: participations.id, 
+        status: participations.status,
+        checkedInAt: participations.checkedInAt,
+        checkedOutAt: participations.checkedOutAt
+      })
       .from(participations)
       .where(and(eq(participations.activityId, activityId), eq(participations.userId, u.id)))
       .limit(1);
 
     if (existing.length === 0) {
-      return json({ success: false, error: { code: 'NOT_REGISTERED', message: 'ยังไม่ได้เช็คอิน/ลงทะเบียน' } }, { status: 400 });
+      return json({ 
+        success: false, 
+        error: { 
+          code: 'NOT_CHECKED_IN', 
+          message: 'ยังไม่ได้เช็คอิน ไม่สามารถเช็คเอาท์ได้', 
+          category: 'restricted' 
+        } 
+      }, { status: 400 });
+    }
+    
+    const participation = existing[0];
+    
+    // Check if already checked out
+    if (participation.status === 'checked_out' && participation.checkedOutAt) {
+      return json({ 
+        success: false, 
+        error: { 
+          code: 'ALREADY_CHECKED_OUT', 
+          message: 'คุณได้เช็คเอาท์แล้ว', 
+          category: 'already_done',
+          details: {
+            previousCheckOut: participation.checkedOutAt,
+            currentStatus: participation.status
+          }
+        } 
+      }, { status: 400 });
+    }
+    
+    // Must be checked in first
+    if (participation.status !== 'checked_in' && participation.status !== 'completed') {
+      return json({ 
+        success: false, 
+        error: { 
+          code: 'NOT_CHECKED_IN_YET', 
+          message: 'ต้องเช็คอินก่อนจึงจะสามารถเช็คเอาท์ได้', 
+          category: 'restricted',
+          details: { currentStatus: participation.status }
+        } 
+      }, { status: 400 });
     }
 
     const now = new Date();
     await db
       .update(participations)
       .set({ status: 'checked_out', checkedOutAt: now })
-      .where(eq(participations.id, existing[0].id));
+      .where(eq(participations.id, participation.id));
 
     return json({
       success: true,
       message: 'เช็คเอาท์สำเร็จ',
+      category: 'success',
       data: {
         user_name: `${u.firstName} ${u.lastName}`.trim(),
         student_id: u.studentId,
         participation_status: 'checked_out',
-        checked_out_at: now.toISOString()
+        checked_out_at: now.toISOString(),
+        activity_title: activity.title,
+        previous_check_in: participation.checkedInAt
       }
     });
   } catch (e) {
     console.error('[CheckOut] error:', e);
-    return json({ success: false, error: { code: 'INTERNAL_ERROR', message: 'ไม่สามารถเช็คเอาท์ได้' } }, { status: 500 });
+    return json({ 
+      success: false, 
+      error: { 
+        code: 'INTERNAL_ERROR', 
+        message: 'เกิดข้อผิดพลาดภายในระบบ ไม่สามารถเช็คเอาท์ได้', 
+        category: 'error' 
+      } 
+    }, { status: 500 });
   }
 };

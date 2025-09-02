@@ -9,6 +9,7 @@
 	import { Badge } from '$lib/components/ui/badge';
 	import { Alert, AlertDescription } from '$lib/components/ui/alert';
 	import { Separator } from '$lib/components/ui/separator';
+	import { Progress } from '$lib/components/ui/progress';
 
 	import {
 		IconCamera,
@@ -19,10 +20,30 @@
 		IconQrcode,
 		IconX,
 		IconUser,
-		IconClock
+		IconClock,
+		IconShieldExclamation,
+		IconUserX,
+		IconUsers,
+		IconQrcodeOff,
+		IconShieldX,
+		IconBuilding,
+		IconClockX,
+		IconUserCheck,
+		IconInfoCircle
 	} from '@tabler/icons-svelte';
 
-	// Types
+	// Types and imports
+	import { 
+		type QRScanResult, 
+		type StatusCode, 
+		type StatusCategory,
+		processQRScanResult, 
+		getStatusConfig, 
+		playStatusSound, 
+		triggerStatusVibration,
+		formatStatusDetails
+	} from '$lib/utils/qr-status';
+
 	interface ScanResult {
 		success: boolean;
 		message: string;
@@ -30,6 +51,9 @@
 		student_id?: string;
 		participation_status?: string;
 		checked_in_at?: string;
+		category?: StatusCategory;
+		statusCode?: StatusCode;
+		details?: string[];
 	}
 
 	interface ScannedUser {
@@ -48,7 +72,9 @@
 		maxHistoryItems = 10,
 		onScan = undefined,
 		onError = undefined,
-		onStatusChange = undefined
+		onStatusChange = undefined,
+		soundEnabled = true,
+		vibrationEnabled = true
 	}: {
 		activity_id?: string;
 		isActive?: boolean;
@@ -57,6 +83,8 @@
 		onScan?: ((result: ScanResult, qrData: string) => void) | undefined;
 		onError?: ((message: string) => void) | undefined;
 		onStatusChange?: ((status: 'idle' | 'requesting' | 'active' | 'error') => void) | undefined;
+		soundEnabled?: boolean;
+		vibrationEnabled?: boolean;
 	} = $props();
 
 	// Component state
@@ -93,6 +121,12 @@
 	let cameraStatus = $state<'idle' | 'requesting' | 'active' | 'error'>('idle');
 	let scanHistory = $state<ScannedUser[]>([]);
 	let isProcessingScan = $state(false);
+
+	// Status feedback state
+	let currentStatus = $state<QRScanResult | null>(null);
+	let statusDisplayTimer = $state<NodeJS.Timeout | null>(null);
+	let statusProgress = $state<number>(100);
+	let statusProgressTimer = $state<NodeJS.Timeout | null>(null);
 
 	// Scan mode: check-in or check-out
 	let scanMode = $state<'checkin' | 'checkout'>('checkin');
@@ -146,6 +180,7 @@
 
 	onDestroy(() => {
 		stopCamera();
+		clearStatusDisplay();
 	});
 
 	async function startCamera() {
@@ -555,9 +590,16 @@
 		try {
 			// Double-check QR code validity before sending to server
 			if (!isValidQRCode(qrData)) {
-				const errorMessage = 'รูปแบบ QR Code ไม่ถูกต้อง';
-				toast.error(errorMessage);
-				onError?.(errorMessage);
+				const errorResult = processQRScanResult({
+					success: false,
+					error: {
+						code: 'QR_INVALID',
+						message: 'รูปแบบ QR Code ไม่ถูกต้อง หรือเสียหาย',
+						category: 'error'
+					}
+				});
+				
+				displayStatus(errorResult);
 				return;
 			}
 
@@ -571,15 +613,21 @@
 			});
 
 			const result = await response.json();
+			
+			// Process the API response through our status system
+			const processedResult = processQRScanResult(result);
+			displayStatus(processedResult);
 
-			if (response.ok && result.success === true) {
+			if (processedResult.success && processedResult.data) {
 				const scanResult: ScanResult = {
 					success: true,
-					message: result.message || 'สแกนสำเร็จ',
-					user_name: result.data?.user_name,
-					student_id: result.data?.student_id,
-					participation_status: result.data?.participation_status,
-					checked_in_at: result.data?.checked_in_at || result.data?.checked_out_at
+					message: processedResult.message,
+					user_name: processedResult.data.user_name,
+					student_id: processedResult.data.student_id,
+					participation_status: processedResult.data.participation_status,
+					checked_in_at: processedResult.data.checked_in_at || processedResult.data.checked_out_at,
+					category: processedResult.category,
+					statusCode: 'CHECKIN_SUCCESS'
 				};
 
 				// Add to history
@@ -597,25 +645,146 @@
 					scanHistory = [historyItem, ...scanHistory.slice(0, maxHistoryItems - 1)];
 				}
 
-				toast.success(`สแกนสำเร็จ: ${scanResult.user_name}`);
 				onScan?.(scanResult, qrData);
 			} else {
 				const scanResult: ScanResult = {
 					success: false,
-					message: result.message || 'เกิดข้อผิดพลาดในการสแกน'
+					message: processedResult.message,
+					category: processedResult.category,
+					statusCode: processedResult.error?.code,
+					details: processedResult.error?.details ? formatStatusDetails(processedResult.error.details) : undefined
 				};
 
-				toast.error(scanResult.message);
 				onScan?.(scanResult, qrData);
 			}
 		} catch (err) {
 			console.error('Scan processing error:', err);
-			const errorMessage = 'เกิดข้อผิดพลาดในการเชื่อมต่อ';
-			toast.error(errorMessage);
-			onError?.(errorMessage);
+			const errorResult = processQRScanResult({
+				success: false,
+				error: {
+					code: 'INTERNAL_ERROR',
+					message: 'เกิดข้อผิดพลาดในการเชื่อมต่อ',
+					category: 'error'
+				}
+			});
+			
+			displayStatus(errorResult);
+			onError?.(errorResult.message);
 		} finally {
 			isProcessingScan = false;
 		}
+	}
+
+	/**
+	 * Display status with visual and audio feedback
+	 */
+	function displayStatus(result: QRScanResult) {
+		// Clear any existing status display
+		clearStatusDisplay();
+		
+		// Set the current status
+		currentStatus = result;
+		
+		// Determine status code for configuration
+		const statusCode = result.error?.code || (result.success ? 'CHECKIN_SUCCESS' : 'INTERNAL_ERROR');
+		const config = getStatusConfig(statusCode);
+		
+		// Audio feedback
+		if (soundEnabled) {
+			playStatusSound(statusCode);
+		}
+		
+		// Haptic feedback
+		if (vibrationEnabled) {
+			triggerStatusVibration(statusCode);
+		}
+		
+		// Start progress animation
+		statusProgress = 100;
+		statusProgressTimer = setInterval(() => {
+			statusProgress -= (100 / (config.duration / 100));
+			if (statusProgress <= 0) {
+				clearStatusDisplay();
+			}
+		}, 100);
+		
+		// Auto-hide after duration
+		statusDisplayTimer = setTimeout(() => {
+			clearStatusDisplay();
+		}, config.duration);
+		
+		// Show toast notification
+		const toastMessage = result.success
+			? `สแกนสำเร็จ: ${result.data?.user_name || 'ไม่ระบุชื่อ'}`
+			: result.message;
+		
+		if (result.success) {
+			toast.success(toastMessage);
+		} else {
+			switch (result.category) {
+				case 'already_done':
+					toast.info(toastMessage);
+					break;
+				case 'restricted':
+					toast.warning(toastMessage);
+					break;
+				case 'error':
+				default:
+					toast.error(toastMessage);
+					break;
+			}
+		}
+	}
+	
+	/**
+	 * Clear status display timers and reset state
+	 */
+	function clearStatusDisplay() {
+		if (statusDisplayTimer) {
+			clearTimeout(statusDisplayTimer);
+			statusDisplayTimer = null;
+		}
+		
+		if (statusProgressTimer) {
+			clearInterval(statusProgressTimer);
+			statusProgressTimer = null;
+		}
+		
+		currentStatus = null;
+		statusProgress = 100;
+	}
+	
+	/**
+	 * Get appropriate icon component for status
+	 */
+	function getStatusIcon(statusCode: StatusCode) {
+		const iconMap: Record<StatusCode, any> = {
+			'CHECKIN_SUCCESS': IconCheck,
+			'CHECKOUT_SUCCESS': IconCheck,
+			'ALREADY_CHECKED_IN': IconInfoCircle,
+			'ALREADY_CHECKED_OUT': IconInfoCircle,
+			'ALREADY_COMPLETED': IconInfoCircle,
+			'FACULTY_RESTRICTION': IconShieldExclamation,
+			'ACTIVITY_NOT_ONGOING': IconClock,
+			'ACTIVITY_EXPIRED': IconClockX,
+			'ACTIVITY_NOT_STARTED': IconClock,
+			'MAX_PARTICIPANTS_REACHED': IconUsers,
+			'NOT_CHECKED_IN': IconUserCheck,
+			'NOT_CHECKED_IN_YET': IconUserCheck,
+			'STUDENT_ACCOUNT_INACTIVE': IconUserX,
+			'QR_EXPIRED': IconQrcodeOff,
+			'INVALID_CHECKOUT_STATUS': IconX,
+			'ACTIVITY_NOT_FOUND': IconAlertTriangle,
+			'STUDENT_NOT_FOUND': IconUserX,
+			'QR_INVALID': IconQrcodeOff,
+			'DEPARTMENT_NOT_FOUND': IconBuilding,
+			'NO_DEPARTMENT': IconBuilding,
+			'AUTH_ERROR': IconShieldX,
+			'VALIDATION_ERROR': IconAlertTriangle,
+			'INTERNAL_ERROR': IconAlertTriangle
+		};
+		
+		return iconMap[statusCode] || IconAlertTriangle;
 	}
 
 	// Manual scan trigger for testing/accessibility
@@ -1301,6 +1470,84 @@
 						{/if}
 					</AlertDescription>
 				</Alert>
+			{/if}
+
+			<!-- Enhanced Status Display -->
+			{#if currentStatus}
+				{@const statusCode = currentStatus.error?.code || (currentStatus.success ? 'CHECKIN_SUCCESS' : 'INTERNAL_ERROR')}
+				{@const config = getStatusConfig(statusCode)}
+				{@const StatusIcon = getStatusIcon(statusCode)}
+				
+				<div class="relative overflow-hidden rounded-lg border-2 {config.borderColor} {config.bgColor} p-4 transition-all duration-300">
+					<!-- Progress bar -->
+					<div class="absolute top-0 left-0 h-1 {config.borderColor.replace('border-', 'bg-')} transition-all duration-100" 
+						 style="width: {statusProgress}%"></div>
+					
+					<div class="flex items-start gap-3">
+						<!-- Status Icon -->
+						<div class="flex-shrink-0 {config.iconColor}">
+							<StatusIcon class="size-6" />
+						</div>
+						
+						<!-- Status Content -->
+						<div class="flex-1 min-w-0">
+							<!-- Main message -->
+							<div class="font-medium {config.color} mb-1">
+								{currentStatus.message}
+							</div>
+							
+							<!-- User information for successful scans -->
+							{#if currentStatus.success && currentStatus.data}
+								<div class="text-sm {config.color.replace('700', '600')} space-y-1">
+									{#if currentStatus.data.user_name}
+										<div class="flex items-center gap-2">
+											<IconUser class="size-4" />
+											<span>{currentStatus.data.user_name}</span>
+											{#if currentStatus.data.student_id}
+												<span class="text-xs opacity-75">({currentStatus.data.student_id})</span>
+											{/if}
+										</div>
+									{/if}
+									
+									{#if currentStatus.data.checked_in_at || currentStatus.data.checked_out_at}
+										<div class="flex items-center gap-2">
+											<IconClock class="size-4" />
+											<span class="text-xs">
+												{new Date(currentStatus.data.checked_in_at || currentStatus.data.checked_out_at || '').toLocaleString('th-TH', { 
+													day: '2-digit', 
+													month: '2-digit', 
+													hour: '2-digit', 
+													minute: '2-digit' 
+												})}
+											</span>
+										</div>
+									{/if}
+								</div>
+							{/if}
+							
+							<!-- Additional details for errors -->
+							{#if currentStatus.error?.details && formatStatusDetails(currentStatus.error.details).length > 0}
+								<div class="mt-2 text-xs {config.color.replace('700', '600')} space-y-1">
+									{#each formatStatusDetails(currentStatus.error.details) as detail}
+										<div class="flex items-start gap-2">
+											<span class="text-xs opacity-50">•</span>
+											<span>{detail}</span>
+										</div>
+									{/each}
+								</div>
+							{/if}
+						</div>
+						
+						<!-- Manual close button -->
+						<button 
+							onclick={clearStatusDisplay}
+							class="flex-shrink-0 {config.color.replace('700', '400')} hover:{config.color.replace('700', '600')} transition-colors"
+							type="button"
+						>
+							<IconX class="size-4" />
+						</button>
+					</div>
+				</div>
 			{/if}
 
 			<!-- Control Buttons -->
