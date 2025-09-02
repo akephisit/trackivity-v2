@@ -22,7 +22,7 @@ export const mockActivities: Activity[] = [
 		eligible_organizations: ['1'],
 		organizer: 'หน่วยงานเศรษฐศาสตร์',
 		organizerType: 'หน่วยงาน',
-		activity_level: 'คณะ'
+		activity_level: 'faculty'
 	},
 	{
 		id: '2',
@@ -45,7 +45,7 @@ export const mockActivities: Activity[] = [
 		eligible_organizations: ['2'],
 		organizer: 'หน่วยงานวิศวกรรมศาสตร์',
 		organizerType: 'หน่วยงาน',
-		activity_level: 'คณะ'
+		activity_level: 'faculty'
 	},
 	{
 		id: '3',
@@ -66,6 +66,6 @@ export const mockActivities: Activity[] = [
 		eligible_organizations: ['1', '2', '3'],
 		organizer: 'มหาวิทยาลัยเทคโนโลยีพระจอมเกล้าธนบุรี',
 		organizerType: 'มหาวิทยาลัย',
-		activity_level: 'มหาวิทยาลัย'
+		activity_level: 'university'
 	}
 ];

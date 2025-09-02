@@ -26,7 +26,7 @@
 	import { toast } from 'svelte-sonner';
 	import * as AlertDialog from '$lib/components/ui/alert-dialog';
 
-	import type { Activity } from '$lib/types/activity';
+	import { getActivityLevelDisplayName } from '$lib/utils/activity';
 
 	let { data } = $props();
 
@@ -89,8 +89,8 @@
 	): 'default' | 'secondary' | 'destructive' | 'outline' {
 		if (!level) return 'outline';
 		const variants: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
-			'คณะ': 'outline',
-			'มหาวิทยาลัย': 'default'
+			'faculty': 'outline',
+			'university': 'default'
 		};
 		return variants[level] || 'outline';
 	}
@@ -375,7 +375,7 @@
 										</Table.Cell>
 										<Table.Cell class="py-4">
 											<Badge variant={getActivityLevelBadgeVariant(activity.activity_level)}>
-												{activity.activity_level || 'คณะ'}
+												{getActivityLevelDisplayName(activity.activity_level || 'faculty')}
 											</Badge>
 										</Table.Cell>
 										<Table.Cell class="py-4">

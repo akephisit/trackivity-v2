@@ -81,7 +81,7 @@ export const load: PageServerLoad = async (event) => {
       organizerType: 'หน่วยงาน',
       participantCount: 0, // TODO: Count from participations table
       status: activity.status || 'รอดำเนินการ',
-      activity_level: activity.activity_level || 'คณะ'
+      activity_level: activity.activity_level || 'faculty'
     }));
 
 		return {
