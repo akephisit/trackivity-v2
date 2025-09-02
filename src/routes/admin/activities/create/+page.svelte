@@ -186,8 +186,10 @@
 	
 	// Activity level options with English values and Thai labels
 
-	// Selected values for selects
-	let selectedActivityType = $state<{ value: ActivityType; label: string } | undefined>(undefined);
+	// Selected values for selects - sync with form defaults
+	let selectedActivityType = $state<{ value: ActivityType; label: string } | undefined>(
+		activityTypeOptions.find(opt => opt.value === $formData.activity_type)
+	);
 	let selectedFaculties = $state<{ value: string; label: string }[]>([]);
 	let selectedAcademicYear = $state<{ value: string; label: string } | undefined>(undefined);
 	let selectedActivityLevel = $state<{ value: string; label: string } | undefined>({ value: 'faculty', label: 'คณะ' });
@@ -293,6 +295,11 @@
 									<Form.Control>
 										{#snippet children({ props })}
 											<Label for={props.id} class="text-base font-medium">ประเภทกิจกรรม *</Label>
+											<input
+												type="hidden"
+												name="activity_type"
+												bind:value={$formData.activity_type}
+											/>
 											<Select.Root
 												type="single"
 												bind:value={selectedActivityType as any}
