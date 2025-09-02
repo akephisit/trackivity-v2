@@ -11,18 +11,14 @@ const activityRequirementsSchema = z.object({
 	academicYear: z.string().min(1).max(20)
 });
 
-export const load: ServerLoad = async ({ locals }: { locals: any }) => {
-	const session = locals.session;
+export const load: ServerLoad = async (event) => {
+	const { requireOrganizationAdmin } = await import('$lib/server/auth-utils');
 	
-	if (!session?.user?.id || !session?.adminRole) {
-		throw redirect(302, '/admin/login');
-	}
-
-	if (session.adminRole.adminLevel !== 'OrganizationAdmin') {
-		throw error(403, 'Access denied. Only organization admins can access settings.');
-	}
-
-	const organizationId = session.adminRole.organizationId;
+	// Get authenticated user and ensure they have OrganizationAdmin privileges
+	const user = requireOrganizationAdmin(event);
+	
+	// Get organization ID from admin role
+	const organizationId = user.admin_role?.organization_id;
 	if (!organizationId) {
 		throw error(400, 'Organization ID not found.');
 	}
@@ -62,6 +58,7 @@ export const load: ServerLoad = async ({ locals }: { locals: any }) => {
 		};
 
 		return {
+			user,
 			organization: organization[0],
 			currentRequirements,
 			currentAcademicYear: currentYear
@@ -73,18 +70,15 @@ export const load: ServerLoad = async ({ locals }: { locals: any }) => {
 };
 
 export const actions: Actions = {
-	updateRequirements: async ({ request, locals }: { request: Request; locals: any }) => {
-		const session = locals.session;
+	updateRequirements: async (event) => {
+		const { request } = event;
+		const { requireOrganizationAdmin } = await import('$lib/server/auth-utils');
 		
-		if (!session?.user?.id || !session?.adminRole) {
-			return fail(401, { error: 'Unauthorized' });
-		}
-
-		if (session.adminRole.adminLevel !== 'OrganizationAdmin') {
-			return fail(403, { error: 'Insufficient permissions' });
-		}
-
-		const organizationId = session.adminRole.organizationId;
+		// Get authenticated user and ensure they have OrganizationAdmin privileges
+		const user = requireOrganizationAdmin(event);
+		
+		// Get organization ID from admin role
+		const organizationId = user.admin_role?.organization_id;
 		if (!organizationId) {
 			return fail(400, { error: 'Organization ID not found' });
 		}
@@ -98,7 +92,7 @@ export const actions: Actions = {
 			};
 
 			const validatedData = activityRequirementsSchema.parse(data);
-			const userId = session.user.id;
+			const userId = user.user_id;
 
 			await db.transaction(async (tx) => {
 				await tx
