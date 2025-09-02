@@ -1,7 +1,7 @@
 import { error, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 import { requireOrganizationAdmin } from '$lib/server/auth-utils';
-import { db, activities, users, organizations, participations } from '$lib/server/db';
+import { db, activities, organizations, participations } from '$lib/server/db';
 import { alias } from 'drizzle-orm/pg-core';
 import { eq } from 'drizzle-orm';
 
@@ -124,8 +124,10 @@ export const actions: Actions = {
 		const title = (fd.get('title') || '').toString().trim();
 		const description = (fd.get('description') || '').toString();
 		const location = (fd.get('location') || '').toString().trim();
-		const startTime = (fd.get('start_time') || '').toString(); // yyyy-MM-ddTHH:mm
-		const endTime = (fd.get('end_time') || '').toString();
+		const startDate = (fd.get('start_date') || '').toString().trim();
+		const endDate = (fd.get('end_date') || '').toString().trim();
+		const startTime = (fd.get('start_time') || '').toString().trim(); // HH:mm format
+		const endTime = (fd.get('end_time') || '').toString().trim(); // HH:mm format
 		const maxParticipantsRaw = (fd.get('max_participants') || '').toString();
         const status = (fd.get('status') || '').toString();
         const regRaw = (fd.get('registration_open') || '').toString().toLowerCase();
@@ -136,7 +138,7 @@ export const actions: Actions = {
     	const organizerId = (fd.get('organizer_id') || '').toString().trim();
     	const activityLevel = (fd.get('activity_level') || '').toString().trim();
 
-		if (!title || !location || !startTime || !endTime) {
+		if (!title || !location || !startDate || !endDate || !startTime || !endTime) {
 			return { error: 'ข้อมูลไม่ครบถ้วน' } as const;
 		}
 
@@ -151,11 +153,24 @@ export const actions: Actions = {
 			return { error: 'ระดับกิจกรรมไม่ถูกต้อง' } as const;
 		}
 
-		// Parse datetimes into date + time
-		const [startDateStr, startTimeStr] = startTime.split('T');
-		const [endDateStr, endTimeStr] = endTime.split('T');
-		if (!startDateStr || !startTimeStr || !endDateStr || !endTimeStr) {
-			return { error: 'รูปแบบวันเวลาไม่ถูกต้อง' } as const;
+		// Validate date and time formats
+		const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+		const timeRegex = /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/;
+		
+		if (!dateRegex.test(startDate) || !dateRegex.test(endDate)) {
+			return { error: 'รูปแบบวันที่ไม่ถูกต้อง' } as const;
+		}
+		
+		if (!timeRegex.test(startTime) || !timeRegex.test(endTime)) {
+			return { error: 'รูปแบบเวลาไม่ถูกต้อง' } as const;
+		}
+
+		// Validate that end date/time is after start date/time
+		const startDateTime = new Date(`${startDate}T${startTime}`);
+		const endDateTime = new Date(`${endDate}T${endTime}`);
+		
+		if (endDateTime <= startDateTime) {
+			return { error: 'วันที่และเวลาสิ้นสุดต้องอยู่หลังจากวันที่และเวลาเริ่มต้น' } as const;
 		}
 
 		const maxParticipants = maxParticipantsRaw ? Number(maxParticipantsRaw) : null;
@@ -165,6 +180,12 @@ export const actions: Actions = {
                     .map((s) => s.trim())
                     .filter((s) => s !== '')
             : [];
+
+		// Prepare time and date values for database
+		const startDateStr = startDate; // Already in YYYY-MM-DD format
+		const endDateStr = endDate; // Already in YYYY-MM-DD format
+		const startTimeStr = startTime; // Already in HH:MM format
+		const endTimeStr = endTime; // Already in HH:MM format
 
         // Permission: only SuperAdmin can change organizer_id
         const isSuperAdmin = (user as any)?.admin_role?.admin_level === 'SuperAdmin';

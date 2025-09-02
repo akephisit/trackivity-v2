@@ -128,7 +128,7 @@
 		}
 	}
 
-	function handleScanError(message: string) {
+	function handleScanError(_message: string) {
 		sessionStats.failed++;
 		// Toast notification removed - QRScanner component handles notifications
 	}

@@ -65,16 +65,37 @@
 		})
 	);
 
-	// Format datetime for input fields
-	function formatDateTimeForInput(dateString: string): string {
-		const date = new Date(dateString);
-		const year = date.getFullYear();
-		const month = String(date.getMonth() + 1).padStart(2, '0');
-		const day = String(date.getDate()).padStart(2, '0');
-		const hours = String(date.getHours()).padStart(2, '0');
-		const minutes = String(date.getMinutes()).padStart(2, '0');
+	// Extract date and time components from ISO string or separate database fields
+	function extractDateFromActivity(activity: any): string {
+		// Try to use separate date field first (more reliable)
+		if (activity.start_date) {
+			return activity.start_date;
+		}
+		// Fallback to parsing ISO string if needed
+		if (activity.start_time) {
+			return new Date(activity.start_time).toISOString().split('T')[0];
+		}
+		return '';
+	}
 
-		return `${year}-${month}-${day}T${hours}:${minutes}`;
+	function extractTimeFromActivity(activity: any, isStart: boolean = true): string {
+		const timeField = isStart ? 'start_time_only' : 'end_time_only';
+		
+		// Use the dedicated time field from database (PostgreSQL time type)
+		if (activity[timeField]) {
+			// The database time field is already in HH:MM:SS format
+			// We need to extract just HH:MM for the HTML time input
+			const timeStr = activity[timeField].toString();
+			// Handle both HH:MM:SS and HH:MM formats
+			if (timeStr.includes(':')) {
+				const parts = timeStr.split(':');
+				if (parts.length >= 2) {
+					return `${parts[0].padStart(2, '0')}:${parts[1].padStart(2, '0')}`;
+				}
+			}
+		}
+		
+		return '';
 	}
 
 	function goBack() {
@@ -295,29 +316,61 @@
 				</div>
 
 				<!-- Date and Time -->
-				<div class="grid gap-4 md:grid-cols-2">
-					<div class="space-y-2">
-						<Label for="start_time">วันที่และเวลาเริ่ม *</Label>
-						<Input
-							id="start_time"
-							name="start_time"
-							type="datetime-local"
-							required
-							value={form?.formData?.start_time || formatDateTimeForInput(activity.start_time)}
-							class="text-sm"
-						/>
-					</div>
+				<div class="space-y-4">
+					<h3 class="text-lg font-semibold">วันที่และเวลา</h3>
+					
+					<div class="grid gap-4 md:grid-cols-2">
+						<!-- Start Date -->
+						<div class="space-y-2">
+							<Label for="start_date">วันที่เริ่ม *</Label>
+							<Input
+								id="start_date"
+								name="start_date"
+								type="date"
+								required
+								value={form?.formData?.start_date || extractDateFromActivity(activity)}
+								class="text-base"
+							/>
+						</div>
 
-					<div class="space-y-2">
-						<Label for="end_time">วันที่และเวลาสิ้นสุด *</Label>
-						<Input
-							id="end_time"
-							name="end_time"
-							type="datetime-local"
-							required
-							value={form?.formData?.end_time || formatDateTimeForInput(activity.end_time)}
-							class="text-sm"
-						/>
+						<!-- End Date -->
+						<div class="space-y-2">
+							<Label for="end_date">วันที่สิ้นสุด *</Label>
+							<Input
+								id="end_date"
+								name="end_date"
+								type="date"
+								required
+								value={form?.formData?.end_date || (activity.end_date || extractDateFromActivity(activity))}
+								class="text-base"
+							/>
+						</div>
+
+						<!-- Start Time -->
+						<div class="space-y-2">
+							<Label for="start_time">เวลาเริ่ม *</Label>
+							<Input
+								id="start_time"
+								name="start_time"
+								type="time"
+								required
+								value={form?.formData?.start_time || extractTimeFromActivity(activity, true)}
+								class="text-base"
+							/>
+						</div>
+
+						<!-- End Time -->
+						<div class="space-y-2">
+							<Label for="end_time">เวลาสิ้นสุด *</Label>
+							<Input
+								id="end_time"
+								name="end_time"
+								type="time"
+								required
+								value={form?.formData?.end_time || extractTimeFromActivity(activity, false)}
+								class="text-base"
+							/>
+						</div>
 					</div>
 				</div>
 
