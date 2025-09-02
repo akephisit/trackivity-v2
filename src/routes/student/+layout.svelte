@@ -14,7 +14,8 @@
 		IconSun,
 		IconMoon,
 		IconMenu,
-		IconX
+		IconX,
+		IconFileText
 	} from '@tabler/icons-svelte';
 	import { page } from '$app/stores';
     import { mode, setMode } from 'mode-watcher';
@@ -30,6 +31,7 @@
 		{ href: '/student/activities', icon: IconCalendarEvent, label: 'กิจกรรม' },
 		{ href: '/student/qr', icon: IconQrcode, label: 'QR Code' },
 		{ href: '/student/history', icon: IconHistory, label: 'ประวัติ' },
+		{ href: '/student/summary', icon: IconFileText, label: 'สรุปกิจกรรม' },
 		{ href: '/student/profile', icon: IconUser, label: 'โปรไฟล์' }
 	];
 
