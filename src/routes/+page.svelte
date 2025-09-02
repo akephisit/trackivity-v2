@@ -22,6 +22,7 @@
 	import { goto, invalidateAll } from '$app/navigation';
 	import { mode, setMode } from 'mode-watcher';
     import MetaTags from '$lib/components/seo/MetaTags.svelte';
+	import { getActivityTypeDisplayName } from '$lib/utils/activity';
 
 	let { data }: { data: PageData } = $props();
 
@@ -259,7 +260,7 @@
 										{#if activity.activityType}
 											<div class="flex items-center gap-2">
 												<Badge variant="secondary" class="text-xs">
-													{activity.activityType}
+													{getActivityTypeDisplayName(activity.activityType)}
 												</Badge>
 												<Badge variant="outline" class="text-xs">
 													{activity.hours} ชั่วโมง
@@ -332,7 +333,7 @@
 										{#if activity.activityType}
 											<div class="flex items-center gap-2">
 												<Badge variant="secondary" class="text-xs">
-													{activity.activityType}
+													{getActivityTypeDisplayName(activity.activityType)}
 												</Badge>
 												<Badge variant="outline" class="text-xs">
 													{activity.hours} ชั่วโมง
@@ -403,7 +404,7 @@
 										{#if activity.activityType}
 											<div class="flex items-center gap-2">
 												<Badge variant="secondary" class="text-xs">
-													{activity.activityType}
+													{getActivityTypeDisplayName(activity.activityType)}
 												</Badge>
 												<Badge variant="outline" class="text-xs">
 													{activity.hours} ชั่วโมง
@@ -474,7 +475,7 @@
 										{#if activity.activityType}
 											<div class="flex items-center gap-2">
 												<Badge variant="secondary" class="text-xs">
-													{activity.activityType}
+													{getActivityTypeDisplayName(activity.activityType)}
 												</Badge>
 												<Badge variant="outline" class="text-xs">
 													{activity.hours} ชั่วโมง

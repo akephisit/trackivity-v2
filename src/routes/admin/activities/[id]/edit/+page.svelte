@@ -34,7 +34,6 @@
 
 	let submitting = $state(false);
 	let selectedStatus = $state(activity.status);
-	let selectedFaculty = $state(activity.faculty_id || '');
 	// No department selection in edit page per requirement
 
 	// Registration open toggle
@@ -52,7 +51,7 @@
 	const isSuperAdmin = (data?.user?.admin_role?.admin_level === 'SuperAdmin');
 
 	// Import activity level options from utils
-	import { activityLevelOptions, getActivityLevelDisplayName } from '$lib/utils/activity';
+	import { activityLevelOptions } from '$lib/utils/activity';
 
 	// Activity level selection state - convert display value to storage value
 	let selectedActivityLevel = $state((form as any)?.formData?.activity_level || activity.activity_level || 'faculty');
