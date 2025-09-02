@@ -1,5 +1,4 @@
 <script lang="ts">
-    import type { ActivityParticipation } from '$lib/types';
 	import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Skeleton } from '$lib/components/ui/skeleton';
@@ -8,7 +7,6 @@
 	import {
 		IconHistory,
 		IconCalendarEvent,
-		IconClock,
 		IconMapPin,
 		IconSearch,
 		IconAlertCircle,
@@ -21,8 +19,11 @@
 		IconBuildingStore,
 		IconCheck,
 		IconX,
-		IconClock2
+		IconClock2,
+		IconSchool,
+		IconBuilding
 	} from '@tabler/icons-svelte';
+	import { getActivityLevelDisplayName } from '$lib/utils/activity';
 
 let { data } = $props<{ data: { history: any[] } }>();
 let participationHistory: any[] = $state(data?.history || []);
@@ -40,7 +41,11 @@ let error: string | null = $state(null);
 		thisYear: 0,
 		uniqueActivities: 0,
 		totalHours: 0,
-		completedActivities: 0
+		facultyHours: 0,
+		universityHours: 0,
+		completedActivities: 0,
+		facultyActivities: 0,
+		universityActivities: 0
 	});
 
 // Initialize from server data
@@ -53,26 +58,72 @@ calculateStats(participationHistory);
 		const thisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 		const thisYear = new Date(now.getFullYear(), 0, 1);
 
-		const completedActivities = data.filter((p) => p.status === 'completed' || p.status === 'checked_out');
-		const totalHours = data.reduce((sum, p) => {
-			if (p.activity?.hours) {
-				return sum + (p.activity.hours || 0);
+		// Remove duplicates for accurate statistics (keep most recent participation per activity)
+		const uniqueActivities = new Map();
+		data.forEach((p) => {
+			const activityId = p.activity?.id;
+			if (activityId) {
+				const existing = uniqueActivities.get(activityId);
+				if (!existing || new Date(p.participated_at) > new Date(existing.participated_at)) {
+					uniqueActivities.set(activityId, p);
+				}
 			}
-			return sum;
-		}, 0);
+		});
+		const uniqueData = Array.from(uniqueActivities.values());
+
+		const completedActivities = uniqueData.filter((p) => p.status === 'completed' || p.status === 'checked_out');
+		
+		// Calculate hours by activity level
+		let totalHours = 0;
+		let facultyHours = 0;
+		let universityHours = 0;
+		let facultyActivities = 0;
+		let universityActivities = 0;
+
+		uniqueData.forEach((p) => {
+			if (p.activity?.hours && (p.status === 'completed' || p.status === 'checked_out')) {
+				const hours = p.activity.hours || 0;
+				totalHours += hours;
+				
+				if (p.activity.activity_level === 'faculty') {
+					facultyHours += hours;
+					facultyActivities++;
+				} else if (p.activity.activity_level === 'university') {
+					universityHours += hours;
+					universityActivities++;
+				}
+			}
+		});
 
 		stats = {
 			total: data.length,
 			thisMonth: data.filter((p) => new Date(p.participated_at) >= thisMonth).length,
 			thisYear: data.filter((p) => new Date(p.participated_at) >= thisYear).length,
-			uniqueActivities: new Set(data.map((p) => p.activity?.id)).size,
+			uniqueActivities: uniqueActivities.size,
 			totalHours,
-			completedActivities: completedActivities.length
+			facultyHours,
+			universityHours,
+			completedActivities: completedActivities.length,
+			facultyActivities,
+			universityActivities
 		};
 	}
 
 	function filterAndSortHistory() {
 		let filtered = participationHistory;
+
+		// Deduplication: Remove duplicate activities (keep the most recent participation for each activity)
+		const activityMap = new Map();
+		filtered.forEach((p) => {
+			const activityId = p.activity?.id;
+			if (activityId) {
+				const existingParticipation = activityMap.get(activityId);
+				if (!existingParticipation || new Date(p.participated_at) > new Date(existingParticipation.participated_at)) {
+					activityMap.set(activityId, p);
+				}
+			}
+		});
+		filtered = Array.from(activityMap.values());
 
 		// Search filter
 		if (searchQuery.trim()) {
@@ -167,17 +218,6 @@ calculateStats(participationHistory);
 		});
 	}
 
-	function getActivityTypeText(type: string): string {
-		const types: Record<string, string> = {
-			lecture: 'บรรยาย',
-			workshop: 'ปฏิบัติการ',
-			seminar: 'สัมมนา',
-			exam: 'สอบ',
-			meeting: 'ประชุม',
-			event: 'งาน'
-		};
-		return types[type] || type;
-	}
 
 	function getActivityBadgeVariant(type: string): 'default' | 'secondary' | 'outline' {
 		switch (type) {
@@ -191,6 +231,28 @@ calculateStats(participationHistory);
 				return 'outline';
 			default:
 				return 'outline';
+		}
+	}
+
+	function getActivityLevelBadgeVariant(level: string): 'default' | 'secondary' | 'outline' {
+		switch (level) {
+			case 'university':
+				return 'default';
+			case 'faculty':
+				return 'secondary';
+			default:
+				return 'outline';
+		}
+	}
+
+	function getActivityLevelIcon(level: string) {
+		switch (level) {
+			case 'university':
+				return IconBuilding;
+			case 'faculty':
+				return IconSchool;
+			default:
+				return IconBuildingStore;
 		}
 	}
 
@@ -237,17 +299,6 @@ calculateStats(participationHistory);
 		}
 	}
 
-	function formatDuration(minutes: number): string {
-		if (minutes < 60) {
-			return `${minutes} นาที`;
-		}
-		const hours = Math.floor(minutes / 60);
-		const remainingMinutes = minutes % 60;
-		if (remainingMinutes === 0) {
-			return `${hours} ชั่วโมง`;
-		}
-		return `${hours} ชม. ${remainingMinutes} นาที`;
-	}
 </script>
 
 <svelte:head>
@@ -263,7 +314,7 @@ calculateStats(participationHistory);
 	</div>
 
 	<!-- Statistics -->
-	<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+	<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-8">
 		<Card>
 			<CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
 				<CardTitle class="text-sm font-medium">ทั้งหมด</CardTitle>
@@ -327,6 +378,28 @@ calculateStats(participationHistory);
 			<CardContent>
 				<div class="text-2xl font-bold">{stats.totalHours}</div>
 				<p class="text-xs text-muted-foreground">ชั่วโมงจากกิจกรรม</p>
+			</CardContent>
+		</Card>
+
+		<Card>
+			<CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
+				<CardTitle class="text-sm font-medium">ชั่วโมงคณะ</CardTitle>
+				<IconSchool class="size-4 text-muted-foreground" />
+			</CardHeader>
+			<CardContent>
+				<div class="text-2xl font-bold">{stats.facultyHours}</div>
+				<p class="text-xs text-muted-foreground">กิจกรรมระดับคณะ</p>
+			</CardContent>
+		</Card>
+
+		<Card>
+			<CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
+				<CardTitle class="text-sm font-medium">ชั่วโมงมหาวิทยาลัย</CardTitle>
+				<IconBuilding class="size-4 text-muted-foreground" />
+			</CardHeader>
+			<CardContent>
+				<div class="text-2xl font-bold">{stats.universityHours}</div>
+				<p class="text-xs text-muted-foreground">กิจกรรมระดับมหาวิทยาลัย</p>
 			</CardContent>
 		</Card>
 	</div>
@@ -437,6 +510,13 @@ calculateStats(participationHistory);
 										<Badge variant={getStatusBadgeVariant(participation.status)}>
 											{getParticipationStatusText(participation.status)}
 										</Badge>
+										{#if participation.activity?.activity_level}
+											{@const LevelIcon = getActivityLevelIcon(participation.activity.activity_level)}
+											<Badge variant={getActivityLevelBadgeVariant(participation.activity.activity_level)} class="gap-1">
+												<LevelIcon class="size-3" />
+												{getActivityLevelDisplayName(participation.activity.activity_level)}
+											</Badge>
+										{/if}
 										{#if participation.activity?.activity_type}
 											<Badge variant={getActivityBadgeVariant(participation.activity.activity_type)}>
 												{participation.activity.activity_type}

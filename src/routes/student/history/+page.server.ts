@@ -31,6 +31,7 @@ export const load: PageServerLoad = async (event) => {
         a_hours: activities.hours,
         a_status: activities.status,
         a_organizer_id: activities.organizerId,
+        a_activity_level: activities.activityLevel,
         // organizer organization
         org_name: organizations.name
       })
@@ -77,7 +78,8 @@ export const load: PageServerLoad = async (event) => {
           end_time: r.a_end_time,
           hours: r.a_hours,
           status: r.a_status,
-          organizer_name: r.org_name
+          organizer_name: r.org_name,
+          activity_level: r.a_activity_level
         }
       };
     });
