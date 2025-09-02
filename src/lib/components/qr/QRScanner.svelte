@@ -66,6 +66,14 @@
 	let error = $state<string | null>(null);
 	let lastScanTime = 0;
 	let scanCooldown = 2000; // 2 seconds between scans
+
+	// Debouncing and cleanup state
+	let cameraRequestInProgress = $state(false);
+	let retryCount = $state(0);
+	let maxRetries = 3;
+	let retryDelay = 1000; // Start with 1 second
+	let cleanupPromise: Promise<void> | null = null;
+
 	let debugInfo = $state({
 		hasCamera: false,
 		cameraPermission: 'unknown',
@@ -153,44 +161,22 @@
 
 		// Check if getUserMedia is supported
 		if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-			error = 'เบราว์เซอร์นี้ไม่รองรับการเข้าถึงกล้อง';
-			cameraStatus = 'error';
-			onStatusChange?.(cameraStatus);
-			onError?.(error);
+			const errorMsg = 'เบราว์เซอร์นี้ไม่รองรับการเข้าถึงกล้อง';
+			handleCameraError(errorMsg);
 			return;
 		}
+
+		// Ensure any existing stream is completely stopped before starting new one
+		await ensureStreamCleanup();
 
 		cameraStatus = 'requesting';
 		error = null;
 		onStatusChange?.(cameraStatus);
 
 		try {
-			// Get current orientation for camera constraints
-			const isPortrait = getDeviceOrientation() === 'portrait';
-			
-			// Request camera permissions with orientation-aware constraints
-			const constraints = {
-				video: {
-					facingMode: { ideal: 'environment' }, // Prefer back camera but allow front if needed
-					width: isPortrait 
-						? { min: 320, ideal: 720, max: 1080 }
-						: { min: 480, ideal: 1280, max: 1920 },
-					height: isPortrait 
-						? { min: 480, ideal: 1280, max: 1920 }
-						: { min: 320, ideal: 720, max: 1080 },
-					frameRate: { ideal: 30, max: 60 }
-				},
-				audio: false
-			};
-
-			console.log('Requesting camera with constraints:', constraints);
-			try {
-				stream = await navigator.mediaDevices.getUserMedia(constraints);
-				console.log('Camera stream obtained successfully:', stream);
-			} catch (getUserMediaError) {
-				console.error('getUserMedia failed:', getUserMediaError);
-				throw getUserMediaError;
-			}
+			// Get camera stream with retry mechanism
+			stream = await getCameraStreamWithRetry();
+			console.log('Camera stream obtained successfully:', stream);
 
 			console.log('Checking video element and stream:', {
 				hasVideoElement: !!videoElement,
@@ -384,46 +370,96 @@
 		} catch (err) {
 			console.error('Failed to start camera:', err);
 
-			// Provide more specific error messages
-			const error_obj = err as Error & { name?: string };
-			if (error_obj.name === 'NotAllowedError') {
-				error = 'กรุณาอนุญาตการใช้งานกล้องในเบราว์เซอร์';
-			} else if (error_obj.name === 'NotFoundError') {
-				error = 'ไม่พบกล้องในอุปกรณ์';
-			} else if (error_obj.name === 'NotReadableError') {
-				error = 'กล้องถูกใช้งานโดยแอปพลิเคชันอื่น';
-			} else if (error_obj.name === 'OverconstrainedError') {
-				error = 'กล้องไม่รองรับการตั้งค่าที่ต้องการ';
-			} else {
-				error = `ไม่สามารถเข้าถึงกล้องได้: ${error_obj.message || 'ข้อผิดพลาดไม่ทราบสาเหตุ'}`;
-			}
-
-			cameraStatus = 'error';
-			onError?.(error);
+			// Handle the error with retry logic
+			await handleCameraStartError(err as Error);
 		}
 
+		cameraRequestInProgress = false;
 		onStatusChange?.(cameraStatus);
 	}
 
 	function stopCamera() {
 		console.log('Stopping camera');
 
-		if (stream) {
-			stream.getTracks().forEach((track) => {
-				console.log('Stopping track:', track.label);
-				track.stop();
-			});
-			stream = null;
-		}
+		// Create cleanup promise to track completion
+		cleanupPromise = performStreamCleanup();
 
-		if (videoElement) {
-			videoElement.pause();
-			videoElement.srcObject = null;
-		}
+		// Don't wait for cleanup to complete, but track it
+		cleanupPromise.finally(() => {
+			cleanupPromise = null;
+		});
 
 		isScanning = false;
 		cameraStatus = 'idle';
+		cameraRequestInProgress = false;
+		retryCount = 0;
+		error = null;
 		onStatusChange?.(cameraStatus);
+	}
+
+	/**
+	 * Performs thorough stream cleanup
+	 */
+	async function performStreamCleanup(): Promise<void> {
+		console.log('Performing stream cleanup');
+
+		if (stream) {
+			try {
+				// Stop all tracks with proper error handling
+				const tracks = stream.getTracks();
+				for (const track of tracks) {
+					try {
+						console.log('Stopping track:', track.label, 'State:', track.readyState);
+						track.stop();
+
+						// Wait for track to actually stop
+						let attempts = 0;
+						while (track.readyState !== 'ended' && attempts < 10) {
+							await new Promise((resolve) => setTimeout(resolve, 10));
+							attempts++;
+						}
+
+						if (track.readyState !== 'ended') {
+							console.warn('Track did not stop properly:', track.label);
+						}
+					} catch (e) {
+						console.warn('Error stopping track:', track.label, e);
+					}
+				}
+			} catch (e) {
+				console.warn('Error during track cleanup:', e);
+			} finally {
+				stream = null;
+			}
+		}
+
+		if (videoElement) {
+			try {
+				videoElement.pause();
+				videoElement.srcObject = null;
+
+				// Wait a bit for the video element to fully release the stream
+				await new Promise((resolve) => setTimeout(resolve, 100));
+			} catch (e) {
+				console.warn('Error cleaning up video element:', e);
+			}
+		}
+
+		debugInfo.streamActive = false;
+		debugInfo.videoReady = false;
+	}
+
+	/**
+	 * Ensures all streams are properly cleaned up before starting new ones
+	 */
+	async function ensureStreamCleanup(): Promise<void> {
+		if (stream || videoElement?.srcObject) {
+			console.log('Ensuring complete stream cleanup before new camera start');
+			await performStreamCleanup();
+
+			// Additional safety delay to ensure hardware is released
+			await new Promise((resolve) => setTimeout(resolve, 200));
+		}
 	}
 
 	async function startQRDetection() {
@@ -514,44 +550,46 @@
 		lastScanTime = now;
 
 		try {
-				// Double-check QR code validity before sending to server
-				if (!isValidQRCode(qrData)) {
-					const errorMessage = 'รูปแบบ QR Code ไม่ถูกต้อง';
-					toast.error(errorMessage);
-					onError?.(errorMessage);
-					return;
-				}
+			// Double-check QR code validity before sending to server
+			if (!isValidQRCode(qrData)) {
+				const errorMessage = 'รูปแบบ QR Code ไม่ถูกต้อง';
+				toast.error(errorMessage);
+				onError?.(errorMessage);
+				return;
+			}
 
-				const response = await fetch(`/api/activities/${activity_id}/${scanMode}`, {
-					method: 'POST',
-					headers: {
-						'Content-Type': 'application/json'
-					},
-					credentials: 'include',
-					body: JSON.stringify({ qr_data: qrData })
-				});
+			const response = await fetch(`/api/activities/${activity_id}/${scanMode}`, {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				credentials: 'include',
+				body: JSON.stringify({ qr_data: qrData })
+			});
 
 			const result = await response.json();
 
 			if (response.ok && result.success === true) {
-					const scanResult: ScanResult = {
-						success: true,
-						message: result.message || 'สแกนสำเร็จ',
-						user_name: result.data?.user_name,
-						student_id: result.data?.student_id,
-						participation_status: result.data?.participation_status,
-						checked_in_at: result.data?.checked_in_at || result.data?.checked_out_at
-					};
+				const scanResult: ScanResult = {
+					success: true,
+					message: result.message || 'สแกนสำเร็จ',
+					user_name: result.data?.user_name,
+					student_id: result.data?.student_id,
+					participation_status: result.data?.participation_status,
+					checked_in_at: result.data?.checked_in_at || result.data?.checked_out_at
+				};
 
 				// Add to history
 				if (scanResult.user_name && scanResult.student_id) {
-						const historyItem: ScannedUser = {
-							user_name: scanResult.user_name,
-							student_id: scanResult.student_id,
-							participation_status: scanResult.participation_status || (scanMode === 'checkin' ? 'checked_in' : 'checked_out'),
-							checked_in_at: scanResult.checked_in_at || new Date().toISOString(),
-							timestamp: now
-						};
+					const historyItem: ScannedUser = {
+						user_name: scanResult.user_name,
+						student_id: scanResult.student_id,
+						participation_status:
+							scanResult.participation_status ||
+							(scanMode === 'checkin' ? 'checked_in' : 'checked_out'),
+						checked_in_at: scanResult.checked_in_at || new Date().toISOString(),
+						timestamp: now
+					};
 
 					scanHistory = [historyItem, ...scanHistory.slice(0, maxHistoryItems - 1)];
 				}
@@ -652,7 +690,10 @@
 		// Try to parse as Base64 encoded JSON (our expected format)
 		try {
 			// Use atob for browser compatibility instead of Buffer
-			const decoded = typeof window !== 'undefined' ? atob(qrData) : Buffer.from(qrData, 'base64').toString('utf-8');
+			const decoded =
+				typeof window !== 'undefined'
+					? atob(qrData)
+					: Buffer.from(qrData, 'base64').toString('utf-8');
 			const obj = JSON.parse(decoded);
 			// Check if it has required fields
 			if (obj && typeof obj === 'object' && obj.uid) {
@@ -695,10 +736,10 @@
 		const barcodePatterns = [
 			/^\d{12,13}$/, // UPC/EAN
 			/^[A-Z]{2}\d+$/, // Some product codes
-			/^\d{1,4}-\d{4,6}-\d{1,6}$/, // Hyphenated numbers
+			/^\d{1,4}-\d{4,6}-\d{1,6}$/ // Hyphenated numbers
 		];
 
-		return barcodePatterns.some(pattern => pattern.test(data));
+		return barcodePatterns.some((pattern) => pattern.test(data));
 	}
 
 	// Handle invalid codes (barcodes, etc.)
@@ -712,25 +753,29 @@
 		invalidScansCount++;
 
 		// Show a helpful message
-		const message = isLikelyBarcode(data) 
+		const message = isLikelyBarcode(data)
 			? 'ตรวจพบบาร์โค้ด กรุณาสแกน QR Code เท่านั้น'
 			: 'รูปแบบ QR Code ไม่ถูกต้อง';
 
 		toast.warning(message);
-		console.log('Invalid code detected:', { data, isLikelyBarcode: isLikelyBarcode(data), length: data.length });
+		console.log('Invalid code detected:', {
+			data,
+			isLikelyBarcode: isLikelyBarcode(data),
+			length: data.length
+		});
 	}
 
 	// Device orientation detection
 	function getDeviceOrientation(): 'portrait' | 'landscape' {
 		if (typeof window === 'undefined') return 'portrait';
-		
+
 		// Use screen orientation API if available
 		if (screen.orientation) {
-			return screen.orientation.angle === 0 || screen.orientation.angle === 180 
-				? 'portrait' 
+			return screen.orientation.angle === 0 || screen.orientation.angle === 180
+				? 'portrait'
 				: 'landscape';
 		}
-		
+
 		// Fallback to window dimensions
 		return window.innerHeight > window.innerWidth ? 'portrait' : 'landscape';
 	}
@@ -747,7 +792,7 @@
 			if (newOrientation !== debugInfo.deviceOrientation) {
 				debugInfo.deviceOrientation = newOrientation;
 				console.log('Orientation changed to:', newOrientation);
-				
+
 				// If camera is active, restart it with new constraints
 				if (cameraStatus === 'active' && stream) {
 					console.log('Restarting camera for orientation change');
@@ -771,6 +816,139 @@
 			window.removeEventListener('resize', handleOrientationChange);
 		};
 	}
+
+	/**
+	 * Gets camera stream with retry mechanism for better reliability
+	 */
+	async function getCameraStreamWithRetry(): Promise<MediaStream> {
+		// Get current orientation for camera constraints
+		const isPortrait = getDeviceOrientation() === 'portrait';
+
+		// Request camera permissions with orientation-aware constraints
+		const constraints = {
+			video: {
+				facingMode: { ideal: 'environment' }, // Prefer back camera but allow front if needed
+				width: isPortrait
+					? { min: 320, ideal: 720, max: 1080 }
+					: { min: 480, ideal: 1280, max: 1920 },
+				height: isPortrait
+					? { min: 480, ideal: 1280, max: 1920 }
+					: { min: 320, ideal: 720, max: 1080 },
+				frameRate: { ideal: 30, max: 60 }
+			},
+			audio: false
+		};
+
+		console.log('Requesting camera with constraints:', constraints);
+
+		// Try with ideal constraints first
+		try {
+			const stream = await navigator.mediaDevices.getUserMedia(constraints);
+			console.log('Camera stream obtained successfully with ideal constraints');
+			return stream;
+		} catch (error) {
+			console.warn('Failed with ideal constraints, trying fallback:', error);
+
+			// Try with fallback constraints if ideal fails
+			const fallbackConstraints = {
+				video: {
+					facingMode: 'environment', // Remove ideal, just prefer back camera
+					width: { min: 320, max: 1920 },
+					height: { min: 240, max: 1080 }
+				},
+				audio: false
+			};
+
+			try {
+				const stream = await navigator.mediaDevices.getUserMedia(fallbackConstraints);
+				console.log('Camera stream obtained with fallback constraints');
+				return stream;
+			} catch (fallbackError) {
+				console.warn('Fallback constraints failed, trying minimal:', fallbackError);
+
+				// Last resort - minimal constraints
+				const minimalConstraints = {
+					video: true,
+					audio: false
+				};
+
+				const stream = await navigator.mediaDevices.getUserMedia(minimalConstraints);
+				console.log('Camera stream obtained with minimal constraints');
+				return stream;
+			}
+		}
+	}
+
+	/**
+	 * Handles camera start errors with retry logic
+	 */
+	async function handleCameraStartError(cameraError: Error): Promise<void> {
+		console.error('Camera start error:', cameraError);
+
+		const errorObj = cameraError as Error & { name?: string };
+
+		// Check if this is a retryable error
+		if (errorObj.name === 'NotReadableError' && retryCount < maxRetries) {
+			retryCount++;
+			const delay = retryDelay * Math.pow(2, retryCount - 1); // Exponential backoff
+
+			console.log(
+				`Camera access failed, retrying in ${delay}ms (attempt ${retryCount}/${maxRetries})`
+			);
+
+			const retryMessage = `กล้องถูกใช้งาน กำลังลองใหม่... (${retryCount}/${maxRetries})`;
+			error = retryMessage;
+
+			// Wait and retry
+			setTimeout(async () => {
+				if (cameraStatus === 'requesting' && isActive && activity_id) {
+					console.log(`Retrying camera start (attempt ${retryCount})`);
+					// Reset status to allow retry
+					cameraStatus = 'idle';
+					cameraRequestInProgress = false;
+					await startCamera();
+				}
+			}, delay);
+
+			return;
+		}
+
+		// Non-retryable error or max retries reached
+		const errorMessage = getCameraErrorMessage(errorObj);
+		handleCameraError(errorMessage);
+	}
+
+	/**
+	 * Gets user-friendly error message for camera errors
+	 */
+	function getCameraErrorMessage(error: Error & { name?: string }): string {
+		if (error.name === 'NotAllowedError') {
+			return 'กรุณาอนุญาตการใช้งานกล้องในเบราว์เซอร์';
+		} else if (error.name === 'NotFoundError') {
+			return 'ไม่พบกล้องในอุปกรณ์';
+		} else if (error.name === 'NotReadableError') {
+			if (retryCount >= maxRetries) {
+				return 'กล้องถูกใช้งานโดยแอปพลิเคชันอื่น โปรดปิดแอปอื่นและลองใหม่';
+			}
+			return 'กล้องถูกใช้งานโดยแอปพลิเคชันอื่น';
+		} else if (error.name === 'OverconstrainedError') {
+			return 'กล้องไม่รองรับการตั้งค่าที่ต้องการ';
+		} else if (error.name === 'SecurityError') {
+			return 'การเข้าถึงกล้องถูกบล็อกโดยนโยบายความปลอดภัย';
+		} else {
+			return `ไม่สามารถเข้าถึงกล้องได้: ${error.message || 'ข้อผิดพลาดไม่ทราบสาเหตุ'}`;
+		}
+	}
+
+	/**
+	 * Handles camera errors uniformly
+	 */
+	function handleCameraError(errorMessage: string): void {
+		error = errorMessage;
+		cameraStatus = 'error';
+		cameraRequestInProgress = false;
+		onError?.(errorMessage);
+	}
 </script>
 
 <div class="space-y-4">
@@ -784,16 +962,30 @@
 				</div>
 
 				<div class="flex items-center gap-2">
-					<Badge variant={cameraStatus === 'active' ? 'default' : 'secondary'}>
+					<Badge
+						variant={cameraStatus === 'active'
+							? 'default'
+							: cameraStatus === 'error'
+								? 'destructive'
+								: 'secondary'}
+					>
 						{#if cameraStatus === 'requesting'}
 							<IconCamera class="mr-1 size-3 animate-pulse" />
-							กำลังเชื่อมต่อ...
+							{#if retryCount > 0}
+								กำลังลองใหม่... ({retryCount}/{maxRetries})
+							{:else}
+								กำลังเชื่อมต่อ...
+							{/if}
 						{:else if cameraStatus === 'active'}
 							<IconCamera class="mr-1 size-3" />
 							พร้อมสแกน
 						{:else if cameraStatus === 'error'}
 							<IconCameraOff class="mr-1 size-3" />
-							ข้อผิดพลาด
+							{#if retryCount >= maxRetries}
+								เชื่อมต่อล้มเหลว
+							{:else}
+								ข้อผิดพลาด
+							{/if}
 						{:else}
 							<IconCameraOff class="mr-1 size-3" />
 							ปิด
@@ -814,7 +1006,10 @@
 			<!-- Camera Preview -->
 			<div class="relative">
 				<div
-					class="relative overflow-hidden rounded-lg border-2 border-dashed bg-muted {debugInfo.deviceOrientation === 'portrait' ? 'aspect-[3/4]' : 'aspect-video'} min-h-[300px] max-h-[600px]"
+					class="relative overflow-hidden rounded-lg border-2 border-dashed bg-muted {debugInfo.deviceOrientation ===
+					'portrait'
+						? 'aspect-[3/4]'
+						: 'aspect-video'} max-h-[600px] min-h-[300px]"
 					id="video-container"
 				>
 					{#if cameraStatus === 'active' || cameraStatus === 'requesting'}
@@ -939,11 +1134,49 @@
 				</div>
 			</div>
 
-			<!-- Error Alert -->
+			<!-- Error Alert with Enhanced Feedback -->
 			{#if error}
-				<Alert variant="destructive">
+				<Alert variant={cameraStatus === 'error' ? 'destructive' : 'default'}>
 					<IconAlertTriangle class="h-4 w-4" />
-					<AlertDescription>{error}</AlertDescription>
+					<AlertDescription class="space-y-3">
+						<div>{error}</div>
+
+						{#if cameraStatus === 'error'}
+							<div class="space-y-2">
+								<!-- Retry button for camera errors -->
+								<div class="flex gap-2">
+									<Button size="sm" onclick={startCamera} disabled={cameraRequestInProgress}>
+										<IconReload
+											class="mr-2 h-3 w-3 {cameraRequestInProgress ? 'animate-spin' : ''}"
+										/>
+										{cameraRequestInProgress ? 'กำลังลองใหม่...' : 'ลองใหม่'}
+									</Button>
+								</div>
+
+								<!-- Troubleshooting tips -->
+								<div class="mt-2 text-sm text-muted-foreground">
+									<p class="mb-1 font-medium">วิธีแก้ไข:</p>
+									<ul class="list-inside list-disc space-y-1 text-xs">
+										{#if error.includes('อนุญาต')}
+											<li>คลิกไอคอนกล้องในแถบที่อยู่ของเบราว์เซอร์และเลือก "อนุญาต"</li>
+											<li>รีเฟรชหน้าเว็บและลองใหม่</li>
+										{:else if error.includes('ถูกใช้งาน') || error.includes('NotReadable')}
+											<li>ปิดแอปหรือแท็บอื่นที่อาจใช้กล้อง (เช่น Google Meet, Zoom)</li>
+											<li>ปิดแอปกล้องในมือถือ</li>
+											<li>รีสตาร์ทเบราว์เซอร์และลองใหม่</li>
+										{:else if error.includes('ไม่พบ')}
+											<li>ตรวจสอบว่าอุปกรณ์มีกล้อง</li>
+											<li>ลองเชื่อมต่อกล้องภายนอก (ถ้าเป็นคอมพิวเตอร์)</li>
+										{:else}
+											<li>รีเฟรชหน้าเว็บและลองใหม่</li>
+											<li>ลองใช้เบราว์เซอร์อื่น (Chrome, Firefox, Safari)</li>
+											<li>ตรวจสอบการเชื่อมต่ออินเทอร์เน็ต</li>
+										{/if}
+									</ul>
+								</div>
+							</div>
+						{/if}
+					</AlertDescription>
 				</Alert>
 			{/if}
 
@@ -969,25 +1202,25 @@
 
 				<!-- Camera controls -->
 				<div class="flex justify-center gap-2">
-				{#if cameraStatus === 'idle' || cameraStatus === 'error'}
-					<Button onclick={startCamera} disabled={!activity_id}>
-						<IconCamera class="mr-2 size-4" />
-						เริ่มสแกน
-					</Button>
-				{:else if cameraStatus === 'active' || cameraStatus === 'requesting'}
-					<Button onclick={stopCamera} variant="outline">
-						<IconCameraOff class="mr-2 size-4" />
-						หยุดสแกน
-					</Button>
-				{/if}
+					{#if cameraStatus === 'idle' || cameraStatus === 'error'}
+						<Button onclick={startCamera} disabled={!activity_id}>
+							<IconCamera class="mr-2 size-4" />
+							เริ่มสแกน
+						</Button>
+					{:else if cameraStatus === 'active' || cameraStatus === 'requesting'}
+						<Button onclick={stopCamera} variant="outline">
+							<IconCameraOff class="mr-2 size-4" />
+							หยุดสแกน
+						</Button>
+					{/if}
 
-				<!-- Development: Manual scan trigger -->
-				{#if cameraStatus === 'active'}
-					<Button onclick={triggerManualScan} variant="outline" size="sm">
-						<IconQrcode class="mr-2 size-4" />
-						สแกนด้วยตนเอง
-					</Button>
-				{/if}
+					<!-- Development: Manual scan trigger -->
+					{#if cameraStatus === 'active'}
+						<Button onclick={triggerManualScan} variant="outline" size="sm">
+							<IconQrcode class="mr-2 size-4" />
+							สแกนด้วยตนเอง
+						</Button>
+					{/if}
 				</div>
 			</div>
 
@@ -1006,6 +1239,8 @@
 						<p class="mb-1 text-xs font-semibold">Debug Info:</p>
 						<div class="space-y-1 text-xs">
 							<p>Camera Status: {cameraStatus}</p>
+							<p>Request In Progress: {cameraRequestInProgress}</p>
+							<p>Retry Count: {retryCount}/{maxRetries}</p>
 							<p>Video Ready: {debugInfo.videoReady}</p>
 							<p>Stream Active: {debugInfo.streamActive}</p>
 							<p>Orientation: {debugInfo.deviceOrientation}</p>
