@@ -2,13 +2,12 @@ import { error, fail, redirect } from '@sveltejs/kit';
 import type { ServerLoad, Actions } from '@sveltejs/kit';
 import { db } from '$lib/server/db';
 import { organizationActivityRequirements, organizations } from '$lib/server/db/schema';
-import { eq, and } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import { z } from 'zod';
 
 const activityRequirementsSchema = z.object({
 	requiredFacultyHours: z.number().min(0).max(1000),
-	requiredUniversityHours: z.number().min(0).max(1000),
-	academicYear: z.string().min(1).max(20)
+	requiredUniversityHours: z.number().min(0).max(1000)
 });
 
 export const load: ServerLoad = async (event) => {
@@ -38,30 +37,21 @@ export const load: ServerLoad = async (event) => {
 			throw error(403, 'Settings are only available for faculty organizations.');
 		}
 
-		const currentYear = new Date().getFullYear().toString();
 		const requirements = await db
 			.select()
 			.from(organizationActivityRequirements)
-			.where(
-				and(
-					eq(organizationActivityRequirements.organizationId, organizationId),
-					eq(organizationActivityRequirements.academicYear, currentYear),
-					eq(organizationActivityRequirements.isActive, true)
-				)
-			)
+			.where(eq(organizationActivityRequirements.organizationId, organizationId))
 			.limit(1);
 
 		const currentRequirements = requirements[0] || {
 			requiredFacultyHours: 0,
-			requiredUniversityHours: 0,
-			academicYear: currentYear
+			requiredUniversityHours: 0
 		};
 
 		return {
 			user,
 			organization: organization[0],
-			currentRequirements,
-			currentAcademicYear: currentYear
+			currentRequirements
 		};
 	} catch (err) {
 		console.error('Failed to load settings:', err);
@@ -87,32 +77,39 @@ export const actions: Actions = {
 			const formData = await request.formData();
 			const data = {
 				requiredFacultyHours: Number(formData.get('requiredFacultyHours')),
-				requiredUniversityHours: Number(formData.get('requiredUniversityHours')),
-				academicYear: formData.get('academicYear')?.toString() || new Date().getFullYear().toString()
+				requiredUniversityHours: Number(formData.get('requiredUniversityHours'))
 			};
 
 			const validatedData = activityRequirementsSchema.parse(data);
 			const userId = user.user_id;
 
 			await db.transaction(async (tx) => {
-				await tx
-					.update(organizationActivityRequirements)
-					.set({ isActive: false })
-					.where(
-						and(
-							eq(organizationActivityRequirements.organizationId, organizationId),
-							eq(organizationActivityRequirements.academicYear, validatedData.academicYear)
-						)
-					);
+				// Check if requirement already exists
+				const existing = await tx
+					.select()
+					.from(organizationActivityRequirements)
+					.where(eq(organizationActivityRequirements.organizationId, organizationId))
+					.limit(1);
 
-				await tx.insert(organizationActivityRequirements).values({
-					organizationId,
-					requiredFacultyHours: validatedData.requiredFacultyHours,
-					requiredUniversityHours: validatedData.requiredUniversityHours,
-					academicYear: validatedData.academicYear,
-					createdBy: userId,
-					isActive: true
-				});
+				if (existing.length > 0) {
+					// Update existing requirement
+					await tx
+						.update(organizationActivityRequirements)
+						.set({
+							requiredFacultyHours: validatedData.requiredFacultyHours,
+							requiredUniversityHours: validatedData.requiredUniversityHours,
+							updatedAt: new Date()
+						})
+						.where(eq(organizationActivityRequirements.organizationId, organizationId));
+				} else {
+					// Create new requirement
+					await tx.insert(organizationActivityRequirements).values({
+						organizationId,
+						requiredFacultyHours: validatedData.requiredFacultyHours,
+						requiredUniversityHours: validatedData.requiredUniversityHours,
+						createdBy: userId
+					});
+				}
 			});
 
 			return {

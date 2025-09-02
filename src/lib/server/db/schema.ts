@@ -412,8 +412,6 @@ export const organizationActivityRequirements = pgTable(
 			.unique(),
 		requiredFacultyHours: integer('required_faculty_hours').notNull().default(0),
 		requiredUniversityHours: integer('required_university_hours').notNull().default(0),
-		academicYear: varchar('academic_year', { length: 20 }).notNull(),
-		isActive: boolean('is_active').notNull().default(true),
 		createdAt: timestamp('created_at', { withTimezone: true }).default(sql`NOW()`),
 		updatedAt: timestamp('updated_at', { withTimezone: true }).default(sql`NOW()`),
 		createdBy: uuid('created_by')
@@ -424,11 +422,7 @@ export const organizationActivityRequirements = pgTable(
 		return {
 			organizationIdIdx: index('idx_organization_activity_requirements_organization_id').on(
 				table.organizationId
-			),
-			academicYearIdx: index('idx_organization_activity_requirements_academic_year').on(
-				table.academicYear
-			),
-			isActiveIdx: index('idx_organization_activity_requirements_is_active').on(table.isActive)
+			)
 		};
 	}
 );

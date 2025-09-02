@@ -104,21 +104,13 @@ export const load: PageServerLoad = async (event) => {
           .limit(1);
 
         if (departmentRecord[0]?.organizationId) {
-          const currentYear = new Date().getFullYear().toString();
           const requirements = await db
             .select({
               requiredFacultyHours: organizationActivityRequirements.requiredFacultyHours,
-              requiredUniversityHours: organizationActivityRequirements.requiredUniversityHours,
-              academicYear: organizationActivityRequirements.academicYear
+              requiredUniversityHours: organizationActivityRequirements.requiredUniversityHours
             })
             .from(organizationActivityRequirements)
-            .where(
-              and(
-                eq(organizationActivityRequirements.organizationId, departmentRecord[0].organizationId),
-                eq(organizationActivityRequirements.academicYear, currentYear),
-                eq(organizationActivityRequirements.isActive, true)
-              )
-            )
+            .where(eq(organizationActivityRequirements.organizationId, departmentRecord[0].organizationId))
             .limit(1);
 
           if (requirements[0]) {

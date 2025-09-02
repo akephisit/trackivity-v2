@@ -78,10 +78,6 @@
 						{data.organization.organizationType === 'faculty' ? 'คณะ' : 'หน่วยงาน'}
 					</p>
 				</div>
-				<div>
-					<Label class="text-sm font-medium">ปีการศึกษาปัจจุบัน</Label>
-					<p class="mt-1 text-sm text-muted-foreground">{data.currentAcademicYear}</p>
-				</div>
 			</div>
 		</CardContent>
 	</Card>
@@ -94,7 +90,7 @@
 				การตั้งค่าจำนวนชั่วโมงสะสมการผ่านกิจกรรม
 			</CardTitle>
 			<CardDescription>
-				กำหนดจำนวนชั่วโมงขั้นต่ำที่นักศึกษาต้องเข้าร่วมกิจกรรมแยกตามระดับ
+				กำหนดจำนวนชั่วโมงขั้นต่ำที่นักศึกษาต้องสะสมจากการเข้าร่วมกิจกรรมตลอดการศึกษา
 			</CardDescription>
 		</CardHeader>
 		<CardContent class="space-y-6">
@@ -102,7 +98,7 @@
 			<Alert>
 				<IconInfoCircle class="size-4" />
 				<AlertDescription>
-					การตั้งค่านี้จะใช้สำหรับคำนวณความก้าวหน้าของนักศึกษาในการเข้าร่วมกิจกรรม 
+					การตั้งค่านี้จะใช้สำหรับคำนวณความก้าวหน้าของนักศึกษาในการสะสมชั่วโมงกิจกรรมตลอดการศึกษา 
 					และแสดงผลใน Progress Bar ในหน้าสรุปกิจกรรมของนักศึกษา
 				</AlertDescription>
 			</Alert>
@@ -159,7 +155,7 @@
 								required
 							/>
 							<p class="text-xs text-muted-foreground">
-								นักศึกษาต้องเข้าร่วมกิจกรรมระดับคณะอย่างน้อย {requiredFacultyHours} ชั่วโมง
+								นักศึกษาต้องสะสมชั่วโมงจากกิจกรรมระดับคณะอย่างน้อย {requiredFacultyHours} ชั่วโมง
 							</p>
 						</div>
 
@@ -180,13 +176,11 @@
 								required
 							/>
 							<p class="text-xs text-muted-foreground">
-								นักศึกษาต้องเข้าร่วมกิจกรรมระดับมหาวิทยาลัยอย่างน้อย {requiredUniversityHours} ชั่วโมง
+								นักศึกษาต้องสะสมชั่วโมงจากกิจกรรมระดับมหาวิทยาลัยอย่างน้อย {requiredUniversityHours} ชั่วโมง
 							</p>
 						</div>
 					</div>
 
-					<!-- Hidden Academic Year -->
-					<input type="hidden" name="academicYear" value={data.currentAcademicYear} />
 
 					<!-- Action Buttons -->
 					<div class="flex gap-3">
@@ -217,9 +211,9 @@
 							<p class="text-sm font-medium">ข้อมูลสรุป</p>
 						</div>
 						<p class="mt-2 text-sm text-blue-600 dark:text-blue-400">
-							นักศึกษาจะต้องเข้าร่วมกิจกรรมรวมทั้งหมดอย่างน้อย 
+							นักศึกษาจะต้องสะสมชั่วโมงกิจกรรมรวมทั้งหมดอย่างน้อย 
 							<span class="font-semibold">{requiredFacultyHours + requiredUniversityHours} ชั่วโมง</span>
-							เพื่อผ่านเกณฑ์การเข้าร่วมกิจกรรม
+							ตลอดการศึกษาเพื่อผ่านเกณฑ์การสำเร็จการศึกษา
 						</p>
 					</div>
 				</div>

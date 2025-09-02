@@ -7,8 +7,7 @@ import { z } from 'zod';
 
 const activityRequirementsSchema = z.object({
 	requiredFacultyHours: z.number().min(0).max(1000),
-	requiredUniversityHours: z.number().min(0).max(1000),
-	academicYear: z.string().min(1).max(20)
+	requiredUniversityHours: z.number().min(0).max(1000)
 });
 
 export const GET: RequestHandler = async ({ url, locals }: { url: URL; locals: any }) => {
@@ -19,24 +18,16 @@ export const GET: RequestHandler = async ({ url, locals }: { url: URL; locals: a
 		}
 
 		const organizationId = session.adminRole.organizationId;
-		const academicYear = url.searchParams.get('academicYear') || new Date().getFullYear().toString();
 
 		const requirements = await db
 			.select()
 			.from(organizationActivityRequirements)
-			.where(
-				and(
-					eq(organizationActivityRequirements.organizationId, organizationId),
-					eq(organizationActivityRequirements.academicYear, academicYear),
-					eq(organizationActivityRequirements.isActive, true)
-				)
-			)
+			.where(eq(organizationActivityRequirements.organizationId, organizationId))
 			.limit(1);
 
 		const requirement = requirements[0] || {
 			requiredFacultyHours: 0,
-			requiredUniversityHours: 0,
-			academicYear
+			requiredUniversityHours: 0
 		};
 
 		return json({ data: requirement });
@@ -64,24 +55,32 @@ export const POST: RequestHandler = async ({ request, locals }: { request: Reque
 		const userId = session.user.id;
 
 		await db.transaction(async (tx) => {
-			await tx
-				.update(organizationActivityRequirements)
-				.set({ isActive: false })
-				.where(
-					and(
-						eq(organizationActivityRequirements.organizationId, organizationId),
-						eq(organizationActivityRequirements.academicYear, validatedData.academicYear)
-					)
-				);
+			// Check if requirement already exists
+			const existing = await tx
+				.select()
+				.from(organizationActivityRequirements)
+				.where(eq(organizationActivityRequirements.organizationId, organizationId))
+				.limit(1);
 
-			await tx.insert(organizationActivityRequirements).values({
-				organizationId,
-				requiredFacultyHours: validatedData.requiredFacultyHours,
-				requiredUniversityHours: validatedData.requiredUniversityHours,
-				academicYear: validatedData.academicYear,
-				createdBy: userId,
-				isActive: true
-			});
+			if (existing.length > 0) {
+				// Update existing requirement
+				await tx
+					.update(organizationActivityRequirements)
+					.set({
+						requiredFacultyHours: validatedData.requiredFacultyHours,
+						requiredUniversityHours: validatedData.requiredUniversityHours,
+						updatedAt: new Date()
+					})
+					.where(eq(organizationActivityRequirements.organizationId, organizationId));
+			} else {
+				// Create new requirement
+				await tx.insert(organizationActivityRequirements).values({
+					organizationId,
+					requiredFacultyHours: validatedData.requiredFacultyHours,
+					requiredUniversityHours: validatedData.requiredUniversityHours,
+					createdBy: userId
+				});
+			}
 		});
 
 		return json({ 
