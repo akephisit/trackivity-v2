@@ -1,0 +1,248 @@
+<script lang="ts">
+	import { enhance } from '$app/forms';
+	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card';
+	import { Label } from '$lib/components/ui/label';
+	import { Input } from '$lib/components/ui/input';
+	import { Button } from '$lib/components/ui/button';
+	import { Alert, AlertDescription } from '$lib/components/ui/alert';
+	import { Separator } from '$lib/components/ui/separator';
+	import {
+		IconSettings,
+		IconHourglass,
+		IconSchool,
+		IconBuilding,
+		IconCheck,
+		IconAlertCircle,
+		IconInfoCircle
+	} from '@tabler/icons-svelte';
+	import { toast } from 'svelte-sonner';
+
+	let { data, form } = $props();
+	
+	let isSubmitting = $state(false);
+	let requiredFacultyHours = $state(data.currentRequirements.requiredFacultyHours);
+	let requiredUniversityHours = $state(data.currentRequirements.requiredUniversityHours);
+
+	function handleSubmit() {
+		isSubmitting = true;
+		return async ({ result, update }: { result: any; update: () => Promise<void> }) => {
+			if (result.type === 'success') {
+				toast.success(result.data?.message || 'การตั้งค่าได้รับการอัพเดทเรียบร้อยแล้ว');
+			} else if (result.type === 'failure') {
+				toast.error(result.data?.error || 'เกิดข้อผิดพลาดในการอัพเดท');
+			}
+			isSubmitting = false;
+			await update();
+		};
+	}
+</script>
+
+<svelte:head>
+	<title>ตั้งค่าระบบ - Trackivity Admin</title>
+</svelte:head>
+
+<div class="container space-y-6">
+	<!-- Header -->
+	<div class="flex items-center gap-4">
+		<div class="rounded-full bg-primary/10 p-3">
+			<IconSettings class="size-6 text-primary" />
+		</div>
+		<div>
+			<h1 class="text-2xl font-bold lg:text-3xl">ตั้งค่าระบบ</h1>
+			<p class="text-muted-foreground">จัดการการตั้งค่าองค์กรและระบบกิจกรรม</p>
+		</div>
+	</div>
+
+	<!-- Organization Info -->
+	<Card>
+		<CardHeader>
+			<CardTitle class="flex items-center gap-2">
+				<IconBuilding class="size-5" />
+				ข้อมูลองค์กร
+			</CardTitle>
+			<CardDescription>ข้อมูลพื้นฐานขององค์กร</CardDescription>
+		</CardHeader>
+		<CardContent>
+			<div class="grid gap-4 md:grid-cols-2">
+				<div>
+					<Label class="text-sm font-medium">ชื่อองค์กร</Label>
+					<p class="mt-1 text-sm text-muted-foreground">{data.organization.name}</p>
+				</div>
+				<div>
+					<Label class="text-sm font-medium">รหัสองค์กร</Label>
+					<p class="mt-1 text-sm text-muted-foreground">{data.organization.code}</p>
+				</div>
+				<div>
+					<Label class="text-sm font-medium">ประเภทองค์กร</Label>
+					<p class="mt-1 text-sm text-muted-foreground">
+						{data.organization.organizationType === 'faculty' ? 'คณะ' : 'หน่วยงาน'}
+					</p>
+				</div>
+				<div>
+					<Label class="text-sm font-medium">ปีการศึกษาปัจจุบัน</Label>
+					<p class="mt-1 text-sm text-muted-foreground">{data.currentAcademicYear}</p>
+				</div>
+			</div>
+		</CardContent>
+	</Card>
+
+	<!-- Activity Hours Requirements -->
+	<Card>
+		<CardHeader>
+			<CardTitle class="flex items-center gap-2">
+				<IconHourglass class="size-5" />
+				การตั้งค่าจำนวนชั่วโมงสะสมการผ่านกิจกรรม
+			</CardTitle>
+			<CardDescription>
+				กำหนดจำนวนชั่วโมงขั้นต่ำที่นักศึกษาต้องเข้าร่วมกิจกรรมแยกตามระดับ
+			</CardDescription>
+		</CardHeader>
+		<CardContent class="space-y-6">
+			<!-- Info Alert -->
+			<Alert>
+				<IconInfoCircle class="size-4" />
+				<AlertDescription>
+					การตั้งค่านี้จะใช้สำหรับคำนวณความก้าวหน้าของนักศึกษาในการเข้าร่วมกิจกรรม 
+					และแสดงผลใน Progress Bar ในหน้าสรุปกิจกรรมของนักศึกษา
+				</AlertDescription>
+			</Alert>
+
+			<!-- Current Settings Display -->
+			<div class="rounded-lg border bg-muted/30 p-4">
+				<h4 class="mb-3 font-semibold">การตั้งค่าปัจจุบัน</h4>
+				<div class="grid gap-4 sm:grid-cols-2">
+					<div class="flex items-center gap-3">
+						<div class="rounded-full bg-green-100 p-2 dark:bg-green-900">
+							<IconSchool class="size-4 text-green-600 dark:text-green-400" />
+						</div>
+						<div>
+							<p class="text-sm font-medium">กิจกรรมระดับคณะ</p>
+							<p class="text-lg font-bold text-green-600 dark:text-green-400">
+								{data.currentRequirements.requiredFacultyHours} ชั่วโมง
+							</p>
+						</div>
+					</div>
+					<div class="flex items-center gap-3">
+						<div class="rounded-full bg-blue-100 p-2 dark:bg-blue-900">
+							<IconBuilding class="size-4 text-blue-600 dark:text-blue-400" />
+						</div>
+						<div>
+							<p class="text-sm font-medium">กิจกรรมระดับมหาวิทยาลัย</p>
+							<p class="text-lg font-bold text-blue-600 dark:text-blue-400">
+								{data.currentRequirements.requiredUniversityHours} ชั่วโมง
+							</p>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<Separator />
+
+			<!-- Settings Form -->
+			<form method="POST" action="?/updateRequirements" use:enhance={handleSubmit}>
+				<div class="space-y-6">
+					<div class="grid gap-6 sm:grid-cols-2">
+						<!-- Faculty Hours -->
+						<div class="space-y-2">
+							<Label for="requiredFacultyHours" class="flex items-center gap-2">
+								<IconSchool class="size-4 text-green-600" />
+								จำนวนชั่วโมงขั้นต่ำ - กิจกรรมระดับคณะ
+							</Label>
+							<Input
+								id="requiredFacultyHours"
+								name="requiredFacultyHours"
+								type="number"
+								min="0"
+								max="1000"
+								bind:value={requiredFacultyHours}
+								placeholder="กรอกจำนวนชั่วโมง"
+								required
+							/>
+							<p class="text-xs text-muted-foreground">
+								นักศึกษาต้องเข้าร่วมกิจกรรมระดับคณะอย่างน้อย {requiredFacultyHours} ชั่วโมง
+							</p>
+						</div>
+
+						<!-- University Hours -->
+						<div class="space-y-2">
+							<Label for="requiredUniversityHours" class="flex items-center gap-2">
+								<IconBuilding class="size-4 text-blue-600" />
+								จำนวนชั่วโมงขั้นต่ำ - กิจกรรมระดับมหาวิทยาลัย
+							</Label>
+							<Input
+								id="requiredUniversityHours"
+								name="requiredUniversityHours"
+								type="number"
+								min="0"
+								max="1000"
+								bind:value={requiredUniversityHours}
+								placeholder="กรอกจำนวนชั่วโมง"
+								required
+							/>
+							<p class="text-xs text-muted-foreground">
+								นักศึกษาต้องเข้าร่วมกิจกรรมระดับมหาวิทยาลัยอย่างน้อย {requiredUniversityHours} ชั่วโมง
+							</p>
+						</div>
+					</div>
+
+					<!-- Hidden Academic Year -->
+					<input type="hidden" name="academicYear" value={data.currentAcademicYear} />
+
+					<!-- Action Buttons -->
+					<div class="flex gap-3">
+						<Button type="submit" disabled={isSubmitting} class="gap-2">
+							{#if isSubmitting}
+								<div class="size-4 animate-spin rounded-full border-2 border-current border-t-transparent"></div>
+							{:else}
+								<IconCheck class="size-4" />
+							{/if}
+							{isSubmitting ? 'กำลังบันทึก...' : 'บันทึกการตั้งค่า'}
+						</Button>
+						<Button
+							type="button"
+							variant="outline"
+							onclick={() => {
+								requiredFacultyHours = data.currentRequirements.requiredFacultyHours;
+								requiredUniversityHours = data.currentRequirements.requiredUniversityHours;
+							}}
+						>
+							รีเซ็ต
+						</Button>
+					</div>
+
+					<!-- Total Hours Info -->
+					<div class="rounded-lg bg-blue-50 p-4 dark:bg-blue-950/20">
+						<div class="flex items-center gap-2 text-blue-700 dark:text-blue-300">
+							<IconInfoCircle class="size-4" />
+							<p class="text-sm font-medium">ข้อมูลสรุป</p>
+						</div>
+						<p class="mt-2 text-sm text-blue-600 dark:text-blue-400">
+							นักศึกษาจะต้องเข้าร่วมกิจกรรมรวมทั้งหมดอย่างน้อย 
+							<span class="font-semibold">{requiredFacultyHours + requiredUniversityHours} ชั่วโมง</span>
+							เพื่อผ่านเกณฑ์การเข้าร่วมกิจกรรม
+						</p>
+					</div>
+				</div>
+			</form>
+
+			<!-- Form Messages -->
+			{#if form?.success}
+				<Alert>
+					<IconCheck class="size-4" />
+					<AlertDescription class="text-green-700 dark:text-green-300">
+						{form.message}
+					</AlertDescription>
+				</Alert>
+			{/if}
+
+			{#if form?.error}
+				<Alert variant="destructive">
+					<IconAlertCircle class="size-4" />
+					<AlertDescription>
+						{form.error}
+					</AlertDescription>
+				</Alert>
+			{/if}
+		</CardContent>
+	</Card>
+</div>

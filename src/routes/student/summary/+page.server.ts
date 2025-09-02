@@ -1,7 +1,7 @@
 import type { PageServerLoad } from './$types';
 import { requireAuth } from '$lib/server/auth-utils';
-import { db, participations, activities, organizations } from '$lib/server/db';
-import { eq } from 'drizzle-orm';
+import { db, participations, activities, organizations, organizationActivityRequirements, users, departments } from '$lib/server/db';
+import { eq, and } from 'drizzle-orm';
 
 export const load: PageServerLoad = async (event) => {
   const user = requireAuth(event);
@@ -83,15 +83,64 @@ export const load: PageServerLoad = async (event) => {
       email: user.email
     };
 
+    // Fetch user's organization through department
+    let activityRequirements = null;
+    try {
+      const userRecord = await db
+        .select({
+          departmentId: users.departmentId
+        })
+        .from(users)
+        .where(eq(users.id, user.user_id))
+        .limit(1);
+
+      if (userRecord[0]?.departmentId) {
+        const departmentRecord = await db
+          .select({
+            organizationId: departments.organizationId
+          })
+          .from(departments)
+          .where(eq(departments.id, userRecord[0].departmentId))
+          .limit(1);
+
+        if (departmentRecord[0]?.organizationId) {
+          const currentYear = new Date().getFullYear().toString();
+          const requirements = await db
+            .select({
+              requiredFacultyHours: organizationActivityRequirements.requiredFacultyHours,
+              requiredUniversityHours: organizationActivityRequirements.requiredUniversityHours,
+              academicYear: organizationActivityRequirements.academicYear
+            })
+            .from(organizationActivityRequirements)
+            .where(
+              and(
+                eq(organizationActivityRequirements.organizationId, departmentRecord[0].organizationId),
+                eq(organizationActivityRequirements.academicYear, currentYear),
+                eq(organizationActivityRequirements.isActive, true)
+              )
+            )
+            .limit(1);
+
+          if (requirements[0]) {
+            activityRequirements = requirements[0];
+          }
+        }
+      }
+    } catch (e) {
+      console.error('[Student Summary] Failed to load activity requirements:', e);
+    }
+
     return { 
       participationHistory,
-      userInfo
+      userInfo,
+      activityRequirements
     };
   } catch (e) {
     console.error('[Student Summary] load error:', e);
     return { 
       participationHistory: [],
-      userInfo: null
+      userInfo: null,
+      activityRequirements: null
     };
   }
 };

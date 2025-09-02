@@ -399,6 +399,40 @@ export const systemAnalytics = pgTable('system_analytics', {
 	createdAt: timestamp('created_at', { withTimezone: true }).default(sql`NOW()`)
 });
 
+// Organization activity requirements table
+export const organizationActivityRequirements = pgTable(
+	'organization_activity_requirements',
+	{
+		id: uuid('id')
+			.primaryKey()
+			.default(sql`gen_random_uuid()`),
+		organizationId: uuid('organization_id')
+			.notNull()
+			.references(() => organizations.id, { onDelete: 'cascade' })
+			.unique(),
+		requiredFacultyHours: integer('required_faculty_hours').notNull().default(0),
+		requiredUniversityHours: integer('required_university_hours').notNull().default(0),
+		academicYear: varchar('academic_year', { length: 20 }).notNull(),
+		isActive: boolean('is_active').notNull().default(true),
+		createdAt: timestamp('created_at', { withTimezone: true }).default(sql`NOW()`),
+		updatedAt: timestamp('updated_at', { withTimezone: true }).default(sql`NOW()`),
+		createdBy: uuid('created_by')
+			.notNull()
+			.references(() => users.id, { onDelete: 'cascade' })
+	},
+	(table) => {
+		return {
+			organizationIdIdx: index('idx_organization_activity_requirements_organization_id').on(
+				table.organizationId
+			),
+			academicYearIdx: index('idx_organization_activity_requirements_academic_year').on(
+				table.academicYear
+			),
+			isActiveIdx: index('idx_organization_activity_requirements_is_active').on(table.isActive)
+		};
+	}
+);
+
 // ===== NOTIFICATION TABLES =====
 
 // Subscription notifications table
@@ -523,3 +557,5 @@ export type Subscription = typeof subscriptions.$inferSelect;
 export type NewSubscription = typeof subscriptions.$inferInsert;
 export type Session = typeof sessions.$inferSelect;
 export type NewSession = typeof sessions.$inferInsert;
+export type OrganizationActivityRequirement = typeof organizationActivityRequirements.$inferSelect;
+export type NewOrganizationActivityRequirement = typeof organizationActivityRequirements.$inferInsert;

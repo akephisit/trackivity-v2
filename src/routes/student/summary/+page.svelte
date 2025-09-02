@@ -4,12 +4,14 @@
 	import { Button } from '$lib/components/ui/button';
 	import { Separator } from '$lib/components/ui/separator';
 	import { 
-		calculateActivitySummary, 
+		calculateActivitySummaryWithProgress,
 		getActivityTypeDisplayName, 
 		getActivityLevelColor,
 		formatHoursDisplay,
 		calculatePercentage,
-		type ActivitySummaryStats
+		getProgressColor,
+		type ActivitySummaryStats,
+		type ActivityRequirements
 	} from '$lib/utils/activity-summary';
 	import {
 		IconFileText,
@@ -24,7 +26,10 @@
 		IconHourglass,
 		IconActivity,
 		IconCircleCheck,
-		IconChartBar
+		IconChartBar,
+		IconTarget,
+		IconProgress,
+		IconInfoCircle
 	} from '@tabler/icons-svelte';
 
 	let { data } = $props<{ 
@@ -35,13 +40,17 @@
 				first_name: string;
 				last_name: string;
 				email: string;
-			} | null
+			} | null;
+			activityRequirements: ActivityRequirements | null;
 		} 
 	}>();
 
-	// Calculate summary statistics
+	// Calculate summary statistics with progress information
 	let stats: ActivitySummaryStats = $derived(
-		calculateActivitySummary(data.participationHistory || [])
+		calculateActivitySummaryWithProgress(
+			data.participationHistory || [], 
+			data.activityRequirements || undefined
+		)
 	);
 
 	// Generate report date
@@ -214,6 +223,150 @@
 			</div>
 		</CardContent>
 	</Card>
+
+	<!-- Progress Section -->
+	{#if data.activityRequirements && stats.progress}
+		<Card class="border-2 border-primary/20">
+			<CardHeader class="bg-primary/5">
+				<div class="flex items-center gap-3">
+					<IconTarget class="size-6 text-primary" />
+					<div>
+						<CardTitle class="text-xl">ความก้าวหน้าในการเข้าร่วมกิจกรรม</CardTitle>
+						<p class="text-sm text-muted-foreground">Progress Tracking Based on Faculty Requirements</p>
+					</div>
+				</div>
+			</CardHeader>
+			<CardContent class="space-y-6">
+				<!-- Overall Progress -->
+				<div class="rounded-lg border bg-muted/30 p-4">
+					<h4 class="mb-4 font-semibold">สถานะรวม</h4>
+					<div class="space-y-4">
+						<div class="flex items-center justify-between">
+							<div class="flex items-center gap-3">
+								<div class="rounded-full bg-primary/10 p-2">
+									<IconProgress class="size-4 text-primary" />
+								</div>
+								<div>
+									<p class="font-medium">ความก้าวหน้าโดยรวม</p>
+									<p class="text-sm text-muted-foreground">
+										{stats.progress.overallProgress.current} จาก {stats.progress.overallProgress.required} ชั่วโมง
+									</p>
+								</div>
+							</div>
+							<div class="text-right">
+								<p class={`text-lg font-bold ${getProgressColor(stats.progress.overallProgress.percentage, stats.progress.overallProgress.isPassing).textClass}`}>
+									{stats.progress.overallProgress.percentage}%
+								</p>
+								<p class={`text-xs ${stats.progress.overallProgress.isPassing ? 'text-green-600 dark:text-green-400' : 'text-muted-foreground'}`}>
+									{#if stats.progress.overallProgress.isPassing}
+										✅ ผ่านเกณฑ์
+									{:else if stats.progress.overallProgress.remaining > 0}
+										เหลืออีก {stats.progress.overallProgress.remaining} ชั่วโมง
+									{/if}
+								</p>
+							</div>
+						</div>
+						<div class="w-full bg-gray-200 rounded-full h-3 dark:bg-gray-700">
+							<div 
+								class={`h-3 rounded-full transition-all duration-500 ${getProgressColor(stats.progress.overallProgress.percentage, stats.progress.overallProgress.isPassing).bgClass}`}
+								style="width: {Math.min(100, stats.progress.overallProgress.percentage)}%"
+							></div>
+						</div>
+					</div>
+				</div>
+
+				<!-- Level-specific Progress -->
+				<div class="grid gap-6 lg:grid-cols-2">
+					<!-- Faculty Progress -->
+					<div class="space-y-4">
+						<h4 class="font-semibold flex items-center gap-2">
+							<IconSchool class="size-4 text-green-600" />
+							ระดับคณะ
+						</h4>
+						<div class="space-y-3">
+							<div class="flex items-center justify-between">
+								<div>
+									<p class="text-sm font-medium">ชั่วโมงที่เข้าร่วม</p>
+									<p class="text-xs text-muted-foreground">
+										{stats.progress.facultyProgress.current} จาก {stats.progress.facultyProgress.required} ชั่วโมง
+									</p>
+								</div>
+								<div class="text-right">
+									<p class={`font-bold ${getProgressColor(stats.progress.facultyProgress.percentage, stats.progress.facultyProgress.isPassing).textClass}`}>
+										{stats.progress.facultyProgress.percentage}%
+									</p>
+									<p class={`text-xs ${stats.progress.facultyProgress.isPassing ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+										{#if stats.progress.facultyProgress.isPassing}
+											✅ ผ่าน
+										{:else}
+											เหลือ {stats.progress.facultyProgress.remaining} ชั่วโมง
+										{/if}
+									</p>
+								</div>
+							</div>
+							<div class="w-full bg-gray-200 rounded-full h-2 dark:bg-gray-700">
+								<div 
+									class={`h-2 rounded-full transition-all duration-500 ${getProgressColor(stats.progress.facultyProgress.percentage, stats.progress.facultyProgress.isPassing).bgClass}`}
+									style="width: {Math.min(100, stats.progress.facultyProgress.percentage)}%"
+								></div>
+							</div>
+						</div>
+					</div>
+
+					<!-- University Progress -->
+					<div class="space-y-4">
+						<h4 class="font-semibold flex items-center gap-2">
+							<IconBuilding class="size-4 text-blue-600" />
+							ระดับมหาวิทยาลัย
+						</h4>
+						<div class="space-y-3">
+							<div class="flex items-center justify-between">
+								<div>
+									<p class="text-sm font-medium">ชั่วโมงที่เข้าร่วม</p>
+									<p class="text-xs text-muted-foreground">
+										{stats.progress.universityProgress.current} จาก {stats.progress.universityProgress.required} ชั่วโมง
+									</p>
+								</div>
+								<div class="text-right">
+									<p class={`font-bold ${getProgressColor(stats.progress.universityProgress.percentage, stats.progress.universityProgress.isPassing).textClass}`}>
+										{stats.progress.universityProgress.percentage}%
+									</p>
+									<p class={`text-xs ${stats.progress.universityProgress.isPassing ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+										{#if stats.progress.universityProgress.isPassing}
+											✅ ผ่าน
+										{:else}
+											เหลือ {stats.progress.universityProgress.remaining} ชั่วโมง
+										{/if}
+									</p>
+								</div>
+							</div>
+							<div class="w-full bg-gray-200 rounded-full h-2 dark:bg-gray-700">
+								<div 
+									class={`h-2 rounded-full transition-all duration-500 ${getProgressColor(stats.progress.universityProgress.percentage, stats.progress.universityProgress.isPassing).bgClass}`}
+									style="width: {Math.min(100, stats.progress.universityProgress.percentage)}%"
+								></div>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<!-- Requirements Info -->
+				<div class="rounded-lg bg-blue-50 p-4 dark:bg-blue-950/20">
+					<div class="flex items-start gap-2 text-blue-700 dark:text-blue-300">
+						<IconInfoCircle class="size-4 mt-0.5" />
+						<div>
+							<p class="text-sm font-medium">เกณฑ์การผ่านกิจกรรม ปีการศึกษา {data.activityRequirements.academicYear}</p>
+							<div class="mt-2 text-xs text-blue-600 dark:text-blue-400">
+								<p>• กิจกรรมระดับคณะ: อย่างน้อย {data.activityRequirements.requiredFacultyHours} ชั่วโมง</p>
+								<p>• กิจกรรมระดับมหาวิทยาลัย: อย่างน้อย {data.activityRequirements.requiredUniversityHours} ชั่วโมง</p>
+								<p class="mt-1 font-medium">รวม: {data.activityRequirements.requiredFacultyHours + data.activityRequirements.requiredUniversityHours} ชั่วโมง</p>
+							</div>
+						</div>
+					</div>
+				</div>
+			</CardContent>
+		</Card>
+	{/if}
 
 	<!-- Activity Level Breakdown -->
 	<div class="grid gap-6 lg:grid-cols-2">

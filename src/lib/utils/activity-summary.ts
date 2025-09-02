@@ -3,6 +3,36 @@
  * Shared logic for calculating activity statistics and summaries
  */
 
+export interface ActivityRequirements {
+  requiredFacultyHours: number;
+  requiredUniversityHours: number;
+  academicYear: string;
+}
+
+export interface ProgressInfo {
+  facultyProgress: {
+    current: number;
+    required: number;
+    percentage: number;
+    remaining: number;
+    isPassing: boolean;
+  };
+  universityProgress: {
+    current: number;
+    required: number;
+    percentage: number;
+    remaining: number;
+    isPassing: boolean;
+  };
+  overallProgress: {
+    current: number;
+    required: number;
+    percentage: number;
+    remaining: number;
+    isPassing: boolean;
+  };
+}
+
 export interface ActivitySummaryStats {
   totalActivities: number;
   completedActivities: number;
@@ -23,6 +53,7 @@ export interface ActivitySummaryStats {
     academicYear: string;
   };
   completionRate: number;
+  progress?: ProgressInfo;
 }
 
 export interface ParticipationRecord {
@@ -214,4 +245,88 @@ export function formatHoursDisplay(hours: number): string {
 export function calculatePercentage(value: number, total: number): number {
   if (total === 0) return 0;
   return Math.round((value / total) * 100);
+}
+
+/**
+ * Calculate progress information based on requirements
+ */
+export function calculateProgress(stats: ActivitySummaryStats, requirements: ActivityRequirements): ProgressInfo {
+  const facultyProgress = {
+    current: stats.facultyLevel.hours,
+    required: requirements.requiredFacultyHours,
+    percentage: Math.min(100, calculatePercentage(stats.facultyLevel.hours, requirements.requiredFacultyHours)),
+    remaining: Math.max(0, requirements.requiredFacultyHours - stats.facultyLevel.hours),
+    isPassing: stats.facultyLevel.hours >= requirements.requiredFacultyHours
+  };
+
+  const universityProgress = {
+    current: stats.universityLevel.hours,
+    required: requirements.requiredUniversityHours,
+    percentage: Math.min(100, calculatePercentage(stats.universityLevel.hours, requirements.requiredUniversityHours)),
+    remaining: Math.max(0, requirements.requiredUniversityHours - stats.universityLevel.hours),
+    isPassing: stats.universityLevel.hours >= requirements.requiredUniversityHours
+  };
+
+  const totalRequired = requirements.requiredFacultyHours + requirements.requiredUniversityHours;
+  const totalCurrent = stats.facultyLevel.hours + stats.universityLevel.hours;
+  
+  const overallProgress = {
+    current: totalCurrent,
+    required: totalRequired,
+    percentage: Math.min(100, calculatePercentage(totalCurrent, totalRequired)),
+    remaining: Math.max(0, totalRequired - totalCurrent),
+    isPassing: facultyProgress.isPassing && universityProgress.isPassing
+  };
+
+  return {
+    facultyProgress,
+    universityProgress,
+    overallProgress
+  };
+}
+
+/**
+ * Calculate comprehensive activity summary with progress information
+ */
+export function calculateActivitySummaryWithProgress(
+  participationHistory: ParticipationRecord[],
+  requirements?: ActivityRequirements
+): ActivitySummaryStats {
+  const stats = calculateActivitySummary(participationHistory);
+  
+  if (requirements) {
+    stats.progress = calculateProgress(stats, requirements);
+  }
+  
+  return stats;
+}
+
+/**
+ * Get progress color based on percentage
+ */
+export function getProgressColor(percentage: number, isPassing: boolean): {
+  bgClass: string;
+  textClass: string;
+} {
+  if (isPassing || percentage >= 100) {
+    return {
+      bgClass: 'bg-green-500',
+      textClass: 'text-green-700 dark:text-green-300'
+    };
+  } else if (percentage >= 75) {
+    return {
+      bgClass: 'bg-blue-500',
+      textClass: 'text-blue-700 dark:text-blue-300'
+    };
+  } else if (percentage >= 50) {
+    return {
+      bgClass: 'bg-yellow-500',
+      textClass: 'text-yellow-700 dark:text-yellow-300'
+    };
+  } else {
+    return {
+      bgClass: 'bg-red-500',
+      textClass: 'text-red-700 dark:text-red-300'
+    };
+  }
 }
