@@ -92,6 +92,7 @@
 	let error = $state<string | null>(null);
 	let lastScanTime = 0;
 	let scanCooldown = 2000; // 2 seconds between scans
+	let lastScannedQRData = ''; // Track last scanned QR to prevent immediate duplicates
 
 	// Debouncing and cleanup state
 	let cameraRequestInProgress = $state(false);
@@ -124,6 +125,7 @@
 	let statusDisplayTimer = $state<NodeJS.Timeout | null>(null);
 	let statusProgress = $state<number>(100);
 	let statusProgressTimer = $state<NodeJS.Timeout | null>(null);
+	let lastStatusHash = ''; // Track last status to prevent duplicate displays
 
 	// Scan mode: check-in or check-out
 	let scanMode = $state<'checkin' | 'checkout'>('checkin');
@@ -429,6 +431,7 @@
 		cameraRequestInProgress = false;
 		retryCount = 0;
 		error = null;
+		lastScannedQRData = ''; // Reset last scanned QR data
 		onStatusChange?.(cameraStatus);
 	}
 
@@ -556,6 +559,11 @@
 				const now = Date.now();
 				if (now - lastScanTime < scanCooldown) return;
 
+				// Check if this is the same QR data as the last scan to prevent immediate duplicates
+				if (code.data === lastScannedQRData && now - lastScanTime < scanCooldown * 2) {
+					return; // Skip processing same QR data within extended cooldown
+				}
+
 				// Validate that this is actually a proper QR code for our system
 				if (isValidQRCode(code.data)) {
 					// Found valid QR code, process it
@@ -571,18 +579,29 @@
 	}
 
 	async function processQRCode(qrData: string) {
-		if (isProcessingScan) return;
+		if (isProcessingScan) {
+			console.log('Scan already in progress, skipping duplicate');
+			return;
+		}
+
+		// Additional check for same QR data to prevent processing duplicates
+		if (qrData === lastScannedQRData && Date.now() - lastScanTime < scanCooldown) {
+			console.log('Same QR data detected within cooldown period, skipping');
+			return;
+		}
 
 		isProcessingScan = true;
 		const now = Date.now();
 
 		// Check cooldown
 		if (now - lastScanTime < scanCooldown) {
+			console.log('Scan within cooldown period, skipping');
 			isProcessingScan = false;
 			return;
 		}
 
 		lastScanTime = now;
+		lastScannedQRData = qrData; // Track this QR data to prevent immediate duplicates
 
 		try {
 			// Double-check QR code validity before sending to server
@@ -676,11 +695,26 @@
 	 * Display status with visual and audio feedback
 	 */
 	function displayStatus(result: QRScanResult) {
+		// Create a hash of the current status to prevent duplicate displays
+		const statusHash = JSON.stringify({
+			success: result.success,
+			message: result.message,
+			errorCode: result.error?.code,
+			userData: result.data?.student_id // Use student_id as unique identifier
+		});
+		
+		// Skip if this is the same status as the last one displayed within a short time
+		if (statusHash === lastStatusHash) {
+			console.log('Duplicate status display prevented');
+			return;
+		}
+		
 		// Clear any existing status display
 		clearStatusDisplay();
 		
-		// Set the current status
+		// Set the current status and update last status hash
 		currentStatus = result;
+		lastStatusHash = statusHash;
 		
 		// Determine status code for configuration
 		const statusCode = result.error?.code || (result.success ? 'CHECKIN_SUCCESS' : 'INTERNAL_ERROR');
@@ -729,6 +763,11 @@
 		
 		currentStatus = null;
 		statusProgress = 100;
+		
+		// Clear last status hash after a delay to allow new statuses
+		setTimeout(() => {
+			lastStatusHash = '';
+		}, 1000);
 	}
 	
 	/**

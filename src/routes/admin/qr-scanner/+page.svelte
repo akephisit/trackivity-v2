@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
-	import { toast } from 'svelte-sonner';
+	// Removed toast import - QRScanner component handles all notifications
 
 	import QRScanner from '$lib/components/qr/QRScanner.svelte';
 	import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
@@ -102,18 +102,18 @@
 
 	function startScanning() {
 		if (!selectedActivityId) {
-			toast.error('กรุณาเลือกกิจกรรมก่อนเริ่มสแกน');
+			// Removed toast - QRScanner component handles all notifications
 			return;
 		}
 
 		scannerActive = true;
 		sessionStats.startTime = new Date();
-		toast.success('เริ่มระบบสแกน QR Code');
+		// Removed toast - QRScanner component handles all notifications
 	}
 
 	function stopScanning() {
 		scannerActive = false;
-		toast.info('หยุดระบบสแกน QR Code');
+		// Removed toast - QRScanner component handles all notifications
 	}
 
 	function handleScanResult(result: any, _qrData: string) {
@@ -144,7 +144,7 @@
 			startTime: new Date()
 		};
 		totalScanned = 0;
-		toast.success('รีเซ็ตสถิติเรียบร้อย');
+		// Removed toast - QRScanner component handles all notifications
 	}
 
 	function formatDateTime(date: string | Date): string {
