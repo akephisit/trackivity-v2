@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { onMount, onDestroy } from 'svelte';
 	import { browser } from '$app/environment';
-	import { toast } from 'svelte-sonner';
 	import jsQR from 'jsqr';
 
 	import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
@@ -9,7 +8,6 @@
 	import { Badge } from '$lib/components/ui/badge';
 	import { Alert, AlertDescription } from '$lib/components/ui/alert';
 	import { Separator } from '$lib/components/ui/separator';
-	import { Progress } from '$lib/components/ui/progress';
 
 	import {
 		IconCamera,
@@ -115,7 +113,6 @@
 	// QR Code validation state
 	let invalidScansCount = $state(0);
 	let lastInvalidScanTime = 0;
-	let recentScannedCodes = new Set<string>();
 
 	// Scanner state
 	let cameraStatus = $state<'idle' | 'requesting' | 'active' | 'error'>('idle');
@@ -713,27 +710,7 @@
 			clearStatusDisplay();
 		}, config.duration);
 		
-		// Show toast notification
-		const toastMessage = result.success
-			? `สแกนสำเร็จ: ${result.data?.user_name || 'ไม่ระบุชื่อ'}`
-			: result.message;
-		
-		if (result.success) {
-			toast.success(toastMessage);
-		} else {
-			switch (result.category) {
-				case 'already_done':
-					toast.info(toastMessage);
-					break;
-				case 'restricted':
-					toast.warning(toastMessage);
-					break;
-				case 'error':
-				default:
-					toast.error(toastMessage);
-					break;
-			}
-		}
+		// Toast notifications removed - Enhanced status display provides better UX
 	}
 	
 	/**
@@ -798,7 +775,7 @@
 
 	function clearHistory() {
 		scanHistory = [];
-		toast.success('ล้างประวัติการสแกนเรียบร้อย');
+		// Toast notification removed - component focuses on enhanced status display
 	}
 
 	function formatDateTime(dateString: string): string {
@@ -924,12 +901,24 @@
 		lastInvalidScanTime = timestamp;
 		invalidScansCount++;
 
-		// Show a helpful message
+		// Show a helpful message via the enhanced status display
 		const message = isLikelyBarcode(data)
 			? 'ตรวจพบบาร์โค้ด กรุณาสแกน QR Code เท่านั้น'
 			: 'รูปแบบ QR Code ไม่ถูกต้อง';
 
-		toast.warning(message);
+		// Use the enhanced status display instead of toast
+		const invalidResult = {
+			success: false,
+			message,
+			category: 'error' as const,
+			error: {
+				code: 'QR_INVALID' as const,
+				message,
+				category: 'error' as const
+			}
+		};
+		
+		displayStatus(invalidResult);
 		console.log('Invalid code detected:', {
 			data,
 			isLikelyBarcode: isLikelyBarcode(data),

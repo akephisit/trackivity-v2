@@ -121,16 +121,16 @@
 
 		if (result.success) {
 			sessionStats.successful++;
-			toast.success(`สแกนสำเร็จ: ${result.user_name}`);
+			// Toast notification removed - QRScanner component handles notifications
 		} else {
 			sessionStats.failed++;
-			toast.error(`สแกนไม่สำเร็จ: ${result.message}`);
+			// Toast notification removed - QRScanner component handles notifications
 		}
 	}
 
 	function handleScanError(message: string) {
 		sessionStats.failed++;
-		toast.error(`เกิดข้อผิดพลาด: ${message}`);
+		// Toast notification removed - QRScanner component handles notifications
 	}
 
 	function handleStatusChange(status: typeof scannerStatus) {
