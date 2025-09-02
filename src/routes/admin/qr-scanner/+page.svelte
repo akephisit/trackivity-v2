@@ -398,7 +398,7 @@
 			onStatusChange={handleStatusChange}
 			showHistory={true}
 			maxHistoryItems={20}
-			soundEnabled={true}
+			soundEnabled={false}
 			vibrationEnabled={true}
 		/>
 	{/if}
