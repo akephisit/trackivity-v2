@@ -24,7 +24,6 @@
 	import { enhance } from '$app/forms';
 	import { toast } from 'svelte-sonner';
 	import {
-		DateFormatter,
 		type DateValue,
 		getLocalTimeZone,
 		today,
@@ -32,6 +31,7 @@
 	} from '@internationalized/date';
 	import { cn } from '$lib/utils';
 	import { buttonVariants } from '$lib/components/ui/button';
+	import { formatThaiDate, formatThaiMonth, toBuddhistEra } from '$lib/utils/thai-date';
 
 	const { data, form } = $props<{
 		data: {
@@ -69,12 +69,15 @@
 	// Activity level selection state - convert display value to storage value
 	let selectedActivityLevel = $state((form as any)?.formData?.activity_level || activity.activity_level || 'faculty');
 
-	// Date formatting for Thai locale
-	const df = new DateFormatter('th-TH', {
-		year: 'numeric',
-		month: 'long',
-		day: 'numeric'
-	});
+	// Thai date formatting functions for calendar
+	function formatCalendarMonth(monthNumber: number): string {
+		const monthIndex = monthNumber - 1; // Convert to 0-based index
+		return formatThaiMonth(monthIndex, 'long');
+	}
+	
+	function formatCalendarYear(year: number): string {
+		return toBuddhistEra(year).toString();
+	}
 
 	// Date picker values
 	let startDateValue = $state<DateValue | undefined>(undefined);
@@ -94,14 +97,12 @@
 		});
 	}
 
-	// Generate minute options (00, 15, 30, 45)
+	// Generate minute options (00-59)
 	function generateMinuteOptions() {
-		return [
-			{ value: '00', label: '00' },
-			{ value: '15', label: '15' },
-			{ value: '30', label: '30' },
-			{ value: '45', label: '45' }
-		];
+		return Array.from({ length: 60 }, (_, i) => {
+			const minute = i.toString().padStart(2, '0');
+			return { value: minute, label: minute };
+		});
 	}
 
 	const hourOptions = generateHourOptions();
@@ -441,7 +442,7 @@
 									disabled={submitting}
 								>
 									<IconCalendar class="mr-2 h-4 w-4" />
-									{startDateValue ? df.format(startDateValue.toDate(getLocalTimeZone())) : "เลือกวันที่เริ่ม"}
+									{startDateValue ? formatThaiDate(startDateValue) : "เลือกวันที่เริ่ม"}
 								</Popover.Trigger>
 								<Popover.Content class="w-auto p-0">
 									<Calendar
@@ -449,6 +450,10 @@
 										bind:value={startDateValue}
 										minValue={today(getLocalTimeZone())}
 										disabled={submitting}
+										locale="th-TH"
+										captionLayout="dropdown"
+										monthFormat={formatCalendarMonth}
+										yearFormat={formatCalendarYear}
 									/>
 								</Popover.Content>
 							</Popover.Root>
@@ -474,7 +479,7 @@
 									disabled={submitting}
 								>
 									<IconCalendar class="mr-2 h-4 w-4" />
-									{endDateValue ? df.format(endDateValue.toDate(getLocalTimeZone())) : "เลือกวันที่สิ้นสุด"}
+									{endDateValue ? formatThaiDate(endDateValue) : "เลือกวันที่สิ้นสุด"}
 								</Popover.Trigger>
 								<Popover.Content class="w-auto p-0">
 									<Calendar
@@ -482,6 +487,10 @@
 										bind:value={endDateValue}
 										minValue={startDateValue || today(getLocalTimeZone())}
 										disabled={submitting}
+										locale="th-TH"
+										captionLayout="dropdown"
+										monthFormat={formatCalendarMonth}
+										yearFormat={formatCalendarYear}
 									/>
 								</Popover.Content>
 							</Popover.Root>
