@@ -1,11 +1,11 @@
-#!/bin/bash
+#!/bin/sh
 set -e
 
 echo "🗄️  Initializing database..."
 
 # Wait for database to be ready
 echo "⏳ Waiting for database connection..."
-until bun run drizzle-kit push --force 2>/dev/null; do
+until bunx drizzle-kit push --force 2>/dev/null; do
   echo "Database not ready, waiting 5 seconds..."
   sleep 5
 done
