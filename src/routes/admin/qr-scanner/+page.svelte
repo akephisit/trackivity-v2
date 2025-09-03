@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { onMount, untrack } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { browser } from '$app/environment';
 	// Removed toast import - QRScanner component handles all notifications
@@ -19,10 +19,8 @@
 		IconUsers,
 		IconMapPin,
 		IconCalendar,
-		IconClock,
 		IconCheck,
 		IconX,
-		IconRefresh,
 		IconSettings,
 		IconArrowBack,
 		IconBuilding
@@ -50,6 +48,7 @@
 			activity_type?: string;
 			location?: string;
 			max_participants?: number;
+			current_participants?: number;
 			hours?: number;
 			status?: string;
 			faculty_id?: string;
@@ -61,36 +60,59 @@
 	let { data }: { data: QRScannerPageData } = $props();
 
 	// Component state
-	let selectedActivity = $state<any>(null);
 	let selectedActivityId = $state(data.selectedActivityId || '');
 	let selectedActivityOption = $state<{ value: string; label: string } | undefined>(undefined);
 	let scannerActive = $state(false);
 	let scannerStatus = $state<'idle' | 'requesting' | 'active' | 'error'>('idle');
-	let totalScanned = $state(0);
-	let sessionStats = $state({
-		successful: 0,
-		failed: 0,
-		startTime: null as Date | null
-	});
+	let manualParticipantCount = $state(0);
 
-	// Reactive statements
+	// Use $derived for computed values to avoid circular dependencies
+	const selectedActivity = $derived(
+		selectedActivityId ? data.activities?.find((a: any) => a.id === selectedActivityId) || null : null
+	);
+
+	// Use base participant count from activity data, plus any manual increments from scanning
+	const currentParticipantCount = $derived(
+		(selectedActivity?.current_participants || 0) + manualParticipantCount
+	);
+
+	// Track URL updates separately to prevent infinite loops
+	let isUpdatingUrl = $state(false);
+	let lastUrlActivityId = $state('');
+	
 	$effect(() => {
-		if (selectedActivityId) {
-			selectedActivity = data.activities?.find((a: any) => a.id === selectedActivityId) || null;
-			// Update URL when activity changes (only in browser)
-			if (browser) {
+		// Only update URL if we're in browser and not currently updating URL
+		if (browser && !isUpdatingUrl && selectedActivityId !== lastUrlActivityId) {
+			// Use untrack to read current URL without creating reactive dependencies
+			const currentUrlActivityId = untrack(() => {
 				const url = new URL(window.location.href);
-				if (url.searchParams.get('activity_id') !== selectedActivityId) {
+				return url.searchParams.get('activity_id') || '';
+			});
+			
+			if (selectedActivityId !== currentUrlActivityId) {
+				isUpdatingUrl = true;
+				const url = new URL(window.location.href);
+				
+				if (selectedActivityId) {
 					url.searchParams.set('activity_id', selectedActivityId);
-					goto(url.toString(), { replaceState: true, noScroll: true });
+				} else {
+					url.searchParams.delete('activity_id');
 				}
+				
+				goto(url.toString(), { replaceState: true, noScroll: true }).finally(() => {
+					isUpdatingUrl = false;
+				});
 			}
-		} else {
-			selectedActivity = null;
+			
+			lastUrlActivityId = selectedActivityId;
 		}
 	});
 
 	onMount(() => {
+		// Initialize URL tracking state first to prevent URL updates during initialization
+		const url = new URL(window.location.href);
+		lastUrlActivityId = url.searchParams.get('activity_id') || '';
+		
 		if (data.selectedActivityId && (data.activities?.length || 0) > 0) {
 			selectedActivityId = data.selectedActivityId;
 			const activity = data.activities?.find(a => a.id === selectedActivityId);
@@ -106,6 +128,8 @@
 
 	function handleActivityChange(activityId: string) {
 		selectedActivityId = activityId;
+		// Reset manual participant count when changing activities
+		manualParticipantCount = 0;
 		// Stop scanner when changing activities
 		if (scannerActive) {
 			scannerActive = false;
@@ -119,7 +143,6 @@
 		}
 
 		scannerActive = true;
-		sessionStats.startTime = new Date();
 		// Removed toast - QRScanner component handles all notifications
 	}
 
@@ -129,50 +152,20 @@
 	}
 
 	function handleScanResult(result: any, _qrData: string) {
-		totalScanned++;
-
 		if (result.success) {
-			sessionStats.successful++;
-			// Toast notification removed - QRScanner component handles notifications
-		} else {
-			sessionStats.failed++;
+			// Increment manual participant count on successful check-in
+			manualParticipantCount++;
 			// Toast notification removed - QRScanner component handles notifications
 		}
+		// Error handling is done by QRScanner component
 	}
 
-	function handleScanError(_message: string) {
-		sessionStats.failed++;
-		// Toast notification removed - QRScanner component handles notifications
-	}
 
 	function handleStatusChange(status: typeof scannerStatus) {
 		scannerStatus = status;
 	}
 
-	function resetStats() {
-		sessionStats = {
-			successful: 0,
-			failed: 0,
-			startTime: new Date()
-		};
-		totalScanned = 0;
-		// Removed toast - QRScanner component handles all notifications
-	}
 
-	function formatDateTime(date: string | Date): string {
-		try {
-			const d = typeof date === 'string' ? new Date(date) : date;
-			return d.toLocaleString('th-TH', {
-				year: 'numeric',
-				month: '2-digit',
-				day: '2-digit',
-				hour: '2-digit',
-				minute: '2-digit'
-			});
-		} catch {
-			return 'ไม่ระบุ';
-		}
-	}
 
 	function formatDate(dateString?: string): string {
 		if (!dateString) return 'ไม่ระบุ';
@@ -191,18 +184,6 @@
 		return timeString || 'ไม่ระบุ';
 	}
 
-	function formatDuration(start: Date): string {
-		const now = new Date();
-		const diff = now.getTime() - start.getTime();
-		const minutes = Math.floor(diff / 60000);
-		const seconds = Math.floor((diff % 60000) / 1000);
-		return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-	}
-
-	function getSuccessRate(): number {
-		if (totalScanned === 0) return 0;
-		return Math.round((sessionStats.successful / totalScanned) * 100);
-	}
 </script>
 
 <svelte:head>
@@ -279,8 +260,7 @@
 						type="single"
 						bind:value={selectedActivityOption as any}
 						onValueChange={(value) => {
-							if (value) {
-								selectedActivityId = value;
+							if (value && value !== selectedActivityId) {
 								const activity = data.activities?.find(a => a.id === value);
 								if (activity) {
 									selectedActivityOption = { value: activity.id, label: activity.title };
@@ -323,7 +303,15 @@
 
 							<div class="flex items-center gap-2">
 								<IconUsers class="size-4 text-muted-foreground" />
-								<span>ผู้เข้าร่วมสูงสุด: {selectedActivity.max_participants || 'ไม่จำกัด'} คน</span>
+								<span>
+									ผู้เข้าร่วม: {selectedActivity.current_participants || 0}
+									{#if selectedActivity.max_participants}
+										/ {selectedActivity.max_participants}
+									{/if} คน
+									{#if !selectedActivity.max_participants}
+										(ไม่จำกัด)
+									{/if}
+								</span>
 							</div>
 
 							<div class="flex items-center gap-2">
@@ -356,48 +344,46 @@
 		</CardContent>
 	</Card>
 
-	<!-- Session Statistics -->
-	{#if sessionStats.startTime}
+	<!-- Activity Statistics -->
+	{#if selectedActivity}
 		<Card>
 			<CardHeader>
 				<CardTitle class="flex items-center gap-2">
-					<IconClock class="size-5" />
-					สถิติการสแกนในเซสชันนี้
+					<IconUsers class="size-5" />
+					สถิติกิจกรรม
 				</CardTitle>
 			</CardHeader>
 			<CardContent>
-				<div class="grid grid-cols-2 gap-4 md:grid-cols-4">
+				<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
 					<div class="text-center">
-						<div class="text-2xl font-bold text-green-600">{sessionStats.successful}</div>
-						<div class="text-sm text-muted-foreground">สำเร็จ</div>
+						<div class="text-3xl font-bold text-blue-600">{currentParticipantCount}</div>
+						<div class="text-sm text-muted-foreground">จำนวนผู้เข้าร่วม</div>
 					</div>
 					<div class="text-center">
-						<div class="text-2xl font-bold text-red-600">{sessionStats.failed}</div>
-						<div class="text-sm text-muted-foreground">ไม่สำเร็จ</div>
-					</div>
-					<div class="text-center">
-						<div class="text-2xl font-bold">{totalScanned}</div>
-						<div class="text-sm text-muted-foreground">ทั้งหมด</div>
-					</div>
-					<div class="text-center">
-						<div class="text-2xl font-bold">{getSuccessRate()}%</div>
-						<div class="text-sm text-muted-foreground">อัตราสำเร็จ</div>
+						<div class="text-3xl font-bold text-gray-600">
+							{selectedActivity.max_participants || 'ไม่จำกัด'}
+						</div>
+						<div class="text-sm text-muted-foreground">จำนวนสูงสุด</div>
 					</div>
 				</div>
 
-				<Separator class="my-4" />
-
-				<div class="flex items-center justify-between text-sm">
-					<span>เริ่มเซสชัน: {formatDateTime(sessionStats.startTime)}</span>
-					<span>ระยะเวลา: {formatDuration(sessionStats.startTime)}</span>
-				</div>
-
-				<div class="mt-2">
-					<Button onclick={resetStats} variant="outline" size="sm">
-						<IconRefresh class="mr-2 size-4" />
-						รีเซ็ตสถิติ
-					</Button>
-				</div>
+				{#if selectedActivity.max_participants && selectedActivity.max_participants > 0}
+					<Separator class="my-4" />
+					<div class="space-y-2">
+						<div class="flex items-center justify-between text-sm">
+							<span>อัตราการเข้าร่วม:</span>
+							<span class="font-medium">
+								{Math.round((currentParticipantCount / selectedActivity.max_participants) * 100)}%
+							</span>
+						</div>
+						<div class="h-2 w-full rounded-full bg-muted">
+							<div 
+								class="h-2 rounded-full bg-blue-600 transition-all duration-300" 
+								style="width: {Math.min((currentParticipantCount / selectedActivity.max_participants) * 100, 100)}%"
+							></div>
+						</div>
+					</div>
+				{/if}
 			</CardContent>
 		</Card>
 	{/if}
@@ -427,7 +413,6 @@
 			activity_id={selectedActivityId}
 			isActive={scannerActive}
 			onScan={handleScanResult}
-			onError={handleScanError}
 			onStatusChange={handleStatusChange}
 			showHistory={true}
 			maxHistoryItems={20}

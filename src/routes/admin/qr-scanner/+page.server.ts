@@ -1,6 +1,6 @@
 import type { PageServerLoad } from './$types';
 import { requireAdmin } from '$lib/server/auth-utils';
-import { db, activities, organizations } from '$lib/server/db';
+import { db, activities, organizations, participations } from '$lib/server/db';
 import { alias } from 'drizzle-orm/pg-core';
 import { and, eq, or, sql } from 'drizzle-orm';
 
@@ -66,6 +66,34 @@ export const load: PageServerLoad = async (event) => {
     .leftJoin(orgOrganizer, eq(activities.organizerId, orgOrganizer.id))
     .where(whereClause);
 
+	// Get participant counts for all activities
+	const participantCounts = await Promise.all(
+		rows.map(async (activity) => {
+			const countResult = await db
+				.select({ count: sql<number>`cast(count(*) as int)` })
+				.from(participations)
+				.where(
+					and(
+						eq(participations.activityId, activity.id),
+						eq(participations.status, 'checked_in')
+					)
+				);
+			return {
+				activity_id: activity.id,
+				participant_count: countResult[0]?.count || 0
+			};
+		})
+	);
+
+	// Add participant counts to activity data
+	const activitiesWithCounts = rows.map(activity => {
+		const countData = participantCounts.find(pc => pc.activity_id === activity.id);
+		return {
+			...activity,
+			current_participants: countData?.participant_count || 0
+		};
+	});
+
 	const admin = {
 		first_name: user.first_name,
 		last_name: user.last_name,
@@ -76,7 +104,7 @@ export const load: PageServerLoad = async (event) => {
 
 	return {
 		admin,
-		activities: rows,
+		activities: activitiesWithCounts,
 		selectedActivityId
 	};
 };
