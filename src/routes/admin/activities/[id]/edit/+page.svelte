@@ -8,17 +8,30 @@
 	import { Textarea } from '$lib/components/ui/textarea';
 	import { Alert, AlertDescription } from '$lib/components/ui/alert';
 	import * as Select from '$lib/components/ui/select';
+	import * as Popover from '$lib/components/ui/popover';
+	import { Calendar } from '$lib/components/ui/calendar';
 	import { Switch } from '$lib/components/ui/switch';
 	import {
 		IconArrowLeft,
 		IconDeviceFloppy,
 		IconAlertCircle,
 		IconInfoCircle,
-		IconEye
+		IconEye,
+		IconCalendar,
+		IconClock
 	} from '@tabler/icons-svelte';
 	import { goto } from '$app/navigation';
 	import { enhance } from '$app/forms';
 	import { toast } from 'svelte-sonner';
+	import {
+		DateFormatter,
+		type DateValue,
+		getLocalTimeZone,
+		today,
+		parseDate
+	} from '@internationalized/date';
+	import { cn } from '$lib/utils';
+	import { buttonVariants } from '$lib/components/ui/button';
 
 	const { data, form } = $props<{
 		data: {
@@ -55,6 +68,44 @@
 
 	// Activity level selection state - convert display value to storage value
 	let selectedActivityLevel = $state((form as any)?.formData?.activity_level || activity.activity_level || 'faculty');
+
+	// Date formatting for Thai locale
+	const df = new DateFormatter('th-TH', {
+		year: 'numeric',
+		month: 'long',
+		day: 'numeric'
+	});
+
+	// Date picker values
+	let startDateValue = $state<DateValue | undefined>(undefined);
+	let endDateValue = $state<DateValue | undefined>(undefined);
+
+	// Time picker values
+	let startTimeHour = $state<string>('');
+	let startTimeMinute = $state<string>('');
+	let endTimeHour = $state<string>('');
+	let endTimeMinute = $state<string>('');
+
+	// Generate hour options (00-23)
+	function generateHourOptions() {
+		return Array.from({ length: 24 }, (_, i) => {
+			const hour = i.toString().padStart(2, '0');
+			return { value: hour, label: hour };
+		});
+	}
+
+	// Generate minute options (00, 15, 30, 45)
+	function generateMinuteOptions() {
+		return [
+			{ value: '00', label: '00' },
+			{ value: '15', label: '15' },
+			{ value: '30', label: '30' },
+			{ value: '45', label: '45' }
+		];
+	}
+
+	const hourOptions = generateHourOptions();
+	const minuteOptions = generateMinuteOptions();
 
 	// Initial selected values from server
 	let selectedEligibleValues = $state<string[]>(data.eligible_organizations_selected || []);
@@ -140,6 +191,53 @@
 
 	// Get current participants count for validation
 	let currentParticipants = $derived(activity.current_participants || 0);
+
+	// Initialize date picker values from activity data
+	$effect(() => {
+		// Initialize start date
+		if (!startDateValue) {
+			const dateStr = (form as any)?.formData?.start_date || extractDateFromActivity(activity);
+			if (dateStr) {
+				try {
+					startDateValue = parseDate(dateStr);
+				} catch (e) {
+					// Invalid date format, ignore
+				}
+			}
+		}
+
+		// Initialize end date
+		if (!endDateValue) {
+			const dateStr = (form as any)?.formData?.end_date || (activity.end_date || extractDateFromActivity(activity));
+			if (dateStr) {
+				try {
+					endDateValue = parseDate(dateStr);
+				} catch (e) {
+					// Invalid date format, ignore
+				}
+			}
+		}
+
+		// Initialize start time
+		if (!startTimeHour) {
+			const timeStr = (form as any)?.formData?.start_time || extractTimeFromActivity(activity, true);
+			if (timeStr) {
+				const [hour, minute] = timeStr.split(':');
+				startTimeHour = hour || '';
+				startTimeMinute = minute || '';
+			}
+		}
+
+		// Initialize end time
+		if (!endTimeHour) {
+			const timeStr = (form as any)?.formData?.end_time || extractTimeFromActivity(activity, false);
+			if (timeStr) {
+				const [hour, minute] = timeStr.split(':');
+				endTimeHour = hour || '';
+				endTimeMinute = minute || '';
+			}
+		}
+	});
 </script>
 
 <svelte:head>
@@ -317,59 +415,172 @@
 
 				<!-- Date and Time -->
 				<div class="space-y-4">
-					<h3 class="text-lg font-semibold">วันที่และเวลา</h3>
+					<h3 class="flex items-center gap-2 text-lg font-semibold">
+						<IconCalendar class="h-5 w-5 text-blue-600" />
+						วันที่และเวลา
+					</h3>
 					
 					<div class="grid gap-4 md:grid-cols-2">
 						<!-- Start Date -->
 						<div class="space-y-2">
-							<Label for="start_date">วันที่เริ่ม *</Label>
-							<Input
-								id="start_date"
+							<Label class="text-base font-medium">วันที่เริ่ม *</Label>
+							<input
+								type="hidden"
 								name="start_date"
-								type="date"
-								required
-								value={form?.formData?.start_date || extractDateFromActivity(activity)}
-								class="text-base"
+								value={startDateValue ? startDateValue.toString() : (form?.formData?.start_date || extractDateFromActivity(activity))}
 							/>
+							<Popover.Root>
+								<Popover.Trigger
+									class={cn(
+										buttonVariants({
+											variant: "outline",
+											class: "w-full justify-start text-left font-normal text-base"
+										}),
+										!startDateValue && "text-muted-foreground"
+									)}
+									disabled={submitting}
+								>
+									<IconCalendar class="mr-2 h-4 w-4" />
+									{startDateValue ? df.format(startDateValue.toDate(getLocalTimeZone())) : "เลือกวันที่เริ่ม"}
+								</Popover.Trigger>
+								<Popover.Content class="w-auto p-0">
+									<Calendar
+										type="single"
+										bind:value={startDateValue}
+										minValue={today(getLocalTimeZone())}
+										disabled={submitting}
+									/>
+								</Popover.Content>
+							</Popover.Root>
 						</div>
 
 						<!-- End Date -->
 						<div class="space-y-2">
-							<Label for="end_date">วันที่สิ้นสุด *</Label>
-							<Input
-								id="end_date"
+							<Label class="text-base font-medium">วันที่สิ้นสุด *</Label>
+							<input
+								type="hidden"
 								name="end_date"
-								type="date"
-								required
-								value={form?.formData?.end_date || (activity.end_date || extractDateFromActivity(activity))}
-								class="text-base"
+								value={endDateValue ? endDateValue.toString() : (form?.formData?.end_date || (activity.end_date || extractDateFromActivity(activity)))}
 							/>
+							<Popover.Root>
+								<Popover.Trigger
+									class={cn(
+										buttonVariants({
+											variant: "outline",
+											class: "w-full justify-start text-left font-normal text-base"
+										}),
+										!endDateValue && "text-muted-foreground"
+									)}
+									disabled={submitting}
+								>
+									<IconCalendar class="mr-2 h-4 w-4" />
+									{endDateValue ? df.format(endDateValue.toDate(getLocalTimeZone())) : "เลือกวันที่สิ้นสุด"}
+								</Popover.Trigger>
+								<Popover.Content class="w-auto p-0">
+									<Calendar
+										type="single"
+										bind:value={endDateValue}
+										minValue={startDateValue || today(getLocalTimeZone())}
+										disabled={submitting}
+									/>
+								</Popover.Content>
+							</Popover.Root>
 						</div>
 
 						<!-- Start Time -->
 						<div class="space-y-2">
-							<Label for="start_time">เวลาเริ่ม *</Label>
-							<Input
-								id="start_time"
+							<Label class="flex items-center gap-2 text-base font-medium">
+								<IconClock class="h-4 w-4" />
+								เวลาเริ่ม *
+							</Label>
+							<input
+								type="hidden"
 								name="start_time"
-								type="time"
-								required
-								value={form?.formData?.start_time || extractTimeFromActivity(activity, true)}
-								class="text-base"
+								value={startTimeHour && startTimeMinute ? `${startTimeHour}:${startTimeMinute}` : (form?.formData?.start_time || extractTimeFromActivity(activity, true))}
 							/>
+							<div class="flex gap-2">
+								<Select.Root
+									type="single"
+									bind:value={startTimeHour as any}
+									disabled={submitting}
+								>
+									<Select.Trigger class="w-20">
+										{startTimeHour || 'ชม'}
+									</Select.Trigger>
+									<Select.Content class="max-h-60">
+										{#each hourOptions as option}
+											<Select.Item value={option.value}>
+												{option.label}
+											</Select.Item>
+										{/each}
+									</Select.Content>
+								</Select.Root>
+								<span class="flex items-center text-gray-500">:</span>
+								<Select.Root
+									type="single"
+									bind:value={startTimeMinute as any}
+									disabled={submitting}
+								>
+									<Select.Trigger class="w-20">
+										{startTimeMinute || 'นาที'}
+									</Select.Trigger>
+									<Select.Content>
+										{#each minuteOptions as option}
+											<Select.Item value={option.value}>
+												{option.label}
+											</Select.Item>
+										{/each}
+									</Select.Content>
+								</Select.Root>
+							</div>
 						</div>
 
 						<!-- End Time -->
 						<div class="space-y-2">
-							<Label for="end_time">เวลาสิ้นสุด *</Label>
-							<Input
-								id="end_time"
+							<Label class="flex items-center gap-2 text-base font-medium">
+								<IconClock class="h-4 w-4" />
+								เวลาสิ้นสุด *
+							</Label>
+							<input
+								type="hidden"
 								name="end_time"
-								type="time"
-								required
-								value={form?.formData?.end_time || extractTimeFromActivity(activity, false)}
-								class="text-base"
+								value={endTimeHour && endTimeMinute ? `${endTimeHour}:${endTimeMinute}` : (form?.formData?.end_time || extractTimeFromActivity(activity, false))}
 							/>
+							<div class="flex gap-2">
+								<Select.Root
+									type="single"
+									bind:value={endTimeHour as any}
+									disabled={submitting}
+								>
+									<Select.Trigger class="w-20">
+										{endTimeHour || 'ชม'}
+									</Select.Trigger>
+									<Select.Content class="max-h-60">
+										{#each hourOptions as option}
+											<Select.Item value={option.value}>
+												{option.label}
+											</Select.Item>
+										{/each}
+									</Select.Content>
+								</Select.Root>
+								<span class="flex items-center text-gray-500">:</span>
+								<Select.Root
+									type="single"
+									bind:value={endTimeMinute as any}
+									disabled={submitting}
+								>
+									<Select.Trigger class="w-20">
+										{endTimeMinute || 'นาที'}
+									</Select.Trigger>
+									<Select.Content>
+										{#each minuteOptions as option}
+											<Select.Item value={option.value}>
+												{option.label}
+											</Select.Item>
+										{/each}
+									</Select.Content>
+								</Select.Root>
+							</div>
 						</div>
 					</div>
 				</div>
