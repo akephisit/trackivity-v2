@@ -6,9 +6,8 @@ WORKDIR /app
 # Install security updates
 RUN apk --no-cache add dumb-init
 
-# Create non-root user for security
-RUN addgroup -g 1001 -S nodejs && \
-    adduser -S bun -u 1001
+# Create non-root group for security (bun user already exists)
+RUN addgroup -g 1001 -S nodejs || true
 
 FROM base AS deps
 COPY package.json bun.lockb* ./
