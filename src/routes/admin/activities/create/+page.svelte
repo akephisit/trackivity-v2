@@ -620,11 +620,7 @@
 															<div class="flex items-center gap-2">
 																<div class="flex h-4 w-4 items-center justify-center">
 																	{#if selectedFacultyIds.includes(option.value)}
-																		<div class="h-3 w-3 rounded-sm bg-blue-600 border border-blue-600">
-																			<svg class="h-2 w-2 text-white" fill="currentColor" viewBox="0 0 8 8">
-																				<path d="m6.564.75-3.59 3.612-1.538-1.55L0 4.26l2.974 2.99L8 2.193z"/>
-																			</svg>
-																		</div>
+																		<div class="h-3 w-3 rounded-sm bg-blue-600"></div>
 																	{:else}
 																		<div class="h-3 w-3 rounded-sm border border-gray-300 bg-white"></div>
 																	{/if}
