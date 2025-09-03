@@ -533,7 +533,7 @@
 									<Select.Trigger class="w-20">
 										{startTimeMinute || 'นาที'}
 									</Select.Trigger>
-									<Select.Content>
+									<Select.Content class="max-h-60">
 										{#each minuteOptions as option}
 											<Select.Item value={option.value}>
 												{option.label}
@@ -581,7 +581,7 @@
 									<Select.Trigger class="w-20">
 										{endTimeMinute || 'นาที'}
 									</Select.Trigger>
-									<Select.Content>
+									<Select.Content class="max-h-60">
 										{#each minuteOptions as option}
 											<Select.Item value={option.value}>
 												{option.label}
