@@ -2,7 +2,7 @@ import type { PageServerLoad } from './$types';
 import { requireAdmin } from '$lib/server/auth-utils';
 import { db, activities, organizations } from '$lib/server/db';
 import { alias } from 'drizzle-orm/pg-core';
-import { and, eq, or } from 'drizzle-orm';
+import { and, eq, or, sql } from 'drizzle-orm';
 
 export const load: PageServerLoad = async (event) => {
 	const user = requireAdmin(event);
@@ -26,14 +26,22 @@ export const load: PageServerLoad = async (event) => {
 		}
 	}
 
-	// Query only ongoing activities; if FacultyAdmin, scope by faculty
-  const whereClause =
-    user.admin_role?.admin_level === 'OrganizationAdmin' && facultyId
-      ? and(
-          eq(activities.status, 'ongoing'),
-          or(eq(activities.organizationId, facultyId), eq(activities.organizerId, facultyId))
-        )
-      : eq(activities.status, 'ongoing');
+	// Query only ongoing activities; if OrganizationAdmin, scope by organization
+	// Include activities where:
+	// 1. Admin's organization is the organizer (organizerId)
+	// 2. Admin's organization is in the legacy organizationId field  
+	// 3. Admin's organization is in the eligibleOrganizations array
+	const whereClause =
+		user.admin_role?.admin_level === 'OrganizationAdmin' && facultyId
+			? and(
+					eq(activities.status, 'ongoing'),
+					or(
+						eq(activities.organizationId, facultyId),
+						eq(activities.organizerId, facultyId),
+						sql`${activities.eligibleOrganizations} @> ${JSON.stringify([facultyId])}`
+					)
+				)
+			: eq(activities.status, 'ongoing');
 
   const orgOrganizer = alias(organizations, 'org_organizer');
   const rows = await db

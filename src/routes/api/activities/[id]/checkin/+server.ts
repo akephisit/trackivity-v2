@@ -21,12 +21,12 @@ function decodeQR(qr_data: string): { uid?: string; sid?: string; ts?: number; e
 export const POST: RequestHandler = async ({ params, request, locals }) => {
   try {
     // Require admin or staff session (locals.user is set when authenticated)
-    if (!locals.user) {
+    if (!locals.user || !locals.user.is_admin) {
       return json({ 
         success: false, 
         error: { 
           code: 'AUTH_ERROR', 
-          message: 'ต้องการการยืนยันตัวตน', 
+          message: 'ต้องการสิทธิ์ผู้ดูแลระบบ', 
           category: 'error' 
         } 
       }, { status: 401 });
@@ -77,6 +77,46 @@ export const POST: RequestHandler = async ({ params, request, locals }) => {
     }
 
     const activity = actRows[0];
+
+    // Check admin permission for this specific activity
+    const adminOrganizationId = (locals.user as any)?.organization_id;
+    const adminLevel = (locals.user as any)?.admin_level;
+    
+    // SuperAdmin can scan all activities
+    if (adminLevel !== 'SuperAdmin') {
+      // OrganizationAdmin can only scan activities where they are:
+      // 1. The organizer (organizerId matches their organization)
+      // 2. In the legacy organizationId field
+      // 3. In the eligibleOrganizations array
+      if (adminLevel === 'OrganizationAdmin' && adminOrganizationId) {
+        const canScan = 
+          activity.organizerId === adminOrganizationId ||
+          (activity.eligibleOrganizations && 
+           Array.isArray(activity.eligibleOrganizations) && 
+           activity.eligibleOrganizations.includes(adminOrganizationId));
+           
+        if (!canScan) {
+          return json({ 
+            success: false, 
+            error: { 
+              code: 'PERMISSION_DENIED', 
+              message: 'คุณไม่มีสิทธิ์ในการสแกน QR Code สำหรับกิจกรรมนี้', 
+              category: 'error' 
+            } 
+          }, { status: 403 });
+        }
+      } else {
+        // RegularAdmin or other levels - no scanning permission
+        return json({ 
+          success: false, 
+          error: { 
+            code: 'INSUFFICIENT_PRIVILEGES', 
+            message: 'ระดับสิทธิ์ของคุณไม่เพียงพอสำหรับการสแกน QR Code', 
+            category: 'error' 
+          } 
+        }, { status: 403 });
+      }
+    }
 
     // Check activity status
     if (activity.status !== 'ongoing') {
