@@ -13,7 +13,7 @@
 		"dev:db": "bun run db:push && bunx vite dev",
 		"dev:db:migrate": "bun run db:migrate && bunx vite dev",
 		"dev:watch": "bun --hot --watch src run dev",
-		"build": "bunx svelte-kit build",
+		"build": "bunx vite build",
 		"build:bun": "bun build --target=bun --outdir=dist src/app.ts",
 		"start": "NODE_ENV=production PORT=${PORT:-8080} bun --config .bunfig.production.toml build/index.js",
 		"start:dev": "bun build/index.js",
