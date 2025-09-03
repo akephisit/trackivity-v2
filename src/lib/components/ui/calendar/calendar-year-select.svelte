@@ -13,7 +13,7 @@
 
 <span
 	class={cn(
-		'relative flex rounded-md border border-input shadow-xs has-focus:border-ring has-focus:ring-[3px] has-focus:ring-ring/50',
+		'relative flex rounded-md border border-input bg-transparent shadow-xs transition-[color,box-shadow] outline-none focus-within:border-ring focus-within:ring-[3px] focus-within:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-input/30 dark:hover:bg-input/50',
 		className
 	)}
 >
@@ -32,11 +32,11 @@
 				{/each}
 			</select>
 			<span
-				class="flex h-8 items-center gap-1 rounded-md pr-1 pl-2 text-sm font-medium select-none [&>svg]:size-3.5 [&>svg]:text-muted-foreground"
+				class="flex h-8 w-fit items-center justify-between gap-2 rounded-md px-3 py-2 text-sm whitespace-nowrap font-medium select-none [&>svg]:size-3.5 [&>svg]:text-muted-foreground"
 				aria-hidden="true"
 			>
 				{yearItems.find((item) => item.value === value)?.label || selectedYearItem.label}
-				<IconChevronDown class="size-4" />
+				<IconChevronDown class="size-4 opacity-50" />
 			</span>
 		{/snippet}
 	</CalendarPrimitive.YearSelect>

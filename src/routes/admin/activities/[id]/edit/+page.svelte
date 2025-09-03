@@ -97,10 +97,10 @@
 		});
 	}
 
-	// Generate minute options (00-59)
+	// Generate minute options (00, 05, 10, 15, etc.)
 	function generateMinuteOptions() {
-		return Array.from({ length: 60 }, (_, i) => {
-			const minute = i.toString().padStart(2, '0');
+		return Array.from({ length: 12 }, (_, i) => {
+			const minute = (i * 5).toString().padStart(2, '0');
 			return { value: minute, label: minute };
 		});
 	}
