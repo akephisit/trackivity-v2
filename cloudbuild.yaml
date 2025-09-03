@@ -28,13 +28,21 @@ steps:
       '--concurrency', '100',
       '--max-instances', '10',
       '--timeout', '300',
-      '--set-env-vars', '^,^NODE_ENV=production,BUN_ENV=production'
+      '--set-env-vars', 'NODE_ENV=production',
+      '--set-env-vars', 'BUN_ENV=production',
+      '--set-env-vars', 'DATABASE_URL=${_DATABASE_URL}',
+      '--set-env-vars', 'JWT_SECRET=${_JWT_SECRET}'
+#     Alternatively, use Secret Manager directly instead of substitutions:
+#     '--set-secrets', 'DATABASE_URL=projects/$PROJECT_ID/secrets/trackivity-database-url:latest',
+#     '--set-secrets', 'JWT_SECRET=projects/$PROJECT_ID/secrets/trackivity-jwt-secret:latest'
     ]
     env:
       - 'CLOUDSDK_RUN_REGION=asia-southeast1'
 
-# Environment variables for substitution
+# Optional default substitutions (override via trigger or --substitutions)
 # substitutions:
+#   _DATABASE_URL: 'postgresql://user:pass@host:5432/db?sslmode=require'
+#   _JWT_SECRET: 'change_me_long_random_secret'
   # Uncomment if using Cloud SQL:
   # _CLOUDSQL_CONNECTION_NAME: 'your-project:asia-southeast1:your-db-instance'
   

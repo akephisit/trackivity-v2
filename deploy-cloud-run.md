@@ -34,11 +34,15 @@ gcloud sql users create trackivity-user \
 ```yaml
 substitutions:
   _CLOUDSQL_CONNECTION_NAME: 'your-project:asia-southeast1:trackivity-db'
+  # Optional: set defaults here or via trigger/CLI
+  # _DATABASE_URL: 'postgresql://user:pass@host:5432/db?sslmode=require'
+  # _JWT_SECRET: 'change_me_long_random_secret'
 ```
 
 2. **Deploy:**
 ```bash
-gcloud builds submit --config cloudbuild.yaml
+gcloud builds submit --config cloudbuild.yaml \
+  --substitutions=_DATABASE_URL='postgresql://user:pass@host:5432/db?sslmode=require',_JWT_SECRET='your-long-random-secret'
 ```
 
 ### Option 2: Direct Docker Deployment
@@ -60,6 +64,8 @@ gcloud run deploy trackivity-v2 \
   --concurrency 100 \
   --max-instances 10 \
   --set-env-vars NODE_ENV=production,BUN_ENV=production \
+  --set-env-vars DATABASE_URL='postgresql://user:pass@host:5432/db?sslmode=require' \
+  --set-env-vars JWT_SECRET='your-long-random-secret' \
   --add-cloudsql-instances YOUR_PROJECT_ID:asia-southeast1:trackivity-db
 ```
 
