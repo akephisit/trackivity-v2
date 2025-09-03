@@ -10,7 +10,7 @@ RUN apk --no-cache add dumb-init
 RUN addgroup -g 1001 -S nodejs || true
 
 FROM base AS deps
-COPY package.json bun.lockb* ./
+COPY package.json bun.lock* ./
 COPY .bunfig.toml .bunfig.production.toml ./
 RUN bun install --frozen-lockfile
 
@@ -22,7 +22,7 @@ RUN bun run prepare && bun run build
 
 FROM base AS runtime
 # Copy production config and package files
-COPY package.json bun.lockb* ./
+COPY package.json bun.lock* ./
 COPY .bunfig.production.toml ./
 
 # Install only production dependencies
