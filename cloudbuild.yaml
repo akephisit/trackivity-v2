@@ -5,6 +5,7 @@ steps:
   - name: 'gcr.io/cloud-builders/docker'
     args: [
       'build', 
+      '--build-arg', 'CSRF_TRUSTED_ORIGINS=${_CSRF_TRUSTED_ORIGINS}',
       '-t', 'gcr.io/$PROJECT_ID/trackivity-v2:$COMMIT_SHA',
       '-t', 'gcr.io/$PROJECT_ID/trackivity-v2:latest',
       '.'
@@ -43,6 +44,7 @@ steps:
 # substitutions:
 #   _DATABASE_URL: 'postgresql://user:pass@host:5432/db?sslmode=require'
 #   _JWT_SECRET: 'change_me_long_random_secret'
+#   _CSRF_TRUSTED_ORIGINS: 'https://your-frontend.example.com,https://another.example.com'
   # Uncomment if using Cloud SQL:
   # _CLOUDSQL_CONNECTION_NAME: 'your-project:asia-southeast1:your-db-instance'
   

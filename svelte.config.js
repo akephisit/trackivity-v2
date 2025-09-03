@@ -1,6 +1,19 @@
 import adapter from 'svelte-adapter-bun';
 import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 
+// Allow adding extra trusted origins at build time, e.g. via
+// Docker build-arg CSRF_TRUSTED_ORIGINS or env.
+function getTrustedOrigins() {
+  const defaults = [
+    'http://localhost:5173'
+  ];
+  const extra = (process.env.CSRF_TRUSTED_ORIGINS || '')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+  return [...new Set([...defaults, ...extra])];
+}
+
 /** @type {import('@sveltejs/kit').Config} */
 const config = {
 	// Consult https://svelte.dev/docs/kit/integrations
@@ -15,10 +28,10 @@ const config = {
 		alias: {
 			'@/*': './path/to/lib/*'
 		},
-		csrf: {
-			trustedOrigins: ['https://trackivity-frontend-ddd8j.ondigitalocean.app']
-		}
-	}
+    csrf: {
+        trustedOrigins: getTrustedOrigins()
+    }
+  }
 };
 
 export default config;

@@ -18,6 +18,9 @@ FROM base AS build
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 ENV NODE_ENV="production"
+# Propagate CSRF trusted origins for SvelteKit build-time config
+ARG CSRF_TRUSTED_ORIGINS
+ENV CSRF_TRUSTED_ORIGINS=${CSRF_TRUSTED_ORIGINS}
 RUN bun run prepare && bun run build
 
 FROM base AS runtime
