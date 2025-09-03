@@ -5,6 +5,12 @@ echo "🗄️  Initializing database..."
 
 # Wait for database to be ready
 echo "⏳ Waiting for database connection..."
+# Support secrets mounted as files via *_FILE convention
+if [ -z "$DATABASE_URL" ] && [ -n "$DATABASE_URL_FILE" ] && [ -f "$DATABASE_URL_FILE" ]; then
+  DATABASE_URL="$(cat "$DATABASE_URL_FILE")"
+  export DATABASE_URL
+fi
+
 if [ -z "$DATABASE_URL" ]; then
   echo "❌ DATABASE_URL is not set. Set it in your service environment."
   exit 1
@@ -12,7 +18,13 @@ fi
 
 MAX_RETRIES=${MAX_RETRIES:-30}
 COUNT=0
-until bunx drizzle-kit push --force; do
+# Prefer local CLI to avoid network/install at runtime
+DRIZZLE_CLI="./node_modules/.bin/drizzle-kit"
+if [ ! -x "$DRIZZLE_CLI" ]; then
+  DRIZZLE_CLI="bunx drizzle-kit"
+fi
+
+until $DRIZZLE_CLI push --force; do
   COUNT=$((COUNT+1))
   if [ "$COUNT" -ge "$MAX_RETRIES" ]; then
     echo "❌ Failed to connect/apply schema after $MAX_RETRIES attempts."

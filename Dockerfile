@@ -25,8 +25,8 @@ FROM base AS runtime
 COPY package.json bun.lock* ./
 COPY .bunfig.production.toml ./
 
-# Install only production dependencies
-RUN bun install --frozen-lockfile --production
+# Use dependencies from the deps stage (avoids runtime network + bunx installs)
+COPY --from=deps /app/node_modules ./node_modules
 
 # Copy built application and necessary files
 COPY --from=build /app/build ./build
