@@ -227,7 +227,11 @@
 				// Wait for video element to be available in DOM
 				await new Promise((resolve) => {
 					const checkElement = () => {
-						// Try to find video element in DOM
+						// Try to find video element in DOM (only in browser)
+						if (!browser) {
+							resolve(false);
+							return;
+						}
 						const domVideoElement = document.querySelector('#video-container video');
 						console.log('Checking for video element in DOM:', {
 							domVideoElement: !!domVideoElement,
@@ -279,7 +283,7 @@
 							'x',
 							videoElement.offsetHeight
 						);
-						console.log('Video element styles:', window.getComputedStyle(videoElement));
+						console.log('Video element styles:', browser ? window.getComputedStyle(videoElement) : 'N/A (SSR)');
 						debugInfo.videoReady = true;
 						debugInfo.streamActive = true;
 						resolve(true);
@@ -344,8 +348,8 @@
 					videoElement.offsetHeight;
 				}
 
-				// Additional checks for video display
-				if (videoElement) {
+				// Additional checks for video display (browser only)
+				if (videoElement && browser) {
 					console.log('Video element computed styles:', {
 						display: window.getComputedStyle(videoElement).display,
 						visibility: window.getComputedStyle(videoElement).visibility,
@@ -376,9 +380,9 @@
 							style: videoElement.style.cssText
 						});
 
-						// Try to force repaint
+						// Try to force repaint (browser only)
 						const parent = videoElement.parentElement;
-						if (parent) {
+						if (parent && browser) {
 							console.log('Parent element info:', {
 								offsetWidth: parent.offsetWidth,
 								offsetHeight: parent.offsetHeight,
@@ -524,7 +528,9 @@
 			return; // Video not ready yet
 		}
 
-		// Create canvas to capture video frame
+		// Create canvas to capture video frame (only in browser)
+		if (!browser) return;
+		
 		const canvas = document.createElement('canvas');
 		const ctx = canvas.getContext('2d');
 
@@ -877,11 +883,12 @@
 
 		// Try to parse as Base64 encoded JSON (our expected format)
 		try {
-			// Use atob for browser compatibility instead of Buffer
-			const decoded =
-				typeof window !== 'undefined'
-					? atob(qrData)
-					: Buffer.from(qrData, 'base64').toString('utf-8');
+			// Use atob for browser compatibility, skip server-side
+			if (!browser) {
+				return false; // Skip validation on server-side
+			}
+			
+			const decoded = atob(qrData);
 			const obj = JSON.parse(decoded);
 			// Check if it has required fields
 			if (obj && typeof obj === 'object' && obj.uid) {
@@ -967,7 +974,7 @@
 
 	// Device type detection
 	function getDeviceType(): 'desktop' | 'mobile' | 'tablet' | 'unknown' {
-		if (typeof window === 'undefined') return 'unknown';
+		if (!browser) return 'unknown';
 
 		const userAgent = navigator.userAgent.toLowerCase();
 		const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
@@ -1024,7 +1031,7 @@
 
 	// Setup device detection
 	function setupDeviceDetection() {
-		if (typeof window === 'undefined') return;
+		if (!browser) return;
 
 		debugInfo.deviceType = getDeviceType();
 		debugInfo.isDesktop = debugInfo.deviceType === 'desktop';
@@ -1042,7 +1049,7 @@
 
 	// Device orientation detection
 	function getDeviceOrientation(): 'portrait' | 'landscape' {
-		if (typeof window === 'undefined') return 'portrait';
+		if (!browser) return 'portrait';
 
 		// Use screen orientation API if available
 		if (screen.orientation) {
@@ -1057,7 +1064,7 @@
 
 	// Setup orientation change detection
 	function setupOrientationDetection() {
-		if (typeof window === 'undefined') return;
+		if (!browser) return;
 
 		debugInfo.deviceOrientation = getDeviceOrientation();
 

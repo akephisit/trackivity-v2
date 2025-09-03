@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
+	import { browser } from '$app/environment';
 	// Removed toast import - QRScanner component handles all notifications
 
 	import QRScanner from '$lib/components/qr/QRScanner.svelte';
@@ -72,11 +73,13 @@
 	$: {
 		if (selectedActivityId) {
 			selectedActivity = data.activities?.find((a: any) => a.id === selectedActivityId) || null;
-			// Update URL when activity changes
-			const url = new URL(window.location.href);
-			if (url.searchParams.get('activity_id') !== selectedActivityId) {
-				url.searchParams.set('activity_id', selectedActivityId);
-				goto(url.toString(), { replaceState: true, noScroll: true });
+			// Update URL when activity changes (only in browser)
+			if (browser) {
+				const url = new URL(window.location.href);
+				if (url.searchParams.get('activity_id') !== selectedActivityId) {
+					url.searchParams.set('activity_id', selectedActivityId);
+					goto(url.toString(), { replaceState: true, noScroll: true });
+				}
 			}
 		} else {
 			selectedActivity = null;
