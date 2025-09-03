@@ -10,6 +10,8 @@
 	import { Badge } from '$lib/components/ui/badge';
 	import { Separator } from '$lib/components/ui/separator';
 	import { Alert, AlertDescription } from '$lib/components/ui/alert';
+	import * as Select from '$lib/components/ui/select';
+	import { Label } from '$lib/components/ui/label';
 
 	import {
 		IconQrcode,
@@ -55,22 +57,23 @@
 		selectedActivityId?: string;
 	};
 
-	export let data: QRScannerPageData;
+	let { data }: { data: QRScannerPageData } = $props();
 
 	// Component state
-	let selectedActivity: any = null;
-	let selectedActivityId = data.selectedActivityId || '';
-	let scannerActive = false;
-	let scannerStatus: 'idle' | 'requesting' | 'active' | 'error' = 'idle';
-	let totalScanned = 0;
-	let sessionStats = {
+	let selectedActivity = $state<any>(null);
+	let selectedActivityId = $state(data.selectedActivityId || '');
+	let selectedActivityOption = $state<{ value: string; label: string } | undefined>(undefined);
+	let scannerActive = $state(false);
+	let scannerStatus = $state<'idle' | 'requesting' | 'active' | 'error'>('idle');
+	let totalScanned = $state(0);
+	let sessionStats = $state({
 		successful: 0,
 		failed: 0,
 		startTime: null as Date | null
-	};
+	});
 
 	// Reactive statements
-	$: {
+	$effect(() => {
 		if (selectedActivityId) {
 			selectedActivity = data.activities?.find((a: any) => a.id === selectedActivityId) || null;
 			// Update URL when activity changes (only in browser)
@@ -84,14 +87,19 @@
 		} else {
 			selectedActivity = null;
 		}
-	}
+	});
 
 	onMount(() => {
 		if (data.selectedActivityId && (data.activities?.length || 0) > 0) {
 			selectedActivityId = data.selectedActivityId;
+			const activity = data.activities?.find(a => a.id === selectedActivityId);
+			if (activity) {
+				selectedActivityOption = { value: activity.id, label: activity.title };
+			}
 		} else if ((data.activities?.length || 0) === 1) {
 			// Auto-select if only one activity
 			selectedActivityId = data.activities![0].id;
+			selectedActivityOption = { value: data.activities![0].id, label: data.activities![0].title };
 		}
 	});
 
@@ -262,19 +270,35 @@
 				</Alert>
 			{:else}
 				<div class="space-y-2">
-					<label for="activity-select" class="text-sm font-medium"
-						>เลือกกิจกรรมที่ต้องการสแกน (เฉพาะกิจกรรมที่กำลังดำเนินการ):</label
+					<Label class="text-sm font-medium">
+						เลือกกิจกรรมที่ต้องการสแกน (เฉพาะกิจกรรมที่กำลังดำเนินการ):
+					</Label>
+					<input type="hidden" bind:value={selectedActivityId} />
+					<Select.Root
+						type="single"
+						bind:value={selectedActivityOption as any}
+						onValueChange={(value) => {
+							if (value) {
+								selectedActivityId = value;
+								const activity = data.activities?.find(a => a.id === value);
+								if (activity) {
+									selectedActivityOption = { value: activity.id, label: activity.title };
+								}
+								handleActivityChange(value);
+							}
+						}}
 					>
-					<select
-						bind:value={selectedActivityId}
-						on:change={(e) => handleActivityChange(e.currentTarget.value)}
-						class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
-					>
-						<option value="">เลือกกิจกรรม...</option>
-						{#each data.activities || [] as activity}
-							<option value={activity.id}>{activity.title}</option>
-						{/each}
-					</select>
+						<Select.Trigger class="w-full">
+							{selectedActivityOption?.label ?? 'เลือกกิจกรรม...'}
+						</Select.Trigger>
+						<Select.Content>
+							{#each data.activities || [] as activity}
+								<Select.Item value={activity.id}>
+									{activity.title}
+								</Select.Item>
+							{/each}
+						</Select.Content>
+					</Select.Root>
 				</div>
 
 				<!-- Selected Activity Info -->
