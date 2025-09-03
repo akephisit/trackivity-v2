@@ -1,0 +1,19 @@
+# Production-optimized Bun configuration
+
+[install]
+registry = "https://registry.npmjs.org/"
+cache = true
+exact = true
+peer = true
+dev = false
+optional = false
+frozenLockfile = true
+dryRun = false
+
+[run]
+shell = false
+silent = true
+
+[env]
+NODE_ENV = "production"
+BUN_ENV = "production"
