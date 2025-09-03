@@ -3,7 +3,7 @@ import type { Actions, PageServerLoad } from './$types';
 import { requireOrganizationAdmin } from '$lib/server/auth-utils';
 import { db, activities, organizations, participations } from '$lib/server/db';
 import { alias } from 'drizzle-orm/pg-core';
-import { eq } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 
 export const load: PageServerLoad = async (event) => {
 	const user = await requireOrganizationAdmin(event);
@@ -92,10 +92,15 @@ export const load: PageServerLoad = async (event) => {
       activity_level: a.activity_level ?? 'faculty'
     };
 
-		// Fetch organizations for options
+		// Fetch faculty-type organizations only for options
 		const facultiesList = await db
 			.select({ id: organizations.id, name: organizations.name, code: organizations.code })
-			.from(organizations);
+			.from(organizations)
+			.where(and(
+				eq(organizations.status, true),
+				eq(organizations.organizationType, 'faculty')
+			))
+			.orderBy(organizations.name);
 
 		const eligible_organizations_selected: string[] = Array.isArray(a.eligible_organizations)
 			? (a.eligible_organizations as any)

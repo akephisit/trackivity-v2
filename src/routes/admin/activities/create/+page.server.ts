@@ -126,16 +126,13 @@ export const load: PageServerLoad = async (event) => {
 		if (response.ok) {
 			const apiData = await response.json();
 
-			// แก้ไขการ parse ให้ถูกต้อง - ตาม log structure: { data: { faculties: [...] } }
-			if (apiData.data && apiData.data.faculties && Array.isArray(apiData.data.faculties)) {
-				faculties = apiData.data.faculties;
-			} else if (apiData.data && Array.isArray(apiData.data)) {
+			// Parse organizations API response - should now only contain faculty-type organizations
+			if (apiData.success && apiData.data && Array.isArray(apiData.data)) {
 				faculties = apiData.data;
 			} else if (Array.isArray(apiData)) {
 				faculties = apiData;
-			} else if (apiData.faculties && Array.isArray(apiData.faculties)) {
-				faculties = apiData.faculties;
 			} else {
+				console.error('Unexpected organizations API response format:', apiData);
 				faculties = [];
 			}
 		} else {

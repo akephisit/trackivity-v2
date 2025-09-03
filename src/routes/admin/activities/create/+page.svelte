@@ -157,22 +157,10 @@
 		{ value: 'Other', label: 'อื่นๆ', description: 'กิจกรรมประเภทอื่นๆ' }
 	];
 
-	// แก้ไขการ parse ข้อมูลหน่วยงาน
-	let actualFaculties = [];
-	if (data.faculties) {
-		if (Array.isArray(data.faculties)) {
-			actualFaculties = data.faculties;
-		} else if (
-			(data.faculties as any).faculties &&
-			Array.isArray((data.faculties as any).faculties)
-		) {
-			actualFaculties = (data.faculties as any).faculties;
-		}
-	}
-
-	const facultyOptions = actualFaculties.map((faculty: any) => ({
-		value: faculty.id || faculty.faculty_id,
-		label: faculty.name || faculty.faculty_name
+	// Parse faculty data from API - should be filtered to only faculty-type organizations
+	const facultyOptions = (Array.isArray(data.faculties) ? data.faculties : []).map((faculty: any) => ({
+		value: faculty.id,
+		label: faculty.name
 	}));
 
 	// Academic year options - generate +/- 2 years from current Buddhist year
@@ -216,7 +204,15 @@
 	let selectedActivityType = $state<{ value: ActivityType; label: string } | undefined>(
 		activityTypeOptions.find(opt => opt.value === $formData.activity_type)
 	);
-	let selectedFaculties = $state<{ value: string; label: string }[]>([]);
+	// For multiple select, we use array of strings (faculty IDs) as that's what bits-ui expects
+	let selectedFacultyIds = $state<string[]>([]);
+	// Derive faculty objects for display purposes
+	let selectedFaculties = $derived(
+		selectedFacultyIds.map(id => {
+			const faculty = facultyOptions.find(f => f.value === id);
+			return faculty ? { value: id, label: faculty.label } : { value: id, label: id };
+		})
+	);
 	let selectedAcademicYear = $state<{ value: string; label: string } | undefined>(undefined);
 	let selectedActivityLevel = $state<{ value: string; label: string } | undefined>({ value: 'faculty', label: 'คณะ' });
 
@@ -596,16 +592,11 @@
 											/>
 											<Select.Root
 												type="multiple"
-												bind:value={selectedFaculties as any}
+												bind:value={selectedFacultyIds}
 												disabled={$submitting}
 												onValueChange={(values) => {
 													if (values && Array.isArray(values)) {
-														selectedFaculties = values.map((value) => {
-															const option = facultyOptions.find((opt: any) => opt.value === value);
-															return option
-																? { value: option.value, label: option.label }
-																: { value, label: value };
-														});
+														selectedFacultyIds = values;
 														$formData.eligible_organizations = values.join(',');
 														console.log(
 															'Updated eligible_organizations:',
@@ -628,10 +619,14 @@
 														<Select.Item value={option.value}>
 															<div class="flex items-center gap-2">
 																<div class="flex h-4 w-4 items-center justify-center">
-																	{#if selectedFaculties.some((f) => f.value === option.value)}
-																		<div class="h-3 w-3 rounded-sm bg-blue-600"></div>
+																	{#if selectedFacultyIds.includes(option.value)}
+																		<div class="h-3 w-3 rounded-sm bg-blue-600 border border-blue-600">
+																			<svg class="h-2 w-2 text-white" fill="currentColor" viewBox="0 0 8 8">
+																				<path d="m6.564.75-3.59 3.612-1.538-1.55L0 4.26l2.974 2.99L8 2.193z"/>
+																			</svg>
+																		</div>
 																	{:else}
-																		<div class="h-3 w-3 rounded-sm border border-gray-300"></div>
+																		<div class="h-3 w-3 rounded-sm border border-gray-300 bg-white"></div>
 																	{/if}
 																</div>
 																{option.label}
@@ -650,12 +645,10 @@
 															<button
 																type="button"
 																onclick={() => {
-																	selectedFaculties = selectedFaculties.filter(
-																		(f) => f.value !== faculty.value
+																	selectedFacultyIds = selectedFacultyIds.filter(
+																		(id) => id !== faculty.value
 																	);
-																	$formData.eligible_organizations = selectedFaculties
-																		.map((f) => f.value)
-																		.join(',');
+																	$formData.eligible_organizations = selectedFacultyIds.join(',');
 																}}
 																class="text-blue-600 hover:text-blue-800"
 															>

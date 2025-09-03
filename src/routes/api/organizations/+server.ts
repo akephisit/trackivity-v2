@@ -1,6 +1,6 @@
 import { json } from '@sveltejs/kit';
 import { db, organizations } from '$lib/server/db';
-import { eq } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 import jwt from 'jsonwebtoken';
 import { env } from '$env/dynamic/private';
 
@@ -14,7 +14,7 @@ function verifyToken(token: string) {
 
 export const GET = async ({ cookies }: { cookies: any }) => {
 	try {
-		// Get all active organizations (no auth required for basic list)
+		// Get all active faculty-type organizations only (no auth required for basic list)
 		const facultiesList = await db
 			.select({
 				id: organizations.id,
@@ -22,11 +22,15 @@ export const GET = async ({ cookies }: { cookies: any }) => {
 				code: organizations.code,
 				description: organizations.description,
 				status: organizations.status,
+				organizationType: organizations.organizationType,
 				createdAt: organizations.createdAt,
 				updatedAt: organizations.updatedAt
 			})
 			.from(organizations)
-			.where(eq(organizations.status, true))
+			.where(and(
+				eq(organizations.status, true),
+				eq(organizations.organizationType, 'faculty')
+			))
 			.orderBy(organizations.name);
 
 		return json({
