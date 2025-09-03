@@ -24,7 +24,8 @@
 		IconX,
 		IconRefresh,
 		IconSettings,
-		IconArrowBack
+		IconArrowBack,
+		IconBuilding
 	} from '@tabler/icons-svelte';
 
 	import type { PageData } from './$types';
@@ -178,8 +179,8 @@
 		try {
 			return new Date(dateString).toLocaleDateString('th-TH', {
 				year: 'numeric',
-				month: '2-digit',
-				day: '2-digit'
+				month: 'long',
+				day: 'numeric'
 			});
 		} catch {
 			return 'ไม่ระบุ';
@@ -311,6 +312,11 @@
 
 						<div class="grid grid-cols-1 gap-4 text-sm md:grid-cols-2">
 							<div class="flex items-center gap-2">
+								<IconBuilding class="size-4 text-muted-foreground" />
+								<span>หน่วยงานผู้จัด: {selectedActivity.organizer || 'ไม่ระบุ'}</span>
+							</div>
+
+							<div class="flex items-center gap-2">
 								<IconMapPin class="size-4 text-muted-foreground" />
 								<span>{selectedActivity.location}</span>
 							</div>
@@ -330,7 +336,7 @@
 								</span>
 							</div>
 
-							<div class="flex items-center gap-2">
+							<div class="flex items-center gap-2 md:col-span-2">
 								<Badge variant="default" class="bg-green-600 hover:bg-green-700">
 									<div class="flex items-center gap-1">
 										<div class="h-2 w-2 animate-pulse rounded-full bg-white"></div>
