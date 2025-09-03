@@ -1,4 +1,3 @@
-import { defineConfig } from 'drizzle-kit';
 import { existsSync, readFileSync } from 'fs';
 import { resolve } from 'path';
 
@@ -31,10 +30,12 @@ import { resolve } from 'path';
 
 if (!process.env.DATABASE_URL) throw new Error('DATABASE_URL is not set');
 
-export default defineConfig({
+const config = {
 	schema: './src/lib/server/db/schema.ts',
 	dialect: 'postgresql',
 	dbCredentials: { url: process.env.DATABASE_URL },
 	verbose: true,
 	strict: true
-});
+};
+
+export default config;
