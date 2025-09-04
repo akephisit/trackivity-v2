@@ -65,6 +65,7 @@ export interface SessionUser {
 	user_id: UUID;
 	student_id: string;
 	email: string;
+	prefix?: string;
 	first_name: string;
 	last_name: string;
 	phone?: string;

@@ -147,8 +147,62 @@ export const adminUpdateSchema = z.object({
 	permissions: z.array(z.string()).optional()
 });
 
+// Profile update schema
+export const profileUpdateSchema = z.object({
+	prefix: z
+		.string()
+		.min(1, 'กรุณาเลือกคำนำหน้า')
+		.refine((val) => PrefixOptions.some((option) => option.value === val), {
+			message: 'กรุณาเลือกคำนำหน้าที่ถูกต้อง'
+		}),
+	first_name: z
+		.string()
+		.min(1, 'กรุณาใส่ชื่อจริง')
+		.min(2, 'ชื่อต้องมีอย่างน้อย 2 ตัวอักษร')
+		.max(100, 'ชื่อต้องไม่เกิน 100 ตัวอักษร'),
+	last_name: z
+		.string()
+		.min(1, 'กรุณาใส่นามสกุล')
+		.min(2, 'นามสกุลต้องมีอย่างน้อย 2 ตัวอักษร')
+		.max(100, 'นามสกุลต้องไม่เกิน 100 ตัวอักษร'),
+	email: z
+		.string()
+		.min(1, 'กรุณาใส่อีเมล')
+		.email('รูปแบบอีเมลไม่ถูกต้อง')
+		.max(255, 'อีเมลยาวเกินไป'),
+	phone: z
+		.string()
+		.optional()
+		.refine((phone) => {
+			if (!phone || phone.trim() === '') return true;
+			// Thai phone number validation (10 digits, starting with 0)
+			const phoneRegex = /^0[0-9]{9}$/;
+			return phoneRegex.test(phone.replace(/[^\d]/g, ''));
+		}, 'รูปแบบเบอร์โทรศัพท์ไม่ถูกต้อง (ต้องเป็น 10 หลัก เริ่มด้วย 0)'),
+	address: z.string().max(500, 'ที่อยู่ยาวเกินไป').optional()
+});
+
+// Password change schema
+export const changePasswordSchema = z.object({
+	current_password: z.string().min(1, 'กรุณาใส่รหัสผ่านปัจจุบัน'),
+	new_password: z
+		.string()
+		.min(8, 'รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร')
+		.max(128, 'รหัสผ่านยาวเกินไป')
+		.refine((password) => {
+			// Password must contain at least one letter and one number
+			return /^(?=.*[A-Za-z])(?=.*\d).{8,}$/.test(password);
+		}, 'รหัสผ่านต้องมีตัวอักษรและตัวเลขอย่างน้อย 1 ตัว'),
+	confirm_password: z.string().min(1, 'กรุณายืนยันรหัสผ่าน')
+}).refine((data) => data.new_password === data.confirm_password, {
+	message: 'การยืนยันรหัสผ่านไม่ตรงกัน',
+	path: ['confirm_password']
+});
+
 export type LoginFormData = z.infer<typeof loginSchema>;
 export type AdminLoginFormData = z.infer<typeof adminLoginSchema>;
 export type RegisterFormData = z.infer<typeof registerSchema>;
 export type AdminCreateFormData = z.infer<typeof adminCreateSchema>;
 export type AdminUpdateFormData = z.infer<typeof adminUpdateSchema>;
+export type ProfileUpdateFormData = z.infer<typeof profileUpdateSchema>;
+export type ChangePasswordFormData = z.infer<typeof changePasswordSchema>;

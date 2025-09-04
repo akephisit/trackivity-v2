@@ -399,6 +399,38 @@ export class ApiClient {
 		return this.post<LoginResponse>('/api/auth/refresh');
 	}
 
+	// ===== STUDENT PROFILE MANAGEMENT =====
+	/**
+	 * Get current student's profile information
+	 */
+	async getStudentProfile(): Promise<ApiResponse<SessionUser>> {
+		return this.get<SessionUser>('/api/student/profile');
+	}
+
+	/**
+	 * Update current student's profile information
+	 */
+	async updateStudentProfile(profileData: {
+		first_name: string;
+		last_name: string;
+		email: string;
+		phone?: string;
+		address?: string;
+	}): Promise<ApiResponse<any>> {
+		return this.patch('/api/student/profile', profileData);
+	}
+
+	/**
+	 * Change current student's password
+	 */
+	async changeStudentPassword(passwordData: {
+		current_password: string;
+		new_password: string;
+		confirm_password: string;
+	}): Promise<ApiResponse<any>> {
+		return this.post('/api/student/profile/change-password', passwordData);
+	}
+
 	// ===== USER MANAGEMENT =====
 	async getUsers(params?: {
 		page?: number;

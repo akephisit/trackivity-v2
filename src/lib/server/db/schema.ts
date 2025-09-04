@@ -130,6 +130,8 @@ export const users = pgTable(
 		prefix: varchar('prefix', { length: 50 }).notNull().default('Generic'),
 		firstName: varchar('first_name', { length: 100 }).notNull(),
 		lastName: varchar('last_name', { length: 100 }).notNull(),
+		phone: varchar('phone', { length: 20 }),
+		address: text('address'),
 		qrSecret: varchar('qr_secret', { length: 255 }).notNull().unique(),
 		status: userStatus('status').notNull().default('active'),
 		departmentId: uuid('department_id').references(() => departments.id, { onDelete: 'restrict' }),
