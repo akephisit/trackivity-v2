@@ -229,7 +229,7 @@
 	function getPrefixLabel(prefixValue?: string): string {
 		if (!prefixValue) return 'ไม่ระบุ';
 		const prefix = PrefixOptions.find(p => p.value === prefixValue);
-		return prefix ? prefix.label : prefixValue;
+		return prefix ? prefix.label : 'ไม่ระบุ';
 	}
 
 	function getFieldError(fieldName: string, errors: Record<string, string[]>): string {
@@ -237,7 +237,16 @@
 	}
 
 	function isFormValid(): boolean {
-		return !!(formData.prefix && formData.first_name.trim() && formData.last_name.trim() && formData.email.trim());
+		return !!(
+			formData.prefix && 
+			formData.prefix.trim() !== '' &&
+			formData.first_name && 
+			formData.first_name.trim() !== '' &&
+			formData.last_name && 
+			formData.last_name.trim() !== '' &&
+			formData.email && 
+			formData.email.trim() !== ''
+		);
 	}
 
 	function isPasswordFormValid(): boolean {
