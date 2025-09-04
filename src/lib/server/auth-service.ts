@@ -1,6 +1,6 @@
 import { db, users, adminRoles } from '$lib/server/db';
 import { eq } from 'drizzle-orm';
-import bcrypt from 'bcrypt';
+import argon2 from 'argon2';
 import jwt from 'jsonwebtoken';
 import type { SessionUser, Permission } from '$lib/types';
 import { env } from '$env/dynamic/private';
@@ -54,7 +54,7 @@ export async function authenticateAndIssueToken(input: AuthInput): Promise<AuthR
 		throw err;
 	}
 
-	const isValidPassword = await bcrypt.compare(password, foundUser.passwordHash);
+	const isValidPassword = await argon2.verify(foundUser.passwordHash, password);
 	if (!isValidPassword) {
 		const err: any = new Error('Invalid credentials');
 		err.code = 'AUTH_ERROR';

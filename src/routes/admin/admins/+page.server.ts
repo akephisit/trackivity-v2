@@ -8,7 +8,7 @@ import type { AdminRole, Organization } from '$lib/types/admin';
 import { AdminLevel } from '$lib/types/admin';
 import { db, users, adminRoles, organizations, departments } from '$lib/server/db';
 import { eq, and, desc, sql } from 'drizzle-orm';
-import bcrypt from 'bcrypt';
+import argon2 from 'argon2';
 import crypto from 'crypto';
 
 export const load: PageServerLoad = async (event) => {
@@ -179,7 +179,7 @@ export const actions: Actions = {
 			}
 
 			// Prepare required fields for users table
-			const passwordHash = await bcrypt.hash(form.data.password, 10);
+			const passwordHash = await argon2.hash(form.data.password);
 			const qrSecret = crypto.randomBytes(16).toString('hex');
 			const genStudentId = () => 'A' + Math.floor(100000000 + Math.random() * 900000000).toString();
 

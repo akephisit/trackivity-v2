@@ -2,7 +2,7 @@
 
 import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
-import bcrypt from 'bcrypt';
+import argon2 from 'argon2';
 import crypto from 'crypto';
 import * as schema from '../src/lib/server/db/schema';
 import { eq } from 'drizzle-orm';
@@ -85,8 +85,7 @@ async function createSuperAdmin(adminData: SuperAdminData) {
 		}
 
 		// Hash password
-		const saltRounds = 12;
-		const passwordHash = await bcrypt.hash(adminData.password, saltRounds);
+		const passwordHash = await argon2.hash(adminData.password);
 
 		// Generate unique QR secret
 		const qrSecret = crypto.randomBytes(32).toString('hex');

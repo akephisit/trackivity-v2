@@ -1,7 +1,7 @@
 import { json, type RequestHandler } from '@sveltejs/kit';
 import { db, users } from '$lib/server/db';
 import { eq } from 'drizzle-orm';
-import bcrypt from 'bcrypt';
+import argon2 from 'argon2';
 import crypto from 'crypto';
 
 interface RegisterBody {
@@ -71,7 +71,7 @@ export const POST: RequestHandler = async ({ request }) => {
 		}
 
 		// Create user
-		const passwordHash = await bcrypt.hash(password, 10);
+		const passwordHash = await argon2.hash(password);
 		const qrSecret = crypto.randomBytes(16).toString('hex');
 
 		const [inserted] = await db

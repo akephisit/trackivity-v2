@@ -2,7 +2,7 @@ import { json } from '@sveltejs/kit';
 import { db, users, departments, organizations } from '$lib/server/db';
 import { eq, like, and, sql } from 'drizzle-orm';
 import jwt from 'jsonwebtoken';
-import bcrypt from 'bcrypt';
+import argon2 from 'argon2';
 import { env } from '$env/dynamic/private';
 
 // Helper function to verify JWT and get user info
@@ -180,7 +180,7 @@ export const POST = async ({ request, cookies }: { request: any; cookies: any })
 		}
 
 		// Hash password
-		const passwordHash = await bcrypt.hash(password, 10);
+		const passwordHash = await argon2.hash(password);
 
 		// Generate QR secret
 		const qrSecret = crypto.randomUUID();

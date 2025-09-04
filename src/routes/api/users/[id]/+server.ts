@@ -2,7 +2,7 @@ import { json } from '@sveltejs/kit';
 import { db, users, departments, organizations } from '$lib/server/db';
 import { eq } from 'drizzle-orm';
 import jwt from 'jsonwebtoken';
-import bcrypt from 'bcrypt';
+import argon2 from 'argon2';
 import { env } from '$env/dynamic/private';
 
 function verifyToken(token: string) {
@@ -155,7 +155,7 @@ export const PUT = async ({
 
 		// Hash password if provided
 		if (userData.password) {
-			updateData.passwordHash = await bcrypt.hash(userData.password, 10);
+			updateData.passwordHash = await argon2.hash(userData.password);
 		}
 
 		// Update user
