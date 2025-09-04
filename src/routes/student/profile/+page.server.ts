@@ -4,7 +4,7 @@ import { db, users } from '$lib/server/db';
 import { eq } from 'drizzle-orm';
 import { fail } from '@sveltejs/kit';
 import { z } from 'zod';
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 
 /**
  * Profile update validation schema
