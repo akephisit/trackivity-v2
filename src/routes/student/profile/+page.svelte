@@ -54,6 +54,10 @@
 		address: ''
 	});
 
+	// Track if form has changes to show save button
+	let hasFormChanges = $state(false);
+
+
 	// Password form data
 	let passwordData: ChangePasswordFormData = $state({
 		current_password: '',
@@ -72,6 +76,23 @@
 		}
 	});
 
+	// Watch for form changes to show/hide save button  
+	$effect(() => {
+		if ($currentUser && editing) {
+			hasFormChanges = (
+				formData.prefix !== ($currentUser.prefix || '') ||
+				formData.first_name !== ($currentUser.first_name || '') ||
+				formData.last_name !== ($currentUser.last_name || '') ||
+				formData.email !== ($currentUser.email || '') ||
+				formData.phone !== ($currentUser.phone || '') ||
+				formData.address !== ($currentUser.address || '')
+			);
+		} else {
+			hasFormChanges = false;
+		}
+	});
+
+
 	function initializeFormData() {
 		if ($currentUser) {
 			formData = {
@@ -89,12 +110,14 @@
 		editing = true;
 		error = null;
 		fieldErrors = {};
+		hasFormChanges = false;
 	}
 
 	function cancelEdit() {
 		editing = false;
 		error = null;
 		fieldErrors = {};
+		hasFormChanges = false;
 		initializeFormData();
 	}
 
@@ -237,9 +260,8 @@
 	}
 
 	function isFormValid(): boolean {
-		return !!(
-			formData.prefix && 
-			formData.prefix.trim() !== '' &&
+		// Check required fields - prefix is optional in validation but required fields must have values
+		const hasRequiredFields = !!(
 			formData.first_name && 
 			formData.first_name.trim() !== '' &&
 			formData.last_name && 
@@ -247,6 +269,11 @@
 			formData.email && 
 			formData.email.trim() !== ''
 		);
+		
+		// If prefix is provided, it must not be empty
+		const prefixValid = !formData.prefix || formData.prefix.trim() !== '';
+		
+		return hasRequiredFields && prefixValid;
 	}
 
 	function isPasswordFormValid(): boolean {
@@ -392,8 +419,13 @@
 								</Alert>
 							{/if}
 
+							<!-- Action buttons - always show save/cancel when editing -->
 							<div class="flex gap-2">
-								<Button onclick={saveProfile} disabled={loading || !isFormValid()} class="flex-1">
+								<Button 
+									onclick={saveProfile} 
+									disabled={loading || !hasFormChanges || !isFormValid()} 
+									class="flex-1"
+								>
 									{#if loading}
 										กำลังบันทึก...
 									{:else}
@@ -406,6 +438,12 @@
 									ยกเลิก
 								</Button>
 							</div>
+							{#if !hasFormChanges}
+								<p class="text-sm text-muted-foreground text-center">ไม่มีการเปลี่ยนแปลงข้อมูล</p>
+							{/if}
+							{#if !isFormValid()}
+								<p class="text-sm text-red-500 text-center">กรุณากรอกข้อมูลที่จำเป็นให้ครบถ้วน</p>
+							{/if}
 						</div>
 					{:else}
 						<!-- View Mode -->
