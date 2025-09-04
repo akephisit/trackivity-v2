@@ -449,17 +449,26 @@
 					<span>ระบบจะบันทึกและแสดงผลการสแกนอัตโนมัติ พร้อมป้องกันการสแกนซ้ำ</span>
 				</div>
 				
-				<!-- Enhanced duplicate prevention info -->
-				<div class="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-					<div class="font-medium text-blue-800 mb-2 flex items-center gap-2">
+				<!-- Enhanced flow control info -->
+				<div class="mt-4 p-3 bg-orange-50 border border-orange-200 rounded-lg">
+					<div class="font-medium text-orange-800 mb-2 flex items-center gap-2">
 						<IconX class="size-4" />
-						ระบบป้องกันการสแกนซ้ำ
+						ระบบควบคุมลำดับขั้นตอนอย่างเคร่งครัด
 					</div>
-					<div class="space-y-1 text-xs text-blue-700">
-						<p>• นักศึกษาแต่ละคนสามารถเช็คอินและเช็คเอาท์ได้เพียงครั้งละหนึ่งครั้งเท่านั้น</p>
-						<p>• การพยายามสแกนซ้ำจะแสดงข้อความแจ้งเตือนและคำแนะนำ</p>
-						<p>• หากมีการสแกนซ้ำติดต่อกันหลายครั้ง ระบบจะแสดงคำแนะนำเพิ่มเติม</p>
-						<p>• สามารถรีเซ็ตการแจ้งเตือนได้โดยกดปุ่ม "รีเซ็ตการแจ้งเตือน"</p>
+					<div class="space-y-2 text-xs text-orange-700">
+						<div class="flex items-center gap-2">
+							<span class="px-2 py-1 bg-white rounded text-xs font-mono text-gray-600">ยังไม่เริ่ม</span>
+							<span>→</span>
+							<span class="px-2 py-1 bg-green-100 text-green-800 rounded text-xs font-mono">เช็คอิน</span>
+							<span>→</span>
+							<span class="px-2 py-1 bg-orange-100 text-orange-800 rounded text-xs font-mono">เช็คเอาท์</span>
+							<span>→</span>
+							<span class="px-2 py-1 bg-gray-100 text-gray-600 rounded text-xs font-mono">สิ้นสุด</span>
+						</div>
+						<p>• <strong>หลังเช็คอิน:</strong> สามารถเช็คเอาท์ได้เท่านั้น ไม่สามารถเช็คอินซ้ำได้</p>
+						<p>• <strong>หลังเช็คเอาท์:</strong> ไม่สามารถสแกนอีกครั้งได้เลย (ทั้งเช็คอินและเช็คเอาท์)</p>
+						<p>• <strong>ไม่สามารถ:</strong> ย้อนกลับขั้นตอน, ข้ามขั้นตอน, หรือทำซ้ำหลังสิ้นสุด</p>
+						<p>• การพยายามละเมิดลำดับขั้นตอนจะถูกปฏิเสธและแสดงข้อความเตือน</p>
 					</div>
 				</div>
 			</div>

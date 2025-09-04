@@ -3,7 +3,7 @@
  * Provides comprehensive status mapping, UI feedback, and message management
  */
 
-export type StatusCategory = 'success' | 'already_done' | 'restricted' | 'error';
+export type StatusCategory = 'success' | 'already_done' | 'restricted' | 'flow_violation' | 'error';
 
 export type StatusCode = 
   // Success statuses
@@ -114,26 +114,26 @@ export const STATUS_CONFIG: Record<StatusCode, StatusConfig> = {
     vibration: [100]
   },
   ALREADY_CHECKED_OUT: {
-    category: 'already_done',
-    color: 'text-blue-700',
-    bgColor: 'bg-blue-50',
-    borderColor: 'border-blue-200',
-    icon: 'info-circle',
-    iconColor: 'text-blue-600',
-    duration: 5000,
-    sound: 'info',
-    vibration: [100]
+    category: 'flow_violation',
+    color: 'text-red-700',
+    bgColor: 'bg-red-50',
+    borderColor: 'border-red-200',
+    icon: 'x-circle',
+    iconColor: 'text-red-600',
+    duration: 7000,
+    sound: 'error',
+    vibration: [400, 200, 400, 200, 400]
   },
   ALREADY_COMPLETED: {
-    category: 'already_done',
-    color: 'text-blue-700',
-    bgColor: 'bg-blue-50',
-    borderColor: 'border-blue-200',
-    icon: 'info-circle',
-    iconColor: 'text-blue-600',
-    duration: 5000,
-    sound: 'info',
-    vibration: [100]
+    category: 'flow_violation',
+    color: 'text-red-700',
+    bgColor: 'bg-red-50',
+    borderColor: 'border-red-200',
+    icon: 'x-circle',
+    iconColor: 'text-red-600',
+    duration: 7000,
+    sound: 'error',
+    vibration: [400, 200, 400, 200, 400]
   },
   REPEATED_DUPLICATE_ATTEMPT: {
     category: 'already_done',
@@ -461,6 +461,14 @@ export function formatStatusDetails(details?: Record<string, any>): string[] {
   
   if (details.userStatus) {
     formatted.push(`สถานะบัญชี: ${getUserStatusText(details.userStatus)}`);
+  }
+  
+  if (details.flowMessage) {
+    formatted.push(`${details.flowMessage}`);
+  }
+  
+  if (details.advice) {
+    formatted.push(`💡 ${details.advice}`);
   }
   
   return formatted;

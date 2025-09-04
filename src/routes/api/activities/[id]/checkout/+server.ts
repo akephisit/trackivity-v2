@@ -221,31 +221,51 @@ export const POST: RequestHandler = async ({ params, request, locals }) => {
     
     const participation = existing[0];
     
-    // Check if already checked out
+    // STRICT ENFORCEMENT: Prevent check-out after already checked out
     if (participation.status === 'checked_out' && participation.checkedOutAt) {
       return json({ 
         success: false, 
         error: { 
           code: 'ALREADY_CHECKED_OUT', 
-          message: 'คุณได้เช็คเอาท์แล้ว', 
-          category: 'already_done',
+          message: 'คุณได้เช็คเอาท์แล้ว ไม่สามารถเช็คเอาท์อีกครั้งได้', 
+          category: 'flow_violation',
           details: {
             previousCheckOut: participation.checkedOutAt,
-            currentStatus: participation.status
+            currentStatus: participation.status,
+            flowMessage: 'การเข้าร่วมกิจกรรมได้สิ้นสุดแล้ว'
+          }
+        } 
+      }, { status: 400 });
+    }
+    
+    // STRICT ENFORCEMENT: Prevent any action after completion
+    if (participation.status === 'completed') {
+      return json({ 
+        success: false, 
+        error: { 
+          code: 'ALREADY_COMPLETED', 
+          message: 'คุณได้เข้าร่วมกิจกรรมครบถ้วนแล้ว ไม่สามารถเช็คเอาท์อีกครั้งได้', 
+          category: 'flow_violation',
+          details: {
+            completionStatus: participation.status,
+            flowMessage: 'การเข้าร่วมกิจกรรมได้สิ้นสุดแล้ว'
           }
         } 
       }, { status: 400 });
     }
     
     // Must be checked in first
-    if (participation.status !== 'checked_in' && participation.status !== 'completed') {
+    if (participation.status !== 'checked_in') {
       return json({ 
         success: false, 
         error: { 
           code: 'NOT_CHECKED_IN_YET', 
           message: 'ต้องเช็คอินก่อนจึงจะสามารถเช็คเอาท์ได้', 
           category: 'restricted',
-          details: { currentStatus: participation.status }
+          details: { 
+            currentStatus: participation.status,
+            flowMessage: 'กรุณาเปลี่ยนเป็นโหมดเช็คอินเพื่อเช็คอินก่อน'
+          }
         } 
       }, { status: 400 });
     }

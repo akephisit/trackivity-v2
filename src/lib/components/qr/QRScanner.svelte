@@ -1648,8 +1648,32 @@
 													<p>• หรือตรวจสอบประวัติการเข้าร่วมในด้านล่าง</p>
 												{:else}
 													<p>• นักศึกษาคนนี้ได้เช็คเอาท์แล้ว</p>
-													<p>• หากต้องการเช็คอินใหม่ กรุณาติดต่อผู้ดูแลระบบ</p>
+													<p>• การเข้าร่วมกิจกรรมได้สิ้นสุดแล้ว ไม่สามารถสแกนอีกครั้งได้</p>
 												{/if}
+											</div>
+										</div>
+									{/if}
+									
+									<!-- Flow violation warning for check-out after completion or invalid transitions -->
+									{#if currentStatus.error?.category === 'flow_violation'}
+										<div class="mt-2 p-3 bg-red-100 border-2 border-red-300 rounded-lg text-red-800">
+											<div class="flex items-center gap-2 text-sm font-bold mb-2">
+												<div class="w-2 h-2 bg-red-600 rounded-full animate-pulse"></div>
+												⚠️ ละเมิดลำดับขั้นตอน
+											</div>
+											<div class="text-xs space-y-1">
+												<p class="font-medium">กิจกรรมนี้มีลำดับขั้นตอนที่เคร่งครัด:</p>
+												<div class="flex items-center gap-2 my-2">
+													<span class="px-2 py-1 bg-white rounded text-xs font-mono">ยังไม่เริ่ม</span>
+													<span>→</span>
+													<span class="px-2 py-1 bg-green-100 text-green-800 rounded text-xs font-mono">เช็คอิน</span>
+													<span>→</span>
+													<span class="px-2 py-1 bg-orange-100 text-orange-800 rounded text-xs font-mono">เช็คเอาท์</span>
+													<span>→</span>
+													<span class="px-2 py-1 bg-gray-100 text-gray-800 rounded text-xs font-mono">สิ้นสุด</span>
+												</div>
+												<p class="text-red-700 font-medium">• ไม่สามารถย้อนกลับหรือข้ามขั้นตอนได้</p>
+												<p class="text-red-700">• เมื่อเช็คเอาท์แล้ว ไม่สามารถเข้าร่วมกิจกรรมอีกครั้งได้</p>
 											</div>
 										</div>
 									{/if}

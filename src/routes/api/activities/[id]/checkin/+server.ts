@@ -315,7 +315,7 @@ export const POST: RequestHandler = async ({ params, request, locals }) => {
 
     const now = new Date();
 
-    // Check if already participated/checked in
+    // Check if already participated/checked in - STRICT ONE-WAY FLOW
     if (existing.length > 0) {
       const participation = existing[0];
       
@@ -328,21 +328,41 @@ export const POST: RequestHandler = async ({ params, request, locals }) => {
             category: 'already_done',
             details: {
               previousCheckIn: participation.checkedInAt,
-              currentStatus: participation.status
+              currentStatus: participation.status,
+              advice: 'หากต้องการเช็คเอาท์ กรุณาเปลี่ยนเป็นโหมดเช็คเอาท์'
             }
           } 
         }, { status: 400 });
       }
       
+      // STRICT ENFORCEMENT: Prevent check-in after check-out
+      if (participation.status === 'checked_out' && participation.checkedOutAt) {
+        return json({ 
+          success: false, 
+          error: { 
+            code: 'ALREADY_CHECKED_OUT', 
+            message: 'คุณได้เช็คเอาท์แล้ว ไม่สามารถเช็คอินอีกครั้งได้', 
+            category: 'flow_violation',
+            details: {
+              previousCheckOut: participation.checkedOutAt,
+              currentStatus: participation.status,
+              flowMessage: 'การเข้าร่วมกิจกรรมได้สิ้นสุดแล้ว'
+            }
+          } 
+        }, { status: 400 });
+      }
+      
+      // STRICT ENFORCEMENT: Prevent any action after completion
       if (participation.status === 'completed') {
         return json({ 
           success: false, 
           error: { 
             code: 'ALREADY_COMPLETED', 
-            message: 'คุณได้เข้าร่วมกิจกรรมครบแล้ว', 
-            category: 'already_done',
+            message: 'คุณได้เข้าร่วมกิจกรรมครบถ้วนแล้ว ไม่สามารถเช็คอินอีกครั้งได้', 
+            category: 'flow_violation',
             details: {
-              completionStatus: participation.status
+              completionStatus: participation.status,
+              flowMessage: 'การเข้าร่วมกิจกรรมได้สิ้นสุดแล้ว'
             }
           } 
         }, { status: 400 });
