@@ -97,11 +97,11 @@
 						อีเมล: <span class="font-medium">{$currentUser?.email}</span>
 					</p>
 					<div class="flex gap-2 pt-2">
-						<Button size="sm" href="/qr">
+						<Button size="sm" href="/student/qr">
 							<IconQrcode class="mr-2 size-4" />
 							ดู QR Code
 						</Button>
-						<Button size="sm" variant="outline" href="/activities">
+						<Button size="sm" variant="outline" href="/student/activities">
 							<IconCalendarEvent class="mr-2 size-4" />
 							กิจกรรมของฉัน
 						</Button>
@@ -139,7 +139,7 @@
 						<p class="text-sm text-muted-foreground">QR Code ยังไม่พร้อมใช้งาน</p>
 					{/if}
 
-					<Button size="sm" href="/qr" class="w-full">
+					<Button size="sm" href="/student/qr" class="w-full">
 						<IconQrcode class="mr-2 size-4" />
 						ไปที่ QR Code
 					</Button>
@@ -200,7 +200,7 @@
 						<IconCalendarEvent class="size-5" />
 						กิจกรรมล่าสุด
 					</span>
-					<Button size="sm" variant="outline" href="/activities">
+					<Button size="sm" variant="outline" href="/student/activities">
 						ดูทั้งหมด
 						<IconChevronRight class="ml-1 size-4" />
 					</Button>
@@ -223,16 +223,23 @@
 						{/each}
 					</div>
 				{:else if recentActivities.length === 0}
-					<div class="py-6 text-center text-muted-foreground">
-						<IconCalendarEvent class="mx-auto mb-2 size-8 opacity-50" />
-						<p>ยังไม่มีกิจกรรม</p>
+					<div class="py-8 text-center text-muted-foreground">
+						<div class="mx-auto mb-3 flex size-12 items-center justify-center rounded-full bg-muted">
+							<IconCalendarEvent class="size-6 opacity-60" />
+						</div>
+						<p class="font-medium">ยังไม่มีกิจกรรม</p>
+						<p class="mt-1 text-sm text-muted-foreground">กิจกรรมใหม่จะปรากฏที่นี่เมื่อมีการเพิ่ม</p>
+						<Button class="mt-3" size="sm" href="/student/activities">
+							<IconCalendarEvent class="mr-2 size-4" />
+							ดูกิจกรรมทั้งหมด
+						</Button>
 					</div>
 				{:else}
 					<div class="space-y-4">
 						{#each recentActivities as activity}
 							<div class="space-y-2 rounded-lg border p-3">
 								<div class="flex items-start justify-between">
-									<h4 class="text-sm font-medium">{activity.name}</h4>
+									<h4 class="text-sm font-medium">{activity.name || activity.title}</h4>
 									<Badge variant={getActivityBadgeVariant(activity.activity_type)}>
 										{getActivityTypeDisplayName(activity.activity_type)}
 									</Badge>
@@ -252,7 +259,7 @@
 									{#if activity.max_participants}
 										<span class="flex items-center gap-1">
 											<IconUsers class="size-3" />
-											{activity.current_participants}/{activity.max_participants}
+											{activity.current_participants || 0}/{activity.max_participants}
 										</span>
 									{/if}
 								</div>
@@ -271,7 +278,7 @@
 						<IconHistory class="size-5" />
 						ประวัติการเข้าร่วม
 					</span>
-					<Button size="sm" variant="outline" href="/activities?tab=history">
+					<Button size="sm" variant="outline" href="/student/history">
 						ดูทั้งหมด
 						<IconChevronRight class="ml-1 size-4" />
 					</Button>
@@ -288,16 +295,22 @@
 						{/each}
 					</div>
 				{:else if participationHistory.length === 0}
-					<div class="py-6 text-center text-muted-foreground">
-						<IconHistory class="mx-auto mb-2 size-8 opacity-50" />
-						<p>ยังไม่มีประวัติการเข้าร่วม</p>
-						<p class="mt-1 text-xs">เมื่อคุณเข้าร่วมกิจกรรมแล้ว ประวัติจะแสดงที่นี่</p>
+					<div class="py-8 text-center text-muted-foreground">
+						<div class="mx-auto mb-3 flex size-12 items-center justify-center rounded-full bg-muted">
+							<IconHistory class="size-6 opacity-60" />
+						</div>
+						<p class="font-medium">ยังไม่มีประวัติการเข้าร่วม</p>
+						<p class="mt-1 text-sm text-muted-foreground">เมื่อคุณเข้าร่วมกิจกรรมแล้ว ประวัติจะแสดงที่นี่</p>
+						<Button class="mt-3" size="sm" href="/student/activities">
+							<IconCalendarEvent class="mr-2 size-4" />
+							ดูกิจกรรม
+						</Button>
 					</div>
 				{:else}
 					<div class="space-y-3">
 						{#each participationHistory as participation}
 							<div class="space-y-2 rounded-lg border p-3">
-								<h4 class="text-sm font-medium">{participation.activity?.name}</h4>
+								<h4 class="text-sm font-medium">{participation.activity?.name || participation.activity?.title}</h4>
 								<div class="flex items-center gap-4 text-xs text-muted-foreground">
 									<span class="flex items-center gap-1">
 										<IconClock class="size-3" />
@@ -325,15 +338,15 @@
 		</CardHeader>
 		<CardContent>
 			<div class="grid gap-3 md:grid-cols-3">
-				<Button href="/qr" class="justify-start">
+				<Button href="/student/qr" class="justify-start">
 					<IconQrcode class="mr-2 size-4" />
 					ดู QR Code ของฉัน
 				</Button>
-				<Button href="/activities" variant="outline" class="justify-start">
+				<Button href="/student/activities" variant="outline" class="justify-start">
 					<IconCalendarEvent class="mr-2 size-4" />
 					ดูกิจกรรมทั้งหมด
 				</Button>
-				<Button href="/profile" variant="outline" class="justify-start">
+				<Button href="/student/profile" variant="outline" class="justify-start">
 					<IconUsers class="mr-2 size-4" />
 					แก้ไขโปรไฟล์
 				</Button>
