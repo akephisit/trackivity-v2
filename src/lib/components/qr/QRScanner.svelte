@@ -130,7 +130,6 @@
 	// Enhanced duplicate tracking
 	let recentlyScannedUsers = $state<Map<string, { timestamp: number; scanMode: string; status: string }>>(new Map());
 	let duplicateAttemptCount = $state<number>(0);
-	let lastDuplicateTime = $state<number>(0);
 
 	// Scan mode: check-in or check-out
 	let scanMode = $state<'checkin' | 'checkout'>('checkin');
@@ -654,8 +653,10 @@
 					participation_status: processedResult.data.participation_status,
 					checked_in_at: processedResult.data.checked_in_at || processedResult.data.checked_out_at,
 					category: processedResult.category,
-					statusCode: 'CHECKIN_SUCCESS'
+					statusCode: scanMode === 'checkin' ? 'CHECKIN_SUCCESS' : 'CHECKOUT_SUCCESS'
 				};
+
+				// The flags are already set by the API, no need to modify them here
 
 				// Add to history
 				if (scanResult.user_name && scanResult.student_id) {
@@ -706,50 +707,37 @@
 	 * Display status with visual and audio feedback
 	 */
 	function displayStatus(result: QRScanResult) {
-		// Handle duplicate detection and enhanced feedback
+		// Handle duplicate detection with minimal feedback for new flexible flow
 		const now = Date.now();
-		const isDuplicateAttempt = result.error && 
-			(result.error.code === 'ALREADY_CHECKED_IN' || result.error.code === 'ALREADY_CHECKED_OUT');
+		const isDuplicateSuccess = result.success && result.data && 
+			((result.data as any).is_duplicate === true);
 		
-		// Track duplicate attempts for better feedback
-		if (isDuplicateAttempt) {
-			if (now - lastDuplicateTime < 10000) { // Within 10 seconds
-				duplicateAttemptCount++;
-			} else {
-				duplicateAttemptCount = 1;
-			}
-			lastDuplicateTime = now;
+		// Minimal tracking for duplicate attempts - less intrusive
+		if (isDuplicateSuccess) {
+			// Simple duplicate counter without complex timing logic
+			duplicateAttemptCount = (duplicateAttemptCount || 0) + 1;
 			
-			// Enhanced message for repeated duplicate attempts
-			if (duplicateAttemptCount > 1) {
+			// Minimal message enhancement for duplicates
+			if (duplicateAttemptCount > 2) { // Only show after multiple duplicates
 				result = {
 					...result,
-					message: `${result.message} (ครั้งที่ ${duplicateAttemptCount})`,
-					error: {
-						...result.error!,
-						message: `${result.error!.message} - กรุณาตรวจสอบสถานะการเข้าร่วม`,
-						details: {
-							...result.error!.details,
-							duplicateAttempts: duplicateAttemptCount,
-							advice: 'หากต้องการเปลี่ยนสถานะ กรุณาเปลี่ยนโหมดสแกน'
-						}
-					}
+					message: `${result.message} (สแกนซ้ำ ${duplicateAttemptCount} ครั้ง)`,
 				};
 			}
+		}
+		
+		// Track this user's recent scan with minimal data
+		if (result.data?.student_id) {
+			recentlyScannedUsers.set(result.data.student_id, {
+				timestamp: now,
+				scanMode: scanMode,
+				status: result.success ? 'SUCCESS' : (result.error?.code || 'ERROR')
+			});
 			
-			// Track this user's recent scan
-			if (result.data?.student_id && result.error) {
-				recentlyScannedUsers.set(result.data.student_id, {
-					timestamp: now,
-					scanMode: scanMode,
-					status: result.error.code
-				});
-				
-				// Clean up old entries (older than 1 minute)
-				for (const [studentId, data] of recentlyScannedUsers.entries()) {
-					if (now - data.timestamp > 60000) {
-						recentlyScannedUsers.delete(studentId);
-					}
+			// Clean up old entries (older than 2 minutes)
+			for (const [studentId, data] of recentlyScannedUsers.entries()) {
+				if (now - data.timestamp > 120000) {
+					recentlyScannedUsers.delete(studentId);
 				}
 			}
 		}
@@ -780,24 +768,18 @@
 		const statusCode = result.error?.code || (result.success ? (scanMode === 'checkin' ? 'CHECKIN_SUCCESS' : 'CHECKOUT_SUCCESS') : 'INTERNAL_ERROR');
 		const config = getStatusConfig(statusCode);
 		
-		// Enhanced duration for duplicate attempts
-		const displayDuration = isDuplicateAttempt && duplicateAttemptCount > 1 ? config.duration * 1.5 : config.duration;
+		// Minimal duration for all statuses - less intrusive
+		const displayDuration = isDuplicateSuccess ? Math.min(config.duration, 2500) : Math.min(config.duration, 4000);
 		
 		// Audio feedback
 		if (soundEnabled) {
 			playStatusSound(statusCode);
 		}
 		
-		// Haptic feedback - stronger for duplicates
+		// Minimal haptic feedback
 		if (vibrationEnabled) {
-			if (isDuplicateAttempt && duplicateAttemptCount > 1) {
-				// Custom strong vibration for repeated duplicates
-				if (navigator.vibrate) {
-					navigator.vibrate([300, 100, 300, 100, 300]);
-				}
-			} else {
-				triggerStatusVibration(statusCode);
-			}
+			// Use standard vibration for all cases, no special handling for duplicates
+			triggerStatusVibration(statusCode);
 		}
 		
 		// Start progress animation
@@ -814,8 +796,8 @@
 			clearStatusDisplay();
 		}, displayDuration);
 		
-		// Reset duplicate count after some time
-		if (!isDuplicateAttempt) {
+		// Reset duplicate count after successful non-duplicate scans
+		if (!isDuplicateSuccess) {
 			duplicateAttemptCount = 0;
 		}
 	}
@@ -1628,7 +1610,7 @@
 								</div>
 							{/if}
 							
-							<!-- Additional details for errors -->
+							<!-- Minimal additional details for errors -->
 							{#if currentStatus.error?.details && formatStatusDetails(currentStatus.error.details).length > 0}
 								<div class="mt-2 text-xs {config.color.replace('700', '600')} space-y-1">
 									{#each formatStatusDetails(currentStatus.error.details) as detail}
@@ -1638,43 +1620,11 @@
 										</div>
 									{/each}
 									
-									<!-- Enhanced guidance for duplicate attempts -->
-									{#if duplicateAttemptCount > 1 && (currentStatus.error?.code === 'ALREADY_CHECKED_IN' || currentStatus.error?.code === 'ALREADY_CHECKED_OUT')}
-										<div class="mt-2 p-2 bg-blue-50 border border-blue-200 rounded text-blue-700">
-											<div class="text-xs font-medium mb-1">💡 คำแนะนำ:</div>
-											<div class="text-xs space-y-1">
-												{#if currentStatus.error?.code === 'ALREADY_CHECKED_IN'}
-													<p>• หากต้องการเช็คเอาท์ กรุณาเปลี่ยนเป็น "โหมดเช็คเอาท์"</p>
-													<p>• หรือตรวจสอบประวัติการเข้าร่วมในด้านล่าง</p>
-												{:else}
-													<p>• นักศึกษาคนนี้ได้เช็คเอาท์แล้ว</p>
-													<p>• การเข้าร่วมกิจกรรมได้สิ้นสุดแล้ว ไม่สามารถสแกนอีกครั้งได้</p>
-												{/if}
-											</div>
-										</div>
-									{/if}
-									
-									<!-- Flow violation warning for check-out after completion or invalid transitions -->
+									<!-- Simplified flow violation warning -->
 									{#if currentStatus.error?.category === 'flow_violation'}
-										<div class="mt-2 p-3 bg-red-100 border-2 border-red-300 rounded-lg text-red-800">
-											<div class="flex items-center gap-2 text-sm font-bold mb-2">
-												<div class="w-2 h-2 bg-red-600 rounded-full animate-pulse"></div>
-												⚠️ ละเมิดลำดับขั้นตอน
-											</div>
-											<div class="text-xs space-y-1">
-												<p class="font-medium">กิจกรรมนี้มีลำดับขั้นตอนที่เคร่งครัด:</p>
-												<div class="flex items-center gap-2 my-2">
-													<span class="px-2 py-1 bg-white rounded text-xs font-mono">ยังไม่เริ่ม</span>
-													<span>→</span>
-													<span class="px-2 py-1 bg-green-100 text-green-800 rounded text-xs font-mono">เช็คอิน</span>
-													<span>→</span>
-													<span class="px-2 py-1 bg-orange-100 text-orange-800 rounded text-xs font-mono">เช็คเอาท์</span>
-													<span>→</span>
-													<span class="px-2 py-1 bg-gray-100 text-gray-800 rounded text-xs font-mono">สิ้นสุด</span>
-												</div>
-												<p class="text-red-700 font-medium">• ไม่สามารถย้อนกลับหรือข้ามขั้นตอนได้</p>
-												<p class="text-red-700">• เมื่อเช็คเอาท์แล้ว ไม่สามารถเข้าร่วมกิจกรรมอีกครั้งได้</p>
-											</div>
+										<div class="mt-2 p-2 bg-red-50 border border-red-200 rounded text-red-700">
+											<div class="text-xs font-medium mb-1">⚠️ ไม่สามารถดำเนินการได้</div>
+											<p class="text-xs">หลังเช็คเอาท์แล้ว ไม่สามารถเช็คอินอีกครั้งได้</p>
 										</div>
 									{/if}
 								</div>
@@ -1800,33 +1750,20 @@
 						<p>วาง QR Code ของนักศึกษาให้อยู่ในกรอบเพื่อสแกน</p>
 						<p>ระบบจะประมวลผลอัตโนมัติเมื่อตรวจพบ QR Code</p>
 						
-						<!-- Recent scan activity indicator -->
+						<!-- Minimal recent activity indicator -->
 						{#if recentlyScannedUsers.size > 0}
-							<div class="mt-2 p-2 bg-blue-50 border border-blue-200 rounded-md">
-								<div class="text-xs text-blue-700 font-medium mb-1">
-									การสแกนล่าสุด ({recentlyScannedUsers.size} คน)
-								</div>
-								<div class="flex flex-wrap gap-1 justify-center">
-									{#each Array.from(recentlyScannedUsers.entries()).slice(0, 3) as [studentId, data]}
-										<span class="inline-flex items-center px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
-											{studentId}
-											<span class="ml-1 text-blue-600">
-												{data.status === 'ALREADY_CHECKED_IN' ? '🟢' : data.status === 'ALREADY_CHECKED_OUT' ? '🟠' : '✅'}
-											</span>
-										</span>
-									{/each}
-									{#if recentlyScannedUsers.size > 3}
-										<span class="text-blue-600">+{recentlyScannedUsers.size - 3} อื่นๆ</span>
-									{/if}
+							<div class="mt-2 p-2 bg-green-50 border border-green-200 rounded-md">
+								<div class="text-xs text-green-700">
+									✅ สแกนล่าสุด: {recentlyScannedUsers.size} คน
 								</div>
 							</div>
 						{/if}
 						
-						<!-- Duplicate attempt warning -->
-						{#if duplicateAttemptCount > 0}
-							<div class="mt-2 p-2 bg-orange-50 border border-orange-200 rounded-md">
-								<div class="text-xs text-orange-700">
-									⚠️ ตรวจพบการสแกนซ้ำ {duplicateAttemptCount} ครั้ง
+						<!-- Minimal duplicate notice (only for excessive duplicates) -->
+						{#if duplicateAttemptCount > 3}
+							<div class="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded-md">
+								<div class="text-xs text-yellow-700">
+									ℹ️ การสแกนซ้ำ {duplicateAttemptCount} ครั้ง (ปกติ)
 								</div>
 							</div>
 						{/if}

@@ -196,55 +196,75 @@ export const POST: RequestHandler = async ({ params, request, locals }) => {
       }, { status: 400 });
     }
 
-    // Check existing participation
+    // Check existing participation - FLEXIBLE FLOW: Allow check-out without check-in
     const existing = await db
       .select({ 
         id: participations.id, 
         status: participations.status,
         checkedInAt: participations.checkedInAt,
-        checkedOutAt: participations.checkedOutAt
+        checkedOutAt: participations.checkedOutAt,
+        registeredAt: participations.registeredAt
       })
       .from(participations)
       .where(and(eq(participations.activityId, activityId), eq(participations.userId, u.id)))
       .limit(1);
 
+    const now = new Date();
+
+    // Handle case where no participation record exists (direct check-out)
     if (existing.length === 0) {
-      return json({ 
-        success: false, 
-        error: { 
-          code: 'NOT_CHECKED_IN', 
-          message: 'ยังไม่ได้เช็คอิน ไม่สามารถเช็คเอาท์ได้', 
-          category: 'restricted' 
-        } 
-      }, { status: 400 });
+      // Create new participation record with direct check-out
+      await db.insert(participations).values({ 
+        activityId, 
+        userId: u.id, 
+        status: 'checked_out', 
+        checkedOutAt: now,
+        registeredAt: now
+        // No checkedInAt - this represents direct check-out
+      });
+
+      return json({
+        success: true,
+        message: 'เช็คเอาท์สำเร็จ (ไม่ผ่านการเช็คอิน)',
+        category: 'success',
+        data: {
+          user_name: `${u.firstName} ${u.lastName}`.trim(),
+          student_id: u.studentId,
+          participation_status: 'checked_out',
+          checked_out_at: now.toISOString(),
+          activity_title: activity.title,
+          is_direct_checkout: true // Flag for activities that don't require check-in
+        }
+      });
     }
     
     const participation = existing[0];
     
-    // STRICT ENFORCEMENT: Prevent check-out after already checked out
+    // Allow duplicate check-out with minimal warning
     if (participation.status === 'checked_out' && participation.checkedOutAt) {
-      return json({ 
-        success: false, 
-        error: { 
-          code: 'ALREADY_CHECKED_OUT', 
-          message: 'คุณได้เช็คเอาท์แล้ว ไม่สามารถเช็คเอาท์อีกครั้งได้', 
-          category: 'flow_violation',
-          details: {
-            previousCheckOut: participation.checkedOutAt,
-            currentStatus: participation.status,
-            flowMessage: 'การเข้าร่วมกิจกรรมได้สิ้นสุดแล้ว'
-          }
-        } 
-      }, { status: 400 });
+      return json({
+        success: true,
+        message: 'เช็คเอาท์สำเร็จ (ได้เช็คเอาท์ไว้แล้ว)',
+        category: 'success',
+        data: {
+          user_name: `${u.firstName} ${u.lastName}`.trim(),
+          student_id: u.studentId,
+          participation_status: 'checked_out',
+          checked_out_at: participation.checkedOutAt, // Use existing timestamp
+          activity_title: activity.title,
+          previous_check_in: participation.checkedInAt,
+          is_duplicate: true // Flag for minimal UI feedback
+        }
+      });
     }
     
-    // STRICT ENFORCEMENT: Prevent any action after completion
+    // ONLY RESTRICTION: Prevent any action after completion
     if (participation.status === 'completed') {
       return json({ 
         success: false, 
         error: { 
           code: 'ALREADY_COMPLETED', 
-          message: 'คุณได้เข้าร่วมกิจกรรมครบถ้วนแล้ว ไม่สามารถเช็คเอาท์อีกครั้งได้', 
+          message: 'ไม่สามารถเช็คเอาท์หลังจากการเข้าร่วมสิ้นสุดแล้ว', 
           category: 'flow_violation',
           details: {
             completionStatus: participation.status,
@@ -253,24 +273,8 @@ export const POST: RequestHandler = async ({ params, request, locals }) => {
         } 
       }, { status: 400 });
     }
-    
-    // Must be checked in first
-    if (participation.status !== 'checked_in') {
-      return json({ 
-        success: false, 
-        error: { 
-          code: 'NOT_CHECKED_IN_YET', 
-          message: 'ต้องเช็คอินก่อนจึงจะสามารถเช็คเอาท์ได้', 
-          category: 'restricted',
-          details: { 
-            currentStatus: participation.status,
-            flowMessage: 'กรุณาเปลี่ยนเป็นโหมดเช็คอินเพื่อเช็คอินก่อน'
-          }
-        } 
-      }, { status: 400 });
-    }
 
-    const now = new Date();
+    // Update existing participation to checked_out
     await db
       .update(participations)
       .set({ status: 'checked_out', checkedOutAt: now })

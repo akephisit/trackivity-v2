@@ -69,6 +69,8 @@ export interface QRScanResult {
     activity_title?: string;
     is_new_participation?: boolean;
     previous_check_in?: string;
+    is_duplicate?: boolean; // New flag for flexible flow
+    is_direct_checkout?: boolean; // New flag for direct checkout
   };
 }
 
@@ -101,28 +103,28 @@ export const STATUS_CONFIG: Record<StatusCode, StatusConfig> = {
     vibration: [200, 100, 200]
   },
 
-  // Already done statuses (Blue/Info)
+  // Already done statuses (Minimal/Success for duplicates)
   ALREADY_CHECKED_IN: {
-    category: 'already_done',
-    color: 'text-blue-700',
-    bgColor: 'bg-blue-50',
-    borderColor: 'border-blue-200',
+    category: 'success', // Changed from 'already_done' to 'success' for less intrusive feedback
+    color: 'text-green-700',
+    bgColor: 'bg-green-50',
+    borderColor: 'border-green-200',
     icon: 'info-circle',
-    iconColor: 'text-blue-600',
-    duration: 5000,
+    iconColor: 'text-green-600',
+    duration: 3000, // Reduced duration
     sound: 'info',
-    vibration: [100]
+    vibration: [100] // Minimal vibration
   },
   ALREADY_CHECKED_OUT: {
-    category: 'flow_violation',
-    color: 'text-red-700',
-    bgColor: 'bg-red-50',
-    borderColor: 'border-red-200',
-    icon: 'x-circle',
-    iconColor: 'text-red-600',
-    duration: 7000,
-    sound: 'error',
-    vibration: [400, 200, 400, 200, 400]
+    category: 'success', // Changed from 'flow_violation' to 'success' for duplicates
+    color: 'text-green-700',
+    bgColor: 'bg-green-50', 
+    borderColor: 'border-green-200',
+    icon: 'info-circle',
+    iconColor: 'text-green-600',
+    duration: 3000, // Reduced duration
+    sound: 'info',
+    vibration: [100] // Minimal vibration
   },
   ALREADY_COMPLETED: {
     category: 'flow_violation',

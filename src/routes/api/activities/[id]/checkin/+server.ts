@@ -1,5 +1,5 @@
 import { json, type RequestHandler } from '@sveltejs/kit';
-import { db, activities, users, participations, organizations, departments } from '$lib/server/db';
+import { db, activities, users, participations, departments } from '$lib/server/db';
 import { and, eq, sql } from 'drizzle-orm';
 
 function decodeQR(qr_data: string): { uid?: string; sid?: string; ts?: number; exp?: number } | null {
@@ -315,33 +315,35 @@ export const POST: RequestHandler = async ({ params, request, locals }) => {
 
     const now = new Date();
 
-    // Check if already participated/checked in - STRICT ONE-WAY FLOW
+    // Check participation status - FLEXIBLE FLOW with minimal restrictions
     if (existing.length > 0) {
       const participation = existing[0];
       
+      // Allow duplicate check-in with minimal warning
       if (participation.status === 'checked_in' && participation.checkedInAt) {
-        return json({ 
-          success: false, 
-          error: { 
-            code: 'ALREADY_CHECKED_IN', 
-            message: 'คุณได้เช็คอินแล้ว', 
-            category: 'already_done',
-            details: {
-              previousCheckIn: participation.checkedInAt,
-              currentStatus: participation.status,
-              advice: 'หากต้องการเช็คเอาท์ กรุณาเปลี่ยนเป็นโหมดเช็คเอาท์'
-            }
-          } 
-        }, { status: 400 });
+        // Success response for duplicate check-in, but maintain existing timestamp
+        return json({
+          success: true,
+          message: 'เช็คอินสำเร็จ (ได้เช็คอินไว้แล้ว)',
+          category: 'success',
+          data: {
+            user_name: `${u.firstName} ${u.lastName}`.trim(),
+            student_id: u.studentId,
+            participation_status: 'checked_in',
+            checked_in_at: participation.checkedInAt, // Use existing timestamp
+            activity_title: activity.title,
+            is_duplicate: true // Flag for minimal UI feedback
+          }
+        });
       }
       
-      // STRICT ENFORCEMENT: Prevent check-in after check-out
+      // ONLY RESTRICTION: Prevent reverse flow (check-in after check-out)
       if (participation.status === 'checked_out' && participation.checkedOutAt) {
         return json({ 
           success: false, 
           error: { 
             code: 'ALREADY_CHECKED_OUT', 
-            message: 'คุณได้เช็คเอาท์แล้ว ไม่สามารถเช็คอินอีกครั้งได้', 
+            message: 'ไม่สามารถเช็คอินหลังจากเช็คเอาท์แล้ว', 
             category: 'flow_violation',
             details: {
               previousCheckOut: participation.checkedOutAt,
@@ -352,13 +354,13 @@ export const POST: RequestHandler = async ({ params, request, locals }) => {
         }, { status: 400 });
       }
       
-      // STRICT ENFORCEMENT: Prevent any action after completion
+      // ONLY RESTRICTION: Prevent any action after completion
       if (participation.status === 'completed') {
         return json({ 
           success: false, 
           error: { 
             code: 'ALREADY_COMPLETED', 
-            message: 'คุณได้เข้าร่วมกิจกรรมครบถ้วนแล้ว ไม่สามารถเช็คอินอีกครั้งได้', 
+            message: 'ไม่สามารถเช็คอินหลังจากการเข้าร่วมสิ้นสุดแล้ว', 
             category: 'flow_violation',
             details: {
               completionStatus: participation.status,
