@@ -411,6 +411,7 @@ export class ApiClient {
 	 * Update current student's profile information
 	 */
 	async updateStudentProfile(profileData: {
+		prefix: string;
 		first_name: string;
 		last_name: string;
 		email: string;

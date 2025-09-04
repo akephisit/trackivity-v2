@@ -178,6 +178,8 @@
 				editing = false;
 				// Refresh user data
 				await auth.validateSession();
+				// Reinitialize form data to reflect updated values
+				initializeFormData();
 			} else {
 				if (response.error?.field_errors) {
 					fieldErrors = response.error.field_errors;

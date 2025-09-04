@@ -108,14 +108,18 @@ export const GET: RequestHandler = async ({ cookies }) => {
 			const row = rows[0];
 			const u = row?.user;
 
+			// Use fresh database data for profile fields, fallback to JWT data
 			const sessionUser: SessionUser = {
 				user_id: decoded.user_id,
-				student_id: decoded.student_id,
-				email: decoded.email,
-				first_name: decoded.first_name,
-				last_name: decoded.last_name,
-				department_id: decoded.department_id || u?.departmentId || undefined,
-				organization_id: decoded.organization_id || row?.org?.id || undefined,
+				student_id: u?.studentId || decoded.student_id,
+				email: u?.email || decoded.email,
+				prefix: u?.prefix || undefined, // Use fresh DB prefix
+				first_name: u?.firstName || decoded.first_name,
+				last_name: u?.lastName || decoded.last_name,
+				phone: u?.phone || undefined, // Use fresh DB phone
+				address: u?.address || undefined, // Use fresh DB address
+				department_id: u?.departmentId || decoded.department_id || undefined,
+				organization_id: row?.org?.id || decoded.organization_id || undefined,
 				organization_name: row?.org?.name || undefined,
 				department_name: row?.dept?.name || undefined,
 				session_id: token.slice(0, 16),
@@ -129,7 +133,7 @@ export const GET: RequestHandler = async ({ cookies }) => {
 					? {
 							id: `admin_${decoded.user_id}`,
 							admin_level: (decoded.admin_level as any) || 'RegularAdmin',
-							organization_id: decoded.organization_id || row?.org?.id || undefined,
+							organization_id: row?.org?.id || decoded.organization_id || undefined,
 							permissions,
 							created_at: new Date().toISOString(),
 							updated_at: new Date().toISOString()
