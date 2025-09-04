@@ -427,14 +427,18 @@
 			<CardTitle>คำแนะนำการใช้งาน</CardTitle>
 		</CardHeader>
 		<CardContent>
-			<div class="space-y-2 text-sm text-muted-foreground">
+			<div class="space-y-3 text-sm text-muted-foreground">
 				<div class="flex items-start gap-2">
 					<IconCheck class="mt-0.5 size-4 text-green-600" />
 					<span>เลือกกิจกรรมที่มีสถานะ "กำลังดำเนินการ" เท่านั้น</span>
 				</div>
 				<div class="flex items-start gap-2">
 					<IconCheck class="mt-0.5 size-4 text-green-600" />
-					<span>กดปุ่ม "เริ่มสแกน QR Code" เพื่อเปิดกล้อง</span>
+					<span>เลือกโหมดการสแกน: <strong>เช็คอิน</strong> สำหรับเข้าร่วม หรือ <strong>เช็คเอาท์</strong> สำหรับออกจากกิจกรรม</span>
+				</div>
+				<div class="flex items-start gap-2">
+					<IconCheck class="mt-0.5 size-4 text-green-600" />
+					<span>กดปุ่ม "เริ่มสแกน" เพื่อเปิดกล้อง</span>
 				</div>
 				<div class="flex items-start gap-2">
 					<IconCheck class="mt-0.5 size-4 text-green-600" />
@@ -442,11 +446,21 @@
 				</div>
 				<div class="flex items-start gap-2">
 					<IconCheck class="mt-0.5 size-4 text-green-600" />
-					<span>ระบบจะบันทึกการเข้าร่วมอัตโนมัติเมื่อตรวจพบ QR Code</span>
+					<span>ระบบจะบันทึกและแสดงผลการสแกนอัตโนมัติ พร้อมป้องกันการสแกนซ้ำ</span>
 				</div>
-				<div class="flex items-start gap-2">
-					<IconCheck class="mt-0.5 size-4 text-green-600" />
-					<span>ตรวจสอบสถิติและประวัติการสแกน - สามารถสแกนได้เฉพาะกิจกรรมที่กำลังดำเนินการ</span>
+				
+				<!-- Enhanced duplicate prevention info -->
+				<div class="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+					<div class="font-medium text-blue-800 mb-2 flex items-center gap-2">
+						<IconX class="size-4" />
+						ระบบป้องกันการสแกนซ้ำ
+					</div>
+					<div class="space-y-1 text-xs text-blue-700">
+						<p>• นักศึกษาแต่ละคนสามารถเช็คอินและเช็คเอาท์ได้เพียงครั้งละหนึ่งครั้งเท่านั้น</p>
+						<p>• การพยายามสแกนซ้ำจะแสดงข้อความแจ้งเตือนและคำแนะนำ</p>
+						<p>• หากมีการสแกนซ้ำติดต่อกันหลายครั้ง ระบบจะแสดงคำแนะนำเพิ่มเติม</p>
+						<p>• สามารถรีเซ็ตการแจ้งเตือนได้โดยกดปุ่ม "รีเซ็ตการแจ้งเตือน"</p>
+					</div>
 				</div>
 			</div>
 		</CardContent>

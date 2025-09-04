@@ -14,6 +14,7 @@ export type StatusCode =
   | 'ALREADY_CHECKED_IN'
   | 'ALREADY_CHECKED_OUT'
   | 'ALREADY_COMPLETED'
+  | 'REPEATED_DUPLICATE_ATTEMPT'
   
   // Restricted access statuses
   | 'FACULTY_RESTRICTION'
@@ -133,6 +134,17 @@ export const STATUS_CONFIG: Record<StatusCode, StatusConfig> = {
     duration: 5000,
     sound: 'info',
     vibration: [100]
+  },
+  REPEATED_DUPLICATE_ATTEMPT: {
+    category: 'already_done',
+    color: 'text-orange-700',
+    bgColor: 'bg-orange-50',
+    borderColor: 'border-orange-200',
+    icon: 'alert-triangle',
+    iconColor: 'text-orange-600',
+    duration: 8000,
+    sound: 'warning',
+    vibration: [300, 100, 300, 100, 300]
   },
 
   // Restricted access statuses (Orange/Warning)
@@ -349,6 +361,7 @@ export function mapApiErrorToStatusCode(apiErrorCode: string): StatusCode {
     'ALREADY_CHECKED_IN': 'ALREADY_CHECKED_IN',
     'ALREADY_CHECKED_OUT': 'ALREADY_CHECKED_OUT', 
     'ALREADY_COMPLETED': 'ALREADY_COMPLETED',
+    'REPEATED_DUPLICATE_ATTEMPT': 'REPEATED_DUPLICATE_ATTEMPT',
     
     // Restricted
     'FACULTY_RESTRICTION': 'FACULTY_RESTRICTION',

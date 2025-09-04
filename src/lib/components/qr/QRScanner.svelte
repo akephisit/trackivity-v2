@@ -126,6 +126,11 @@
 	let statusProgress = $state<number>(100);
 	let statusProgressTimer = $state<NodeJS.Timeout | null>(null);
 	let lastStatusHash = ''; // Track last status to prevent duplicate displays
+	
+	// Enhanced duplicate tracking
+	let recentlyScannedUsers = $state<Map<string, { timestamp: number; scanMode: string; status: string }>>(new Map());
+	let duplicateAttemptCount = $state<number>(0);
+	let lastDuplicateTime = $state<number>(0);
 
 	// Scan mode: check-in or check-out
 	let scanMode = $state<'checkin' | 'checkout'>('checkin');
@@ -701,12 +706,61 @@
 	 * Display status with visual and audio feedback
 	 */
 	function displayStatus(result: QRScanResult) {
+		// Handle duplicate detection and enhanced feedback
+		const now = Date.now();
+		const isDuplicateAttempt = result.error && 
+			(result.error.code === 'ALREADY_CHECKED_IN' || result.error.code === 'ALREADY_CHECKED_OUT');
+		
+		// Track duplicate attempts for better feedback
+		if (isDuplicateAttempt) {
+			if (now - lastDuplicateTime < 10000) { // Within 10 seconds
+				duplicateAttemptCount++;
+			} else {
+				duplicateAttemptCount = 1;
+			}
+			lastDuplicateTime = now;
+			
+			// Enhanced message for repeated duplicate attempts
+			if (duplicateAttemptCount > 1) {
+				result = {
+					...result,
+					message: `${result.message} (ครั้งที่ ${duplicateAttemptCount})`,
+					error: {
+						...result.error!,
+						message: `${result.error!.message} - กรุณาตรวจสอบสถานะการเข้าร่วม`,
+						details: {
+							...result.error!.details,
+							duplicateAttempts: duplicateAttemptCount,
+							advice: 'หากต้องการเปลี่ยนสถานะ กรุณาเปลี่ยนโหมดสแกน'
+						}
+					}
+				};
+			}
+			
+			// Track this user's recent scan
+			if (result.data?.student_id && result.error) {
+				recentlyScannedUsers.set(result.data.student_id, {
+					timestamp: now,
+					scanMode: scanMode,
+					status: result.error.code
+				});
+				
+				// Clean up old entries (older than 1 minute)
+				for (const [studentId, data] of recentlyScannedUsers.entries()) {
+					if (now - data.timestamp > 60000) {
+						recentlyScannedUsers.delete(studentId);
+					}
+				}
+			}
+		}
+		
 		// Create a hash of the current status to prevent duplicate displays
 		const statusHash = JSON.stringify({
 			success: result.success,
 			message: result.message,
 			errorCode: result.error?.code,
-			userData: result.data?.student_id // Use student_id as unique identifier
+			userData: result.data?.student_id, // Use student_id as unique identifier
+			duplicateCount: duplicateAttemptCount
 		});
 		
 		// Skip if this is the same status as the last one displayed within a short time
@@ -723,23 +777,33 @@
 		lastStatusHash = statusHash;
 		
 		// Determine status code for configuration
-		const statusCode = result.error?.code || (result.success ? 'CHECKIN_SUCCESS' : 'INTERNAL_ERROR');
+		const statusCode = result.error?.code || (result.success ? (scanMode === 'checkin' ? 'CHECKIN_SUCCESS' : 'CHECKOUT_SUCCESS') : 'INTERNAL_ERROR');
 		const config = getStatusConfig(statusCode);
+		
+		// Enhanced duration for duplicate attempts
+		const displayDuration = isDuplicateAttempt && duplicateAttemptCount > 1 ? config.duration * 1.5 : config.duration;
 		
 		// Audio feedback
 		if (soundEnabled) {
 			playStatusSound(statusCode);
 		}
 		
-		// Haptic feedback
+		// Haptic feedback - stronger for duplicates
 		if (vibrationEnabled) {
-			triggerStatusVibration(statusCode);
+			if (isDuplicateAttempt && duplicateAttemptCount > 1) {
+				// Custom strong vibration for repeated duplicates
+				if (navigator.vibrate) {
+					navigator.vibrate([300, 100, 300, 100, 300]);
+				}
+			} else {
+				triggerStatusVibration(statusCode);
+			}
 		}
 		
 		// Start progress animation
 		statusProgress = 100;
 		statusProgressTimer = setInterval(() => {
-			statusProgress -= (100 / (config.duration / 100));
+			statusProgress -= (100 / (displayDuration / 100));
 			if (statusProgress <= 0) {
 				clearStatusDisplay();
 			}
@@ -748,9 +812,12 @@
 		// Auto-hide after duration
 		statusDisplayTimer = setTimeout(() => {
 			clearStatusDisplay();
-		}, config.duration);
+		}, displayDuration);
 		
-		// Toast notifications removed - Enhanced status display provides better UX
+		// Reset duplicate count after some time
+		if (!isDuplicateAttempt) {
+			duplicateAttemptCount = 0;
+		}
 	}
 	
 	/**
@@ -786,6 +853,7 @@
 			'ALREADY_CHECKED_IN': IconInfoCircle,
 			'ALREADY_CHECKED_OUT': IconInfoCircle,
 			'ALREADY_COMPLETED': IconInfoCircle,
+			'REPEATED_DUPLICATE_ATTEMPT': IconAlertTriangle,
 			'FACULTY_RESTRICTION': IconShieldExclamation,
 			'ACTIVITY_NOT_ONGOING': IconClock,
 			'ACTIVITY_EXPIRED': IconClockX,
@@ -1569,6 +1637,22 @@
 											<span>{detail}</span>
 										</div>
 									{/each}
+									
+									<!-- Enhanced guidance for duplicate attempts -->
+									{#if duplicateAttemptCount > 1 && (currentStatus.error?.code === 'ALREADY_CHECKED_IN' || currentStatus.error?.code === 'ALREADY_CHECKED_OUT')}
+										<div class="mt-2 p-2 bg-blue-50 border border-blue-200 rounded text-blue-700">
+											<div class="text-xs font-medium mb-1">💡 คำแนะนำ:</div>
+											<div class="text-xs space-y-1">
+												{#if currentStatus.error?.code === 'ALREADY_CHECKED_IN'}
+													<p>• หากต้องการเช็คเอาท์ กรุณาเปลี่ยนเป็น "โหมดเช็คเอาท์"</p>
+													<p>• หรือตรวจสอบประวัติการเข้าร่วมในด้านล่าง</p>
+												{:else}
+													<p>• นักศึกษาคนนี้ได้เช็คเอาท์แล้ว</p>
+													<p>• หากต้องการเช็คอินใหม่ กรุณาติดต่อผู้ดูแลระบบ</p>
+												{/if}
+											</div>
+										</div>
+									{/if}
 								</div>
 							{/if}
 						</div>
@@ -1587,40 +1671,94 @@
 
 			<!-- Control Buttons -->
 			<div class="flex flex-col items-center gap-3">
-				<!-- Mode toggle -->
+				<!-- Mode toggle with enhanced visual feedback -->
 				<div class="inline-flex overflow-hidden rounded-md border bg-background">
 					<button
-						class={`px-3 py-2 text-sm ${scanMode === 'checkin' ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'}`}
-						onclick={() => (scanMode = 'checkin')}
+						class={`px-4 py-2 text-sm font-medium transition-all duration-200 ${scanMode === 'checkin' ? 'bg-green-600 text-white shadow-md' : 'hover:bg-muted text-muted-foreground hover:text-foreground'}`}
+						onclick={() => {
+							scanMode = 'checkin';
+							duplicateAttemptCount = 0; // Reset duplicate count when changing modes
+							recentlyScannedUsers.clear(); // Clear recent scan history
+						}}
 						type="button"
+						disabled={isProcessingScan}
 					>
-						เช็คอิน
+						<div class="flex items-center gap-2">
+							{#if scanMode === 'checkin'}
+								<div class="w-2 h-2 bg-white rounded-full"></div>
+							{/if}
+							เช็คอิน
+						</div>
 					</button>
 					<button
-						class={`px-3 py-2 text-sm ${scanMode === 'checkout' ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'}`}
-						onclick={() => (scanMode = 'checkout')}
+						class={`px-4 py-2 text-sm font-medium transition-all duration-200 ${scanMode === 'checkout' ? 'bg-orange-600 text-white shadow-md' : 'hover:bg-muted text-muted-foreground hover:text-foreground'}`}
+						onclick={() => {
+							scanMode = 'checkout';
+							duplicateAttemptCount = 0; // Reset duplicate count when changing modes
+							recentlyScannedUsers.clear(); // Clear recent scan history
+						}}
 						type="button"
+						disabled={isProcessingScan}
 					>
-						เช็คเอาท์
+						<div class="flex items-center gap-2">
+							{#if scanMode === 'checkout'}
+								<div class="w-2 h-2 bg-white rounded-full"></div>
+							{/if}
+							เช็คเอาท์
+						</div>
 					</button>
 				</div>
+				
+				<!-- Mode indicator -->
+				<div class="text-xs text-muted-foreground text-center">
+					{#if scanMode === 'checkin'}
+						<span class="text-green-600">โหมดเช็คอิน - สำหรับการเข้าร่วมกิจกรรม</span>
+					{:else}
+						<span class="text-orange-600">โหมดเช็คเอาท์ - สำหรับการออกจากกิจกรรม</span>
+					{/if}
+				</div>
 
-				<!-- Camera controls -->
-				<div class="flex justify-center gap-2">
+				<!-- Camera controls with status indicators -->
+				<div class="flex justify-center items-center gap-3">
 					{#if cameraStatus === 'idle' || cameraStatus === 'error'}
-						<Button onclick={startCamera} disabled={!activity_id}>
+						<Button 
+							onclick={startCamera} 
+							disabled={!activity_id}
+							class="px-6 py-2 font-medium"
+						>
 							<IconCamera class="mr-2 size-4" />
 							เริ่มสแกน
 						</Button>
 					{:else if cameraStatus === 'active' || cameraStatus === 'requesting'}
-						<Button onclick={stopCamera} variant="outline">
+						<Button 
+							onclick={stopCamera} 
+							variant="outline"
+							class="px-6 py-2 font-medium"
+						>
 							<IconCameraOff class="mr-2 size-4" />
 							หยุดสแกน
 						</Button>
+						
+						<!-- Reset duplicate counter button -->
+						{#if duplicateAttemptCount > 0}
+							<Button 
+								onclick={() => {
+									duplicateAttemptCount = 0;
+									recentlyScannedUsers.clear();
+									clearStatusDisplay();
+								}}
+								variant="ghost" 
+								size="sm"
+								class="text-orange-600 hover:text-orange-800"
+							>
+								<IconReload class="mr-1 size-3" />
+								รีเซ็ตการแจ้งเตือน
+							</Button>
+						{/if}
 					{/if}
 
 					<!-- Development: Manual scan trigger -->
-					{#if cameraStatus === 'active'}
+					{#if cameraStatus === 'active' && import.meta.env.DEV}
 						<Button onclick={triggerManualScan} variant="outline" size="sm">
 							<IconQrcode class="mr-2 size-4" />
 							สแกนด้วยตนเอง
@@ -1629,13 +1767,46 @@
 				</div>
 			</div>
 
-			<!-- Scanner Info -->
-			<div class="space-y-1 text-center text-xs text-muted-foreground">
+			<!-- Scanner Info with Recent Activity -->
+			<div class="space-y-3 text-center text-xs text-muted-foreground">
 				{#if !activity_id}
 					<p class="text-destructive">กรุณาเลือกกิจกรรมก่อนเริ่มสแกน</p>
 				{:else}
-					<p>วาง QR Code ของนักศึกษาให้อยู่ในกรอบเพื่อสแกน</p>
-					<p>ระบบจะประมวลผลอัตโนมัติเมื่อตรวจพบ QR Code</p>
+					<div class="space-y-2">
+						<p>วาง QR Code ของนักศึกษาให้อยู่ในกรอบเพื่อสแกน</p>
+						<p>ระบบจะประมวลผลอัตโนมัติเมื่อตรวจพบ QR Code</p>
+						
+						<!-- Recent scan activity indicator -->
+						{#if recentlyScannedUsers.size > 0}
+							<div class="mt-2 p-2 bg-blue-50 border border-blue-200 rounded-md">
+								<div class="text-xs text-blue-700 font-medium mb-1">
+									การสแกนล่าสุด ({recentlyScannedUsers.size} คน)
+								</div>
+								<div class="flex flex-wrap gap-1 justify-center">
+									{#each Array.from(recentlyScannedUsers.entries()).slice(0, 3) as [studentId, data]}
+										<span class="inline-flex items-center px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
+											{studentId}
+											<span class="ml-1 text-blue-600">
+												{data.status === 'ALREADY_CHECKED_IN' ? '🟢' : data.status === 'ALREADY_CHECKED_OUT' ? '🟠' : '✅'}
+											</span>
+										</span>
+									{/each}
+									{#if recentlyScannedUsers.size > 3}
+										<span class="text-blue-600">+{recentlyScannedUsers.size - 3} อื่นๆ</span>
+									{/if}
+								</div>
+							</div>
+						{/if}
+						
+						<!-- Duplicate attempt warning -->
+						{#if duplicateAttemptCount > 0}
+							<div class="mt-2 p-2 bg-orange-50 border border-orange-200 rounded-md">
+								<div class="text-xs text-orange-700">
+									⚠️ ตรวจพบการสแกนซ้ำ {duplicateAttemptCount} ครั้ง
+								</div>
+							</div>
+						{/if}
+					</div>
 				{/if}
 
 				<!-- Debug Information (development only) -->
