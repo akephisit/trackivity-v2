@@ -434,25 +434,6 @@ export class ApiClient {
 		return this.delete<void>(`/api/users/${userId}`);
 	}
 
-	// ===== PROFILE MANAGEMENT =====
-	async updateProfile(profileData: {
-		first_name: string;
-		last_name: string;
-		email: string;
-		phone?: string;
-		address?: string;
-	}): Promise<ApiResponse<SessionUser>> {
-		return this.put<SessionUser>('/api/profile', profileData);
-	}
-
-	async changePassword(passwordData: {
-		current_password: string;
-		new_password: string;
-		confirm_password: string;
-	}): Promise<ApiResponse<void>> {
-		return this.post<void>('/api/profile/password', passwordData);
-	}
-
 	// ===== ORGANIZATION (Faculty) & DEPARTMENT =====
 	async getFaculties(): Promise<ApiResponse<Faculty[]>> {
 		return this.get<Faculty[]>('/api/organizations');

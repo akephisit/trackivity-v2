@@ -1,7 +1,7 @@
 import type { PageServerLoad } from './$types';
 import { requireAuth } from '$lib/server/auth-utils';
-import { db, activities, participations } from '$lib/server/db';
-import { eq, desc, count, and, gte, lte } from 'drizzle-orm';
+import { db, activities, participations, organizations, users } from '$lib/server/db';
+import { eq, desc, count, and, gte, lte, sql } from 'drizzle-orm';
 
 export const load: PageServerLoad = async (event) => {
 	const user = requireAuth(event);
