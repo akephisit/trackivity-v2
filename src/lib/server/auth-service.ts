@@ -1,4 +1,4 @@
-import { db, users, adminRoles } from '$lib/server/db';
+import { db, users, adminRoles, sessions } from '$lib/server/db';
 import { eq } from 'drizzle-orm';
 import argon2 from 'argon2';
 import jwt from 'jsonwebtoken';
@@ -135,6 +135,24 @@ export async function authenticateAndIssueToken(input: AuthInput): Promise<AuthR
 	const expiresInSeconds = (remember_me ? 30 : 7) * 24 * 60 * 60;
 	const token = jwt.sign(payload, env.JWT_SECRET!, { expiresIn: expiresInSeconds });
 	const expiresAt = new Date(Date.now() + expiresInSeconds * 1000);
+
+	// Create session record for tracking last access
+	try {
+		await db.insert(sessions).values({
+			id: token.slice(0, 16), // Use part of token as session ID
+			userId: foundUser.id,
+			deviceInfo: {},
+			ipAddress: null,
+			userAgent: null,
+			createdAt: new Date(),
+			lastAccessed: new Date(),
+			expiresAt: expiresAt,
+			isActive: true
+		});
+	} catch (error) {
+		// Don't fail login if session creation fails
+		console.warn('Failed to create session record:', error);
+	}
 
 	const sessionUser: SessionUser = {
 		user_id: foundUser.id,

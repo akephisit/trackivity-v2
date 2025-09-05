@@ -3,7 +3,7 @@ import { error } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import type { User, UserFilter, UserStats, Organization, Department } from '$lib/types/admin';
 import { AdminLevel } from '$lib/types/admin';
-import { db, users, adminRoles, organizations, departments } from '$lib/server/db';
+import { db, users, adminRoles, organizations, departments, sessions } from '$lib/server/db';
 import { eq, and, or, like, desc, count, sql, gte } from 'drizzle-orm';
 
 /**
@@ -32,7 +32,12 @@ async function getUsersFromDb(
 			organization_name: organizations.name,
 			admin_level: adminRoles.adminLevel,
 			admin_organization_id: adminRoles.organizationId,
-			is_admin: sql<boolean>`${adminRoles.id} IS NOT NULL`
+			is_admin: sql<boolean>`${adminRoles.id} IS NOT NULL`,
+			last_accessed: sql<Date | null>`(
+				SELECT MAX(s.last_accessed) 
+				FROM sessions s 
+				WHERE s.user_id = ${users.id}
+			)`
 		})
 		.from(users)
 		.leftJoin(departments, eq(users.departmentId, departments.id))
@@ -87,6 +92,7 @@ async function getUsersFromDb(
 	if (conditions.length > 0) {
 		query = query.where(and(...conditions));
 	}
+
 
 	// Add ordering and pagination
 	const result = await query.orderBy(desc(users.createdAt)).offset(offset).limit(limit);
@@ -350,7 +356,7 @@ export const load: PageServerLoad = async (event) => {
 				role,
 				phone: undefined,
 				avatar: undefined,
-				last_login: undefined,
+				last_login: u.last_accessed ? new Date(u.last_accessed).toISOString() : undefined,
 				email_verified_at: undefined,
 				created_at: u.created_at ? new Date(u.created_at).toISOString() : new Date().toISOString(),
 				updated_at: u.updated_at ? new Date(u.updated_at).toISOString() : new Date().toISOString(),

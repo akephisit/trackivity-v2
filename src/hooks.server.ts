@@ -1,6 +1,8 @@
 import { type Handle, type HandleServerError, redirect } from '@sveltejs/kit';
 import jwt from 'jsonwebtoken';
 import { env } from '$env/dynamic/private';
+import { db, sessions } from '$lib/server/db';
+import { eq } from 'drizzle-orm';
 /**
  * JWT payload interface for type safety
  */
@@ -113,6 +115,20 @@ function validateJWTToken(token: string): JWTPayload | null {
 }
 
 /**
+ * Update session last accessed time
+ */
+async function updateSessionLastAccessed(sessionId: string): Promise<void> {
+	try {
+		await db.update(sessions)
+			.set({ lastAccessed: new Date() })
+			.where(eq(sessions.id, sessionId));
+	} catch (error) {
+		// Ignore errors, session tracking is not critical
+		console.warn('Session update failed:', error);
+	}
+}
+
+/**
  * Create redirect URL with return path
  */
 function createRedirectUrl(
@@ -157,6 +173,11 @@ export const handle: Handle = async ({ event, resolve }) => {
 
 			isAuthenticated = true;
 			isAdmin = decoded.is_admin || false;
+
+			// Update session last_accessed asynchronously (don't block request)
+			updateSessionLastAccessed(sessionToken.slice(0, 16)).catch(err => 
+				console.warn('Failed to update session last accessed:', err)
+			);
 		} else {
 			// Invalid or expired token - clear cookie
 			cookies.delete('session_token', { path: '/' });

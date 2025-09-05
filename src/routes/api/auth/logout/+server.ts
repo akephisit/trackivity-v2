@@ -1,4 +1,6 @@
 import { json, type RequestHandler } from '@sveltejs/kit';
+import { db, sessions } from '$lib/server/db';
+import { eq } from 'drizzle-orm';
 
 /**
  * User logout endpoint
@@ -6,6 +8,22 @@ import { json, type RequestHandler } from '@sveltejs/kit';
  */
 export const POST: RequestHandler = async ({ cookies }) => {
 	try {
+		// Get session token before deleting it
+		const sessionToken = cookies.get('session_token');
+		
+		// Mark session as inactive in database
+		if (sessionToken) {
+			const sessionId = sessionToken.slice(0, 16);
+			try {
+				await db.update(sessions)
+					.set({ isActive: false })
+					.where(eq(sessions.id, sessionId));
+			} catch (error) {
+				console.warn('Failed to deactivate session:', error);
+				// Don't fail logout if session update fails
+			}
+		}
+
 		// Clear the JWT session token cookie
 		cookies.delete('session_token', {
 			path: '/',
