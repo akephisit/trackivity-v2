@@ -279,7 +279,38 @@
 	}
 
 	function isPasswordFormValid(): boolean {
-		return !!(passwordData.current_password && passwordData.new_password && passwordData.confirm_password);
+		// Check if all fields are filled
+		const allFieldsFilled = !!(passwordData.current_password && passwordData.new_password && passwordData.confirm_password);
+		
+		// Check if new password meets requirements
+		const newPasswordValid = passwordData.new_password.length >= 8 && 
+			/^(?=.*[A-Za-z])(?=.*\d).{8,}$/.test(passwordData.new_password);
+		
+		// Check if passwords match
+		const passwordsMatch = passwordData.new_password === passwordData.confirm_password;
+		
+		return allFieldsFilled && newPasswordValid && passwordsMatch;
+	}
+
+	function getPasswordMatchError(): string {
+		if (passwordData.confirm_password && passwordData.new_password && passwordData.new_password !== passwordData.confirm_password) {
+			return 'การยืนยันรหัสผ่านไม่ตรงกัน';
+		}
+		return '';
+	}
+
+	function getNewPasswordStrengthError(): string {
+		if (!passwordData.new_password) return '';
+		
+		if (passwordData.new_password.length < 8) {
+			return 'รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร';
+		}
+		
+		if (!/^(?=.*[A-Za-z])(?=.*\d).{8,}$/.test(passwordData.new_password)) {
+			return 'รหัสผ่านต้องมีตัวอักษรและตัวเลขอย่างน้อย 1 ตัว';
+		}
+		
+		return '';
 	}
 </script>
 
@@ -561,6 +592,7 @@
 									type={showCurrentPassword ? 'text' : 'password'}
 									bind:value={passwordData.current_password}
 									placeholder="กรอกรหัสผ่านปัจจุบัน"
+									autocomplete="current-password"
 									class={getFieldError('current_password', passwordFieldErrors) ? 'border-red-500' : ''}
 								/>
 								<Button
@@ -590,7 +622,8 @@
 									type={showNewPassword ? 'text' : 'password'}
 									bind:value={passwordData.new_password}
 									placeholder="กรอกรหัสผ่านใหม่ (อย่างน้อย 8 ตัวอักษร มีตัวอักษรและตัวเลข)"
-									class={getFieldError('new_password', passwordFieldErrors) ? 'border-red-500' : ''}
+									autocomplete="new-password"
+									class={getFieldError('new_password', passwordFieldErrors) || getNewPasswordStrengthError() ? 'border-red-500' : passwordData.new_password && passwordData.new_password.length >= 8 && /^(?=.*[A-Za-z])(?=.*\d).{8,}$/.test(passwordData.new_password) ? 'border-green-500' : ''}
 								/>
 								<Button
 									variant="ghost"
@@ -608,6 +641,10 @@
 							</div>
 							{#if getFieldError('new_password', passwordFieldErrors)}
 								<p class="text-sm text-red-500">{getFieldError('new_password', passwordFieldErrors)}</p>
+							{:else if getNewPasswordStrengthError()}
+								<p class="text-sm text-red-500">{getNewPasswordStrengthError()}</p>
+							{:else if passwordData.new_password && passwordData.new_password.length >= 8 && /^(?=.*[A-Za-z])(?=.*\d).{8,}$/.test(passwordData.new_password)}
+								<p class="text-sm text-green-600">รหัสผ่านแข็งแรง</p>
 							{/if}
 						</div>
 
@@ -619,7 +656,8 @@
 									type={showConfirmPassword ? 'text' : 'password'}
 									bind:value={passwordData.confirm_password}
 									placeholder="กรอกรหัสผ่านใหม่อีกครั้ง"
-									class={getFieldError('confirm_password', passwordFieldErrors) ? 'border-red-500' : ''}
+									autocomplete="new-password"
+									class={getFieldError('confirm_password', passwordFieldErrors) || getPasswordMatchError() ? 'border-red-500' : passwordData.confirm_password && passwordData.new_password && passwordData.new_password === passwordData.confirm_password ? 'border-green-500' : ''}
 								/>
 								<Button
 									variant="ghost"
@@ -637,6 +675,10 @@
 							</div>
 							{#if getFieldError('confirm_password', passwordFieldErrors)}
 								<p class="text-sm text-red-500">{getFieldError('confirm_password', passwordFieldErrors)}</p>
+							{:else if getPasswordMatchError()}
+								<p class="text-sm text-red-500">{getPasswordMatchError()}</p>
+							{:else if passwordData.confirm_password && passwordData.new_password && passwordData.new_password === passwordData.confirm_password}
+								<p class="text-sm text-green-600">รหัสผ่านตรงกัน</p>
 							{/if}
 						</div>
 
@@ -661,6 +703,52 @@
 								ยกเลิก
 							</Button>
 						</div>
+						
+						{#if !isPasswordFormValid() && (passwordData.current_password || passwordData.new_password || passwordData.confirm_password)}
+							<div class="mt-2 p-3 bg-muted/50 rounded-lg">
+								<p class="text-sm text-muted-foreground mb-2">กรุณาตรวจสอบ:</p>
+								<ul class="text-sm text-muted-foreground space-y-1">
+									{#if !passwordData.current_password}
+										<li class="flex items-center gap-2">
+											<IconX class="size-3 text-red-500" />
+											กรอกรหัสผ่านปัจจุบัน
+										</li>
+									{/if}
+									{#if !passwordData.new_password}
+										<li class="flex items-center gap-2">
+											<IconX class="size-3 text-red-500" />
+											กรอกรหัสผ่านใหม่
+										</li>
+									{:else if getNewPasswordStrengthError()}
+										<li class="flex items-center gap-2">
+											<IconX class="size-3 text-red-500" />
+											{getNewPasswordStrengthError()}
+										</li>
+									{:else}
+										<li class="flex items-center gap-2">
+											<IconCheck class="size-3 text-green-500" />
+											รหัสผ่านใหม่ถูกต้อง
+										</li>
+									{/if}
+									{#if !passwordData.confirm_password}
+										<li class="flex items-center gap-2">
+											<IconX class="size-3 text-red-500" />
+											กรอกยืนยันรหัสผ่าน
+										</li>
+									{:else if getPasswordMatchError()}
+										<li class="flex items-center gap-2">
+											<IconX class="size-3 text-red-500" />
+											{getPasswordMatchError()}
+										</li>
+									{:else if passwordData.new_password}
+										<li class="flex items-center gap-2">
+											<IconCheck class="size-3 text-green-500" />
+											รหัสผ่านยืนยันถูกต้อง
+										</li>
+									{/if}
+								</ul>
+							</div>
+						{/if}
 					</div>
 				</CardContent>
 			</Card>

@@ -29,7 +29,7 @@ const changePasswordSchema = z.object({
 			// Password must contain at least one letter and one number
 			return /^(?=.*[A-Za-z])(?=.*\d).{8,}$/.test(password);
 		}, 'รหัสผ่านต้องมีตัวอักษรและตัวเลขอย่างน้อย 1 ตัว'),
-	confirm_password: z.string()
+	confirm_password: z.string().min(1, 'กรุณายืนยันรหัสผ่าน')
 }).refine((data) => data.new_password === data.confirm_password, {
 	message: 'การยืนยันรหัสผ่านไม่ตรงกัน',
 	path: ['confirm_password']
