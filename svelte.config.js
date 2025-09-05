@@ -11,7 +11,11 @@ function getTrustedOrigins() {
     .split(',')
     .map((s) => s.trim())
     .filter(Boolean);
-  return [...new Set([...defaults, ...extra])];
+  
+  const allOrigins = [...new Set([...defaults, ...extra])];
+  
+  console.log('[CSRF] Trusted origins configured:', allOrigins);
+  return allOrigins;
 }
 
 /** @type {import('@sveltejs/kit').Config} */

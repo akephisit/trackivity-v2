@@ -143,22 +143,50 @@ export const handle: Handle = async ({ event, resolve }) => {
 	if (sessionToken) {
 		const decoded = validateJWTToken(sessionToken);
 		if (decoded) {
-			// Set authenticated user in locals
-			event.locals.user = {
-				id: decoded.user_id,
-				student_id: decoded.student_id,
-				email: decoded.email,
-				first_name: decoded.first_name,
-				last_name: decoded.last_name,
-				is_admin: decoded.is_admin || false,
-				admin_level: decoded.admin_level,
-				organization_id: (decoded as any).organization_id
-			};
+			// Set authenticated user in locals with enhanced validation
+			try {
+				event.locals.user = {
+					id: decoded.user_id,
+					student_id: decoded.student_id,
+					email: decoded.email,
+					first_name: decoded.first_name,
+					last_name: decoded.last_name,
+					is_admin: decoded.is_admin || false,
+					admin_level: decoded.admin_level,
+					organization_id: (decoded as any).organization_id
+				};
 
-			isAuthenticated = true;
-			isAdmin = decoded.is_admin || false;
+				isAuthenticated = true;
+				isAdmin = decoded.is_admin || false;
+
+				// Enhanced logging for admin users in production
+				if (isAdmin && process.env.NODE_ENV === 'production') {
+					console.log('[Auth] Admin user authenticated:', {
+						userId: decoded.user_id,
+						adminLevel: decoded.admin_level,
+						organizationId: (decoded as any).organization_id,
+						path: pathname,
+						timestamp: new Date().toISOString()
+					});
+				}
+			} catch (userSetupError) {
+				console.error('[Auth] Error setting up user in locals:', {
+					error: userSetupError instanceof Error ? userSetupError.message : String(userSetupError),
+					decodedPayload: decoded,
+					path: pathname
+				});
+				// Clear the problematic session
+				cookies.delete('session_token', { path: '/' });
+			}
 		} else {
-			// Invalid or expired token - clear cookie
+			// Invalid or expired token - clear cookie with enhanced logging
+			if (process.env.NODE_ENV === 'production') {
+				console.log('[Auth] Invalid/expired session token cleared:', {
+					path: pathname,
+					userAgent: event.request.headers.get('user-agent'),
+					timestamp: new Date().toISOString()
+				});
+			}
 			cookies.delete('session_token', { path: '/' });
 		}
 	}
