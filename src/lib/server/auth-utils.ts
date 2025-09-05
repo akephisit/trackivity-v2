@@ -185,50 +185,14 @@ export function requireSuperAdmin(event: RequestEvent): SessionUser {
  * Require FacultyAdmin or SuperAdmin access
  */
 export function requireOrganizationAdmin(event: RequestEvent): SessionUser {
-	try {
-		const user = requireAdmin(event);
+	const user = requireAdmin(event);
 
-		// Enhanced validation for production debugging
-		if (!user.admin_role) {
-			console.error('[Auth] User has no admin role:', {
-				userId: user.user_id,
-				email: user.email,
-				path: event.url.pathname
-			});
-			throw redirect(303, '/unauthorized');
-		}
-
-		const level = user.admin_role.admin_level;
-		if (level !== 'SuperAdmin' && level !== 'OrganizationAdmin') {
-			console.error('[Auth] Insufficient admin level for organization admin access:', {
-				userId: user.user_id,
-				currentLevel: level,
-				requiredLevels: ['SuperAdmin', 'OrganizationAdmin'],
-				path: event.url.pathname
-			});
-			throw redirect(303, '/unauthorized');
-		}
-
-		// Additional validation for OrganizationAdmin users
-		if (level === 'OrganizationAdmin' && !user.admin_role.organization_id) {
-			console.error('[Auth] OrganizationAdmin missing organization_id:', {
-				userId: user.user_id,
-				adminRoleId: user.admin_role.id,
-				path: event.url.pathname
-			});
-			throw redirect(303, '/unauthorized');
-		}
-
-		return user;
-	} catch (authError) {
-		console.error('[Auth] Organization admin authentication failed:', {
-			error: authError instanceof Error ? authError.message : String(authError),
-			path: event.url.pathname,
-			userAgent: event.request.headers.get('user-agent'),
-			referer: event.request.headers.get('referer')
-		});
-		throw authError;
+	const level = user.admin_role!.admin_level;
+	if (level !== 'SuperAdmin' && level !== 'OrganizationAdmin') {
+		throw redirect(303, '/unauthorized');
 	}
+
+	return user;
 }
 
 /**
