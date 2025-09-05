@@ -7,7 +7,7 @@ import { eq, or, desc } from 'drizzle-orm';
 
 export const load: PageServerLoad = async (event) => {
 	// ตรวจสอบสิทธิ์ - เฉพาะ FacultyAdmin หรือ SuperAdmin
-	const user = await requireOrganizationAdmin(event);
+	const user = requireOrganizationAdmin(event);
 	const adminLevel = user.admin_role?.admin_level;
 	const organizationId = user.admin_role?.organization_id;
 
@@ -115,7 +115,7 @@ export const load: PageServerLoad = async (event) => {
 export const actions: Actions = {
 	delete: async (event) => {
 		// Ensure only OrganizationAdmin/SuperAdmin can delete
-		await requireOrganizationAdmin(event);
+		requireOrganizationAdmin(event);
 
 		try {
 			const formData = await event.request.formData();

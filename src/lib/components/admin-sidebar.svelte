@@ -127,13 +127,16 @@
             );
         }
 
-		baseItems.push({
-			title: 'ตั้งค่า',
-			href: '/admin/settings',
-			icon: IconSettings,
-			active: page.url.pathname.startsWith('/admin/settings'),
-			description: 'ตั้งค่าระบบ'
-		});
+		// Show settings menu for SuperAdmin or faculty-type organizations only
+		if (adminLevel === 'SuperAdmin' || organization?.organizationType === 'faculty') {
+			baseItems.push({
+				title: 'ตั้งค่า',
+				href: '/admin/settings',
+				icon: IconSettings,
+				active: page.url.pathname.startsWith('/admin/settings'),
+				description: 'ตั้งค่าระบบ'
+			});
+		}
 
 		return baseItems;
 	}

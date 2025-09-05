@@ -96,7 +96,7 @@ const activityCreateSchema = z
 
 export const load: PageServerLoad = async (event) => {
 	// ตรวจสอบสิทธิ์ - เฉพาะ OrganizationAdmin หรือ SuperAdmin
-	const user = await requireOrganizationAdmin(event);
+	const user = requireOrganizationAdmin(event);
 
 	// สร้าง empty form
 	const form = await superValidate(zod(activityCreateSchema));
@@ -155,7 +155,7 @@ export const load: PageServerLoad = async (event) => {
 export const actions: Actions = {
 	default: async (event) => {
 		// ตรวจสอบสิทธิ์อีกครั้ง
-		await requireOrganizationAdmin(event);
+		requireOrganizationAdmin(event);
 
 		// Validate form data
 		const form = await superValidate(event, zod(activityCreateSchema));

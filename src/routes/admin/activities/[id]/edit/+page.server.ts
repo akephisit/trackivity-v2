@@ -6,7 +6,7 @@ import { alias } from 'drizzle-orm/pg-core';
 import { eq, and } from 'drizzle-orm';
 
 export const load: PageServerLoad = async (event) => {
-	const user = await requireOrganizationAdmin(event);
+	const user = requireOrganizationAdmin(event);
 	const { params } = event;
 
 	if (!params.id) throw error(400, 'ไม่พบรหัสกิจกรรม');
@@ -120,7 +120,7 @@ export const load: PageServerLoad = async (event) => {
 
 export const actions: Actions = {
     update: async (event) => {
-        const user = await requireOrganizationAdmin(event);
+        const user = requireOrganizationAdmin(event);
         const { params } = event;
         if (!params.id) return { error: 'ไม่พบรหัสกิจกรรม' } as const;
 

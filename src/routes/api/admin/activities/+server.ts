@@ -5,7 +5,7 @@ import { db, activities, organizations } from '$lib/server/db';
 import { eq } from 'drizzle-orm';
 
 export const POST: RequestHandler = async (event) => {
-	const user = await requireOrganizationAdmin(event);
+	const user = requireOrganizationAdmin(event);
 
 	let body: any;
 	try {

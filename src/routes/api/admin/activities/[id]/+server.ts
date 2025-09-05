@@ -5,7 +5,7 @@ import { db, activities, organizations } from '$lib/server/db';
 import { eq } from 'drizzle-orm';
 
 export const GET: RequestHandler = async (event) => {
-	const user = await requireOrganizationAdmin(event);
+	const user = requireOrganizationAdmin(event);
 	const { id } = event.params;
 	if (!id) return json({ success: false, error: 'Missing id' }, { status: 400 });
 

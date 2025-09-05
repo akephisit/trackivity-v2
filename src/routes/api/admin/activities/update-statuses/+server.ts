@@ -15,7 +15,7 @@ function computeStatus(
 }
 
 export const POST: RequestHandler = async (event) => {
-	const user = await requireOrganizationAdmin(event);
+	const user = requireOrganizationAdmin(event);
 	try {
 		// Load activities scoped by organization for OrganizationAdmin; all for SuperAdmin
 		const where =
