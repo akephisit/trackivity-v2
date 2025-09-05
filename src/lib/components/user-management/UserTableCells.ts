@@ -69,14 +69,14 @@ function getRoleVariant(role: string): 'default' | 'secondary' | 'destructive' |
 
 function getStatusLabel(status: string): string {
 	const statusLabels: Record<string, string> = {
-		// New semantics aligned with admin page
-		online: 'ใช้งานอยู่',
-		offline: 'ไม่ออนไลน์',
-		disabled: 'ปิดใช้งาน',
-		// Backward compatibility
-		active: 'ใช้งานอยู่',
-		inactive: 'ไม่ออนไลน์',
-		suspended: 'ถูกระงับ'
+		// Updated to Option 2: User Status Focus
+		online: 'เปิดใช้งาน',
+		offline: 'ปิดใช้งาน',
+		disabled: 'ระงับบัญชี',
+		// Backward compatibility with database enum values
+		active: 'เปิดใช้งาน',
+		inactive: 'ปิดใช้งาน',
+		suspended: 'ระงับบัญชี'
 	};
 	return statusLabels[status] || status;
 }
