@@ -1,10 +1,9 @@
 import { requireOrganizationAdmin } from '$lib/server/auth-utils';
-import { fail, redirect } from '@sveltejs/kit';
+import { fail } from '@sveltejs/kit';
 import { superValidate } from 'sveltekit-superforms';
 import { zod } from 'sveltekit-superforms/adapters';
 import { z } from 'zod';
 import type { PageServerLoad, Actions } from './$types';
-import type { ActivityCreateData } from '$lib/types/activity';
 
 // Validation schema for activity creation
 const activityCreateSchema = z
@@ -119,36 +118,34 @@ export const load: PageServerLoad = async (event) => {
 		activity_level: 'faculty'
 	};
 
-	// ดึงข้อมูลหน่วยงานจากฐานข้อมูล
-	let faculties: any[] = [];
+	// ดึงข้อมูลหน่วยงานทั้งหมด (คณะและหน่วยงาน) จากฐานข้อมูล
+	let organizations: any = { all: [], grouped: { faculty: [], office: [] } };
 	try {
-		const response = await event.fetch('/api/organizations');
+		const response = await event.fetch('/api/organizations/all');
 		if (response.ok) {
 			const apiData = await response.json();
 
-			// Parse organizations API response - should now only contain faculty-type organizations
-			if (apiData.success && apiData.data && Array.isArray(apiData.data)) {
-				faculties = apiData.data;
-			} else if (Array.isArray(apiData)) {
-				faculties = apiData;
+			// Parse organizations API response - now contains both faculty and office types
+			if (apiData.success && apiData.data) {
+				organizations = apiData.data;
 			} else {
 				console.error('Unexpected organizations API response format:', apiData);
-				faculties = [];
+				organizations = { all: [], grouped: { faculty: [], office: [] } };
 			}
 		} else {
-			console.error('Faculties API error:', response.status, response.statusText);
+			console.error('Organizations API error:', response.status, response.statusText);
 		}
 	} catch (error) {
-		console.error('Failed to fetch faculties:', error);
-		// ใช้ default faculties หากไม่สามารถดึงข้อมูลได้
-		faculties = [];
+		console.error('Failed to fetch organizations:', error);
+		// ใช้ default organizations หากไม่สามารถดึงข้อมูลได้
+		organizations = { all: [], grouped: { faculty: [], office: [] } };
 	}
 
 	return {
 		form,
 		user,
 		admin_role: user.admin_role,
-		faculties
+		organizations
 	};
 };
 
