@@ -28,7 +28,7 @@
 		IconEyeOff
 	} from '@tabler/icons-svelte';
 	import { toast } from 'svelte-sonner';
-	import { apiClient, isApiSuccess } from '$lib/api/client';
+	import { apiClient } from '$lib/api/client';
 	import { profileUpdateSchema, changePasswordSchema, PrefixOptions } from '$lib/schemas/auth';
 	import type { ProfileUpdateFormData, ChangePasswordFormData } from '$lib/schemas/auth';
 
@@ -173,7 +173,7 @@
 			// Update profile via API
 			const response = await apiClient.updateStudentProfile(formData);
 
-			if (isApiSuccess(response)) {
+			if (response.success) {
 				toast.success('บันทึกข้อมูลส่วนตัวสำเร็จ');
 				editing = false;
 				// Refresh user data
@@ -222,7 +222,7 @@
 			// Change password via API
 			const response = await apiClient.changeStudentPassword(passwordData);
 
-			if (isApiSuccess(response)) {
+			if (response.success) {
 				toast.success('เปลี่ยนรหัสผ่านสำเร็จ');
 				cancelPasswordChange();
 			} else {
