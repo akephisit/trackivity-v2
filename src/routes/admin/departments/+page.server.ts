@@ -5,16 +5,14 @@ import { z } from 'zod';
 import type { PageServerLoad, Actions } from './$types';
 import type { Department, Organization } from '$lib/types/admin';
 import { requireAdmin } from '$lib/server/auth-utils';
-import { db, organizations, departments } from '$lib/server/db';
-import { eq, and, desc } from 'drizzle-orm';
+import { db, organizations, departments, users, adminRoles } from '$lib/server/db';
+import { eq, and, desc, count, sql } from 'drizzle-orm';
 
 // Department schemas
 const departmentCreateSchema = z.object({
 	name: z.string().min(1, 'กรุณากรอกชื่อภาควิชา'),
 	code: z.string().min(1, 'กรุณากรอกรหัสภาควิชา'),
 	description: z.string().optional(),
-	head_name: z.string().optional(),
-	head_email: z.string().email('รูปแบบอีเมลไม่ถูกต้อง').optional().or(z.literal('')),
 	status: z.preprocess((val) => {
 		if (val === 'true' || val === true) return true;
 		if (val === 'false' || val === false) return false;
@@ -28,8 +26,6 @@ const departmentUpdateSchema = z.object({
 	name: z.string().min(1, 'กรุณากรอกชื่อภาควิชา').optional(),
 	code: z.string().min(1, 'กรุณากรอกรหัสภาควิชา').optional(),
 	description: z.string().optional(),
-	head_name: z.string().optional(),
-	head_email: z.string().email('รูปแบบอีเมลไม่ถูกต้อง').optional().or(z.literal('')),
 	status: z.boolean().optional()
 });
 
@@ -42,32 +38,10 @@ export const load: PageServerLoad = async (event) => {
 	const admin_role = user.admin_role;
 
 	try {
-		// Fetch departments directly from database and map to typed Department
+		// Fetch departments with student and admin counts
 		let departmentsData: Department[];
 		if (admin_role?.admin_level === 'OrganizationAdmin' && (admin_role as any).organization_id) {
-			const rows = await db
-				.select({
-					id: departments.id,
-					name: departments.name,
-					code: departments.code,
-					organization_id: departments.organizationId,
-					description: departments.description,
-					status: departments.status,
-					created_at: departments.createdAt,
-					updated_at: departments.updatedAt
-				})
-				.from(departments)
-				.where(eq(departments.organizationId, (admin_role as any).organization_id))
-				.orderBy(desc(departments.createdAt));
-
-			departmentsData = rows.map((d) => ({
-				...d,
-				description: d.description || undefined,
-				created_at: d.created_at?.toISOString() || new Date().toISOString(),
-				updated_at: d.updated_at?.toISOString() || new Date().toISOString()
-			}));
-		} else {
-			// SuperAdmin - get all departments with organization info
+			// Get departments for specific organization
 			const rows = await db
 				.select({
 					id: departments.id,
@@ -78,17 +52,64 @@ export const load: PageServerLoad = async (event) => {
 					status: departments.status,
 					created_at: departments.createdAt,
 					updated_at: departments.updatedAt,
-					organization_name: organizations.name
+					students_count: sql<number>`CAST(COUNT(DISTINCT ${users.id}) AS INTEGER)`,
+					// Count admins for this organization (organization-level admins)
+					admins_count: sql<number>`0` // Will calculate separately
 				})
 				.from(departments)
-				.leftJoin(organizations, eq(departments.organizationId, organizations.id))
+				.leftJoin(users, eq(departments.id, users.departmentId))
+				.where(eq(departments.organizationId, (admin_role as any).organization_id))
+				.groupBy(departments.id, departments.name, departments.code, departments.organizationId, departments.description, departments.status, departments.createdAt, departments.updatedAt)
 				.orderBy(desc(departments.createdAt));
+
+			// Get admin count for the organization
+			const adminCountResult = await db
+				.select({ count: count() })
+				.from(adminRoles)
+				.where(eq(adminRoles.organizationId, (admin_role as any).organization_id));
+			
+			const totalAdmins = adminCountResult[0]?.count || 0;
 
 			departmentsData = rows.map((d) => ({
 				...d,
 				description: d.description || undefined,
 				created_at: d.created_at?.toISOString() || new Date().toISOString(),
-				updated_at: d.updated_at?.toISOString() || new Date().toISOString()
+				updated_at: d.updated_at?.toISOString() || new Date().toISOString(),
+				students_count: d.students_count || 0,
+				admins_count: totalAdmins // All admins belong to the organization
+			}));
+		} else {
+			// SuperAdmin - get all departments with organization info and counts
+			const rows = await db
+				.select({
+					id: departments.id,
+					name: departments.name,
+					code: departments.code,
+					organization_id: departments.organizationId,
+					description: departments.description,
+					status: departments.status,
+					created_at: departments.createdAt,
+					updated_at: departments.updatedAt,
+					organization_name: organizations.name,
+					students_count: sql<number>`CAST(COUNT(DISTINCT ${users.id}) AS INTEGER)`
+				})
+				.from(departments)
+				.leftJoin(organizations, eq(departments.organizationId, organizations.id))
+				.leftJoin(users, eq(departments.id, users.departmentId))
+				.groupBy(departments.id, departments.name, departments.code, departments.organizationId, departments.description, departments.status, departments.createdAt, departments.updatedAt, organizations.name)
+				.orderBy(desc(departments.createdAt));
+
+			// Get total admin count for SuperAdmin view
+			const adminCountResult = await db.select({ count: count() }).from(adminRoles);
+			const totalAdmins = adminCountResult[0]?.count || 0;
+
+			departmentsData = rows.map((d) => ({
+				...d,
+				description: d.description || undefined,
+				created_at: d.created_at?.toISOString() || new Date().toISOString(),
+				updated_at: d.updated_at?.toISOString() || new Date().toISOString(),
+				students_count: d.students_count || 0,
+				admins_count: totalAdmins // Total system admins for SuperAdmin view
 			}));
 		}
 

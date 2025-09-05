@@ -54,8 +54,6 @@
 		name: z.string().min(1, 'กรุณากรอกชื่อภาควิชา'),
 		code: z.string().min(1, 'กรุณากรอกรหัสภาควิชา'),
 		description: z.string().optional(),
-		head_name: z.string().optional(),
-		head_email: z.string().email('รูปแบบอีเมลไม่ถูกต้อง').optional().or(z.literal('')),
 		status: z.boolean().default(true),
 		organization_id: z.string().uuid('กรุณาเลือกหน่วยงานที่ถูกต้อง').optional()
 	});
@@ -106,8 +104,6 @@
 		name: '',
 		code: '',
 		description: '',
-		head_name: '',
-		head_email: '',
 		status: true
 	});
 
@@ -132,7 +128,7 @@
 				(dept) =>
 					dept.name.toLowerCase().includes(query) ||
 					(dept.description && dept.description.toLowerCase().includes(query)) ||
-					(dept.head_name && dept.head_name.toLowerCase().includes(query))
+					dept.code.toLowerCase().includes(query)
 			);
 		}
 
@@ -160,8 +156,6 @@
 			name: '',
 			code: '',
 			description: '',
-			head_name: '',
-			head_email: '',
 			status: true,
 			organization_id: undefined
 		};
@@ -174,8 +168,6 @@
 			name: department.name,
 			code: department.code || '',
 			description: department.description || '',
-			head_name: department.head_name || '',
-			head_email: department.head_email || '',
 			status: department.status
 		};
 		editDialogOpen = true;
@@ -436,7 +428,7 @@
 						/>
 						<Input
 							bind:value={searchQuery}
-							placeholder="ค้นหาภาควิชา, หัวหน้าภาค, หรือคำอธิบาย..."
+							placeholder="ค้นหาภาควิชา, รหัสภาค, หรือคำอธิบาย..."
 							class="pr-10 pl-10"
 						/>
 						{#if searchQuery}
@@ -532,7 +524,6 @@
 									{#if data.userRole === 'SuperAdmin'}
 										<Table.Head class="font-semibold">หน่วยงาน</Table.Head>
 									{/if}
-									<Table.Head class="font-semibold">หัวหน้าภาค</Table.Head>
 									<Table.Head class="text-center font-semibold">จำนวนนักศึกษา</Table.Head>
 									<Table.Head class="font-semibold">สถานะ</Table.Head>
 									<Table.Head class="font-semibold">วันที่สร้าง</Table.Head>
@@ -577,22 +568,6 @@
 												{/if}
 											</Table.Cell>
 										{/if}
-										<Table.Cell class="py-4">
-											{#if department.head_name}
-												<div>
-													<div class="font-medium text-gray-900 dark:text-gray-100">
-														{department.head_name}
-													</div>
-													{#if department.head_email}
-														<div class="text-sm text-gray-500 dark:text-gray-400">
-															{department.head_email}
-														</div>
-													{/if}
-												</div>
-											{:else}
-												<span class="text-gray-400">ยังไม่ได้กำหนด</span>
-											{/if}
-										</Table.Cell>
 										<Table.Cell class="py-4 text-center">
 											<Badge variant="secondary">
 												{department.students_count || 0}
@@ -737,36 +712,6 @@
 				<Form.FieldErrors />
 			</Form.Field>
 
-			<Form.Field form={createForm} name="head_name">
-				<Form.Control>
-					{#snippet children({ props })}
-						<Label for={props.id}>ชื่อหัวหน้าภาค (ไม่บังคับ)</Label>
-						<Input
-							{...props}
-							bind:value={$createFormData.head_name}
-							placeholder="เช่น รศ.ดร. สมชาย ใจดี"
-							disabled={$createSubmitting}
-						/>
-					{/snippet}
-				</Form.Control>
-				<Form.FieldErrors />
-			</Form.Field>
-
-			<Form.Field form={createForm} name="head_email">
-				<Form.Control>
-					{#snippet children({ props })}
-						<Label for={props.id}>อีเมลหัวหน้าภาค (ไม่บังคับ)</Label>
-						<Input
-							{...props}
-							type="email"
-							bind:value={$createFormData.head_email}
-							placeholder="เช่น head@university.ac.th"
-							disabled={$createSubmitting}
-						/>
-					{/snippet}
-				</Form.Control>
-				<Form.FieldErrors />
-			</Form.Field>
 
 			{#if data.userRole !== 'OrganizationAdmin'}
 				<Form.Field form={createForm} name="organization_id">
@@ -856,19 +801,6 @@
 					/>
 				</div>
 
-				<div class="space-y-2">
-					<Label>ชื่อหัวหน้าภาค</Label>
-					<Input bind:value={editFormData.head_name} placeholder="เช่น รศ.ดร. สมชาย ใจดี" />
-				</div>
-
-				<div class="space-y-2">
-					<Label>อีเมลหัวหน้าภาค</Label>
-					<Input
-						type="email"
-						bind:value={editFormData.head_email}
-						placeholder="เช่น head@university.ac.th"
-					/>
-				</div>
 
 				<div class="flex items-center space-x-2">
 					<Switch bind:checked={editFormData.status} />

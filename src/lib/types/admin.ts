@@ -53,8 +53,6 @@ export interface Department {
 	code: string;
 	description?: string;
 	organization_id: string; // UUID string
-	head_name?: string;
-	head_email?: string;
 	students_count?: number;
 	admins_count?: number;
 	status: boolean;
