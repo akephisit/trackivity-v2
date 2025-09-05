@@ -26,6 +26,7 @@
         IconUser
     } from '@tabler/icons-svelte';
     import { goto } from '$app/navigation';
+    import { toast } from 'svelte-sonner';
 
 	const { data } = $props<{ data: { activity: Activity; participations: Participation[] } }>();
 	const { activity, participations } = data;
@@ -133,18 +134,19 @@
 			if (response.ok) {
 				const result = await response.json();
 				if (result.success === true) {
+					toast.success('ลงทะเบียนล่วงหน้าสำเร็จ');
 					// Refresh the page to update registration status
 					window.location.reload();
 				} else {
-            alert(result.message || 'เกิดข้อผิดพลาดในการลงทะเบียนล่วงหน้า');
+					toast.error(result.message || 'เกิดข้อผิดพลาดในการลงทะเบียนล่วงหน้า');
 				}
 			} else {
 				const error = await response.json();
-            alert(error.message || 'เกิดข้อผิดพลาดในการลงทะเบียนล่วงหน้า');
+				toast.error(error.message || 'เกิดข้อผิดพลาดในการลงทะเบียนล่วงหน้า');
 			}
 		} catch (error) {
 			console.error('Registration error:', error);
-        alert('เกิดข้อผิดพลาดในการลงทะเบียนล่วงหน้า');
+			toast.error('เกิดข้อผิดพลาดในการลงทะเบียนล่วงหน้า');
 		} finally {
 			registering = false;
 		}
