@@ -91,11 +91,11 @@
 				.min(1, 'กรุณาเลือกหน่วยงานที่จัดกิจกรรม'),
 			eligible_organizations: z
 				.string()
-				.min(1, 'กรุณาเลือกหน่วยงานที่สามารถเข้าร่วมได้')
+				.min(1, 'กรุณาเลือกคณะที่สามารถเข้าร่วมได้')
 				.refine((value) => {
 					const items = value.split(',').filter((f) => f.trim() !== '');
 					return items.length > 0;
-				}, 'กรุณาเลือกอย่างน้อย 1 หน่วยงาน'),
+				}, 'กรุณาเลือกอย่างน้อย 1 คณะ'),
 			academic_year: z.string().min(1, 'กรุณาเลือกปีการศึกษา'),
 			activity_level: z.enum(['faculty', 'university'], {
 				errorMap: () => ({ message: 'กรุณาเลือกระดับกิจกรรม' })
@@ -219,12 +219,12 @@
 	);
 	// For multiple select, we use array of strings (organization IDs) as that's what bits-ui expects
 	let selectedOrganizationIds = $state<string[]>([]);
-	// Derive organization objects for display purposes
+	// Derive organization objects for display purposes (กรองเฉพาะคณะที่เลือก)
 	let selectedOrganizations = $derived(
 		selectedOrganizationIds.map(id => {
-			const org = allOrganizationOptions.find(o => o.value === id);
-			return org ? { value: id, label: org.label, type: org.type } : { value: id, label: id, type: 'faculty' as const };
-		})
+			const org = facultyOptions.find((o: any) => o.value === id); // ใช้เฉพาะ facultyOptions
+			return org ? { value: id, label: org.label, type: org.type } : null;
+		}).filter(Boolean) as { value: string; label: string; type: 'faculty' }[]
 	);
 	let selectedAcademicYear = $state<{ value: string; label: string } | undefined>(undefined);
 	let selectedActivityLevel = $state<{ value: string; label: string } | undefined>({ value: 'faculty', label: 'คณะ' });
@@ -625,7 +625,7 @@
 									<Form.Control>
 										{#snippet children({ props })}
 											<Label for={props.id} class="text-base font-medium"
-												>หน่วยงานที่สามารถเข้าร่วมได้ *</Label
+												>คณะที่สามารถเข้าร่วมได้ *</Label
 											>
 											<input
 												type="hidden"
@@ -638,8 +638,11 @@
 												disabled={$submitting}
 												onValueChange={(values) => {
 													if (values && Array.isArray(values)) {
-														selectedOrganizationIds = values;
-														$formData.eligible_organizations = values.join(',');
+														// กรองเฉพาะ faculty IDs ที่ถูกต้อง
+														const facultyIds = facultyOptions.map((f: any) => f.value);
+														const validValues = values.filter(id => facultyIds.includes(id));
+														selectedOrganizationIds = validValues;
+														$formData.eligible_organizations = validValues.join(',');
 														console.log(
 															'Updated eligible_organizations:',
 															$formData.eligible_organizations
@@ -649,19 +652,16 @@
 											>
 												<Select.Trigger>
 													{#if selectedOrganizations.length === 0}
-														เลือกหน่วยงานที่สามารถเข้าร่วมได้
+														เลือกคณะที่สามารถเข้าร่วมได้
 													{:else if selectedOrganizations.length === 1}
 														{selectedOrganizations[0].label}
 													{:else}
-														เลือกแล้ว {selectedOrganizations.length} หน่วยงาน
+														เลือกแล้ว {selectedOrganizations.length} คณะ
 													{/if}
 												</Select.Trigger>
 												<Select.Content>
-													<!-- คณะ Section -->
+													<!-- แสดงเฉพาะคณะเท่านั้น -->
 													{#if facultyOptions.length > 0}
-														<div class="px-2 py-1.5 text-sm font-semibold text-gray-700 bg-gray-50">
-															คณะ
-														</div>
 														{#each facultyOptions as option}
 															<Select.Item value={option.value}>
 																<div class="flex items-center gap-2">
@@ -673,31 +673,6 @@
 																		{/if}
 																	</div>
 																	<div class="w-2 h-2 rounded-full bg-blue-500 mr-1"></div>
-																	{option.label}
-																</div>
-															</Select.Item>
-														{/each}
-													{/if}
-													
-													<!-- หน่วยงาน Section -->
-													{#if officeOptions.length > 0}
-														{#if facultyOptions.length > 0}
-															<div class="border-t my-1"></div>
-														{/if}
-														<div class="px-2 py-1.5 text-sm font-semibold text-gray-700 bg-gray-50">
-															หน่วยงาน
-														</div>
-														{#each officeOptions as option}
-															<Select.Item value={option.value}>
-																<div class="flex items-center gap-2">
-																	<div class="flex h-4 w-4 items-center justify-center">
-																		{#if selectedOrganizationIds.includes(option.value)}
-																			<div class="h-3 w-3 rounded-sm bg-green-600"></div>
-																		{:else}
-																			<div class="h-3 w-3 rounded-sm border border-gray-300 bg-white"></div>
-																		{/if}
-																	</div>
-																	<div class="w-2 h-2 rounded-full bg-green-500 mr-1"></div>
 																	{option.label}
 																</div>
 															</Select.Item>
