@@ -53,8 +53,12 @@ export const load: ServerLoad = async (event) => {
 			organization: organization[0],
 			currentRequirements
 		};
-	} catch (err) {
+	} catch (err: unknown) {
 		console.error('Failed to load settings:', err);
+		// Re-throw SvelteKit HttpError/Redirect without masking as 500
+		if (err && typeof err === 'object' && 'status' in err) {
+			throw err as any;
+		}
 		throw error(500, 'Failed to load settings');
 	}
 };
