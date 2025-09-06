@@ -95,7 +95,7 @@
 </script>
 
 <div class="min-h-screen bg-background">
-	<!-- Mobile Header -->
+	<!-- Mobile Header (สำหรับมือถือเท่านั้น) -->
 	<header class="sticky top-0 z-40 border-b bg-card lg:hidden">
 		<div class="flex items-center justify-between px-4 py-3">
 			<div class="flex items-center gap-3">
@@ -131,7 +131,7 @@
 
 	<div class="flex">
 		<!-- Desktop Sidebar -->
-		<div class="hidden lg:block sticky top-0 h-screen w-64 border-r bg-card">
+		<div class="hidden lg:block fixed top-0 left-0 h-screen w-64 border-r bg-card">
 			<aside class="relative h-full flex flex-col overflow-hidden">
 			<!-- Logo -->
 			<div class="border-b p-6">
@@ -266,7 +266,29 @@
 		</aside>
 
 		<!-- Main Content -->
-		<main class="flex-1 lg:ml-0">
+		<main class="flex-1 lg:ml-64 min-h-screen">
+			<!-- Desktop Top Bar -->
+			<header class="hidden lg:block sticky top-0 z-40 border-b bg-card">
+				<div class="flex items-center justify-between px-6 py-3 ml-0">
+					<h1 class="text-lg font-semibold">Trackivity</h1>
+					<div class="flex items-center gap-2 mr-6">
+						{#if $currentUser}
+							<span class="text-sm text-muted-foreground">{$currentUser.first_name}</span>
+						{/if}
+						<Button variant="ghost" size="sm" onclick={toggleTheme} class="p-2">
+							{#if mode.current === 'light'}
+								<IconMoon class="size-4" />
+							{:else}
+								<IconSun class="size-4" />
+							{/if}
+						</Button>
+						<Button variant="ghost" size="sm" onclick={handleLogout} class="p-2">
+							<IconLogout class="size-4" />
+						</Button>
+					</div>
+				</div>
+			</header>
+			
 			<div class="container mx-auto max-w-7xl px-4 py-6 lg:px-6">
 				{@render children?.()}
 			</div>
