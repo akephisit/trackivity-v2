@@ -194,13 +194,13 @@
 	<!-- Header -->
 	<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
 		<div>
-			<h1 class="text-3xl font-bold text-gray-900 dark:text-white">
+			<h1 class="text-2xl font-bold text-gray-900 dark:text-white">
 				แดชบอร์ด
 				{#if data.admin_role?.admin_level === 'OrganizationAdmin' && (data.admin_role as any)?.organization}
 					- {(data.admin_role as any).organization.name}
 				{/if}
 			</h1>
-			<p class="mt-2 text-gray-600 dark:text-gray-400">
+			<p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
 				ยินดีต้อนรับ, {data.user.first_name}
 				{data.user.last_name}
 				{#if data.admin_role?.admin_level === 'OrganizationAdmin' && (data.admin_role as any)?.organization}
@@ -234,21 +234,21 @@
 				<CardDescription>ข้อมูลสรุปของหน่วยงานที่คุณดูแล</CardDescription>
 			</CardHeader>
 			<CardContent>
-				<div class="grid grid-cols-1 gap-4 md:grid-cols-3">
+				<div class="grid grid-cols-1 gap-3 md:grid-cols-3">
 					<div class="text-center">
-						<div class="text-2xl font-bold text-blue-700 dark:text-blue-300">
+						<div class="text-xl font-bold text-blue-700 dark:text-blue-300">
 							{(data.admin_role as any).organization.name}
 						</div>
 						<div class="text-sm text-gray-600 dark:text-gray-400">ชื่อหน่วยงาน</div>
 					</div>
 					<div class="text-center">
-						<div class="text-2xl font-bold text-green-700 dark:text-green-300">
+						<div class="text-xl font-bold text-green-700 dark:text-green-300">
 							{data.stats?.departments_count || 0}
 						</div>
 						<div class="text-sm text-gray-600 dark:text-gray-400">ภาควิชา</div>
 					</div>
 					<div class="text-center">
-						<div class="text-2xl font-bold text-purple-700 dark:text-purple-300">
+						<div class="text-xl font-bold text-purple-700 dark:text-purple-300">
 							{data.stats?.organization_users || 0}
 						</div>
 						<div class="text-sm text-gray-600 dark:text-gray-400">ผู้ใช้ทั้งหมด</div>
@@ -259,9 +259,9 @@
 	{/if}
 
 	<!-- Stats Cards -->
-	<div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+	<div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
 		{#each statCards as stat}
-			<Card class="transition-shadow duration-200 hover:shadow-lg">
+			<Card class="transition-shadow duration-200 hover:shadow-md">
 				<CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
 					<CardTitle class="text-sm font-medium text-gray-600 dark:text-gray-400">
 						{stat.title}
@@ -271,7 +271,7 @@
 					</div>
 				</CardHeader>
 				<CardContent>
-					<div class="text-2xl font-bold text-gray-900 dark:text-white">
+					<div class="text-xl font-bold text-gray-900 dark:text-white">
 						{(stat.value || 0).toLocaleString()}
 					</div>
 					<p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
@@ -284,7 +284,7 @@
 
 	<!-- Department Analytics for Faculty Admin -->
 	{#if data.admin_role?.admin_level === 'OrganizationAdmin' && departmentChartData?.length > 0}
-		<div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+		<div class="grid grid-cols-1 gap-4">
 			<!-- Department Distribution Chart -->
 			<Card>
 				<CardHeader>
@@ -295,7 +295,7 @@
 					<CardDescription>จำนวนผู้ใช้ในแต่ละภาควิชาของหน่วยงาน</CardDescription>
 				</CardHeader>
 				<CardContent>
-					<Chart.Container config={chartConfig} class="min-h-[200px] w-full">
+					<Chart.Container config={chartConfig} class="h-[120px] md:h-[200px] w-full">
 						<BarChart
 							data={departmentChartData}
 							xScale={scaleBand().padding(0.25)}
@@ -323,9 +323,9 @@
 	<div class="grid grid-cols-1 gap-6">
 		<!-- Recent Activities -->
 		<Card>
-			<CardHeader>
-				<CardTitle class="flex items-center gap-2">
-					<IconClock class="h-5 w-5" />
+			<CardHeader class="pb-3">
+				<CardTitle class="flex items-center gap-2 text-lg">
+					<IconClock class="h-4 w-4" />
 					กิจกรรมล่าสุด
 					{#if data.admin_role?.admin_level === 'OrganizationAdmin'}
 						<span class="text-sm font-normal text-gray-500"
@@ -343,10 +343,10 @@
 			</CardHeader>
 			<CardContent>
 				{#if data.recentActivities && data.recentActivities.length > 0}
-					<div class="space-y-4">
-						{#each data.recentActivities.slice(0, 5) as activity}
+					<div class="space-y-3">
+						{#each data.recentActivities.slice(0, 4) as activity}
 							<div
-								class="flex items-start space-x-3 rounded-lg p-3 transition-colors duration-200 hover:bg-gray-50 dark:hover:bg-gray-800"
+								class="flex items-start space-x-3 rounded-lg p-2 transition-colors duration-200 hover:bg-gray-50 dark:hover:bg-gray-800"
 							>
 								<div class="flex-shrink-0">
 									{#if activity.type === 'success' || activity.action === 'login' || activity.action === 'profile_update'}
@@ -408,27 +408,27 @@
 	<!-- System Info -->
 	{#if data.admin_role?.admin_level === 'SuperAdmin'}
 		<Card>
-			<CardHeader>
-				<CardTitle class="flex items-center gap-2">
-					<IconTrendingUp class="h-5 w-5" />
+			<CardHeader class="pb-3">
+				<CardTitle class="flex items-center gap-2 text-lg">
+					<IconTrendingUp class="h-4 w-4" />
 					ข้อมูลระบบ
 				</CardTitle>
 				<CardDescription>สถานะและข้อมูลทั่วไปของระบบ</CardDescription>
 			</CardHeader>
 			<CardContent>
-				<div class="grid grid-cols-1 gap-6 md:grid-cols-3">
+				<div class="grid grid-cols-1 gap-4 md:grid-cols-3">
 					<div class="text-center">
-						<div class="text-2xl font-bold text-green-600 dark:text-green-400">99.9%</div>
+						<div class="text-xl font-bold text-green-600 dark:text-green-400">99.9%</div>
 						<div class="text-sm text-gray-500 dark:text-gray-400">Uptime</div>
 					</div>
 					<div class="text-center">
-						<div class="text-2xl font-bold text-blue-600 dark:text-blue-400">
+						<div class="text-xl font-bold text-blue-600 dark:text-blue-400">
 							{((data.stats?.recent_activities?.length || 0) / 24).toFixed(1)}
 						</div>
 						<div class="text-sm text-gray-500 dark:text-gray-400">กิจกรรมต่อชั่วโมง</div>
 					</div>
 					<div class="text-center">
-						<div class="text-2xl font-bold text-purple-600 dark:text-purple-400">
+						<div class="text-xl font-bold text-purple-600 dark:text-purple-400">
 							{data.stats?.user_registrations_today || 0}
 						</div>
 						<div class="text-sm text-gray-500 dark:text-gray-400">ผู้ใช้ลงทะเบียนวันนี้</div>
