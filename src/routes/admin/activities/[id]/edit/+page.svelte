@@ -243,7 +243,7 @@
 </script>
 
 <svelte:head>
-	<title>แก้ไข{activity.title} - Admin Panel</title>
+    <title>แก้ไข{activity.title} - Trackivity</title>
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
 </svelte:head>
 
@@ -256,7 +256,7 @@
 		</Button>
 		<div class="flex-1">
 			<h1 class="admin-page-title"><IconCalendar class="size-6 text-primary" /> แก้ไขกิจกรรม</h1>
-			<p class="text-muted-foreground">{activity.title} - Admin Panel</p>
+                <p class="text-muted-foreground">{activity.title} - Trackivity</p>
 		</div>
 		<Button variant="outline" size="sm" onclick={previewActivity}>
 			<IconEye class="mr-2 size-4" />

@@ -162,7 +162,7 @@
 </script>
 
 <svelte:head>
-	<title>{meta.title} | Trackivity</title>
+	<title>{meta.title} - Trackivity</title>
 	<meta name="description" content={meta.description} />
 </svelte:head>
 

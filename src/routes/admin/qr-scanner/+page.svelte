@@ -187,7 +187,7 @@
 </script>
 
 <svelte:head>
-	<title>QR Scanner - Admin Dashboard</title>
+	<title>QR Scanner - Trackivity</title>
 	<meta name="description" content="ระบบสแกน QR Code สำหรับผู้ดูแลระบบ" />
 </svelte:head>
 

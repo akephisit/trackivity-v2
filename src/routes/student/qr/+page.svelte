@@ -145,7 +145,7 @@
 </script>
 
 <svelte:head>
-	<title>QR Code - Trackivity Student</title>
+	<title>QR Code - Trackivity</title>
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
 </svelte:head>
 

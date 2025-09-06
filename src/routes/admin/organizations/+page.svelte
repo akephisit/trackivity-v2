@@ -296,7 +296,7 @@ function clearSearch() {
 </script>
 
 <svelte:head>
-	<title>จัดการหน่วยงาน - Admin Panel</title>
+    <title>จัดการหน่วยงาน - Trackivity</title>
 </svelte:head>
 
 <div class="space-y-4 lg:space-y-6">

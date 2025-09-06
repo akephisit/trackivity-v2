@@ -512,7 +512,7 @@
 </script>
 
 <svelte:head>
-	<title>จัดการแอดมิน - Admin Panel</title>
+    <title>จัดการแอดมิน - Trackivity</title>
 </svelte:head>
 
 <div class="space-y-4 lg:space-y-6">

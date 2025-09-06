@@ -87,7 +87,7 @@
 </script>
 
 <svelte:head>
-	<title>จัดการผู้ใช้ - Admin Panel</title>
+    <title>จัดการผู้ใช้ - Trackivity</title>
 </svelte:head>
 
 <div class="space-y-4 lg:space-y-6">

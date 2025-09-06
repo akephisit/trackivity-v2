@@ -302,7 +302,7 @@ calculateStats(participationHistory);
 </script>
 
 <svelte:head>
-	<title>ประวัติการเข้าร่วม - Trackivity Student</title>
+	<title>ประวัติการเข้าร่วม - Trackivity</title>
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
 </svelte:head>
 

@@ -342,7 +342,7 @@
 </script>
 
 <svelte:head>
-	<title>สร้างกิจกรรมใหม่ - Admin Panel</title>
+    <title>สร้างกิจกรรมใหม่ - Trackivity</title>
 </svelte:head>
 
 <div class="space-y-6">

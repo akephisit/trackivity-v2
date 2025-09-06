@@ -457,7 +457,7 @@
 </script>
 
 <svelte:head>
-	<title>{pageTitle} - Admin Panel</title>
+    <title>{pageTitle} - Trackivity</title>
 </svelte:head>
 
 <div class="space-y-6">

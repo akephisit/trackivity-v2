@@ -130,7 +130,7 @@
 </script>
 
 <svelte:head>
-	<title>จัดการกิจกรรม - Admin Panel</title>
+    <title>จัดการกิจกรรม - Trackivity</title>
 </svelte:head>
 
 <div class="space-y-4 lg:space-y-6">

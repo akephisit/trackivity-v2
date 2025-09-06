@@ -79,7 +79,7 @@
 </script>
 
 <svelte:head>
-	<title>สรุปกิจกรรม - Trackivity Student</title>
+	<title>สรุปกิจกรรม - Trackivity</title>
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
 </svelte:head>
 

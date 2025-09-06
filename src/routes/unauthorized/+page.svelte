@@ -16,7 +16,7 @@
 </script>
 
 <svelte:head>
-	<title>ไม่มีสิทธิ์เข้าถึง - Admin Panel</title>
+    <title>ไม่มีสิทธิ์เข้าถึง - Trackivity</title>
 </svelte:head>
 
 <div

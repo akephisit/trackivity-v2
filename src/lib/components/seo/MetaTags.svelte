@@ -35,7 +35,7 @@
     }
   });
 
-  const fullTitle = `${title}${siteName ? ` | ${siteName}` : ''}`;
+  const fullTitle = `${title}${siteName ? ` - ${siteName}` : ''}`;
 </script>
 
 <svelte:head>

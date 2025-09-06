@@ -315,7 +315,7 @@
 </script>
 
 <svelte:head>
-	<title>โปรไฟล์ - Trackivity Student</title>
+	<title>โปรไฟล์ - Trackivity</title>
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
 </svelte:head>
 

@@ -38,7 +38,7 @@
 </script>
 
 <svelte:head>
-	<title>ตั้งค่าระบบ - Trackivity Admin</title>
+	<title>ตั้งค่าระบบ - Trackivity</title>
 </svelte:head>
 
 <div class="space-y-4 lg:space-y-6">
