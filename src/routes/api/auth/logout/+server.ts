@@ -20,14 +20,7 @@ export const POST: RequestHandler = async ({ cookies }) => {
 				const sessionId = decoded.session_id;
 				
 				if (sessionId) {
-					const deactivated = await deactivateSession(sessionId);
-					if (deactivated) {
-						console.log(`[Auth] Successfully deactivated session ${sessionId}`);
-					} else {
-						console.log(`[Auth] Session ${sessionId} was already inactive or not found`);
-					}
-				} else {
-					console.warn('[Auth] No session_id found in JWT token');
+					await deactivateSession(sessionId);
 				}
 			} catch (error) {
 				console.warn('Failed to decode JWT token during logout:', error);

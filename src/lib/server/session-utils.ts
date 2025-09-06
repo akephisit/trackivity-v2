@@ -119,7 +119,7 @@ export async function createSessionWithRetry(
 			const sessionId = generateSecureSessionId();
 			
 			// Attempt to insert the session
-			const insertedSession = await db.insert(sessions).values({
+			await db.insert(sessions).values({
 				id: sessionId,
 				userId,
 				deviceInfo: deviceInfo || {},
@@ -129,9 +129,8 @@ export async function createSessionWithRetry(
 				lastAccessed: new Date(),
 				expiresAt,
 				isActive: true
-			}).returning({ id: sessions.id, isActive: sessions.isActive });
+			});
 
-			console.log(`[Session] Created session ${sessionId} for user ${userId} (attempt ${attempt}) - Inserted: ${insertedSession.length} records, isActive: ${insertedSession[0]?.isActive}`);
 			return { sessionId, created: true };
 		} catch (error: any) {
 			lastError = error;
@@ -162,8 +161,7 @@ export async function createSessionWithRetry(
 
 						if (existingSessions.length > 0) {
 							const existingSession = existingSessions[0];
-							console.log(`[Session] Reusing existing session ${existingSession.id} for user ${userId}`);
-							return { sessionId: existingSession.id, created: false };
+									return { sessionId: existingSession.id, created: false };
 						}
 					} catch (recoveryError) {
 						console.error('[Session] Session recovery failed:', recoveryError);
@@ -209,8 +207,7 @@ export async function updateSessionLastAccessed(sessionId: string): Promise<void
  */
 export async function deactivateSession(sessionId: string): Promise<boolean> {
 	try {
-		console.log(`[Session] Attempting to deactivate session ${sessionId}`);
-		
+			
 		// First, check if session exists and get its current state
 		const existingSession = await db
 			.select({ id: sessions.id, isActive: sessions.isActive })
@@ -224,7 +221,6 @@ export async function deactivateSession(sessionId: string): Promise<boolean> {
 		}
 
 		const session = existingSession[0];
-		console.log(`[Session] Found session ${sessionId}, current isActive: ${session.isActive}`);
 
 		if (!session.isActive) {
 			console.log(`[Auth] Session ${sessionId} was already inactive or not found`);
@@ -239,8 +235,7 @@ export async function deactivateSession(sessionId: string): Promise<boolean> {
 			.returning({ id: sessions.id });
 
 		const success = result.length > 0;
-		console.log(`[Session] Deactivation result for ${sessionId}: ${success ? 'SUCCESS' : 'FAILED'} - Updated ${result.length} records`);
-		
+			
 		return success;
 	} catch (error) {
 		console.error(`[Session] Failed to deactivate session ${sessionId}:`, error);
