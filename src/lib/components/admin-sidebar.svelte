@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/state';
-	import { goto } from '$app/navigation';
+	import { goto, preloadData } from '$app/navigation';
 	import * as Sidebar from '$lib/components/ui/sidebar/index.js';
 	import {
 		IconLayoutDashboard,
@@ -200,6 +200,14 @@
 		// Navigate to the target URL
 		goto(href);
 	}
+
+	/**
+	 * Preload handler for hover events
+	 * @param href - The URL to preload
+	 */
+	function handlePreload(href: string) {
+		preloadData(href);
+	}
 </script>
 
 <Sidebar.Root collapsible="offcanvas" {...restProps}>
@@ -213,6 +221,7 @@
 							{...props} 
 							class="flex items-center space-x-3 w-full text-left" 
 							onclick={(e) => handleNavigation('/admin', e)}
+							onmouseenter={() => handlePreload('/admin')}
 						>
 							<div
 								class="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-primary"
@@ -276,6 +285,7 @@
 										{...props} 
 										class="flex items-center space-x-3 w-full text-left" 
 										onclick={(e) => handleNavigation(item.href, e)}
+										onmouseenter={() => handlePreload(item.href)}
 									>
 										{#if item.icon}
 											{@const IconComponent = item.icon}
@@ -309,6 +319,7 @@
 										{...props} 
 										class="flex items-center space-x-3 w-full text-left" 
 										onclick={(e) => handleNavigation('/admin/activities/create', e)}
+										onmouseenter={() => handlePreload('/admin/activities/create')}
 									>
 										<IconCalendarEvent class="!h-4 !w-4 flex-shrink-0" />
 										<span class="text-sm">สร้างกิจกรรมใหม่</span>
@@ -323,6 +334,7 @@
 										{...props} 
 										class="flex items-center space-x-3 w-full text-left" 
 										onclick={(e) => handleNavigation('/admin/reports', e)}
+										onmouseenter={() => handlePreload('/admin/reports')}
 									>
 										<IconUsers class="!h-4 !w-4 flex-shrink-0" />
 										<span class="text-sm">รายงานหน่วยงาน</span>
