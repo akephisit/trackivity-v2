@@ -317,21 +317,18 @@
 	<title>{pageTitle} - Admin Panel</title>
 </svelte:head>
 
-<div class="space-y-6">
+<div class="space-y-4 lg:space-y-6">
 	<!-- Header -->
-	<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-		<div>
-			<h1
-				id="department-management-heading"
-				class="text-4xl font-bold text-gray-900 dark:text-white"
-			>
+	<div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+		<div class="space-y-1 min-w-0">
+			<h1 class="text-2xl font-bold lg:text-3xl">
 				{#if data.userRole === 'OrganizationAdmin' && data.currentFaculty}
 					จัดการภาควิชา - {data.currentFaculty.name}
 				{:else}
 					จัดการภาควิชา
 				{/if}
 			</h1>
-			<p class="mt-3 text-lg text-gray-600 dark:text-gray-400">
+			<p class="text-muted-foreground">
 				{#if data.userRole === 'OrganizationAdmin'}
 					จัดการภาควิชาในหน่วยงานของคุณ รวมถึงการเปิด-ปิดการใช้งาน
 				{:else}
@@ -340,25 +337,22 @@
 			</p>
 		</div>
 		{#if canCreateDepartments}
-			<Button
-				onclick={openCreateDialog}
-				class="bg-blue-600 px-6 py-3 text-base font-medium text-white hover:bg-blue-700"
-			>
-				<IconPlus class="mr-2 h-5 w-5" />
+			<Button onclick={openCreateDialog} class="gap-2 w-full sm:w-auto">
+				<IconPlus class="h-4 w-4" />
 				เพิ่มภาควิชาใหม่
 			</Button>
 		{/if}
 	</div>
 
 	<!-- Stats Cards -->
-	<div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-5">
+	<div class="grid gap-3 lg:gap-4 grid-cols-2 lg:grid-cols-5">
 		<Card>
 			<CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
-				<CardTitle class="text-sm font-medium">ภาควิชาทั้งหมด</CardTitle>
-				<IconBuilding class="h-4 w-4 text-muted-foreground" />
+				<CardTitle class="text-xs lg:text-sm font-medium truncate">ภาควิชาทั้งหมด</CardTitle>
+				<IconBuilding class="h-4 w-4 lg:w-5 lg:h-5 text-muted-foreground flex-shrink-0" />
 			</CardHeader>
-			<CardContent>
-				<div class="text-2xl font-bold">{stats.total}</div>
+			<CardContent class="p-4 lg:p-6">
+				<div class="text-lg lg:text-2xl font-bold">{stats.total}</div>
 			</CardContent>
 		</Card>
 
@@ -414,8 +408,8 @@
 	<!-- Search and Filter -->
 	<Card>
 		<CardHeader>
-			<CardTitle class="flex items-center gap-3">
-				<IconFilter class="h-6 w-6 text-blue-600" />
+			<CardTitle class="flex items-center gap-2">
+				<IconFilter class="h-5 w-5" />
 				ค้นหาและกรอง
 			</CardTitle>
 		</CardHeader>
@@ -423,13 +417,11 @@
 			<div class="flex flex-col gap-4 sm:flex-row">
 				<div class="flex-1">
 					<div class="relative">
-						<IconSearch
-							class="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform text-gray-400"
-						/>
+						<IconSearch class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
 						<Input
 							bind:value={searchQuery}
 							placeholder="ค้นหาภาควิชา, รหัสภาค, หรือคำอธิบาย..."
-							class="pr-10 pl-10"
+							class="pl-10"
 						/>
 						{#if searchQuery}
 							<Button
@@ -476,27 +468,24 @@
 	<!-- Departments Table -->
 	<div class="space-y-6" role="main" aria-labelledby="department-management-heading">
 		{#if refreshing}
-			<div class="flex items-center justify-center py-12" role="status" aria-live="polite">
-				<IconLoader class="mr-3 h-8 w-8 animate-spin text-blue-500" />
-				<span class="text-lg text-gray-600 dark:text-gray-300">กำลังรีเฟรชข้อมูล...</span>
+			<div class="flex items-center justify-center py-12">
+				<IconLoader class="mr-3 h-8 w-8 animate-spin text-muted-foreground" />
+				<span class="text-muted-foreground">กำลังรีเฟรชข้อมูล...</span>
 			</div>
 		{:else if filteredDepartments.length === 0}
-			<div class="py-16 text-center text-gray-500 dark:text-gray-400">
+			<div class="flex flex-col items-center justify-center py-16 text-center">
 				{#if searchQuery || statusFilter !== 'all'}
-					<IconSearch class="mx-auto mb-6 h-16 w-16 opacity-50" />
-					<h3 class="mb-2 text-xl font-semibold">ไม่พบข้อมูลที่ตรงกับการค้นหา</h3>
-					<p class="mb-6 text-gray-400">ลองเปลี่ยนคำค้นหาหรือตัวกรองใหม่</p>
+					<IconSearch class="mb-4 h-12 w-12 text-muted-foreground/50" />
+					<h3 class="mb-2 text-lg font-semibold">ไม่พบข้อมูลที่ตรงกับการค้นหา</h3>
+					<p class="mb-4 text-muted-foreground">ลองเปลี่ยนคำค้นหาหรือตัวกรองใหม่</p>
 					<Button onclick={clearSearch} variant="outline">ล้างการค้นหา</Button>
 				{:else}
-					<IconBuilding class="mx-auto mb-6 h-16 w-16 opacity-50" />
-					<h3 class="mb-2 text-xl font-semibold">ยังไม่มีข้อมูลภาควิชาในระบบ</h3>
-					<p class="mb-6 text-gray-400">เริ่มต้นด้วยการเพิ่มภาควิชาแรก</p>
+					<IconBuilding class="mb-4 h-12 w-12 text-muted-foreground/50" />
+					<h3 class="mb-2 text-lg font-semibold">ยังไม่มีข้อมูลภาควิชาในระบบ</h3>
+					<p class="mb-4 text-muted-foreground">เริ่มต้นด้วยการเพิ่มภาควิชาแรก</p>
 					{#if canCreateDepartments}
-						<Button
-							onclick={openCreateDialog}
-							class="bg-blue-600 px-6 py-3 text-white hover:bg-blue-700"
-						>
-							<IconPlus class="mr-2 h-5 w-5" />
+						<Button onclick={openCreateDialog} class="gap-2">
+							<IconPlus class="h-4 w-4" />
 							เพิ่มภาควิชาแรก
 						</Button>
 					{/if}
@@ -505,8 +494,8 @@
 		{:else}
 			<Card>
 				<CardHeader>
-					<CardTitle class="flex items-center gap-3">
-						<IconBuilding class="h-6 w-6 text-blue-600" />
+					<CardTitle class="flex items-center gap-2">
+						<IconBuilding class="h-5 w-5" />
 						รายการภาควิชา
 						<Badge variant="secondary" class="ml-2">
 							{filteredDepartments.length} รายการ
@@ -515,7 +504,7 @@
 					<CardDescription>จัดการข้อมูลภาควิชาต่างๆ ในระบบ</CardDescription>
 				</CardHeader>
 				<CardContent class="p-0">
-					<div class="overflow-hidden">
+					<div class="overflow-x-auto">
 						<Table.Root>
 							<Table.Header>
 								<Table.Row class="bg-gray-50 dark:bg-gray-800">
@@ -532,20 +521,18 @@
 							</Table.Header>
 							<Table.Body>
 								{#each filteredDepartments as department (department.id)}
-									<Table.Row class="hover:bg-gray-50/50 dark:hover:bg-gray-800/50">
+									<Table.Row class="hover:bg-muted/50">
 										<Table.Cell class="py-4 font-medium">
 											<div class="flex items-center gap-3">
-												<div
-													class="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-900"
-												>
-													<IconBuilding class="h-5 w-5 text-blue-600 dark:text-blue-400" />
+												<div class="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100">
+													<IconBuilding class="h-5 w-5 text-blue-600" />
 												</div>
 												<div>
-													<div class="font-semibold text-gray-900 dark:text-gray-100">
+													<div class="font-semibold">
 														{department.name}
 													</div>
 													{#if department.description}
-														<div class="max-w-xs truncate text-sm text-gray-500 dark:text-gray-400">
+														<div class="max-w-xs truncate text-sm text-muted-foreground">
 															{department.description}
 														</div>
 													{/if}
@@ -574,12 +561,7 @@
 											</Badge>
 										</Table.Cell>
 										<Table.Cell class="py-4">
-											<Badge
-												variant={department.status ? 'default' : 'secondary'}
-												class={department.status
-													? 'bg-green-100 text-green-800 hover:bg-green-100'
-													: 'bg-gray-100 text-gray-600'}
-											>
+											<Badge variant={department.status ? 'default' : 'secondary'}>
 												<span
 													class="mr-2 h-2 w-2 rounded-full"
 													class:bg-green-500={department.status}
@@ -588,7 +570,7 @@
 												{department.status ? 'เปิดใช้งาน' : 'ปิดใช้งาน'}
 											</Badge>
 										</Table.Cell>
-										<Table.Cell class="py-4 text-sm text-gray-500">
+										<Table.Cell class="py-4 text-sm text-muted-foreground">
 											{formatDateTime(department.created_at)}
 										</Table.Cell>
 										<Table.Cell class="py-4 text-right">

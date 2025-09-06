@@ -1,11 +1,34 @@
 <script lang="ts">
 	import { page } from '$app/state';
-	import * as Sidebar from '$lib/components/ui/sidebar/index.js';
 	import AdminSidebar from '$lib/components/admin-sidebar.svelte';
 
 	let { data, children } = $props();
+	let mobileMenuOpen = $state(false);
 
 	let isLoginPage = $derived(page.url.pathname === '/admin/login');
+
+	function toggleMobileMenu() {
+		mobileMenuOpen = !mobileMenuOpen;
+	}
+
+	function closeMobileMenu() {
+		mobileMenuOpen = false;
+	}
+
+	function getPageTitle() {
+		if (page.url.pathname === '/admin') return 'แดชบอร์ด';
+		if (page.url.pathname.startsWith('/admin/activities')) return 'จัดการกิจกรรม';
+		if (page.url.pathname.startsWith('/admin/organizations')) return 'จัดการหน่วยงาน';
+		if (page.url.pathname.startsWith('/admin/users')) return 'จัดการผู้ใช้';
+		if (page.url.pathname.startsWith('/admin/admins')) return 'จัดการแอดมิน';
+		if (page.url.pathname.startsWith('/admin/departments')) return 'จัดการภาควิชา';
+		if (page.url.pathname.startsWith('/admin/organization-users')) return 'จัดการผู้ใช้หน่วยงาน';
+		if (page.url.pathname.startsWith('/admin/organization-admins')) return 'จัดการแอดมินหน่วยงาน';
+		if (page.url.pathname.startsWith('/admin/qr-scanner')) return 'สแกน QR Code';
+		if (page.url.pathname.startsWith('/admin/reports')) return 'รายงานหน่วยงาน';
+		if (page.url.pathname.startsWith('/admin/settings')) return 'ตั้งค่า';
+		return 'Admin Panel';
+	}
 </script>
 
 {#if isLoginPage}
@@ -13,53 +36,27 @@
 		{@render children()}
 	</div>
 {:else}
-	<Sidebar.Provider>
-		<AdminSidebar user={data.user} admin_role={data.admin_role} organization={data.organization} />
-		<Sidebar.Inset>
-			<!-- Header -->
-			<header class="flex h-16 shrink-0 items-center gap-2 border-b px-4">
-				<Sidebar.Trigger class="md:hidden" />
-				<div class="flex w-full items-center justify-between">
-					<div class="flex items-center gap-2">
-						<h1 class="text-lg font-semibold">
-							{#if page.url.pathname === '/admin'}
-								แดชบอร์ด
-							{:else if page.url.pathname.startsWith('/admin/activities')}
-								จัดการกิจกรรม
-							{:else if page.url.pathname.startsWith('/admin/organizations')}
-								จัดการหน่วยงาน
-							{:else if page.url.pathname.startsWith('/admin/admins')}
-								จัดการแอดมิน
-							{:else if page.url.pathname.startsWith('/admin/departments')}
-								จัดการภาควิชา
-							{:else if page.url.pathname.startsWith('/admin/organization-users')}
-								จัดการผู้ใช้หน่วยงาน
-							{:else if page.url.pathname.startsWith('/admin/organization-admins')}
-								จัดการแอดมินหน่วยงาน
-							{:else if page.url.pathname.startsWith('/admin/settings')}
-								ตั้งค่า
-							{:else}
-								Admin Panel
-							{/if}
-						</h1>
-					</div>
-					<div class="flex items-center space-x-4">
-						<span class="text-sm text-muted-foreground">
-							{new Date().toLocaleDateString('th-TH', {
-								weekday: 'long',
-								year: 'numeric',
-								month: 'long',
-								day: 'numeric'
-							})}
-						</span>
-					</div>
-				</div>
-			</header>
+	<div class="min-h-screen bg-background">
+		<AdminSidebar 
+			user={data.user} 
+			admin_role={data.admin_role} 
+			organization={data.organization}
+			{mobileMenuOpen}
+			onToggleMobileMenu={toggleMobileMenu}
+			onCloseMobileMenu={closeMobileMenu}
+		/>
 
+		<div class="flex">
 			<!-- Main Content -->
-			<main class="p-6">
-				{@render children()}
-			</main>
-		</Sidebar.Inset>
-	</Sidebar.Provider>
+				<main class="flex-1 lg:ml-64">
+					<!-- Mobile spacing for fixed header -->
+					<!-- Remove spacer: header is sticky, not fixed -->
+
+				<!-- Content -->
+					<div class="px-4 lg:px-6 py-4 lg:py-6">
+						{@render children()}
+					</div>
+				</main>
+			</div>
+		</div>
 {/if}

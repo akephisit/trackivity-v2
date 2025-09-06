@@ -41,15 +41,15 @@
 	<title>ตั้งค่าระบบ - Trackivity Admin</title>
 </svelte:head>
 
-<div class="container space-y-6">
+<div class="space-y-4 lg:space-y-6">
 	<!-- Header -->
-	<div class="flex items-center gap-4">
-		<div class="rounded-full bg-primary/10 p-3">
-			<IconSettings class="size-6 text-primary" />
-		</div>
-		<div>
+	<div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+		<div class="space-y-1 min-w-0">
 			<h1 class="text-2xl font-bold lg:text-3xl">ตั้งค่าระบบ</h1>
 			<p class="text-muted-foreground">จัดการการตั้งค่าองค์กรและระบบกิจกรรม</p>
+		</div>
+		<div class="rounded-full bg-primary/10 p-3 self-start">
+			<IconSettings class="h-6 w-6 text-primary" />
 		</div>
 	</div>
 
@@ -57,13 +57,13 @@
 	<Card>
 		<CardHeader>
 			<CardTitle class="flex items-center gap-2">
-				<IconBuilding class="size-5" />
+				<IconBuilding class="h-5 w-5" />
 				ข้อมูลองค์กร
 			</CardTitle>
 			<CardDescription>ข้อมูลพื้นฐานขององค์กร</CardDescription>
 		</CardHeader>
-		<CardContent>
-			<div class="grid gap-4 md:grid-cols-2">
+		<CardContent class="p-4 lg:p-6">
+			<div class="grid gap-4 sm:grid-cols-2">
 				<div>
 					<Label class="text-sm font-medium">ชื่อองค์กร</Label>
 					<p class="mt-1 text-sm text-muted-foreground">{data.organization.name}</p>
@@ -86,14 +86,14 @@
 	<Card>
 		<CardHeader>
 			<CardTitle class="flex items-center gap-2">
-				<IconHourglass class="size-5" />
+				<IconHourglass class="h-5 w-5" />
 				การตั้งค่าจำนวนชั่วโมงสะสมการผ่านกิจกรรม
 			</CardTitle>
 			<CardDescription>
 				กำหนดจำนวนชั่วโมงขั้นต่ำที่นักศึกษาต้องสะสมจากการเข้าร่วมกิจกรรมตลอดการศึกษา
 			</CardDescription>
 		</CardHeader>
-		<CardContent class="space-y-6">
+		<CardContent class="space-y-4 lg:space-y-6 p-4 lg:p-6">
 			<!-- Info Alert -->
 			<Alert>
 				<IconInfoCircle class="size-4" />
@@ -108,23 +108,23 @@
 				<h4 class="mb-3 font-semibold">การตั้งค่าปัจจุบัน</h4>
 				<div class="grid gap-4 sm:grid-cols-2">
 					<div class="flex items-center gap-3">
-						<div class="rounded-full bg-green-100 p-2 dark:bg-green-900">
-							<IconSchool class="size-4 text-green-600 dark:text-green-400" />
+						<div class="rounded-full bg-green-100 p-2">
+							<IconSchool class="h-4 w-4 text-green-600" />
 						</div>
 						<div>
 							<p class="text-sm font-medium">กิจกรรมระดับคณะ</p>
-							<p class="text-lg font-bold text-green-600 dark:text-green-400">
+							<p class="text-lg font-bold text-green-600">
 								{data.currentRequirements.requiredFacultyHours} ชั่วโมง
 							</p>
 						</div>
 					</div>
 					<div class="flex items-center gap-3">
-						<div class="rounded-full bg-blue-100 p-2 dark:bg-blue-900">
-							<IconBuilding class="size-4 text-blue-600 dark:text-blue-400" />
+						<div class="rounded-full bg-blue-100 p-2">
+							<IconBuilding class="h-4 w-4 text-blue-600" />
 						</div>
 						<div>
 							<p class="text-sm font-medium">กิจกรรมระดับมหาวิทยาลัย</p>
-							<p class="text-lg font-bold text-blue-600 dark:text-blue-400">
+							<p class="text-lg font-bold text-blue-600">
 								{data.currentRequirements.requiredUniversityHours} ชั่วโมง
 							</p>
 						</div>
@@ -141,7 +141,7 @@
 						<!-- Faculty Hours -->
 						<div class="space-y-2">
 							<Label for="requiredFacultyHours" class="flex items-center gap-2">
-								<IconSchool class="size-4 text-green-600" />
+								<IconSchool class="h-4 w-4 text-green-600" />
 								จำนวนชั่วโมงขั้นต่ำ - กิจกรรมระดับคณะ
 							</Label>
 							<Input
@@ -162,7 +162,7 @@
 						<!-- University Hours -->
 						<div class="space-y-2">
 							<Label for="requiredUniversityHours" class="flex items-center gap-2">
-								<IconBuilding class="size-4 text-blue-600" />
+								<IconBuilding class="h-4 w-4 text-blue-600" />
 								จำนวนชั่วโมงขั้นต่ำ - กิจกรรมระดับมหาวิทยาลัย
 							</Label>
 							<Input
@@ -183,12 +183,12 @@
 
 
 					<!-- Action Buttons -->
-					<div class="flex gap-3">
-						<Button type="submit" disabled={isSubmitting} class="gap-2">
+					<div class="flex flex-col sm:flex-row gap-3">
+						<Button type="submit" disabled={isSubmitting} class="gap-2 w-full sm:w-auto">
 							{#if isSubmitting}
-								<div class="size-4 animate-spin rounded-full border-2 border-current border-t-transparent"></div>
+								<div class="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"></div>
 							{:else}
-								<IconCheck class="size-4" />
+								<IconCheck class="h-4 w-4" />
 							{/if}
 							{isSubmitting ? 'กำลังบันทึก...' : 'บันทึกการตั้งค่า'}
 						</Button>
@@ -205,12 +205,12 @@
 					</div>
 
 					<!-- Total Hours Info -->
-					<div class="rounded-lg bg-blue-50 p-4 dark:bg-blue-950/20">
-						<div class="flex items-center gap-2 text-blue-700 dark:text-blue-300">
-							<IconInfoCircle class="size-4" />
+					<div class="rounded-lg bg-blue-50 p-4">
+						<div class="flex items-center gap-2 text-blue-700">
+							<IconInfoCircle class="h-4 w-4" />
 							<p class="text-sm font-medium">ข้อมูลสรุป</p>
 						</div>
-						<p class="mt-2 text-sm text-blue-600 dark:text-blue-400">
+						<p class="mt-2 text-sm text-blue-600">
 							นักศึกษาจะต้องสะสมชั่วโมงกิจกรรมรวมทั้งหมดอย่างน้อย 
 							<span class="font-semibold">{requiredFacultyHours + requiredUniversityHours} ชั่วโมง</span>
 							ตลอดการศึกษาเพื่อผ่านเกณฑ์การสำเร็จการศึกษา
@@ -222,8 +222,8 @@
 			<!-- Form Messages -->
 			{#if form?.success}
 				<Alert>
-					<IconCheck class="size-4" />
-					<AlertDescription class="text-green-700 dark:text-green-300">
+					<IconCheck class="h-4 w-4" />
+					<AlertDescription class="text-green-700">
 						{form.message}
 					</AlertDescription>
 				</Alert>
@@ -231,7 +231,7 @@
 
 			{#if form?.error}
 				<Alert variant="destructive">
-					<IconAlertCircle class="size-4" />
+					<IconAlertCircle class="h-4 w-4" />
 					<AlertDescription>
 						{form.error}
 					</AlertDescription>

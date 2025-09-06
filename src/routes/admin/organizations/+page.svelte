@@ -30,13 +30,48 @@
 		IconToggleLeft,
 		IconToggleRight,
 		IconUsers,
-		IconBuilding
+		IconBuilding,
+		IconSearch,
+		IconFilter
 	} from '@tabler/icons-svelte/icons';
 	import { toast } from 'svelte-sonner';
 	import { invalidateAll, invalidate } from '$app/navigation';
 
 	let { data } = $props();
 	let refreshing = $state(false);
+
+// Search and filter states
+let searchQuery = $state('');
+let statusFilter = $state<'all' | 'active' | 'inactive'>('all');
+
+// Filtered faculties
+let filteredFaculties = $derived.by(() => {
+	let filtered = data.faculties;
+
+	// Apply search filter
+	if (searchQuery.trim()) {
+		const query = searchQuery.toLowerCase();
+		filtered = filtered.filter(
+			(faculty: any) =>
+				faculty.name.toLowerCase().includes(query) ||
+				faculty.code.toLowerCase().includes(query) ||
+				(faculty.description && faculty.description.toLowerCase().includes(query))
+		);
+	}
+
+	// Apply status filter
+	if (statusFilter !== 'all') {
+		filtered = filtered.filter((faculty: any) =>
+			statusFilter === 'active' ? faculty.status : !faculty.status
+		);
+	}
+
+	return filtered;
+});
+
+function clearSearch() {
+	searchQuery = '';
+}
 
 	// Faculty schemas
 	const facultyCreateSchema = z.object({
@@ -264,94 +299,146 @@
 	<title>จัดการหน่วยงาน - Admin Panel</title>
 </svelte:head>
 
-<div class="space-y-6">
+<div class="space-y-4 lg:space-y-6">
 	<!-- Header -->
-	<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-		<div>
-			<h1 id="faculty-management-heading" class="text-4xl font-bold text-gray-900 dark:text-white">
-				จัดการหน่วยงาน
-			</h1>
-			<p class="mt-3 text-lg text-gray-600 dark:text-gray-400">
+	<div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+		<div class="space-y-1 min-w-0">
+			<h1 class="text-2xl font-bold lg:text-3xl">จัดการหน่วยงาน</h1>
+			<p class="text-muted-foreground">
 				จัดการข้อมูลหน่วยงานในมหาวิทยาลัย รวมถึงการเปิด-ปิดการใช้งาน
 			</p>
 		</div>
-		<Button
-			onclick={openCreateDialog}
-			class="bg-blue-600 px-6 py-3 text-base font-medium text-white hover:bg-blue-700"
-		>
-			<IconPlus class="mr-2 h-5 w-5" />
+		<Button onclick={openCreateDialog} class="gap-2 w-full sm:w-auto">
+			<IconPlus class="h-4 w-4" />
 			เพิ่มหน่วยงานใหม่
 		</Button>
 	</div>
 
 	<!-- Stats Cards -->
-	<div class="grid grid-cols-1 gap-6 sm:grid-cols-3">
+	<div class="grid gap-3 lg:gap-4 grid-cols-2 lg:grid-cols-3">
 		<Card>
 			<CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
-				<CardTitle class="text-sm font-medium">หน่วยงานทั้งหมด</CardTitle>
-				<IconSchool class="h-4 w-4 text-muted-foreground" />
+				<CardTitle class="text-xs lg:text-sm font-medium truncate">หน่วยงานทั้งหมด</CardTitle>
+				<IconSchool class="h-4 w-4 lg:w-5 lg:h-5 text-muted-foreground flex-shrink-0" />
 			</CardHeader>
-			<CardContent>
-				<div class="text-2xl font-bold">{stats.total}</div>
+			<CardContent class="p-4 lg:p-6">
+				<div class="text-lg lg:text-2xl font-bold">{stats.total}</div>
 			</CardContent>
 		</Card>
 
 		<Card>
 			<CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
-				<CardTitle class="text-sm font-medium">เปิดใช้งาน</CardTitle>
-				<IconBuilding class="h-4 w-4 text-green-500" />
+				<CardTitle class="text-xs lg:text-sm font-medium truncate">เปิดใช้งาน</CardTitle>
+				<IconBuilding class="h-4 w-4 lg:w-5 lg:h-5 text-green-500 flex-shrink-0" />
 			</CardHeader>
-			<CardContent>
-				<div class="text-2xl font-bold text-green-600">
+			<CardContent class="p-4 lg:p-6">
+				<div class="text-lg lg:text-2xl font-bold text-green-600">
 					{stats.active}
 				</div>
 			</CardContent>
 		</Card>
 
-		<Card>
+		<Card class="lg:col-span-1 col-span-2">
 			<CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
-				<CardTitle class="text-sm font-medium">ปิดใช้งาน</CardTitle>
-				<IconUsers class="h-4 w-4 text-red-500" />
+				<CardTitle class="text-xs lg:text-sm font-medium truncate">ปิดใช้งาน</CardTitle>
+				<IconUsers class="h-4 w-4 lg:w-5 lg:h-5 text-red-500 flex-shrink-0" />
 			</CardHeader>
-			<CardContent>
-				<div class="text-2xl font-bold text-red-600">
+			<CardContent class="p-4 lg:p-6">
+				<div class="text-lg lg:text-2xl font-bold text-red-600">
 					{stats.inactive}
 				</div>
 			</CardContent>
 		</Card>
 	</div>
 
-	<!-- Faculties Table -->
-	<div class="space-y-6" role="main" aria-labelledby="faculty-management-heading">
-		{#if refreshing}
-			<div class="flex items-center justify-center py-12" role="status" aria-live="polite">
-				<IconLoader class="mr-3 h-8 w-8 animate-spin text-blue-500" />
-				<span class="text-lg text-gray-600 dark:text-gray-300">กำลังรีเฟรชข้อมูล...</span>
+	<!-- Search and Filter -->
+	<Card>
+		<CardHeader>
+			<CardTitle class="flex items-center gap-2">
+				<IconFilter class="h-5 w-5" />
+				ค้นหาและกรอง
+			</CardTitle>
+		</CardHeader>
+		<CardContent class="space-y-4">
+			<div class="space-y-4 sm:space-y-0 sm:flex sm:flex-col lg:flex-row lg:gap-4">
+				<div class="flex-1">
+					<div class="relative">
+						<IconSearch class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+						<Input
+							bind:value={searchQuery}
+							placeholder="ค้นหาชื่อหน่วยงาน รหัส หรือคำอธิบาย..."
+							class="pl-10"
+						/>
+					</div>
+				</div>
+				<div class="flex flex-col sm:flex-row gap-2">
+					<Button
+						variant={statusFilter === 'all' ? 'default' : 'outline'}
+						size="sm"
+						class="w-full sm:w-auto"
+						onclick={() => (statusFilter = 'all')}
+					>
+						ทั้งหมด ({stats.total})
+					</Button>
+					<Button
+						variant={statusFilter === 'active' ? 'default' : 'outline'}
+						size="sm"
+						class="w-full sm:w-auto {statusFilter === 'active' ? '' : 'border-green-600 text-green-600 hover:bg-green-50'}"
+						onclick={() => (statusFilter = 'active')}
+					>
+						เปิดใช้งาน ({stats.active})
+					</Button>
+					<Button
+						variant={statusFilter === 'inactive' ? 'default' : 'outline'}
+						size="sm"
+						class="w-full sm:w-auto {statusFilter === 'inactive' ? '' : 'border-red-600 text-red-600 hover:bg-red-50'}"
+						onclick={() => (statusFilter = 'inactive')}
+					>
+						ปิดใช้งาน ({stats.inactive})
+					</Button>
+				</div>
 			</div>
-		{:else if data.faculties.length === 0}
-			<div class="py-16 text-center text-gray-500 dark:text-gray-400">
-				<IconSchool class="mx-auto mb-6 h-16 w-16 opacity-50" />
-				<h3 class="mb-2 text-xl font-semibold">ยังไม่มีข้อมูลหน่วยงานในระบบ</h3>
-				<p class="mb-6 text-gray-400">เริ่มต้นด้วยการเพิ่มหน่วยงานแรก</p>
-				<Button
-					onclick={openCreateDialog}
-					class="bg-blue-600 px-6 py-3 text-white hover:bg-blue-700"
-				>
-					<IconPlus class="mr-2 h-5 w-5" />
-					เพิ่มหน่วยงานแรก
-				</Button>
+		</CardContent>
+	</Card>
+
+	<!-- Organizations Table -->
+	<div class="space-y-6">
+		{#if refreshing}
+			<div class="flex items-center justify-center py-12">
+				<IconLoader class="mr-3 h-8 w-8 animate-spin text-muted-foreground" />
+				<span class="text-muted-foreground">กำลังรีเฟรชข้อมูล...</span>
+			</div>
+		{:else if filteredFaculties.length === 0}
+			<div class="flex flex-col items-center justify-center py-16 text-center">
+				{#if searchQuery || statusFilter !== 'all'}
+					<IconSearch class="mb-4 h-12 w-12 text-muted-foreground/50" />
+					<h3 class="mb-2 text-lg font-semibold">ไม่พบข้อมูลที่ตรงกับการค้นหา</h3>
+					<p class="mb-4 text-muted-foreground">ลองเปลี่ยนคำค้นหาหรือตัวกรองใหม่</p>
+					<Button onclick={clearSearch} variant="outline">ล้างการค้นหา</Button>
+				{:else}
+					<IconSchool class="mb-4 h-12 w-12 text-muted-foreground/50" />
+					<h3 class="mb-2 text-lg font-semibold">ยังไม่มีข้อมูลหน่วยงานในระบบ</h3>
+					<p class="mb-4 text-muted-foreground">เริ่มต้นด้วยการเพิ่มหน่วยงานแรก</p>
+					<Button onclick={openCreateDialog} class="gap-2">
+						<IconPlus class="h-4 w-4" />
+						เพิ่มหน่วยงานแรก
+					</Button>
+				{/if}
 			</div>
 		{:else}
 			<Card>
 				<CardHeader>
-					<CardTitle class="flex items-center gap-3">
-						<IconSchool class="h-6 w-6 text-blue-600" />
-						รายการหน่วยงานทั้งหมด
+					<CardTitle class="flex items-center gap-2">
+						<IconSchool class="h-5 w-5" />
+						รายการหน่วยงาน
+						<Badge variant="secondary" class="ml-2">
+							{filteredFaculties.length} รายการ
+						</Badge>
 					</CardTitle>
 					<CardDescription>จัดการข้อมูลหน่วยงานต่างๆ ในมหาวิทยาลัย</CardDescription>
 				</CardHeader>
 				<CardContent class="p-0">
-					<div class="overflow-hidden">
+					<div class="overflow-x-auto">
 						<Table.Root>
 							<Table.Header>
 								<Table.Row class="bg-gray-50 dark:bg-gray-800">
@@ -365,17 +452,15 @@
 								</Table.Row>
 							</Table.Header>
 							<Table.Body>
-								{#each data.faculties as faculty (faculty.id)}
-									<Table.Row class="hover:bg-gray-50/50 dark:hover:bg-gray-800/50">
+								{#each filteredFaculties as faculty (faculty.id)}
+									<Table.Row class="hover:bg-muted/50">
 										<Table.Cell class="py-4 font-medium">
-											<div class="flex items-center gap-3">
-												<div
-													class="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-900"
-												>
-													<IconSchool class="h-5 w-5 text-blue-600 dark:text-blue-400" />
+											<div class="flex items-center gap-3 min-w-0">
+												<div class="flex h-8 w-8 lg:h-10 lg:w-10 items-center justify-center rounded-lg bg-blue-100 flex-shrink-0">
+													<IconSchool class="h-4 w-4 lg:h-5 lg:w-5 text-blue-600" />
 												</div>
-												<div>
-													<div class="font-semibold text-gray-900 dark:text-gray-100">
+												<div class="min-w-0 flex-1">
+													<div class="font-semibold truncate">
 														{faculty.name}
 													</div>
 												</div>
@@ -396,18 +481,13 @@
 												{faculty.organizationType === 'faculty' ? 'คณะ' : 'หน่วยงาน'}
 											</Badge>
 										</Table.Cell>
-										<Table.Cell class="max-w-xs py-4">
-											<div class="truncate text-sm text-gray-600 dark:text-gray-300">
+										<Table.Cell class="py-4">
+											<div class="truncate text-sm text-muted-foreground min-w-0 max-w-48 lg:max-w-xs">
 												{faculty.description || '-'}
 											</div>
 										</Table.Cell>
 										<Table.Cell class="py-4">
-											<Badge
-												variant={faculty.status ? 'default' : 'secondary'}
-												class={faculty.status
-													? 'bg-green-100 text-green-800 hover:bg-green-100'
-													: 'bg-gray-100 text-gray-600'}
-											>
+											<Badge variant={faculty.status ? 'default' : 'secondary'}>
 												<span
 													class="mr-2 h-2 w-2 rounded-full"
 													class:bg-green-500={faculty.status}
@@ -416,7 +496,7 @@
 												{faculty.status ? 'เปิดใช้งาน' : 'ปิดใช้งาน'}
 											</Badge>
 										</Table.Cell>
-										<Table.Cell class="py-4 text-sm text-gray-500">
+										<Table.Cell class="py-4 text-sm text-muted-foreground">
 											{formatDateTime(faculty.created_at)}
 										</Table.Cell>
 										<Table.Cell class="py-4 text-right">
@@ -426,9 +506,6 @@
 													size="sm"
 													onclick={() => handleToggleStatus(faculty.id, faculty.status)}
 													disabled={toggleLoading[faculty.id] || false}
-													class="{faculty.status
-														? 'text-orange-600 hover:bg-orange-50 hover:text-orange-700'
-														: 'text-green-600 hover:bg-green-50 hover:text-green-700'} transition-colors"
 													title="{faculty.status ? 'ปิดใช้งาน' : 'เปิดใช้งาน'}หน่วยงาน"
 												>
 													{#if toggleLoading[faculty.id]}
@@ -443,7 +520,6 @@
 													variant="ghost"
 													size="sm"
 													onclick={() => openEditDialog(faculty)}
-													class="text-blue-600 hover:bg-blue-50 hover:text-blue-700"
 													title="แก้ไขหน่วยงาน"
 												>
 													<IconEdit class="h-4 w-4" />
@@ -452,7 +528,6 @@
 													variant="ghost"
 													size="sm"
 													onclick={() => openDeleteDialog(faculty.id, faculty.name)}
-													class="text-red-600 hover:bg-red-50 hover:text-red-700"
 													title="ลบหน่วยงาน"
 												>
 													<IconTrash class="h-4 w-4" />

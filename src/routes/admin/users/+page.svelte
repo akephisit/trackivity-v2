@@ -8,26 +8,26 @@
 	} from '$lib/components/ui/card';
 	import { Button } from '$lib/components/ui/button';
 	import { Badge } from '$lib/components/ui/badge';
+	import { Input } from '$lib/components/ui/input';
+	import * as Select from '$lib/components/ui/select';
 	import * as Table from '$lib/components/ui/table';
 	import {
 		IconUsers,
 		IconUserCheck,
 		IconUserX,
-		IconPlus,
+		IconSearch,
 		IconDownload,
 		IconRefresh,
-		IconSettings
+		IconEdit,
+		IconEye,
+		IconUserPlus
 	} from '@tabler/icons-svelte/icons';
-
-	// Import filtering component
-	import UserFilters from '$lib/components/user-management/UserFilters.svelte';
-	import { PrefixOptions } from '$lib/schemas/auth';
 	import { getRoleText, getRoleBadgeVariant } from '$lib/utils';
+	import { goto } from '$app/navigation';
 
-	// Get data from server load function
 	let { data } = $props();
 
-	// Extract data from server load with safe defaults
+	// Extract data with safe defaults
 	const {
 		users = [],
 		stats = {
@@ -46,274 +46,332 @@
 		adminLevel
 	} = $derived(data || {});
 
-	// Status badge colors and display text (similar to admin/admins)
-	function getStatusBadgeVariant(status: string) {
-		switch (status) {
-			case 'online':
-				return 'default';
-			case 'offline':
-				return 'secondary';
-			case 'disabled':
-				return 'destructive';
-			case 'active':
-				return 'default';
-			case 'inactive':
-				return 'secondary';
-			case 'suspended':
-				return 'destructive';
-			default:
-				return 'secondary';
-		}
+	// Filter states
+	let searchTerm = $state('');
+	let selectedRole = $state('all');
+	let selectedStatus = $state('all');
+	let selectedOrg = $state('all');
+
+	// Filtered users
+	let filteredUsers = $derived(
+		users.filter((user) => {
+			const matchesSearch = searchTerm === '' || 
+				user.first_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+				user.last_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+				user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+				user.student_id?.toLowerCase().includes(searchTerm.toLowerCase());
+			
+			const matchesRole = selectedRole === 'all' || user.role === selectedRole;
+			const matchesStatus = selectedStatus === 'all' || user.is_active.toString() === selectedStatus;
+			const matchesOrg = selectedOrg === 'all' || user.organization?.id === selectedOrg;
+
+			return matchesSearch && matchesRole && matchesStatus && matchesOrg;
+		})
+	);
+
+	function getStatusBadgeVariant(status: boolean): 'default' | 'secondary' | 'destructive' {
+		return status ? 'default' : 'secondary';
 	}
 
-	function getStatusText(status: string): string {
-		switch (status) {
-			case 'online':
-				return 'ใช้งานอยู่';
-			case 'offline':
-				return 'ไม่ออนไลน์';
-			case 'disabled':
-				return 'ปิดใช้งาน';
-			case 'active':
-				return 'เปิดใช้งาน';
-			case 'inactive':
-				return 'ไม่ใช้งาน';
-			case 'suspended':
-				return 'ระงับ';
-			default:
-				return status;
-		}
+	function getStatusText(status: boolean): string {
+		return status ? 'ใช้งานอยู่' : 'ไม่ใช้งาน';
 	}
 
-
-	// Format date
-	function formatDate(dateString: string) {
+	function formatDate(dateString: string): string {
 		return new Date(dateString).toLocaleDateString('th-TH', {
-			year: 'numeric',
+			day: 'numeric',
 			month: 'short',
-			day: 'numeric'
+			year: 'numeric'
 		});
-	}
-	function getPrefixLabel(value?: string) {
-		if (!value) return '';
-		const found = PrefixOptions.find((o) => o.value === value);
-		return found ? found.label : '';
-	}
-	function formatFullName(user: any) {
-		const prefix = getPrefixLabel(user?.prefix);
-		const first = user?.first_name || '';
-		const last = user?.last_name || '';
-		return `${prefix ? prefix + ' ' : ''}${first} ${last}`.trim() || 'ไม่ระบุชื่อ';
 	}
 </script>
 
 <svelte:head>
-	<title>จัดการผู้ใช้ - Admin Dashboard</title>
+	<title>จัดการผู้ใช้ - Admin Panel</title>
 </svelte:head>
 
-<div class="flex-1 space-y-4 p-4 pt-6 md:p-8">
-	<div class="flex items-center justify-between space-y-2">
-		<h2 class="text-3xl font-bold tracking-tight">จัดการผู้ใช้</h2>
-		<div class="flex items-center space-x-2">
-			<Button variant="outline" size="sm">
-				<IconRefresh class="mr-2 h-4 w-4" />
+<div class="space-y-4 lg:space-y-6">
+	<!-- Header Section -->
+	<div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+		<div class="min-w-0">
+			<h2 class="text-lg font-semibold text-foreground">จัดการผู้ใช้</h2>
+			<p class="text-sm text-muted-foreground">จัดการผู้ใช้งานในระบบ</p>
+		</div>
+		<div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+			<Button variant="outline" size="sm" class="w-full sm:w-auto">
+				<IconDownload class="w-4 h-4 mr-2" />
+				ส่งออกข้อมูล
+			</Button>
+			<Button variant="outline" size="sm" class="w-full sm:w-auto">
+				<IconRefresh class="w-4 h-4 mr-2" />
 				รีเฟรช
 			</Button>
-			<Button variant="outline" size="sm">
-				<IconDownload class="mr-2 h-4 w-4" />
-				ส่งออก
-			</Button>
-			{#if canManageAllUsers}
-				<Button size="sm">
-					<IconPlus class="mr-2 h-4 w-4" />
-					เพิ่มผู้ใช้
-				</Button>
-			{/if}
 		</div>
 	</div>
 
 	<!-- Stats Cards -->
-	<div class="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+	<div class="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
 		<Card>
-			<CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
-				<CardTitle class="text-sm font-medium">ผู้ใช้ทั้งหมด</CardTitle>
-				<IconUsers class="h-4 w-4 text-muted-foreground" />
-			</CardHeader>
-			<CardContent>
-				<div class="text-2xl font-bold">{stats.total_users}</div>
+			<CardContent class="p-4 lg:p-6">
+				<div class="flex items-center justify-between">
+					<div class="min-w-0 flex-1">
+						<p class="text-xs lg:text-sm text-muted-foreground truncate">ผู้ใช้ทั้งหมด</p>
+						<p class="text-lg lg:text-2xl font-bold text-foreground">{stats.total_users}</p>
+					</div>
+					<div class="w-8 h-8 lg:w-10 lg:h-10 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0 ml-2">
+						<IconUsers class="w-4 h-4 lg:w-5 lg:h-5 text-primary" />
+					</div>
+				</div>
 			</CardContent>
 		</Card>
 
 		<Card>
-			<CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
-				<CardTitle class="text-sm font-medium">ใช้งานอยู่</CardTitle>
-				<IconUserCheck class="h-4 w-4 text-muted-foreground" />
-			</CardHeader>
-			<CardContent>
-				<div class="text-2xl font-bold text-green-600">{stats.active_users}</div>
+			<CardContent class="p-4 lg:p-6">
+				<div class="flex items-center justify-between">
+					<div class="min-w-0 flex-1">
+						<p class="text-xs lg:text-sm text-muted-foreground truncate">ใช้งานอยู่</p>
+						<p class="text-lg lg:text-2xl font-bold text-foreground">{stats.active_users}</p>
+					</div>
+					<div class="w-8 h-8 lg:w-10 lg:h-10 bg-green-500/10 rounded-lg flex items-center justify-center flex-shrink-0 ml-2">
+						<IconUserCheck class="w-4 h-4 lg:w-5 lg:h-5 text-green-500" />
+					</div>
+				</div>
 			</CardContent>
 		</Card>
 
 		<Card>
-			<CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
-				<CardTitle class="text-sm font-medium">ไม่ใช้งาน</CardTitle>
-				<IconUserX class="h-4 w-4 text-muted-foreground" />
-			</CardHeader>
-			<CardContent>
-				<div class="text-2xl font-bold text-gray-600">{stats.inactive_users}</div>
+			<CardContent class="p-4 lg:p-6">
+				<div class="flex items-center justify-between">
+					<div class="min-w-0 flex-1">
+						<p class="text-xs lg:text-sm text-muted-foreground truncate">ไม่ใช้งาน</p>
+						<p class="text-lg lg:text-2xl font-bold text-foreground">{stats.inactive_users}</p>
+					</div>
+					<div class="w-8 h-8 lg:w-10 lg:h-10 bg-red-500/10 rounded-lg flex items-center justify-center flex-shrink-0 ml-2">
+						<IconUserX class="w-4 h-4 lg:w-5 lg:h-5 text-red-500" />
+					</div>
+				</div>
 			</CardContent>
 		</Card>
 
 		<Card>
-			<CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
-				<CardTitle class="text-sm font-medium">นักเรียน</CardTitle>
-				<IconSettings class="h-4 w-4 text-muted-foreground" />
-			</CardHeader>
-			<CardContent>
-				<div class="text-2xl font-bold text-blue-600">{stats.students}</div>
+			<CardContent class="p-4 lg:p-6">
+				<div class="flex items-center justify-between">
+					<div class="min-w-0 flex-1">
+						<p class="text-xs lg:text-sm text-muted-foreground truncate">นักศึกษา</p>
+						<p class="text-lg lg:text-2xl font-bold text-foreground">{stats.students}</p>
+					</div>
+					<div class="w-8 h-8 lg:w-10 lg:h-10 bg-blue-500/10 rounded-lg flex items-center justify-center flex-shrink-0 ml-2">
+						<IconUserPlus class="w-4 h-4 lg:w-5 lg:h-5 text-blue-500" />
+					</div>
+				</div>
 			</CardContent>
 		</Card>
 	</div>
 
-	<!-- Advanced Filters -->
-	<UserFilters
-		filters={filters || {}}
-		faculties={Array.isArray(organizations) ? organizations : []}
-		departments={[]}
-		showFacultyFilter={canManageAllUsers}
-		on:filtersChanged={(e) => {
-			// Handle filter changes by navigating with new filters
-			console.log('Filters changed:', e.detail);
-		}}
-		on:export={(e) => {
-			// Handle export
-			console.log('Export requested with filters:', e.detail);
-		}}
-		on:clearFilters={() => {
-			// Handle clear filters
-			console.log('Clear filters');
-		}}
-	/>
+	<!-- Filters -->
+	<Card>
+		<CardContent class="p-4">
+			<div class="space-y-4 sm:space-y-0 sm:flex sm:flex-row sm:gap-4">
+				<!-- Search -->
+				<div class="flex-1">
+					<div class="relative">
+						<IconSearch class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+						<Input
+							bind:value={searchTerm}
+							placeholder="ค้นหาชื่อ, อีเมล, หรือรหัสนักศึกษา..."
+							class="pl-10"
+						/>
+					</div>
+				</div>
+
+				<!-- Filters -->
+				<div class="flex flex-col sm:flex-row gap-2 sm:gap-4">
+					<!-- Role Filter -->
+					<Select.Root bind:selected={selectedRole}>
+						<Select.Trigger class="w-full sm:w-48">
+							<Select.Value placeholder="บทบาท" />
+						</Select.Trigger>
+						<Select.Content>
+							<Select.Item value="all">ทุกบทบาท</Select.Item>
+							<Select.Item value="student">นักศึกษา</Select.Item>
+							<Select.Item value="faculty">อาจารย์</Select.Item>
+							<Select.Item value="staff">เจ้าหน้าที่</Select.Item>
+						</Select.Content>
+					</Select.Root>
+
+					<!-- Status Filter -->
+					<Select.Root bind:selected={selectedStatus}>
+						<Select.Trigger class="w-full sm:w-48">
+							<Select.Value placeholder="สถานะ" />
+						</Select.Trigger>
+						<Select.Content>
+							<Select.Item value="all">ทุกสถานะ</Select.Item>
+							<Select.Item value="true">ใช้งานอยู่</Select.Item>
+							<Select.Item value="false">ไม่ใช้งาน</Select.Item>
+						</Select.Content>
+					</Select.Root>
+
+					{#if canManageAllUsers && organizations.length > 0}
+						<!-- Organization Filter -->
+						<Select.Root bind:selected={selectedOrg}>
+							<Select.Trigger class="w-full sm:w-48">
+								<Select.Value placeholder="หน่วยงาน" />
+							</Select.Trigger>
+							<Select.Content>
+								<Select.Item value="all">ทุกหน่วยงาน</Select.Item>
+								{#each organizations as org}
+									<Select.Item value={org.id}>{org.name}</Select.Item>
+								{/each}
+							</Select.Content>
+						</Select.Root>
+					{/if}
+				</div>
+			</div>
+		</CardContent>
+	</Card>
 
 	<!-- Users Table -->
 	<Card>
 		<CardHeader>
-			<CardTitle>รายการผู้ใช้</CardTitle>
-			<CardDescription>
-				จัดการและติดตามผู้ใช้ในระบบ
-				{#if !canManageAllUsers}
-					(เฉพาะหน่วยงานของคุณ)
-				{/if}
-			</CardDescription>
+			<CardTitle class="flex items-center justify-between">
+				<span>รายการผู้ใช้</span>
+				<span class="text-sm font-normal text-muted-foreground">
+					แสดง {filteredUsers.length} จาก {stats.total_users} ผู้ใช้
+				</span>
+			</CardTitle>
 		</CardHeader>
-		<CardContent>
-			<div class="rounded-md border">
-				<Table.Root>
+		<CardContent class="p-0">
+			{#if filteredUsers.length > 0}
+				<div class="overflow-x-auto">
+					<Table.Root>
 					<Table.Header>
 						<Table.Row>
 							<Table.Head>ผู้ใช้</Table.Head>
-							<Table.Head>อีเมล</Table.Head>
 							<Table.Head>บทบาท</Table.Head>
+							<Table.Head>หน่วยงาน</Table.Head>
 							<Table.Head>สถานะ</Table.Head>
-							<Table.Head>หน่วยงาน/ภาควิชา</Table.Head>
-							<Table.Head>เข้าสู่ระบบล่าสุด</Table.Head>
-							<Table.Head>สร้างเมื่อ</Table.Head>
+							<Table.Head>วันที่สมัคร</Table.Head>
+							<Table.Head class="text-right">จัดการ</Table.Head>
 						</Table.Row>
 					</Table.Header>
 					<Table.Body>
-						{#each users as user}
-							<Table.Row>
-								<Table.Cell class="font-medium">
-									<div class="flex flex-col">
-										<span>{formatFullName(user)}</span>
-										{#if user.student_id}
-											<span class="text-sm text-muted-foreground">{user.student_id}</span>
-										{/if}
+						{#each filteredUsers as user}
+							<Table.Row class="hover:bg-muted/50">
+								<Table.Cell>
+									<div class="space-y-1 min-w-0">
+										<div class="flex items-center gap-3">
+											<div class="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0">
+												<span class="text-sm font-medium text-primary">
+													{user.first_name?.charAt(0)?.toUpperCase() || 'U'}
+												</span>
+											</div>
+											<div class="min-w-0 flex-1">
+												<p class="font-medium text-foreground truncate">
+													{user.first_name} {user.last_name}
+												</p>
+												<p class="text-sm text-muted-foreground truncate">{user.email}</p>
+												{#if user.student_id}
+													<p class="text-xs text-muted-foreground truncate">รหัส: {user.student_id}</p>
+												{/if}
+											</div>
+										</div>
 									</div>
 								</Table.Cell>
-								<Table.Cell>{user.email}</Table.Cell>
 								<Table.Cell>
-									<Badge variant={getRoleBadgeVariant(user.role)}>{getRoleText(user.role)}</Badge>
-								</Table.Cell>
-								<Table.Cell>
-									<Badge variant={getStatusBadgeVariant(user.status)}>
-										{#if user.status === 'online' || user.status === 'offline' || user.status === 'disabled'}
-											<span
-												class="mr-2 h-2 w-2 rounded-full {user.status === 'online'
-													? 'bg-green-500'
-													: user.status === 'offline'
-														? 'bg-yellow-500'
-														: 'bg-red-500'}"
-											></span>
-										{/if}
-										{getStatusText(user.status)}
+									<Badge variant={getRoleBadgeVariant(user.role)}>
+										{getRoleText(user.role)}
 									</Badge>
 								</Table.Cell>
 								<Table.Cell>
-									<div class="flex flex-col">
-										{#if user.role === 'super_admin'}
-											<!-- ซุปเปอร์แอดมินไม่ต้องแสดงหน่วยงาน -->
-											<span class="text-sm text-muted-foreground">-</span>
-										{:else if user.role === 'organization_admin' || user.role === 'regular_admin'}
-											<!-- แอดมินหน่วยงานและแอดมินทั่วไป แสดงเฉพาะหน่วยงาน -->
-											{#if user.organization}
-												<span class="text-sm">{user.organization.name}</span>
-											{:else}
-												<span class="text-sm text-muted-foreground">ไม่ระบุหน่วยงาน</span>
-											{/if}
-										{:else}
-											<!-- นักศึกษาและอื่นๆ แสดงทั้งหน่วยงานและสาขาวิชา -->
-											{#if user.organization}
-												<span class="text-sm">{user.organization.name}</span>
-											{:else}
-												<span class="text-sm text-muted-foreground">ไม่ระบุหน่วยงาน</span>
-											{/if}
+									{#if user.organization}
+										<div class="space-y-1 min-w-0">
+											<p class="text-sm font-medium truncate">{user.organization.name}</p>
 											{#if user.department}
-												<span class="text-xs text-muted-foreground">{user.department.name}</span>
+												<p class="text-xs text-muted-foreground truncate">{user.department.name}</p>
 											{/if}
-										{/if}
-									</div>
-								</Table.Cell>
-								<Table.Cell>
-									{#if user.last_login}
-										{formatDate(user.last_login)}
+										</div>
 									{:else}
-										<span class="text-muted-foreground">ไม่เคย</span>
+										<span class="text-muted-foreground text-sm">-</span>
 									{/if}
 								</Table.Cell>
-								<Table.Cell>{formatDate(user.created_at)}</Table.Cell>
-							</Table.Row>
-						{:else}
-							<Table.Row>
-								<Table.Cell colspan={7} class="h-24 text-center">ไม่พบข้อมูลผู้ใช้</Table.Cell>
+								<Table.Cell>
+									<Badge variant={getStatusBadgeVariant(user.is_active)}>
+										{getStatusText(user.is_active)}
+									</Badge>
+								</Table.Cell>
+								<Table.Cell>
+									<span class="text-sm">{formatDate(user.created_at)}</span>
+								</Table.Cell>
+								<Table.Cell class="text-right">
+									<div class="flex items-center justify-end gap-2">
+										<Button
+											variant="ghost"
+											size="sm"
+											onclick={() => goto(`/admin/users/${user.id}`)}
+										>
+											<IconEye class="w-4 h-4" />
+										</Button>
+										<Button
+											variant="ghost"
+											size="sm"
+											onclick={() => goto(`/admin/users/${user.id}/edit`)}
+										>
+											<IconEdit class="w-4 h-4" />
+										</Button>
+									</div>
+								</Table.Cell>
 							</Table.Row>
 						{/each}
 					</Table.Body>
-				</Table.Root>
-			</div>
-
-			<!-- Pagination -->
-			{#if pagination.total_pages > 1}
-				<div class="flex items-center justify-end space-x-2 py-4">
-					<div class="flex items-center space-x-6 lg:space-x-8">
-						<div class="flex items-center space-x-2">
-							<p class="text-sm font-medium">หน้า {pagination.page} จาก {pagination.total_pages}</p>
-						</div>
-						<div class="flex items-center space-x-2">
-							<Button variant="outline" size="sm" disabled={pagination.page === 1}>
-								ก่อนหน้า import {PrefixOptions} from '$lib/schemas/auth';
-							</Button>
-							<Button
-								variant="outline"
-								size="sm"
-								disabled={pagination.page === pagination.total_pages}
-							>
-								ถัดไป
-							</Button>
-						</div>
-					</div>
+					</Table.Root>
+				</div>
+			{:else}
+				<div class="text-center py-12">
+					<IconUsers class="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+					<h3 class="text-lg font-medium mb-2">ไม่พบผู้ใช้</h3>
+					<p class="text-muted-foreground mb-4">
+						{searchTerm || selectedRole !== 'all' || selectedStatus !== 'all' || selectedOrg !== 'all'
+							? 'ไม่พบผู้ใช้ที่ตรงกับเงื่อนไขการค้นหา' 
+							: 'ยังไม่มีผู้ใช้ในระบบ'}
+					</p>
 				</div>
 			{/if}
 		</CardContent>
 	</Card>
+
+	<!-- Pagination -->
+	{#if pagination.total_pages > 1}
+		<Card>
+			<CardContent class="p-4">
+				<div class="flex items-center justify-between">
+					<p class="text-sm text-muted-foreground">
+						แสดง {((pagination.page - 1) * pagination.limit) + 1} ถึง 
+						{Math.min(pagination.page * pagination.limit, pagination.total_count)} 
+						จาก {pagination.total_count} รายการ
+					</p>
+					<div class="flex items-center gap-2">
+						<Button 
+							variant="outline" 
+							size="sm" 
+							disabled={pagination.page <= 1}
+							onclick={() => goto(`?page=${pagination.page - 1}`)}
+						>
+							ก่อนหน้า
+						</Button>
+						<span class="text-sm font-medium">
+							หน้า {pagination.page} จาก {pagination.total_pages}
+						</span>
+						<Button 
+							variant="outline" 
+							size="sm" 
+							disabled={pagination.page >= pagination.total_pages}
+							onclick={() => goto(`?page=${pagination.page + 1}`)}
+						>
+							ถัดไป
+						</Button>
+					</div>
+				</div>
+			</CardContent>
+		</Card>
+	{/if}
 </div>

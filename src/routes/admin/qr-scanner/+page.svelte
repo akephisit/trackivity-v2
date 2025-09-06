@@ -191,19 +191,19 @@
 	<meta name="description" content="ระบบสแกน QR Code สำหรับผู้ดูแลระบบ" />
 </svelte:head>
 
-<div class="container mx-auto max-w-4xl space-y-6 p-4">
+<div class="space-y-4 lg:space-y-6">
 	<!-- Header -->
-	<div class="flex items-center justify-between">
-		<div>
-			<h1 class="flex items-center gap-2 text-2xl font-bold">
-				<IconQrcode class="size-6" />
+	<div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+		<div class="space-y-1 min-w-0">
+			<h1 class="flex items-center gap-2 text-2xl font-bold lg:text-3xl">
+				<IconQrcode class="h-6 w-6" />
 				ระบบสแกน QR Code
 			</h1>
 			<p class="text-muted-foreground">สแกน QR Code เพื่อบันทึกการเข้าร่วมกิจกรรม</p>
 		</div>
 
-		<Button variant="outline" onclick={() => goto('/admin')}>
-			<IconArrowBack class="mr-2 size-4" />
+		<Button variant="outline" onclick={() => goto('/admin')} class="gap-2 w-full sm:w-auto">
+			<IconArrowBack class="h-4 w-4" />
 			กลับหน้าหลัก
 		</Button>
 	</div>
@@ -212,12 +212,12 @@
 	<Card>
 		<CardHeader>
 			<CardTitle class="flex items-center gap-2">
-				<IconSettings class="size-5" />
+				<IconSettings class="h-5 w-5" />
 				ข้อมูลผู้ดูแลระบบ
 			</CardTitle>
 		</CardHeader>
 		<CardContent>
-			<div class="grid grid-cols-1 gap-4 md:grid-cols-3">
+			<div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
 				<div>
 					<p class="text-sm text-muted-foreground">ชื่อ</p>
 					<p class="font-medium">{data.admin?.first_name} {data.admin?.last_name}</p>
@@ -238,11 +238,11 @@
 	<Card>
 		<CardHeader>
 			<CardTitle class="flex items-center gap-2">
-				<IconActivity class="size-5" />
+				<IconActivity class="h-5 w-5" />
 				เลือกกิจกรรม
 			</CardTitle>
 		</CardHeader>
-		<CardContent class="space-y-4">
+		<CardContent class="space-y-4 p-4 lg:p-6">
 			{#if (data.activities?.length || 0) === 0}
 				<Alert>
 					<IconX class="h-4 w-4" />
@@ -286,23 +286,23 @@
 				{#if selectedActivity}
 					<div class="space-y-3 rounded-lg bg-muted/50 p-4">
 						<h3 class="flex items-center gap-2 font-semibold">
-							<IconActivity class="size-5" />
+							<IconActivity class="h-5 w-5" />
 							{selectedActivity.title}
 						</h3>
 
 						<div class="grid grid-cols-1 gap-4 text-sm md:grid-cols-2">
 							<div class="flex items-center gap-2">
-								<IconBuilding class="size-4 text-muted-foreground" />
+								<IconBuilding class="h-4 w-4 text-muted-foreground" />
 								<span>หน่วยงานผู้จัด: {selectedActivity.organizer || 'ไม่ระบุ'}</span>
 							</div>
 
 							<div class="flex items-center gap-2">
-								<IconMapPin class="size-4 text-muted-foreground" />
+								<IconMapPin class="h-4 w-4 text-muted-foreground" />
 								<span>{selectedActivity.location}</span>
 							</div>
 
 							<div class="flex items-center gap-2">
-								<IconUsers class="size-4 text-muted-foreground" />
+								<IconUsers class="h-4 w-4 text-muted-foreground" />
 								<span>
 									ผู้เข้าร่วม: {selectedActivity.current_participants || 0}
 									{#if selectedActivity.max_participants}
@@ -315,7 +315,7 @@
 							</div>
 
 							<div class="flex items-center gap-2">
-								<IconCalendar class="size-4 text-muted-foreground" />
+								<IconCalendar class="h-4 w-4 text-muted-foreground" />
 								<span>
 									{formatDate(selectedActivity.start_date)}
 									{formatTime(selectedActivity.start_time)}
@@ -349,7 +349,7 @@
 		<Card>
 			<CardHeader>
 				<CardTitle class="flex items-center gap-2">
-					<IconUsers class="size-5" />
+					<IconUsers class="h-5 w-5" />
 					สถิติกิจกรรม
 				</CardTitle>
 			</CardHeader>
@@ -396,12 +396,12 @@
 				disabled={!selectedActivityId}
 				class="flex items-center gap-2"
 			>
-				<IconQrcode class="size-5" />
+				<IconQrcode class="h-5 w-5" />
 				เริ่มสแกน QR Code
 			</Button>
 		{:else}
 			<Button onclick={stopScanning} variant="outline" class="flex items-center gap-2">
-				<IconX class="size-5" />
+				<IconX class="h-5 w-5" />
 				หยุดสแกน
 			</Button>
 		{/if}
@@ -429,23 +429,23 @@
 		<CardContent>
 			<div class="space-y-3 text-sm text-muted-foreground">
 				<div class="flex items-start gap-2">
-					<IconCheck class="mt-0.5 size-4 text-green-600" />
+					<IconCheck class="mt-0.5 h-4 w-4 text-green-600" />
 					<span>เลือกกิจกรรมที่มีสถานะ "กำลังดำเนินการ" เท่านั้น</span>
 				</div>
 				<div class="flex items-start gap-2">
-					<IconCheck class="mt-0.5 size-4 text-green-600" />
+					<IconCheck class="mt-0.5 h-4 w-4 text-green-600" />
 					<span>เลือกโหมดการสแกน: <strong>เช็คอิน</strong> สำหรับเข้าร่วม หรือ <strong>เช็คเอาท์</strong> สำหรับออกจากกิจกรรม (รองรับการเริ่มต้นด้วยโหมดใดก็ได้)</span>
 				</div>
 				<div class="flex items-start gap-2">
-					<IconCheck class="mt-0.5 size-4 text-green-600" />
+					<IconCheck class="mt-0.5 h-4 w-4 text-green-600" />
 					<span>กดปุ่ม "เริ่มสแกน" เพื่อเปิดกล้อง</span>
 				</div>
 				<div class="flex items-start gap-2">
-					<IconCheck class="mt-0.5 size-4 text-green-600" />
+					<IconCheck class="mt-0.5 h-4 w-4 text-green-600" />
 					<span>วาง QR Code ของนักศึกษาในกรอบที่กำหนด</span>
 				</div>
 				<div class="flex items-start gap-2">
-					<IconCheck class="mt-0.5 size-4 text-green-600" />
+					<IconCheck class="mt-0.5 h-4 w-4 text-green-600" />
 					<span>ระบบจะบันทึกและแสดงผลการสแกนอัตโนมัติ พร้อมการแจ้งเตือนแบบเรียบง่าย</span>
 				</div>
 				
