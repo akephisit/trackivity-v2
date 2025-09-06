@@ -20,20 +20,6 @@
         mobileMenuOpen = false;
     }
 
-    function getPageTitle() {
-		if (page.url.pathname === '/admin') return 'แดชบอร์ด';
-		if (page.url.pathname.startsWith('/admin/activities')) return 'จัดการกิจกรรม';
-		if (page.url.pathname.startsWith('/admin/organizations')) return 'จัดการหน่วยงาน';
-		if (page.url.pathname.startsWith('/admin/users')) return 'จัดการผู้ใช้';
-		if (page.url.pathname.startsWith('/admin/admins')) return 'จัดการแอดมิน';
-		if (page.url.pathname.startsWith('/admin/departments')) return 'จัดการภาควิชา';
-		if (page.url.pathname.startsWith('/admin/organization-users')) return 'จัดการผู้ใช้หน่วยงาน';
-		if (page.url.pathname.startsWith('/admin/organization-admins')) return 'จัดการแอดมินหน่วยงาน';
-		if (page.url.pathname.startsWith('/admin/qr-scanner')) return 'สแกน QR Code';
-		if (page.url.pathname.startsWith('/admin/reports')) return 'รายงานหน่วยงาน';
-		if (page.url.pathname.startsWith('/admin/settings')) return 'ตั้งค่า';
-        return 'Trackivity';
-    }
 
     async function handleLogout() {
         try {
@@ -69,10 +55,11 @@
 			onToggleMobileMenu={toggleMobileMenu}
 			onCloseMobileMenu={closeMobileMenu}
 		/>
+		
+		<div class="w-full lg:flex lg:flex-1">
 
-		<div class="flex">
-			<!-- Main Content -->
-            	<main class="flex-1 lg:ml-64">
+		<!-- Main Content -->
+            	<main class="flex-1 lg:ml-64 min-h-screen">
                     <!-- Desktop Top Bar -->
                     <header class="hidden lg:block sticky top-0 z-40 border-b bg-card">
                         <div class="flex items-center justify-between px-6 py-3">
@@ -96,10 +83,10 @@
                     </header>
 
                     <!-- Content -->
-                    	<div class="px-4 lg:px-6 py-4 lg:py-6">
+                    	<div class="px-3 sm:px-4 lg:px-6 py-3 sm:py-4 lg:py-6 w-full overflow-x-hidden">
                             {@render children()}
                         </div>
                     </main>
-			</div>
 		</div>
+	</div>
 {/if}
