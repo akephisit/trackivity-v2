@@ -237,7 +237,7 @@
 					<IconMenu class="size-5" />
 				{/if}
 			</Button>
-			<h1 class="text-lg font-semibold">Admin Panel</h1>
+			<h1 class="text-lg font-semibold">Trackivity</h1>
 		</div>
 
 		{#if hasUser}
@@ -270,7 +270,7 @@
 					<IconShield class="!h-5 !w-5 text-primary-foreground" />
 				</div>
 				<div class="flex flex-col items-start">
-					<h1 class="text-xl font-bold text-foreground">Admin Panel</h1>
+					<h1 class="text-xl font-bold text-foreground">Trackivity</h1>
 					<p class="mt-1 text-sm text-muted-foreground">
 						{getRoleDisplayName(admin_role?.admin_level)}
 					</p>
@@ -388,7 +388,7 @@
 				<IconShield class="!h-5 !w-5 text-primary-foreground" />
 			</div>
 			<div class="flex flex-col items-start">
-				<h1 class="text-xl font-bold text-foreground">Admin Panel</h1>
+				<h1 class="text-xl font-bold text-foreground">Trackivity</h1>
 				<p class="mt-1 text-sm text-muted-foreground">
 					{getRoleDisplayName(admin_role?.admin_level)}
 				</p>
