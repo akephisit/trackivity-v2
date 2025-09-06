@@ -1,5 +1,5 @@
 import { json, type RequestHandler } from '@sveltejs/kit';
-import { deactivateSession, debugSessionState } from '$lib/server/session-utils';
+import { deactivateSession } from '$lib/server/session-utils';
 import jwt from 'jsonwebtoken';
 import { env } from '$env/dynamic/private';
 
@@ -19,15 +19,7 @@ export const POST: RequestHandler = async ({ cookies }) => {
 				const decoded = jwt.verify(sessionToken, env.JWT_SECRET!) as any;
 				const sessionId = decoded.session_id;
 				
-				console.log(`[Auth] Logout attempt - JWT decoded, session_id: ${sessionId}`);
-				console.log(`[Auth] JWT payload keys: ${Object.keys(decoded).join(', ')}`);
-				
 				if (sessionId) {
-					console.log(`[Auth] Attempting to deactivate session ${sessionId}`);
-					
-					// First debug the session state
-					await debugSessionState(sessionId);
-					
 					const deactivated = await deactivateSession(sessionId);
 					if (deactivated) {
 						console.log(`[Auth] Successfully deactivated session ${sessionId}`);
@@ -36,16 +28,11 @@ export const POST: RequestHandler = async ({ cookies }) => {
 					}
 				} else {
 					console.warn('[Auth] No session_id found in JWT token');
-					console.warn('[Auth] Full JWT payload:', JSON.stringify(decoded, null, 2));
 				}
 			} catch (error) {
 				console.warn('Failed to decode JWT token during logout:', error);
-				console.warn('Token length:', sessionToken?.length);
-				console.warn('Token preview:', sessionToken?.substring(0, 50) + '...');
 				// Don't fail logout if JWT decode fails
 			}
-		} else {
-			console.warn('[Auth] No session token found during logout');
 		}
 
 		// Clear the JWT session token cookie
