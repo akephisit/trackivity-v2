@@ -35,6 +35,10 @@
 
     let { user, admin_role, organization, ...restProps }: AdminSidebarProps = $props();
 
+	// Get sidebar context for mobile menu control
+	import { useSidebar } from '$lib/components/ui/sidebar/context.svelte.js';
+	const sidebar = useSidebar();
+
 	// Navigation items based on admin level
 	let navigationItems = $derived(getNavigationItems(admin_role?.admin_level));
 
@@ -177,6 +181,25 @@
 		}
 		return 'แอดมิน';
 	}
+
+	/**
+	 * Navigation handler that closes mobile menu and navigates
+	 * @param href - The URL to navigate to
+	 * @param event - The click event (optional)
+	 */
+	function handleNavigation(href: string, event?: Event) {
+		if (event) {
+			event.preventDefault();
+		}
+		
+		// Close mobile sidebar if we're on mobile
+		if (sidebar.isMobile && sidebar.openMobile) {
+			sidebar.setOpenMobile(false);
+		}
+		
+		// Navigate to the target URL
+		goto(href);
+	}
 </script>
 
 <Sidebar.Root collapsible="offcanvas" {...restProps}>
@@ -186,7 +209,11 @@
 			<Sidebar.MenuItem>
 				<Sidebar.MenuButton class="data-[slot=sidebar-menu-button]:!p-3">
 					{#snippet child({ props })}
-						<a href="/admin" {...props} class="flex items-center space-x-3">
+						<button 
+							{...props} 
+							class="flex items-center space-x-3 w-full text-left" 
+							onclick={(e) => handleNavigation('/admin', e)}
+						>
 							<div
 								class="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-primary"
 							>
@@ -198,7 +225,7 @@
 									{getRoleDisplayName(admin_role?.admin_level)}
 								</span>
 							</div>
-						</a>
+						</button>
 					{/snippet}
 				</Sidebar.MenuButton>
 			</Sidebar.MenuItem>
@@ -245,7 +272,11 @@
 						<Sidebar.MenuItem>
 							<Sidebar.MenuButton isActive={item.active}>
 								{#snippet child({ props })}
-									<a href={item.href} {...props} class="flex items-center space-x-3">
+									<button 
+										{...props} 
+										class="flex items-center space-x-3 w-full text-left" 
+										onclick={(e) => handleNavigation(item.href, e)}
+									>
 										{#if item.icon}
 											{@const IconComponent = item.icon}
 											<IconComponent class="!h-4 !w-4 flex-shrink-0" />
@@ -256,7 +287,7 @@
 												<span class="text-xs text-muted-foreground">{item.description}</span>
 											{/if}
 										</div>
-									</a>
+									</button>
 								{/snippet}
 							</Sidebar.MenuButton>
 						</Sidebar.MenuItem>
@@ -274,20 +305,28 @@
 						<Sidebar.MenuItem>
 							<Sidebar.MenuButton>
 								{#snippet child({ props })}
-									<a href="/admin/activities/create" {...props} class="flex items-center space-x-3">
+									<button 
+										{...props} 
+										class="flex items-center space-x-3 w-full text-left" 
+										onclick={(e) => handleNavigation('/admin/activities/create', e)}
+									>
 										<IconCalendarEvent class="!h-4 !w-4 flex-shrink-0" />
 										<span class="text-sm">สร้างกิจกรรมใหม่</span>
-									</a>
+									</button>
 								{/snippet}
 							</Sidebar.MenuButton>
 						</Sidebar.MenuItem>
 						<Sidebar.MenuItem>
 							<Sidebar.MenuButton>
 								{#snippet child({ props })}
-									<a href="/admin/reports" {...props} class="flex items-center space-x-3">
+									<button 
+										{...props} 
+										class="flex items-center space-x-3 w-full text-left" 
+										onclick={(e) => handleNavigation('/admin/reports', e)}
+									>
 										<IconUsers class="!h-4 !w-4 flex-shrink-0" />
 										<span class="text-sm">รายงานหน่วยงาน</span>
-									</a>
+									</button>
 								{/snippet}
 							</Sidebar.MenuButton>
 						</Sidebar.MenuItem>
