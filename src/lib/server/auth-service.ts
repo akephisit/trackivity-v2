@@ -1,10 +1,10 @@
-import { db, users, adminRoles, sessions } from '$lib/server/db';
+import { db, users, adminRoles } from '$lib/server/db';
 import { eq } from 'drizzle-orm';
 import argon2 from 'argon2';
 import jwt from 'jsonwebtoken';
 import type { SessionUser, Permission } from '$lib/types';
 import { env } from '$env/dynamic/private';
-const JWT_EXPIRES_IN = '7d';
+import { createSessionWithRetry, cleanupExpiredSessions } from './session-utils';
 
 export interface AuthInput {
 	email?: string;
@@ -119,7 +119,12 @@ export async function authenticateAndIssueToken(input: AuthInput): Promise<AuthR
 		permissions.push('ViewPersonalQR', 'ViewPersonalHistory');
 	}
 
-	const payload = {
+	// Expiration: 30 days if remember_me, otherwise default 7 days
+	const expiresInSeconds = (remember_me ? 30 : 7) * 24 * 60 * 60;
+	const expiresAt = new Date(Date.now() + expiresInSeconds * 1000);
+
+	// First, create a preliminary JWT payload without session ID to generate token for fallback
+	const preliminaryPayload = {
 		user_id: foundUser.id,
 		student_id: foundUser.studentId,
 		email: foundUser.email,
@@ -131,27 +136,53 @@ export async function authenticateAndIssueToken(input: AuthInput): Promise<AuthR
 		organization_id: isAdmin ? (adminRoleRes[0] as any).organizationId : null
 	};
 
-	// Expiration: 30 days if remember_me, otherwise default 7 days
-	const expiresInSeconds = (remember_me ? 30 : 7) * 24 * 60 * 60;
-	const token = jwt.sign(payload, env.JWT_SECRET!, { expiresIn: expiresInSeconds });
-	const expiresAt = new Date(Date.now() + expiresInSeconds * 1000);
-
-	// Create session record for tracking last access
+	// Generate preliminary token for fallback session ID
+	const preliminaryToken = jwt.sign(preliminaryPayload, env.JWT_SECRET!, { expiresIn: expiresInSeconds });
+	
+	// Create session record for tracking last access with robust collision handling
+	let sessionId: string;
+	let token: string;
+	
 	try {
-		await db.insert(sessions).values({
-			id: token.slice(0, 16), // Use part of token as session ID
-			userId: foundUser.id,
-			deviceInfo: {},
-			ipAddress: null,
-			userAgent: null,
-			createdAt: new Date(),
-			lastAccessed: new Date(),
-			expiresAt: expiresAt,
-			isActive: true
-		});
+		// Run cleanup asynchronously to prevent old sessions from accumulating
+		cleanupExpiredSessions().catch(err => 
+			console.warn('Background session cleanup failed:', err)
+		);
+		
+		// Create session with collision handling and retry logic
+		const sessionResult = await createSessionWithRetry(
+			foundUser.id,
+			expiresAt,
+			{}, // deviceInfo - could be populated from request headers
+			null, // ipAddress - could be populated from request
+			null  // userAgent - could be populated from request
+		);
+		
+		sessionId = sessionResult.sessionId;
+		
+		if (!sessionResult.created) {
+			console.log(`[Auth] Reused existing session ${sessionId} for user ${foundUser.id}`);
+		}
+		
+		// Create final JWT payload with the actual session ID
+		const finalPayload = {
+			...preliminaryPayload,
+			session_id: sessionId
+		};
+		
+		// Generate final token with session ID included
+		token = jwt.sign(finalPayload, env.JWT_SECRET!, { expiresIn: expiresInSeconds });
+		
 	} catch (error) {
-		// Don't fail login if session creation fails
-		console.warn('Failed to create session record:', error);
+		// Don't fail login if session creation fails, but log the error
+		console.error('Failed to create session record:', error);
+		
+		// Fall back to using a portion of the token as session ID for compatibility
+		sessionId = preliminaryToken.slice(0, 16);
+		console.warn(`[Auth] Using fallback session ID ${sessionId} for user ${foundUser.id}`);
+		
+		// Use preliminary token as the final token
+		token = preliminaryToken;
 	}
 
 	const sessionUser: SessionUser = {
@@ -162,7 +193,7 @@ export async function authenticateAndIssueToken(input: AuthInput): Promise<AuthR
 		last_name: foundUser.lastName,
 		department_id: foundUser.departmentId || undefined,
 		organization_id: (isAdmin ? (adminRoleRes[0] as any).organizationId : null) || undefined,
-		session_id: token.slice(0, 16),
+		session_id: sessionId,
 		permissions,
 		expires_at: expiresAt.toISOString(),
 		created_at: foundUser.createdAt?.toISOString(),
