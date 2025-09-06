@@ -9,7 +9,6 @@
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
 	import { Separator } from '$lib/components/ui/separator';
-	import { Progress } from '$lib/components/ui/progress';
 	import * as Chart from '$lib/components/ui/chart';
 	import {
 		IconUsers,
@@ -23,9 +22,6 @@
 		IconChartBar,
 		IconSchool,
 		IconUsersGroup,
-		IconBook,
-		IconAward,
-		IconShieldCheck
 	} from '@tabler/icons-svelte/icons';
 	import { BarChart } from 'layerchart';
 	import { scaleBand } from 'd3-scale';
@@ -320,194 +316,11 @@
 				</CardContent>
 			</Card>
 
-			<!-- Faculty Performance Metrics -->
-			<Card>
-				<CardHeader>
-					<CardTitle class="flex items-center gap-2">
-						<IconAward class="h-5 w-5" />
-						ประสิทธิภาพหน่วยงาน
-					</CardTitle>
-					<CardDescription>ตัวชี้วัดและเป้าหมายของหน่วยงาน</CardDescription>
-				</CardHeader>
-				<CardContent class="space-y-4">
-					<div>
-						<div class="mb-2 flex items-center justify-between">
-							<span class="text-sm font-medium">อัตราผู้ใช้งานใหม่</span>
-							<span class="text-sm text-gray-500">
-								{Math.round(
-									((data.stats?.new_users_this_month || 0) /
-										Math.max(data.stats?.organization_users || 1, 1)) *
-										100
-								)}%
-							</span>
-						</div>
-						<Progress
-							value={Math.round(
-								((data.stats?.new_users_this_month || 0) /
-									Math.max(data.stats?.organization_users || 1, 1)) *
-									100
-							)}
-							class="h-2"
-						/>
-					</div>
-					<div>
-						<div class="mb-2 flex items-center justify-between">
-							<span class="text-sm font-medium">อัตราผู้ใช้งานใช้งาน</span>
-							<span class="text-sm text-gray-500">
-								{Math.round(
-									((data.stats?.active_users || 0) /
-										Math.max(data.stats?.organization_users || 1, 1)) *
-										100
-								)}%
-							</span>
-						</div>
-						<Progress
-							value={Math.round(
-								((data.stats?.active_users || 0) /
-									Math.max(data.stats?.organization_users || 1, 1)) *
-									100
-							)}
-							class="h-2"
-						/>
-					</div>
-					<div>
-						<div class="mb-2 flex items-center justify-between">
-							<span class="text-sm font-medium">ความครบถ้วนข้อมูลภาควิชา</span>
-							<span class="text-sm text-gray-500">85%</span>
-						</div>
-						<Progress value={85} class="h-2" />
-					</div>
-					<div class="mt-4 grid grid-cols-2 gap-4">
-						<div class="rounded-lg bg-green-50 p-3 text-center dark:bg-green-950">
-							<IconShieldCheck class="mx-auto mb-1 h-6 w-6 text-green-600 dark:text-green-400" />
-							<div class="text-sm font-medium text-green-800 dark:text-green-200">
-								เป้าหมายสำเร็จ
-							</div>
-							<div class="text-xs text-green-600 dark:text-green-400">3 จาก 4 เป้าหมาย</div>
-						</div>
-						<div class="rounded-lg bg-blue-50 p-3 text-center dark:bg-blue-950">
-							<IconTrendingUp class="mx-auto mb-1 h-6 w-6 text-blue-600 dark:text-blue-400" />
-							<div class="text-sm font-medium text-blue-800 dark:text-blue-200">แนวโน้มดี</div>
-							<div class="text-xs text-blue-600 dark:text-blue-400">+12% จากเดือนที่แล้ว</div>
-						</div>
-					</div>
-				</CardContent>
-			</Card>
 		</div>
 	{/if}
 
-	<!-- Quick Actions & Recent Activities -->
-	<div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
-		<!-- Quick Actions -->
-		<Card>
-			<CardHeader>
-				<CardTitle class="flex items-center gap-2">
-					<IconChartBar class="h-5 w-5" />
-					การดำเนินการด่วน
-				</CardTitle>
-				<CardDescription>ฟังก์ชันที่ใช้บ่อยสำหรับการจัดการระบบ</CardDescription>
-			</CardHeader>
-			<CardContent class="space-y-4">
-				{#if data.admin_role?.admin_level === 'SuperAdmin'}
-					<div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
-						<Button
-							variant="outline"
-							class="h-auto justify-start py-3 hover:bg-blue-50 dark:hover:bg-blue-950"
-							onclick={() => (window.location.href = '/admin/organization-users')}
-						>
-							<IconUsers class="mr-2 h-4 w-4" />
-							<div class="text-left">
-								<div class="font-medium">จัดการผู้ใช้</div>
-								<div class="text-xs text-gray-500">เพิ่ม แก้ไข ลบผู้ใช้</div>
-							</div>
-						</Button>
-						<Button
-							variant="outline"
-							class="h-auto justify-start py-3 hover:bg-green-50 dark:hover:bg-green-950"
-							onclick={() => (window.location.href = '/admin/admins')}
-						>
-							<IconShield class="mr-2 h-4 w-4" />
-							<div class="text-left">
-								<div class="font-medium">จัดการแอดมิน</div>
-								<div class="text-xs text-gray-500">กำหนดสิทธิ์ผู้ดูแล</div>
-							</div>
-						</Button>
-						<Button
-							variant="outline"
-							class="h-auto justify-start py-3 hover:bg-purple-50 dark:hover:bg-purple-950"
-							onclick={() => (window.location.href = '/admin/organizations')}
-						>
-							<IconBuilding class="mr-2 h-4 w-4" />
-							<div class="text-left">
-								<div class="font-medium">จัดการหน่วยงาน</div>
-								<div class="text-xs text-gray-500">เพิ่ม แก้ไขข้อมูลหน่วยงาน</div>
-							</div>
-						</Button>
-						<Button
-							variant="outline"
-							class="h-auto justify-start py-3 hover:bg-orange-50 dark:hover:bg-orange-950"
-						>
-							<IconActivity class="mr-2 h-4 w-4" />
-							<div class="text-left">
-								<div class="font-medium">รายงานระบบ</div>
-								<div class="text-xs text-gray-500">ดูสถิติและรายงาน</div>
-							</div>
-						</Button>
-					</div>
-				{:else if data.admin_role?.admin_level === 'OrganizationAdmin'}
-					<div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
-						<Button
-							variant="outline"
-							class="h-auto justify-start py-3 hover:bg-blue-50 dark:hover:bg-blue-950"
-							onclick={() => (window.location.href = '/admin/organization-users')}
-						>
-							<IconUsers class="mr-2 h-4 w-4" />
-							<div class="text-left">
-								<div class="font-medium">จัดการผู้ใช้หน่วยงาน</div>
-								<div class="text-xs text-gray-500">จัดการผู้ใช้ในหน่วยงานของคุณ</div>
-							</div>
-						</Button>
-						<Button
-							variant="outline"
-							class="h-auto justify-start py-3 hover:bg-green-50 dark:hover:bg-green-950"
-							onclick={() => (window.location.href = '/admin/departments')}
-						>
-							<IconBuilding class="mr-2 h-4 w-4" />
-							<div class="text-left">
-								<div class="font-medium">จัดการภาควิชา</div>
-								<div class="text-xs text-gray-500">เพิ่ม แก้ไข ภาควิชาในหน่วยงาน</div>
-							</div>
-						</Button>
-						<Button
-							variant="outline"
-							class="h-auto justify-start py-3 hover:bg-purple-50 dark:hover:bg-purple-950"
-						>
-							<IconChartBar class="mr-2 h-4 w-4" />
-							<div class="text-left">
-								<div class="font-medium">รายงานหน่วยงาน</div>
-								<div class="text-xs text-gray-500">สถิติและรายงานของหน่วยงาน</div>
-							</div>
-						</Button>
-						<Button
-							variant="outline"
-							class="h-auto justify-start py-3 hover:bg-indigo-50 dark:hover:bg-indigo-950"
-						>
-							<IconBook class="mr-2 h-4 w-4" />
-							<div class="text-left">
-								<div class="font-medium">จัดการหลักสูตร</div>
-								<div class="text-xs text-gray-500">ดูและจัดการหลักสูตร</div>
-							</div>
-						</Button>
-					</div>
-				{:else}
-					<div class="py-4 text-center text-gray-500 dark:text-gray-400">
-						<IconActivity class="mx-auto mb-2 h-8 w-8 opacity-50" />
-						<p>การดำเนินการจะแสดงตามสิทธิ์ของคุณ</p>
-					</div>
-				{/if}
-			</CardContent>
-		</Card>
-
+	<!-- Recent Activities -->
+	<div class="grid grid-cols-1 gap-6">
 		<!-- Recent Activities -->
 		<Card>
 			<CardHeader>
