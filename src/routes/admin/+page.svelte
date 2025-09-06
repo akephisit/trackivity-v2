@@ -27,16 +27,19 @@
 		IconAward,
 		IconShieldCheck
 	} from '@tabler/icons-svelte/icons';
-	import { AdminLevel } from '$lib/types/admin';
 	import { BarChart } from 'layerchart';
 	import { scaleBand } from 'd3-scale';
     import MetaTags from '$lib/components/seo/MetaTags.svelte';
 
 	let { data } = $props();
+	
+	// Safely handle undefined data with loading state
+	const isLoading = $derived(!data?.user || !data?.admin_role);
+	const hasError = $derived(false); // Remove error property that doesn't exist
 
 	// กำหนดสีและไอคอนสำหรับสถิติ (แบ่งตาม Admin Level)
 	function getStatCards() {
-		const isOrgAdmin = data.admin_role?.admin_level === AdminLevel.OrganizationAdmin;
+		const isOrgAdmin = data.admin_role?.admin_level === 'OrganizationAdmin';
 		const stats = data.stats;
 
 		if (isOrgAdmin) {
@@ -175,20 +178,36 @@
 	<title>แดชบอร์ด - Admin Panel</title>
 </svelte:head>
 
+{#if isLoading}
+<div class="flex items-center justify-center min-h-screen">
+	<div class="text-center space-y-4">
+		<div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+		<p class="text-muted-foreground">กำลังโหลดข้อมูลแดชบอร์ด...</p>
+	</div>
+</div>
+{:else if hasError}
+<div class="flex items-center justify-center min-h-screen">
+	<div class="text-center space-y-4">
+		<IconAlertCircle class="h-12 w-12 text-destructive mx-auto" />
+		<p class="text-destructive">เกิดข้อผิดพลาดในการโหลดข้อมูล</p>
+		<Button onclick={() => location.reload()}>โหลดใหม่</Button>
+	</div>
+</div>
+{:else}
 <div class="space-y-6">
 	<!-- Header -->
 	<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
 		<div>
 			<h1 class="text-3xl font-bold text-gray-900 dark:text-white">
 				แดชบอร์ด
-				{#if data.admin_role?.admin_level === AdminLevel.OrganizationAdmin && (data.admin_role as any)?.organization}
+				{#if data.admin_role?.admin_level === 'OrganizationAdmin' && (data.admin_role as any)?.organization}
 					- {(data.admin_role as any).organization.name}
 				{/if}
 			</h1>
 			<p class="mt-2 text-gray-600 dark:text-gray-400">
 				ยินดีต้อนรับ, {data.user.first_name}
 				{data.user.last_name}
-				{#if data.admin_role?.admin_level === AdminLevel.OrganizationAdmin && (data.admin_role as any)?.organization}
+				{#if data.admin_role?.admin_level === 'OrganizationAdmin' && (data.admin_role as any)?.organization}
 					<span
 						class="ml-2 rounded-full bg-blue-100 px-2 py-1 text-sm text-blue-800 dark:bg-blue-900 dark:text-blue-200"
 					>
@@ -207,7 +226,7 @@
 	</div>
 
 	<!-- Organization Info Card for Organization Admin -->
-	{#if data.admin_role?.admin_level === AdminLevel.OrganizationAdmin && (data.admin_role as any)?.organization}
+	{#if data.admin_role?.admin_level === 'OrganizationAdmin' && (data.admin_role as any)?.organization}
 		<Card
 			class="border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50 dark:border-blue-800 dark:from-blue-950 dark:to-indigo-950"
 		>
@@ -268,7 +287,7 @@
 	</div>
 
 	<!-- Department Analytics for Faculty Admin -->
-	{#if data.admin_role?.admin_level === AdminLevel.OrganizationAdmin && departmentChartData?.length > 0}
+	{#if data.admin_role?.admin_level === 'OrganizationAdmin' && departmentChartData?.length > 0}
 		<div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
 			<!-- Department Distribution Chart -->
 			<Card>
@@ -389,7 +408,7 @@
 				<CardDescription>ฟังก์ชันที่ใช้บ่อยสำหรับการจัดการระบบ</CardDescription>
 			</CardHeader>
 			<CardContent class="space-y-4">
-				{#if data.admin_role?.admin_level === AdminLevel.SuperAdmin}
+				{#if data.admin_role?.admin_level === 'SuperAdmin'}
 					<div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
 						<Button
 							variant="outline"
@@ -435,7 +454,7 @@
 							</div>
 						</Button>
 					</div>
-				{:else if data.admin_role?.admin_level === AdminLevel.OrganizationAdmin}
+				{:else if data.admin_role?.admin_level === 'OrganizationAdmin'}
 					<div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
 						<Button
 							variant="outline"
@@ -495,14 +514,14 @@
 				<CardTitle class="flex items-center gap-2">
 					<IconClock class="h-5 w-5" />
 					กิจกรรมล่าสุด
-					{#if data.admin_role?.admin_level === AdminLevel.OrganizationAdmin}
+					{#if data.admin_role?.admin_level === 'OrganizationAdmin'}
 						<span class="text-sm font-normal text-gray-500"
 							>(หน่วยงาน{(data.admin_role as any)?.organization?.name})</span
 						>
 					{/if}
 				</CardTitle>
 				<CardDescription>
-					{#if data.admin_role?.admin_level === AdminLevel.OrganizationAdmin}
+					{#if data.admin_role?.admin_level === 'OrganizationAdmin'}
 						กิจกรรมและการเปลี่ยนแปลงล่าสุดในหน่วยงานของคุณ
 					{:else}
 						กิจกรรมและการเปลี่ยนแปลงล่าสุดในระบบ
@@ -543,7 +562,7 @@
 										<p class="text-xs text-gray-400 dark:text-gray-500">
 											{formatDateTime(activity.created_at)}
 										</p>
-										{#if activity.faculty_name && data.admin_role?.admin_level === AdminLevel.SuperAdmin}
+										{#if activity.faculty_name && data.admin_role?.admin_level === 'SuperAdmin'}
 											<span
 												class="rounded-full bg-blue-100 px-2 py-1 text-xs text-blue-700 dark:bg-blue-900 dark:text-blue-300"
 											>
@@ -564,7 +583,7 @@
 					<div class="py-8 text-center text-gray-500 dark:text-gray-400">
 						<IconClock class="mx-auto mb-2 h-8 w-8 opacity-50" />
 						<p>ยังไม่มีกิจกรรมล่าสุด</p>
-						{#if data.admin_role?.admin_level === AdminLevel.OrganizationAdmin}
+						{#if data.admin_role?.admin_level === 'OrganizationAdmin'}
 							<p class="mt-2 text-xs">กิจกรรมจะแสดงเฉพาะในหน่วยงานของคุณ</p>
 						{/if}
 					</div>
@@ -574,7 +593,7 @@
 	</div>
 
 	<!-- System Info -->
-	{#if data.admin_role?.admin_level === AdminLevel.SuperAdmin}
+	{#if data.admin_role?.admin_level === 'SuperAdmin'}
 		<Card>
 			<CardHeader>
 				<CardTitle class="flex items-center gap-2">
@@ -606,3 +625,4 @@
 		</Card>
 	{/if}
 </div>
+{/if}
