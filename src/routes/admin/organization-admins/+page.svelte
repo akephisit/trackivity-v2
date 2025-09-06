@@ -544,7 +544,7 @@
 				{#if (stats?.inactive_admins ?? 0) > 0}
 					<p class="text-xs text-muted-foreground">ต้องการการตรวจสอบ</p>
 				{:else}
-					<p class="text-xs text-green-600 text-muted-foreground">ทุกคนใช้งานได้</p>
+					<p class="text-xs text-green-600">ทุกคนใช้งานได้</p>
 				{/if}
 			</CardContent>
 		</Card>

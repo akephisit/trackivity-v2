@@ -62,19 +62,23 @@
 				user.student_id?.toLowerCase().includes(searchTerm.toLowerCase());
 			
 			const matchesRole = selectedRole === 'all' || user.role === selectedRole;
-			const matchesStatus = selectedStatus === 'all' || user.is_active.toString() === selectedStatus;
+			const matchesStatus = selectedStatus === 'all' || user.status === selectedStatus;
 			const matchesOrg = selectedOrg === 'all' || user.organization?.id === selectedOrg;
 
 			return matchesSearch && matchesRole && matchesStatus && matchesOrg;
 		})
 	);
 
-	function getStatusBadgeVariant(status: boolean): 'default' | 'secondary' | 'destructive' {
-		return status ? 'default' : 'secondary';
+	function getStatusBadgeVariant(status: string): 'default' | 'secondary' | 'destructive' {
+		if (status === 'online') return 'default';
+		if (status === 'disabled') return 'destructive';
+		return 'secondary';
 	}
 
-	function getStatusText(status: boolean): string {
-		return status ? 'ใช้งานอยู่' : 'ไม่ใช้งาน';
+	function getStatusText(status: string): string {
+		if (status === 'online') return 'ใช้งานอยู่';
+		if (status === 'disabled') return 'ถูกระงับ';
+		return 'ไม่ใช้งาน';
 	}
 
 	function formatDate(dateString: string): string {
@@ -187,9 +191,15 @@
 				<!-- Filters -->
 				<div class="flex flex-col sm:flex-row gap-2 sm:gap-4">
 					<!-- Role Filter -->
-					<Select.Root bind:selected={selectedRole}>
+					<Select.Root type="single" bind:value={selectedRole}>
 						<Select.Trigger class="w-full sm:w-48">
-							<Select.Value placeholder="บทบาท" />
+							{selectedRole === 'all'
+								? 'ทุกบทบาท'
+								: selectedRole === 'student'
+								? 'นักศึกษา'
+								: selectedRole === 'faculty'
+								? 'อาจารย์'
+								: 'เจ้าหน้าที่'}
 						</Select.Trigger>
 						<Select.Content>
 							<Select.Item value="all">ทุกบทบาท</Select.Item>
@@ -200,22 +210,31 @@
 					</Select.Root>
 
 					<!-- Status Filter -->
-					<Select.Root bind:selected={selectedStatus}>
+					<Select.Root type="single" bind:value={selectedStatus}>
 						<Select.Trigger class="w-full sm:w-48">
-							<Select.Value placeholder="สถานะ" />
+							{selectedStatus === 'all'
+								? 'ทุกสถานะ'
+								: selectedStatus === 'online'
+								? 'ใช้งานอยู่'
+								: selectedStatus === 'disabled'
+								? 'ถูกระงับ'
+								: 'ไม่ใช้งาน'}
 						</Select.Trigger>
 						<Select.Content>
 							<Select.Item value="all">ทุกสถานะ</Select.Item>
-							<Select.Item value="true">ใช้งานอยู่</Select.Item>
-							<Select.Item value="false">ไม่ใช้งาน</Select.Item>
+							<Select.Item value="online">ใช้งานอยู่</Select.Item>
+							<Select.Item value="offline">ไม่ใช้งาน</Select.Item>
+							<Select.Item value="disabled">ถูกระงับ</Select.Item>
 						</Select.Content>
 					</Select.Root>
 
 					{#if canManageAllUsers && organizations.length > 0}
 						<!-- Organization Filter -->
-						<Select.Root bind:selected={selectedOrg}>
+						<Select.Root type="single" bind:value={selectedOrg}>
 							<Select.Trigger class="w-full sm:w-48">
-								<Select.Value placeholder="หน่วยงาน" />
+								{selectedOrg === 'all'
+									? 'ทุกหน่วยงาน'
+									: (organizations.find((o) => o.id === selectedOrg)?.name ?? 'หน่วยงาน')}
 							</Select.Trigger>
 							<Select.Content>
 								<Select.Item value="all">ทุกหน่วยงาน</Select.Item>
@@ -295,8 +314,8 @@
 									{/if}
 								</Table.Cell>
 								<Table.Cell>
-									<Badge variant={getStatusBadgeVariant(user.is_active)}>
-										{getStatusText(user.is_active)}
+									<Badge variant={getStatusBadgeVariant(user.status)}>
+										{getStatusText(user.status)}
 									</Badge>
 								</Table.Cell>
 								<Table.Cell>

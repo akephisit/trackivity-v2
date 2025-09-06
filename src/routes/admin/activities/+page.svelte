@@ -224,9 +224,9 @@
 				<!-- Filters -->
 				<div class="flex flex-col sm:flex-row gap-2 sm:gap-4">
 					<!-- Type Filter -->
-					<Select.Root bind:selected={selectedType}>
+					<Select.Root type="single" bind:value={selectedType}>
 						<Select.Trigger class="w-full sm:w-48">
-							<Select.Value placeholder="ประเภทกิจกรรม" />
+							{selectedType === 'all' ? 'ทุกประเภท' : getActivityTypeDisplayName(selectedType)}
 						</Select.Trigger>
 						<Select.Content>
 							<Select.Item value="all">ทุกประเภท</Select.Item>
@@ -239,9 +239,9 @@
 					</Select.Root>
 
 					<!-- Status Filter -->
-					<Select.Root bind:selected={selectedStatus}>
+					<Select.Root type="single" bind:value={selectedStatus}>
 						<Select.Trigger class="w-full sm:w-48">
-							<Select.Value placeholder="สถานะ" />
+							{selectedStatus === 'all' ? 'ทุกสถานะ' : selectedStatus}
 						</Select.Trigger>
 						<Select.Content>
 							<Select.Item value="all">ทุกสถานะ</Select.Item>
