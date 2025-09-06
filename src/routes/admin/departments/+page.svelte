@@ -321,7 +321,8 @@
 	<!-- Header -->
 	<div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 		<div class="space-y-1 min-w-0">
-			<h1 class="text-2xl font-bold lg:text-3xl">
+			<h1 class="admin-page-title">
+				<IconBuilding class="size-6 text-primary" />
 				{#if data.userRole === 'OrganizationAdmin' && data.currentFaculty}
 					จัดการภาควิชา - {data.currentFaculty.name}
 				{:else}

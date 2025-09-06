@@ -354,7 +354,7 @@
 				กลับ
 			</Button>
 			<div>
-				<h1 class="text-4xl font-bold text-gray-900 dark:text-white">สร้างกิจกรรมใหม่</h1>
+				<h1 class="admin-page-title"><IconCalendar class="size-6 text-primary" /> สร้างกิจกรรมใหม่</h1>
 				<p class="mt-2 text-lg text-gray-600 dark:text-gray-400">
 					กรอกข้อมูลเพื่อสร้างกิจกรรมใหม่ในระบบ
 				</p>

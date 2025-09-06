@@ -140,8 +140,8 @@
 		<div class="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent rounded-lg p-4 lg:p-6">
 			<div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
 				<div class="min-w-0 flex-1">
-					<h2 class="text-lg lg:text-xl font-semibold text-foreground mb-1 truncate">
-						สวัสดี, {data.user.first_name} {data.user.last_name}
+					<h2 class="admin-page-title mb-1 truncate">
+						<IconActivity class="size-6 text-primary" /> สวัสดี, {data.user.first_name} {data.user.last_name}
 					</h2>
 					<p class="text-sm lg:text-base text-muted-foreground">
 						{#if isOrgAdmin}

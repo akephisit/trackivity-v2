@@ -170,7 +170,8 @@
 	<!-- Header -->
 	<div class="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
 		<div>
-			<h1 class="text-2xl font-bold">
+			<h1 class="admin-page-title">
+				<IconUsers class="size-6 text-primary" />
 				{adminLevel === 'SuperAdmin' ? 'ระบบจัดการผู้ใช้ทั้งหมด' : 'จัดการผู้ใช้หน่วยงาน'}
 			</h1>
 			<p class="text-muted-foreground">

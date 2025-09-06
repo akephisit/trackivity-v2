@@ -311,7 +311,7 @@
 			กลับ
 		</Button>
 		<div class="flex-1">
-			<h1 class="text-2xl font-bold lg:text-3xl">{activity.title}</h1>
+			<h1 class="admin-page-title"><IconCalendar class="size-6 text-primary" /> {activity.title}</h1>
 			<p class="text-muted-foreground">จัดการกิจกรรม - Admin Panel</p>
 		</div>
 		<div class="flex gap-2">

@@ -137,7 +137,7 @@
 	<!-- Header Section -->
 	<div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 		<div class="min-w-0">
-			<h2 class="text-lg font-semibold text-foreground">จัดการกิจกรรม</h2>
+			<h1 class="admin-page-title"><IconCalendarEvent class="size-6 text-primary" /> จัดการกิจกรรม</h1>
 			<p class="text-sm text-muted-foreground">จัดการและติดตามกิจกรรมทั้งหมด</p>
 		</div>
 		<Button onclick={() => goto('/admin/activities/create')} class="flex items-center gap-2 w-full sm:w-auto">

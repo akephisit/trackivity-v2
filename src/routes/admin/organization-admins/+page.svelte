@@ -466,9 +466,9 @@
 		<div>
 			<h1
 				id="faculty-admin-management-heading"
-				class="text-4xl font-bold text-gray-900 dark:text-white"
+				class="admin-page-title"
 			>
-				{pageTitle}
+				<IconShield class="size-6 text-primary" /> {pageTitle}
 			</h1>
 			<p class="mt-3 text-lg text-gray-600 dark:text-gray-400">
 				{#if data.isSuperAdmin}

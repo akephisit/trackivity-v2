@@ -303,7 +303,7 @@ function clearSearch() {
 	<!-- Header -->
 	<div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 		<div class="space-y-1 min-w-0">
-			<h1 class="text-2xl font-bold lg:text-3xl">จัดการหน่วยงาน</h1>
+			<h1 class="admin-page-title"><IconBuilding class="size-6 text-primary" /> จัดการหน่วยงาน</h1>
 			<p class="text-muted-foreground">
 				จัดการข้อมูลหน่วยงานในมหาวิทยาลัย รวมถึงการเปิด-ปิดการใช้งาน
 			</p>

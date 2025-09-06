@@ -94,7 +94,7 @@
 	<!-- Header Section -->
 	<div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 		<div class="min-w-0">
-			<h2 class="text-lg font-semibold text-foreground">จัดการผู้ใช้</h2>
+			<h1 class="admin-page-title"><IconUsers class="size-6 text-primary" /> จัดการผู้ใช้</h1>
 			<p class="text-sm text-muted-foreground">จัดการผู้ใช้งานในระบบ</p>
 		</div>
 		<div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">

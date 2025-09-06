@@ -255,7 +255,7 @@
 			กลับ
 		</Button>
 		<div class="flex-1">
-			<h1 class="text-2xl font-bold lg:text-3xl">แก้ไขกิจกรรม</h1>
+			<h1 class="admin-page-title"><IconCalendar class="size-6 text-primary" /> แก้ไขกิจกรรม</h1>
 			<p class="text-muted-foreground">{activity.title} - Admin Panel</p>
 		</div>
 		<Button variant="outline" size="sm" onclick={previewActivity}>
