@@ -351,7 +351,7 @@
 		</aside>
 
 		<!-- Main Content -->
-		<main class="flex-1 lg:ml-64 min-h-screen">
+		<main class="flex-1 lg:ml-64 min-h-screen overflow-x-hidden">
 			<!-- Desktop Top Bar -->
 			<header class="hidden lg:block sticky top-0 z-40 border-b bg-card">
 				<div class="flex items-center justify-between px-6 py-3 ml-0">
@@ -374,7 +374,7 @@
 				</div>
 			</header>
 			
-			<div class="container mx-auto max-w-7xl px-4 py-6 lg:px-6">
+			<div class="container mx-auto max-w-7xl px-4 py-6 lg:px-6 w-full overflow-x-hidden">
 				{@render children()}
 			</div>
 		</main>

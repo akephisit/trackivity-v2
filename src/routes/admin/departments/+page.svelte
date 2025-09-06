@@ -510,13 +510,13 @@
 							<Table.Header>
 								<Table.Row class="bg-gray-50 dark:bg-gray-800">
 									<Table.Head class="font-semibold">ชื่อภาควิชา</Table.Head>
-									<Table.Head class="font-semibold">รหัส</Table.Head>
+									<Table.Head class="font-semibold hidden sm:table-cell">รหัส</Table.Head>
 									{#if data.userRole === 'SuperAdmin'}
-										<Table.Head class="font-semibold">หน่วยงาน</Table.Head>
+										<Table.Head class="font-semibold hidden md:table-cell">หน่วยงาน</Table.Head>
 									{/if}
-									<Table.Head class="text-center font-semibold">จำนวนนักศึกษา</Table.Head>
+									<Table.Head class="text-center font-semibold hidden sm:table-cell">จำนวนนักศึกษา</Table.Head>
 									<Table.Head class="font-semibold">สถานะ</Table.Head>
-									<Table.Head class="font-semibold">วันที่สร้าง</Table.Head>
+									<Table.Head class="font-semibold hidden lg:table-cell">วันที่สร้าง</Table.Head>
 									<Table.Head class="text-right font-semibold">การดำเนินการ</Table.Head>
 								</Table.Row>
 							</Table.Header>
@@ -528,25 +528,29 @@
 												<div class="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100">
 													<IconBuilding class="h-5 w-5 text-blue-600" />
 												</div>
-												<div>
+												<div class="min-w-0 flex-1">
 													<div class="font-semibold">
 														{department.name}
 													</div>
+													<div class="flex flex-col gap-1 text-sm text-muted-foreground sm:hidden">
+														<span>รหัส: {department.code}</span>
+														<span>นักศึกษา: {department.students_count || 0} คน</span>
+													</div>
 													{#if department.description}
-														<div class="max-w-xs truncate text-sm text-muted-foreground">
+														<div class="max-w-xs truncate text-sm text-muted-foreground hidden sm:block">
 															{department.description}
 														</div>
 													{/if}
 												</div>
 											</div>
 										</Table.Cell>
-										<Table.Cell class="py-4">
+										<Table.Cell class="py-4 hidden sm:table-cell">
 											<Badge variant="outline">
 												{department.code}
 											</Badge>
 										</Table.Cell>
 										{#if data.userRole === 'SuperAdmin'}
-											<Table.Cell class="py-4">
+											<Table.Cell class="py-4 hidden md:table-cell">
 												{#if department.organization}
 													<Badge variant="outline">
 														{department.organization.name}
@@ -556,7 +560,7 @@
 												{/if}
 											</Table.Cell>
 										{/if}
-										<Table.Cell class="py-4 text-center">
+										<Table.Cell class="py-4 text-center hidden sm:table-cell">
 											<Badge variant="secondary">
 												{department.students_count || 0}
 											</Badge>
@@ -571,7 +575,7 @@
 												{department.status ? 'เปิดใช้งาน' : 'ปิดใช้งาน'}
 											</Badge>
 										</Table.Cell>
-										<Table.Cell class="py-4 text-sm text-muted-foreground">
+										<Table.Cell class="py-4 text-sm text-muted-foreground hidden lg:table-cell">
 											{formatDateTime(department.created_at)}
 										</Table.Cell>
 										<Table.Cell class="py-4 text-right">
