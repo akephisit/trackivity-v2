@@ -119,7 +119,7 @@ export async function createSessionWithRetry(
 			const sessionId = generateSecureSessionId();
 			
 			// Attempt to insert the session
-			await db.insert(sessions).values({
+			const insertedSession = await db.insert(sessions).values({
 				id: sessionId,
 				userId,
 				deviceInfo: deviceInfo || {},
@@ -129,9 +129,9 @@ export async function createSessionWithRetry(
 				lastAccessed: new Date(),
 				expiresAt,
 				isActive: true
-			});
+			}).returning({ id: sessions.id, isActive: sessions.isActive });
 
-			console.log(`[Session] Created session ${sessionId} for user ${userId} (attempt ${attempt})`);
+			console.log(`[Session] Created session ${sessionId} for user ${userId} (attempt ${attempt}) - Inserted: ${insertedSession.length} records, isActive: ${insertedSession[0]?.isActive}`);
 			return { sessionId, created: true };
 		} catch (error: any) {
 			lastError = error;
@@ -209,12 +209,39 @@ export async function updateSessionLastAccessed(sessionId: string): Promise<void
  */
 export async function deactivateSession(sessionId: string): Promise<boolean> {
 	try {
+		console.log(`[Session] Attempting to deactivate session ${sessionId}`);
+		
+		// First, check if session exists and get its current state
+		const existingSession = await db
+			.select({ id: sessions.id, isActive: sessions.isActive })
+			.from(sessions)
+			.where(eq(sessions.id, sessionId))
+			.limit(1);
+
+		if (existingSession.length === 0) {
+			console.log(`[Auth] Session ${sessionId} was already inactive or not found`);
+			return false;
+		}
+
+		const session = existingSession[0];
+		console.log(`[Session] Found session ${sessionId}, current isActive: ${session.isActive}`);
+
+		if (!session.isActive) {
+			console.log(`[Auth] Session ${sessionId} was already inactive or not found`);
+			return false;
+		}
+
+		// Update the session to inactive
 		const result = await db
 			.update(sessions)
 			.set({ isActive: false })
-			.where(eq(sessions.id, sessionId));
+			.where(eq(sessions.id, sessionId))
+			.returning({ id: sessions.id });
 
-		return result.length > 0;
+		const success = result.length > 0;
+		console.log(`[Session] Deactivation result for ${sessionId}: ${success ? 'SUCCESS' : 'FAILED'} - Updated ${result.length} records`);
+		
+		return success;
 	} catch (error) {
 		console.error(`[Session] Failed to deactivate session ${sessionId}:`, error);
 		return false;
@@ -236,5 +263,55 @@ export async function getSession(sessionId: string) {
 	} catch (error) {
 		console.error(`[Session] Failed to get session ${sessionId}:`, error);
 		return null;
+	}
+}
+
+/**
+ * Debug function to get detailed session information and log database state
+ */
+export async function debugSessionState(sessionId: string): Promise<void> {
+	try {
+		console.log(`[Session Debug] Checking session ${sessionId}`);
+		
+		// Get the specific session
+		const session = await db
+			.select()
+			.from(sessions)
+			.where(eq(sessions.id, sessionId))
+			.limit(1);
+
+		if (session.length === 0) {
+			console.log(`[Session Debug] Session ${sessionId} not found in database`);
+			
+			// Check if there are any sessions with similar IDs (in case of ID format issues)
+			const similarSessions = await db
+				.select({ id: sessions.id, isActive: sessions.isActive, createdAt: sessions.createdAt })
+				.from(sessions)
+				.limit(5);
+				
+			console.log(`[Session Debug] Recent sessions in database:`);
+			similarSessions.forEach(s => {
+				console.log(`  - ID: ${s.id}, Active: ${s.isActive}, Created: ${s.createdAt}`);
+			});
+		} else {
+			const s = session[0];
+			console.log(`[Session Debug] Found session ${sessionId}:`);
+			console.log(`  - User ID: ${s.userId}`);
+			console.log(`  - Is Active: ${s.isActive}`);
+			console.log(`  - Created: ${s.createdAt}`);
+			console.log(`  - Last Accessed: ${s.lastAccessed}`);
+			console.log(`  - Expires: ${s.expiresAt}`);
+			console.log(`  - Is Expired: ${new Date() > s.expiresAt}`);
+		}
+		
+		// Get total session count for context
+		const totalSessions = await db
+			.select({ count: sessions.id })
+			.from(sessions);
+			
+		console.log(`[Session Debug] Total sessions in database: ${totalSessions.length}`);
+		
+	} catch (error) {
+		console.error(`[Session Debug] Failed to debug session ${sessionId}:`, error);
 	}
 }

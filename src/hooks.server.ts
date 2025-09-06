@@ -164,8 +164,8 @@ export const handle: Handle = async ({ event, resolve }) => {
 			isAuthenticated = true;
 			isAdmin = decoded.is_admin || false;
 
-			// Extract session ID from JWT payload or token (prioritize payload)
-			const sessionId = (decoded as any).session_id || sessionToken.slice(0, 16);
+			// Extract session ID from JWT payload
+			const sessionId = (decoded as any).session_id;
 			
 			// Update session last_accessed asynchronously (don't block request)
 			updateSessionLastAccessed(sessionId).catch(err => 
