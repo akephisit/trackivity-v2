@@ -143,7 +143,7 @@
 	<main class="container mx-auto px-4 py-8 space-y-12">
 		<!-- Summary Stats -->
 		{#if data.activities}
-			<section class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
+			<section class="grid gap-6 grid-cols-2 lg:grid-cols-4">
 				<Card.Root class="bg-gradient-to-r from-blue-500 to-blue-600 text-white border-0">
 					<Card.Content class="p-6">
 						<div class="flex items-center justify-between">
