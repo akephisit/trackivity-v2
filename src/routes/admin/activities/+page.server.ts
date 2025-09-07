@@ -91,6 +91,7 @@ export const load: PageServerLoad = async (event) => {
 			organizer_name: activity.organizer_name,
 			organizerType: 'หน่วยงาน',
 			participantCount: activity.participant_count || 0,
+			view_count: activity.view_count || 0,
 			status: activity.status || 'รอดำเนินการ',
 			activity_level: activity.activity_level || 'faculty'
 		}));

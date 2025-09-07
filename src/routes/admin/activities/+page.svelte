@@ -26,6 +26,7 @@
 	import { page } from '$app/state';
 	import { toast } from 'svelte-sonner';
 	import { getActivityLevelDisplayName, getActivityTypeDisplayName } from '$lib/utils/activity';
+	import { formatViewCount, formatParticipantCount } from '$lib/utils/activity-tracking';
 
 	let { data } = $props();
 
@@ -40,7 +41,9 @@
 		academic: data.activities.filter((a) => a.activity_type === 'Academic').length,
 		sports: data.activities.filter((a) => a.activity_type === 'Sports').length,
 		cultural: data.activities.filter((a) => a.activity_type === 'Cultural').length,
-		ongoing: data.activities.filter((a) => getActivityStatus(a).label === 'กำลังดำเนินการ').length
+		ongoing: data.activities.filter((a) => getActivityStatus(a).label === 'กำลังดำเนินการ').length,
+		totalParticipants: data.activities.reduce((sum, a) => sum + (a.participantCount || 0), 0),
+		totalViews: data.activities.reduce((sum, a) => sum + (a.view_count || 0), 0)
 	});
 
 	// Filtered activities
@@ -155,7 +158,7 @@
 	</div>
 
 	<!-- Stats Cards -->
-	<div class="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
+	<div class="grid grid-cols-2 gap-3 lg:grid-cols-6 lg:gap-4">
 		<Card>
 			<CardContent class="p-4 lg:p-6">
 				<div class="flex items-center justify-between">
@@ -215,6 +218,38 @@
 						class="ml-2 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-orange-500/10 lg:h-10 lg:w-10"
 					>
 						<IconRefresh class="h-4 w-4 text-orange-500 lg:h-5 lg:w-5" />
+					</div>
+				</div>
+			</CardContent>
+		</Card>
+
+		<Card>
+			<CardContent class="p-4 lg:p-6">
+				<div class="flex items-center justify-between">
+					<div class="min-w-0 flex-1">
+						<p class="truncate text-xs text-muted-foreground lg:text-sm">ผู้เข้าร่วมทั้งหมด</p>
+						<p class="text-lg font-bold text-foreground lg:text-2xl">{stats.totalParticipants}</p>
+					</div>
+					<div
+						class="ml-2 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-purple-500/10 lg:h-10 lg:w-10"
+					>
+						<IconUsers class="h-4 w-4 text-purple-500 lg:h-5 lg:w-5" />
+					</div>
+				</div>
+			</CardContent>
+		</Card>
+
+		<Card>
+			<CardContent class="p-4 lg:p-6">
+				<div class="flex items-center justify-between">
+					<div class="min-w-0 flex-1">
+						<p class="truncate text-xs text-muted-foreground lg:text-sm">ยอดชมทั้งหมด</p>
+						<p class="text-lg font-bold text-foreground lg:text-2xl">{stats.totalViews}</p>
+					</div>
+					<div
+						class="ml-2 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-orange-500/10 lg:h-10 lg:w-10"
+					>
+						<IconEye class="h-4 w-4 text-orange-500 lg:h-5 lg:w-5" />
 					</div>
 				</div>
 			</CardContent>
@@ -290,6 +325,7 @@
 								<Table.Head>ประเภท</Table.Head>
 								<Table.Head>วันที่</Table.Head>
 								<Table.Head>สถานที่</Table.Head>
+								<Table.Head>ผู้เข้าร่วม</Table.Head>
 								<Table.Head>สถานะ</Table.Head>
 								<Table.Head class="text-right">จัดการ</Table.Head>
 							</Table.Row>
@@ -334,6 +370,20 @@
 												<span class="truncate">{activity.location}</span>
 											{:else}
 												<span class="text-muted-foreground">-</span>
+											{/if}
+										</div>
+									</Table.Cell>
+									<Table.Cell>
+										<div class="flex min-w-0 items-center gap-2 text-sm">
+											<div class="flex items-center gap-1">
+												<IconUsers class="h-3 w-3 flex-shrink-0 text-muted-foreground" />
+												<span class="font-medium">{formatParticipantCount(activity.participantCount || 0, activity.max_participants)}</span>
+											</div>
+											{#if activity.view_count && activity.view_count > 0}
+												<div class="flex items-center gap-1 text-xs text-muted-foreground">
+													<IconEye class="h-3 w-3 flex-shrink-0" />
+													<span>{formatViewCount(activity.view_count)}</span>
+												</div>
 											{/if}
 										</div>
 									</Table.Cell>
