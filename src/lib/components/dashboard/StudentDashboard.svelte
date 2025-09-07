@@ -149,7 +149,7 @@
 	</div>
 
 	<!-- Statistics Section -->
-	<div class="grid gap-6 md:grid-cols-3">
+	<div class="grid grid-cols-2 gap-6 md:grid-cols-3">
 		<Card>
 			<CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
 				<CardTitle class="text-sm font-medium">การเข้าร่วมทั้งหมด</CardTitle>
