@@ -3,6 +3,7 @@
 	import { currentUser } from '$lib/stores/auth';
 	import type { Activity } from '$lib/types';
     import MetaTags from '$lib/components/seo/MetaTags.svelte';
+	import { getDailyGreeting } from '$lib/utils/greeting';
 	const { data } = $props<{
 		recentActivities: Activity[];
 		participationHistory: any[];
@@ -12,6 +13,11 @@
 			upcomingActivities: number;
 		};
 	}>();
+	
+	// Get dynamic greeting
+	const greeting = $derived(
+		$currentUser ? getDailyGreeting($currentUser.first_name, 'student') : { greeting: 'สวัสดี!', subtitle: 'ติดตามกิจกรรมและผลงานของคุณได้ที่นี่' }
+	);
 </script>
 
 <MetaTags title="แดชบอร์ดนักศึกษา" description="ติดตามกิจกรรมและผลงานของคุณ" />
@@ -19,9 +25,9 @@
 <!-- Welcome Banner for Desktop and Mobile -->
 <div class="mb-6 rounded-lg bg-gradient-to-r from-primary/10 via-primary/5 to-transparent p-4 lg:p-6">
 	<h2 class="admin-page-title mb-1">
-		สวัสดี, {$currentUser?.first_name}!
+		{greeting.greeting}
 	</h2>
-	<p class="text-sm lg:text-base text-muted-foreground">ติดตามกิจกรรมและผลงานของคุณได้ที่นี่</p>
+	<p class="text-sm lg:text-base text-muted-foreground">{greeting.subtitle}</p>
 </div>
 
 <StudentDashboard

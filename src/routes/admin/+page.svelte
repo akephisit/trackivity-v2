@@ -21,11 +21,17 @@
 		IconPlus
 	} from '@tabler/icons-svelte/icons';
     import MetaTags from '$lib/components/seo/MetaTags.svelte';
+	import { getDailyGreeting } from '$lib/utils/greeting';
 
 	let { data } = $props();
 	
 	const isLoading = $derived(!data?.user || !data?.admin_role);
 	const isOrgAdmin = $derived(data.admin_role?.admin_level === 'OrganizationAdmin');
+	
+	// Get dynamic greeting
+	const greeting = $derived(
+		data.user ? getDailyGreeting(data.user.first_name, 'admin') : { greeting: 'สวัสดี!', subtitle: 'พร้อมจัดการระบบ' }
+	);
 
 	// สถิติหลัก
 	function getMainStats() {
@@ -141,16 +147,12 @@
 			<div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
 				<div class="min-w-0 flex-1">
 					<h2 class="admin-page-title mb-1 truncate">
-						<IconActivity class="size-6 text-primary" /> สวัสดี, {data.user.first_name} {data.user.last_name}
+						<IconActivity class="size-6 text-primary" /> {greeting.greeting}
 					</h2>
 					<p class="text-sm lg:text-base text-muted-foreground">
-						{#if isOrgAdmin}
-							จัดการหน่วยงานของคุณ
-							{#if (data.admin_role as any)?.organization}
-								<span class="block sm:inline">- {(data.admin_role as any).organization.name}</span>
-							{/if}
-						{:else}
-							จัดการระบบทั้งหมด
+						{greeting.subtitle}
+						{#if isOrgAdmin && (data.admin_role as any)?.organization}
+							<span class="block sm:inline">- {(data.admin_role as any).organization.name}</span>
 						{/if}
 					</p>
 				</div>
