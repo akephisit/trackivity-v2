@@ -242,10 +242,6 @@ export class QRClient {
 					) {
 						payload = response.data;
 					}
-					// Check for legacy format: direct object with QR data
-					else if ('qr_data' in response || 'id' in response) {
-						payload = response;
-					}
 					// Check if response itself is the data (another format)
 					else if ((response as any).data && (response as any).data.qr_data) {
 						payload = (response as any).data;

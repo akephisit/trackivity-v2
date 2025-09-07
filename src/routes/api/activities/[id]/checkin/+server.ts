@@ -97,8 +97,7 @@ export const POST: RequestHandler = async ({ params, request, locals }) => {
 		if (adminLevel !== 'SuperAdmin') {
 			// OrganizationAdmin can only scan activities where they are:
 			// 1. The organizer (organizerId matches their organization)
-			// 2. In the legacy organizationId field
-			// 3. In the eligibleOrganizations array
+			// 2. In the eligibleOrganizations array
 			if (adminLevel === 'OrganizationAdmin' && adminOrganizationId) {
 				const canScan =
 					activity.organizerId === adminOrganizationId ||

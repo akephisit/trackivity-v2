@@ -29,8 +29,7 @@ export const load: PageServerLoad = async (event) => {
 	// Query only ongoing activities; if OrganizationAdmin, scope by organization
 	// Include activities where:
 	// 1. Admin's organization is the organizer (organizerId)
-	// 2. Admin's organization is in the legacy organizationId field
-	// 3. Admin's organization is in the eligibleOrganizations array
+	// 2. Admin's organization is in the eligibleOrganizations array
 	const whereClause =
 		user.admin_role?.admin_level === 'OrganizationAdmin' && facultyId
 			? and(

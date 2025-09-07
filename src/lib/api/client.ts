@@ -278,10 +278,6 @@ export class ApiClient {
 			if ('status' in data && data.status === 'success' && 'data' in data) {
 				return { success: true, data: data.data } as ApiResponse<T>;
 			}
-			// Handle legacy format: direct data object (without success flag)
-			else if (!('success' in data)) {
-				return { success: true, data } as ApiResponse<T>;
-			}
 		}
 
 		return data as ApiResponse<T>;

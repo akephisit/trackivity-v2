@@ -261,7 +261,7 @@ export const load: PageServerLoad = async (event) => {
 		} as any;
 
 		users = rawUsers.map((u: any) => {
-			// Use database status directly - no legacy mapping needed
+			// Use database status directly
 			const status = u.status || 'inactive';
 
 			const department = u.department_name

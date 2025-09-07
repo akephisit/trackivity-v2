@@ -212,7 +212,7 @@ export const activities = pgTable(
 		location: varchar('location', { length: 255 }).notNull(),
 		activityType: activityType('activity_type'),
 		academicYear: smallint('academic_year').notNull(), // Use smallint instead of varchar
-		// organizerId replaces legacy text organizer; references organizations
+		// organizerId references organizations table
 		organizerId: uuid('organizer_id')
 			.notNull()
 			.references(() => organizations.id, { onDelete: 'restrict' }),
