@@ -6,7 +6,6 @@ import {
 	boolean,
 	timestamp,
 	integer,
-	decimal,
 	date,
 	time,
 	jsonb,
@@ -16,8 +15,7 @@ import {
 	inet,
 	bigint,
 	smallint,
-	primaryKey,
-	foreignKey
+	primaryKey
 } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 
@@ -88,12 +86,10 @@ export const organizations = pgTable(
 		created_at: timestamp('created_at', { withTimezone: true }).default(sql`NOW()`),
 		updated_at: timestamp('updated_at', { withTimezone: true }).default(sql`NOW()`)
 	},
-	(table) => {
-		return {
-			statusIdx: index('idx_organizations_status').on(table.status),
-			organizationTypeIdx: index('idx_organizations_organization_type').on(table.organizationType)
-		};
-	}
+	(table) => [
+		index('idx_organizations_status').on(table.status),
+		index('idx_organizations_organization_type').on(table.organizationType)
+	]
 );
 
 // Departments table
@@ -113,11 +109,9 @@ export const departments = pgTable(
 		created_at: timestamp('created_at', { withTimezone: true }).default(sql`NOW()`),
 		updated_at: timestamp('updated_at', { withTimezone: true }).default(sql`NOW()`)
 	},
-	(table) => {
-		return {
-			codeOrganizationUnique: unique().on(table.code, table.organizationId)
-		};
-	}
+	(table) => [
+		unique().on(table.code, table.organizationId)
+	]
 );
 
 // Users table - Optimized
@@ -151,19 +145,17 @@ export const users = pgTable(
 			.notNull()
 			.default(sql`NOW()`)
 	},
-	(table) => {
-		return {
-			studentIdIdx: index('idx_users_student_id').on(table.studentId),
-			emailIdx: index('idx_users_email').on(table.email),
-			departmentIdIdx: index('idx_users_department_id').on(table.departmentId),
-			statusIdx: index('idx_users_status').on(table.status),
-			lastLoginIdx: index('idx_users_last_login').on(table.lastLoginAt),
-			// Compound index for active users lookup
-			activeUsersIdx: index('idx_users_active_department').on(table.status, table.departmentId),
-			// Simple text search index for names (using regular btree)
-			nameSearchIdx: index('idx_users_name_search').on(table.firstName, table.lastName)
-		};
-	}
+	(table) => [
+		index('idx_users_student_id').on(table.studentId),
+		index('idx_users_email').on(table.email),
+		index('idx_users_department_id').on(table.departmentId),
+		index('idx_users_status').on(table.status),
+		index('idx_users_last_login').on(table.lastLoginAt),
+		// Compound index for active users lookup
+		index('idx_users_active_department').on(table.status, table.departmentId),
+		// Simple text search index for names (using regular btree)
+		index('idx_users_name_search').on(table.firstName, table.lastName)
+	]
 );
 
 // Admin roles table
@@ -190,14 +182,12 @@ export const adminRoles = pgTable(
 		created_at: timestamp('created_at', { withTimezone: true }).default(sql`NOW()`),
 		updated_at: timestamp('updated_at', { withTimezone: true }).default(sql`NOW()`)
 	},
-	(table) => {
-		return {
-			userIdIdx: index('idx_admin_roles_user_id').on(table.userId),
-			organizationIdIdx: index('idx_admin_roles_organization_id').on(table.organizationId),
-			isEnabledIdx: index('idx_admin_roles_is_enabled').on(table.isEnabled),
-			lastSessionIdx: index('idx_admin_roles_last_session').on(table.lastSessionId)
-		};
-	}
+	(table) => [
+		index('idx_admin_roles_user_id').on(table.userId),
+		index('idx_admin_roles_organization_id').on(table.organizationId),
+		index('idx_admin_roles_is_enabled').on(table.isEnabled),
+		index('idx_admin_roles_last_session').on(table.lastSessionId)
+	]
 );
 
 // Activities table - Optimized
@@ -247,32 +237,30 @@ export const activities = pgTable(
 			.notNull()
 			.default(sql`NOW()`)
 	},
-	(table) => {
-		return {
-			organizerIdIdx: index('idx_activities_organizer_id').on(table.organizerId),
-			organizationIdIdx: index('idx_activities_organization_id').on(table.organizationId),
-			createdByIdx: index('idx_activities_created_by').on(table.createdBy),
-			statusIdx: index('idx_activities_status').on(table.status),
-			academicYearIdx: index('idx_activities_academic_year').on(table.academicYear),
-			activityTypeIdx: index('idx_activities_activity_type').on(table.activityType),
-			startDateIdx: index('idx_activities_start_date').on(table.startDate),
-			activityLevelIdx: index('idx_activities_activity_level').on(table.activityLevel),
-			eligibleOrganizationsIdx: index('idx_activities_eligible_organizations').using(
-				'gin',
-				table.eligibleOrganizations
-			),
-			// Compound indexes for common queries
-			statusOrgIdx: index('idx_activities_status_org').on(table.status, table.organizerId),
-			dateStatusIdx: index('idx_activities_date_status').on(table.startDate, table.status),
-			activeActivitiesIdx: index('idx_activities_active').on(
-				table.status,
-				table.registrationOpen,
-				table.startDate
-			),
-			// Simple title search index
-			titleSearchIdx: index('idx_activities_title_search').on(table.title)
-		};
-	}
+	(table) => [
+		index('idx_activities_organizer_id').on(table.organizerId),
+		index('idx_activities_organization_id').on(table.organizationId),
+		index('idx_activities_created_by').on(table.createdBy),
+		index('idx_activities_status').on(table.status),
+		index('idx_activities_academic_year').on(table.academicYear),
+		index('idx_activities_activity_type').on(table.activityType),
+		index('idx_activities_start_date').on(table.startDate),
+		index('idx_activities_activity_level').on(table.activityLevel),
+		index('idx_activities_eligible_organizations').using(
+			'gin',
+			table.eligibleOrganizations
+		),
+		// Compound indexes for common queries
+		index('idx_activities_status_org').on(table.status, table.organizerId),
+		index('idx_activities_date_status').on(table.startDate, table.status),
+		index('idx_activities_active').on(
+			table.status,
+			table.registrationOpen,
+			table.startDate
+		),
+		// Simple title search index
+		index('idx_activities_title_search').on(table.title)
+	]
 );
 
 // Participations table
@@ -294,14 +282,12 @@ export const participations = pgTable(
 		checkedOutAt: timestamp('checked_out_at', { withTimezone: true }),
 		notes: text('notes')
 	},
-	(table) => {
-		return {
-			userActivityUnique: unique().on(table.userId, table.activityId),
-			userIdIdx: index('idx_participations_user_id').on(table.userId),
-			activityIdIdx: index('idx_participations_activity_id').on(table.activityId),
-			statusIdx: index('idx_participations_status').on(table.status)
-		};
-	}
+	(table) => [
+		unique().on(table.userId, table.activityId),
+		index('idx_participations_user_id').on(table.userId),
+		index('idx_participations_activity_id').on(table.activityId),
+		index('idx_participations_status').on(table.status)
+	]
 );
 
 // Subscriptions table
@@ -321,12 +307,10 @@ export const subscriptions = pgTable(
 		created_at: timestamp('created_at', { withTimezone: true }).default(sql`NOW()`),
 		updated_at: timestamp('updated_at', { withTimezone: true }).default(sql`NOW()`)
 	},
-	(table) => {
-		return {
-			userIdIdx: index('idx_subscriptions_user_id').on(table.userId),
-			expiresAtIdx: index('idx_subscriptions_expires_at').on(table.expiresAt)
-		};
-	}
+	(table) => [
+		index('idx_subscriptions_user_id').on(table.userId),
+		index('idx_subscriptions_expires_at').on(table.expiresAt)
+	]
 );
 
 // Sessions table - Optimized (consider moving to Redis in production)
@@ -351,14 +335,12 @@ export const sessions = pgTable(
 		expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
 		isActive: boolean('is_active').notNull().default(true)
 	},
-	(table) => {
-		return {
-			userIdIdx: index('idx_sessions_user_id').on(table.userId),
-			expiresAtIdx: index('idx_sessions_expires_at').on(table.expiresAt),
-			activeSessionsIdx: index('idx_sessions_active_expires').on(table.isActive, table.expiresAt),
-			lastAccessedIdx: index('idx_sessions_last_accessed').on(table.lastAccessed)
-		};
-	}
+	(table) => [
+		index('idx_sessions_user_id').on(table.userId),
+		index('idx_sessions_expires_at').on(table.expiresAt),
+		index('idx_sessions_active_expires').on(table.isActive, table.expiresAt),
+		index('idx_sessions_last_accessed').on(table.lastAccessed)
+	]
 );
 
 // ===== AUDIT & LOGS TABLES =====
@@ -382,23 +364,21 @@ export const auditLogs = pgTable(
 			.notNull()
 			.default(sql`NOW()`)
 	},
-	(table) => {
-		return {
-			// Compound primary key for partitioning
-			primaryIdx: primaryKey({ columns: [table.logDate, table.id] }),
-			userIdIdx: index('idx_audit_logs_user_id').on(table.userId),
-			sessionIdIdx: index('idx_audit_logs_session_id').on(table.sessionId),
-			actionIdx: index('idx_audit_logs_action').on(table.action),
-			entityIdx: index('idx_audit_logs_entity').on(table.entityType, table.entityId),
-			timestampIdx: index('idx_audit_logs_timestamp').on(table.timestamp),
-			// Composite indexes for common audit queries
-			userActionIdx: index('idx_audit_logs_user_action').on(
-				table.userId,
-				table.action,
-				table.logDate
-			)
-		};
-	}
+	(table) => [
+		// Compound primary key for partitioning
+		primaryKey({ columns: [table.logDate, table.id] }),
+		index('idx_audit_logs_user_id').on(table.userId),
+		index('idx_audit_logs_session_id').on(table.sessionId),
+		index('idx_audit_logs_action').on(table.action),
+		index('idx_audit_logs_entity').on(table.entityType, table.entityId),
+		index('idx_audit_logs_timestamp').on(table.timestamp),
+		// Composite indexes for common audit queries
+		index('idx_audit_logs_user_action').on(
+			table.userId,
+			table.action,
+			table.logDate
+		)
+	]
 );
 
 // Activity views table - For tracking popularity
@@ -416,19 +396,17 @@ export const activityViews = pgTable(
 		ipAddress: inet('ip_address'),
 		sessionId: varchar('session_id', { length: 128 })
 	},
-	(table) => {
-		return {
-			activityIdIdx: index('idx_activity_views_activity_id').on(table.activityId),
-			userIdIdx: index('idx_activity_views_user_id').on(table.userId),
-			viewedAtIdx: index('idx_activity_views_viewed_at').on(table.viewedAt),
-			// Composite index for deduplication
-			uniqueViewIdx: index('idx_activity_views_unique').on(
-				table.activityId,
-				table.userId,
-				table.viewedAt
-			)
-		};
-	}
+	(table) => [
+		index('idx_activity_views_activity_id').on(table.activityId),
+		index('idx_activity_views_user_id').on(table.userId),
+		index('idx_activity_views_viewed_at').on(table.viewedAt),
+		// Composite index for deduplication
+		index('idx_activity_views_unique').on(
+			table.activityId,
+			table.userId,
+			table.viewedAt
+		)
+	]
 );
 
 // Organization activity requirements table
@@ -450,13 +428,11 @@ export const organizationActivityRequirements = pgTable(
 			.notNull()
 			.references(() => users.id, { onDelete: 'cascade' })
 	},
-	(table) => {
-		return {
-			organizationIdIdx: index('idx_org_activity_reqs_org_id').on(
-				table.organizationId
-			)
-		};
-	}
+	(table) => [
+		index('idx_org_activity_reqs_org_id').on(
+			table.organizationId
+		)
+	]
 );
 
 // ===== NOTIFICATION TABLES =====
@@ -487,18 +463,16 @@ export const subscriptionNotifications = pgTable(
 		created_at: timestamp('created_at', { withTimezone: true }).default(sql`NOW()`),
 		updated_at: timestamp('updated_at', { withTimezone: true }).default(sql`NOW()`)
 	},
-	(table) => {
-		return {
-			subscriptionIdIdx: index('idx_subscription_notifications_subscription_id').on(
-				table.subscriptionId
-			),
-			userIdIdx: index('idx_subscription_notifications_user_id').on(table.userId),
-			statusIdx: index('idx_subscription_notifications_status').on(table.status),
-			daysUntilExpiryIdx: index('idx_subscription_notifications_days_until_expiry').on(
-				table.daysUntilExpiry
-			)
-		};
-	}
+	(table) => [
+		index('idx_subscription_notifications_subscription_id').on(
+			table.subscriptionId
+		),
+		index('idx_subscription_notifications_user_id').on(table.userId),
+		index('idx_subscription_notifications_status').on(table.status),
+		index('idx_subscription_notifications_days_until_expiry').on(
+			table.daysUntilExpiry
+		)
+	]
 );
 
 // Email queue table
@@ -524,13 +498,11 @@ export const emailQueue = pgTable(
 		created_at: timestamp('created_at', { withTimezone: true }).default(sql`NOW()`),
 		updated_at: timestamp('updated_at', { withTimezone: true }).default(sql`NOW()`)
 	},
-	(table) => {
-		return {
-			statusIdx: index('idx_email_queue_status').on(table.status),
-			priorityIdx: index('idx_email_queue_priority').on(table.priority),
-			scheduledForIdx: index('idx_email_queue_scheduled_for').on(table.scheduledFor)
-		};
-	}
+	(table) => [
+		index('idx_email_queue_status').on(table.status),
+		index('idx_email_queue_priority').on(table.priority),
+		index('idx_email_queue_scheduled_for').on(table.scheduledFor)
+	]
 );
 
 // Subscription expiry log table
@@ -552,16 +524,14 @@ export const subscriptionExpiryLog = pgTable(
 		checkTimestamp: timestamp('check_timestamp', { withTimezone: true }).default(sql`NOW()`),
 		metadata: jsonb('metadata').default(sql`'{}'`)
 	},
-	(table) => {
-		return {
-			subscriptionIdIdx: index('idx_subscription_expiry_log_subscription_id').on(
-				table.subscriptionId
-			),
-			checkTimestampIdx: index('idx_subscription_expiry_log_check_timestamp').on(
-				table.checkTimestamp
-			)
-		};
-	}
+	(table) => [
+		index('idx_subscription_expiry_log_subscription_id').on(
+			table.subscriptionId
+		),
+		index('idx_subscription_expiry_log_check_timestamp').on(
+			table.checkTimestamp
+		)
+	]
 );
 
 // ===== RELATIONS & TYPES =====

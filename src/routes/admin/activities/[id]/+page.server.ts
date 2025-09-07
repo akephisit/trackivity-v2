@@ -1,7 +1,7 @@
 import type { PageServerLoad, Actions } from './$types';
 import { requireAdmin } from '$lib/server/auth-utils';
 import { db, activities, participations, users, organizations } from '$lib/server/db';
-import { eq, count } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/pg-core';
 import { error, redirect } from '@sveltejs/kit';
 
