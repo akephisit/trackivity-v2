@@ -353,10 +353,10 @@
 		<!-- Main Content -->
 		<main class="flex-1 lg:ml-64 min-h-screen overflow-x-hidden">
 			<!-- Desktop Top Bar -->
-			<header class="hidden lg:block sticky top-0 z-40 border-b bg-card">
-				<div class="flex items-center justify-between px-6 py-3 ml-0">
+			<header class="hidden lg:block fixed top-0 left-64 right-0 z-40 border-b bg-card">
+				<div class="flex items-center justify-between px-6 py-3">
 					<h1 class="text-lg font-semibold">{appTitle}</h1>
-					<div class="flex items-center gap-2 mr-6">
+					<div class="flex items-center gap-2">
 						{#if user}
 							<span class="text-sm text-muted-foreground">{user.first_name}</span>
 						{/if}
@@ -374,7 +374,7 @@
 				</div>
 			</header>
 			
-			<div class="container mx-auto max-w-7xl px-4 py-6 lg:px-6 w-full overflow-x-hidden">
+			<div class="pt-16 container mx-auto max-w-7xl px-4 py-6 lg:px-6 w-full overflow-x-hidden">
 				{@render children()}
 			</div>
 		</main>
