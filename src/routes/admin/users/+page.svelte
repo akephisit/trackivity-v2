@@ -18,12 +18,9 @@
 		IconSearch,
 		IconDownload,
 		IconRefresh,
-		IconEdit,
-		IconEye,
 		IconUserPlus
 	} from '@tabler/icons-svelte/icons';
 	import { getRoleText, getRoleBadgeVariant } from '$lib/utils';
-	import { goto } from '$app/navigation';
 
 	let { data } = $props();
 
@@ -281,7 +278,6 @@
 								<Table.Head>หน่วยงาน</Table.Head>
 								<Table.Head>สถานะ</Table.Head>
 								<Table.Head>วันที่สมัคร</Table.Head>
-								<Table.Head class="text-right">จัดการ</Table.Head>
 							</Table.Row>
 						</Table.Header>
 						<Table.Body>
@@ -338,24 +334,6 @@
 									</Table.Cell>
 									<Table.Cell>
 										<span class="text-sm">{formatDate(user.created_at)}</span>
-									</Table.Cell>
-									<Table.Cell class="text-right">
-										<div class="flex items-center justify-end gap-2">
-											<Button
-												variant="ghost"
-												size="sm"
-												onclick={() => goto(`/admin/users/${user.id}`)}
-											>
-												<IconEye class="h-4 w-4" />
-											</Button>
-											<Button
-												variant="ghost"
-												size="sm"
-												onclick={() => goto(`/admin/users/${user.id}/edit`)}
-											>
-												<IconEdit class="h-4 w-4" />
-											</Button>
-										</div>
 									</Table.Cell>
 								</Table.Row>
 							{/each}
