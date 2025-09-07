@@ -198,10 +198,10 @@
 		</div>
 
 		<!-- Quick Filter Buttons -->
-		<div class="flex gap-2">
+		<div class="flex flex-wrap gap-2">
 			<!-- Status Filter -->
 			<Select.Root type="single">
-				<Select.Trigger class="w-32">
+				<Select.Trigger class="w-24 sm:w-32">
 					{statusOptions.find((o) => o.value === selectedStatus)?.label || 'สถานะ'}
 				</Select.Trigger>
 				<Select.Content>
@@ -215,7 +215,7 @@
 
 			<!-- Role Filter -->
 			<Select.Root type="single">
-				<Select.Trigger class="w-32">
+				<Select.Trigger class="w-24 sm:w-32">
 					{roleOptions.find((o) => o.value === selectedRole)?.label || 'บทบาท'}
 				</Select.Trigger>
 				<Select.Content>
@@ -230,7 +230,7 @@
 			<!-- Faculty Filter (if enabled) -->
 			{#if showFacultyFilter && faculties.length > 0}
 				<Select.Root type="single">
-					<Select.Trigger class="w-40">
+					<Select.Trigger class="w-32 sm:w-40">
 						{selectedFaculty === 'all'
 							? 'ทุกหน่วยงาน'
 							: faculties.find((f) => f.id === selectedFaculty)?.name || 'หน่วยงาน'}
@@ -253,12 +253,13 @@
 				variant="outline"
 				size="sm"
 				onclick={() => (showAdvancedFilters = !showAdvancedFilters)}
-				class={showAdvancedFilters ? 'bg-muted' : ''}
+				class="{showAdvancedFilters ? 'bg-muted' : ''} min-w-0"
 			>
-				<IconFilter class="mr-2 h-4 w-4" />
-				ตัวกรองเพิ่มเติม
+				<IconFilter class="mr-1 h-4 w-4 sm:mr-2" />
+				<span class="hidden sm:inline">ตัวกรองเพิ่มเติม</span>
+				<span class="sm:hidden">กรอง</span>
 				{#if activeFiltersCount > 0}
-					<Badge variant="secondary" class="ml-2 h-5 w-5 p-0 text-xs">
+					<Badge variant="secondary" class="ml-1 h-5 w-5 p-0 text-xs sm:ml-2">
 						{activeFiltersCount}
 					</Badge>
 				{/if}
