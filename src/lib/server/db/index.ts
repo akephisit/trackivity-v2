@@ -7,7 +7,9 @@ const connectionString = env.DATABASE_URL!;
 const client = postgres(connectionString, {
 	max: 20,
 	idle_timeout: 20,
-	connect_timeout: 10
+	connect_timeout: 10,
+	max_lifetime: 60 * 60, // 1 hour
+	debug: false
 });
 
 // Create drizzle instance
