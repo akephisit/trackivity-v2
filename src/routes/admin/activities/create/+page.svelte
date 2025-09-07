@@ -40,7 +40,7 @@
 	// Client-side validation schema (matches server)
 	const activityCreateSchema = z
 		.object({
-			activity_name: z
+			title: z
 				.string()
 				.min(1, 'กรุณากรอกชื่อกิจกรรม')
 				.max(255, 'ชื่อกิจกรรมต้องไม่เกิน 255 ตัวอักษร'),
@@ -387,13 +387,13 @@
 						<div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
 							<!-- Activity Name -->
 							<div class="lg:col-span-2">
-								<Form.Field {form} name="activity_name">
+								<Form.Field {form} name="title">
 									<Form.Control>
 										{#snippet children({ props })}
 											<Label for={props.id} class="text-base font-medium">ชื่อกิจกรรม *</Label>
 											<Input
 												{...props}
-												bind:value={$formData.activity_name}
+												bind:value={$formData.title}
 												placeholder="เช่น การบรรยายพิเศษเรื่องเทคโนโลยีใหม่"
 												disabled={$submitting}
 												class="text-base"

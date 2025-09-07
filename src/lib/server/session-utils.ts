@@ -62,7 +62,7 @@ export async function cleanupUserSessions(userId: string, keepLatest: number = 5
 			.select({ id: sessions.id })
 			.from(sessions)
 			.where(eq(sessions.userId, userId))
-			.orderBy(sessions.createdAt);
+			.orderBy(sessions.created_at);
 
 		if (userSessions.length <= keepLatest) {
 			return 0; // No cleanup needed
@@ -121,7 +121,7 @@ export async function createSessionWithRetry(
 				deviceFingerprint: deviceInfo ? JSON.stringify(deviceInfo).slice(0, 64) : null,
 				ipAddress,
 				userAgent,
-				createdAt: new Date(),
+				created_at: new Date(),
 				lastAccessed: new Date(),
 				expiresAt,
 				isActive: true
@@ -154,7 +154,7 @@ export async function createSessionWithRetry(
 									gt(sessions.expiresAt, new Date())
 								)
 							)
-							.orderBy(sessions.createdAt)
+							.orderBy(sessions.created_at)
 							.limit(1);
 
 						if (existingSessions.length > 0) {

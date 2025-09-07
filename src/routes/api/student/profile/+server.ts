@@ -85,8 +85,8 @@ export const GET = async ({ cookies }: { cookies: any }) => {
 				address: users.address,
 				status: users.status,
 				departmentId: users.departmentId,
-				createdAt: users.createdAt,
-				updatedAt: users.updatedAt,
+				created_at: users.created_at,
+				updated_at: users.updated_at,
 				department: {
 					id: departments.id,
 					name: departments.name,
@@ -152,8 +152,8 @@ export const GET = async ({ cookies }: { cookies: any }) => {
 			session_id: decoded.session_id || '',
 			permissions: user.adminRole?.permissions || ['ViewPersonalQR', 'ViewPersonalHistory'],
 			expires_at: new Date(decoded.exp * 1000).toISOString(),
-			created_at: user.createdAt?.toISOString(),
-			updated_at: user.updatedAt?.toISOString()
+			created_at: user.created_at?.toISOString(),
+			updated_at: user.updated_at?.toISOString()
 		};
 
 		return json({
@@ -273,7 +273,7 @@ export const PATCH = async ({ request, cookies }: { request: any; cookies: any }
 			email: validData.email,
 			phone: validData.phone?.trim() || null,
 			address: validData.address?.trim() || null,
-			updatedAt: new Date()
+			updated_at: new Date()
 		};
 
 		// Update user profile
@@ -290,7 +290,7 @@ export const PATCH = async ({ request, cookies }: { request: any; cookies: any }
 				lastName: users.lastName,
 				phone: users.phone,
 				address: users.address,
-				updatedAt: users.updatedAt
+				updated_at: users.updated_at
 			});
 
 		return json({
@@ -304,7 +304,7 @@ export const PATCH = async ({ request, cookies }: { request: any; cookies: any }
 				last_name: updatedUser[0].lastName,
 				phone: updatedUser[0].phone,
 				address: updatedUser[0].address,
-				updated_at: updatedUser[0].updatedAt?.toISOString()
+				updated_at: updatedUser[0].updated_at?.toISOString()
 			},
 			message: 'อัพเดตข้อมูลส่วนตัวสำเร็จ'
 		});

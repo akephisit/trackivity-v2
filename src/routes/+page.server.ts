@@ -31,8 +31,8 @@ export const load: PageServerLoad = async (event) => {
 						maxParticipants: activities.maxParticipants,
 						registrationOpen: activities.registrationOpen,
 						status: activities.status,
-						createdAt: activities.createdAt,
-						updatedAt: activities.updatedAt,
+						created_at: activities.created_at,
+						updated_at: activities.updated_at,
 						organizerName: organizations.name,
 						organizerType: organizations.organizationType,
 						creatorName: users.firstName
@@ -43,10 +43,10 @@ export const load: PageServerLoad = async (event) => {
 					.where(
 						and(
 							eq(activities.status, 'published'),
-							gte(activities.createdAt, new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)) // Last 30 days
+							gte(activities.created_at, new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)) // Last 30 days
 						)
 					)
-					.orderBy(desc(activities.createdAt))
+					.orderBy(desc(activities.created_at))
 					.limit(6),
 
 				// Upcoming activities - published activities starting in the future
@@ -65,8 +65,8 @@ export const load: PageServerLoad = async (event) => {
 						maxParticipants: activities.maxParticipants,
 						registrationOpen: activities.registrationOpen,
 						status: activities.status,
-						createdAt: activities.createdAt,
-						updatedAt: activities.updatedAt,
+						created_at: activities.created_at,
+						updated_at: activities.updated_at,
 						organizerName: organizations.name,
 						organizerType: organizations.organizationType,
 						creatorName: users.firstName
@@ -99,8 +99,8 @@ export const load: PageServerLoad = async (event) => {
 						maxParticipants: activities.maxParticipants,
 						registrationOpen: activities.registrationOpen,
 						status: activities.status,
-						createdAt: activities.createdAt,
-						updatedAt: activities.updatedAt,
+						created_at: activities.created_at,
+						updated_at: activities.updated_at,
 						organizerName: organizations.name,
 						organizerType: organizations.organizationType,
 						creatorName: users.firstName
@@ -134,8 +134,8 @@ export const load: PageServerLoad = async (event) => {
 						maxParticipants: activities.maxParticipants,
 						registrationOpen: activities.registrationOpen,
 						status: activities.status,
-						createdAt: activities.createdAt,
-						updatedAt: activities.updatedAt,
+						created_at: activities.created_at,
+						updated_at: activities.updated_at,
 						organizerName: organizations.name,
 						organizerType: organizations.organizationType,
 						creatorName: users.firstName
@@ -150,7 +150,7 @@ export const load: PageServerLoad = async (event) => {
 							eq(activities.status, 'completed')
 						)
 					)
-					.orderBy(desc(activities.updatedAt))
+					.orderBy(desc(activities.updated_at))
 					.limit(6)
 			]);
 

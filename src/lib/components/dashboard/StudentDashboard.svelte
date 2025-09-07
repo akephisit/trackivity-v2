@@ -242,7 +242,7 @@
 						{#each recentActivities as activity}
 							<div class="space-y-2 rounded-lg border p-3">
 								<div class="flex items-start justify-between">
-									<h4 class="text-sm font-medium">{activity.name || activity.title}</h4>
+									<h4 class="text-sm font-medium">{activity.title}</h4>
 									<Badge variant={getActivityBadgeVariant(activity.activity_type)}>
 										{getActivityTypeDisplayName(activity.activity_type)}
 									</Badge>
@@ -262,7 +262,7 @@
 									{#if activity.max_participants}
 										<span class="flex items-center gap-1">
 											<IconUsers class="size-3" />
-											{activity.current_participants || 0}/{activity.max_participants}
+											{activity.participant_count || 0}/{activity.max_participants}
 										</span>
 									{/if}
 								</div>

@@ -191,7 +191,7 @@
 	];
 
 	// Get current participants count for validation
-	let currentParticipants = $derived(activity.current_participants || 0);
+	let currentParticipants = $derived(activity.participant_count || 0);
 
 	// Initialize date picker values from activity data
 	$effect(() => {

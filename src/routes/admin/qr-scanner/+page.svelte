@@ -48,7 +48,7 @@
 			activity_type?: string;
 			location?: string;
 			max_participants?: number;
-			current_participants?: number;
+			participant_count?: number;
 			hours?: number;
 			status?: string;
 			faculty_id?: string;
@@ -75,7 +75,7 @@
 
 	// Use base participant count from activity data, plus any manual increments from scanning
 	const currentParticipantCount = $derived(
-		(selectedActivity?.current_participants || 0) + manualParticipantCount
+		(selectedActivity?.participant_count || 0) + manualParticipantCount
 	);
 
 	// Track URL updates separately to prevent infinite loops
@@ -302,7 +302,7 @@
 							<div class="flex items-center gap-2">
 								<IconUsers class="h-4 w-4 text-muted-foreground" />
 								<span>
-									ผู้เข้าร่วม: {selectedActivity.current_participants || 0}
+									ผู้เข้าร่วม: {selectedActivity.participant_count || 0}
 									{#if selectedActivity.max_participants}
 										/ {selectedActivity.max_participants}
 									{/if} คน

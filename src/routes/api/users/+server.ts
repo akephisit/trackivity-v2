@@ -77,8 +77,8 @@ export const GET = async ({ url, cookies }: { url: any; cookies: any }) => {
 				firstName: users.firstName,
 				lastName: users.lastName,
 				departmentId: users.departmentId,
-				createdAt: users.createdAt,
-				updatedAt: users.updatedAt,
+				created_at: users.created_at,
+				updated_at: users.updated_at,
 				department: {
 					id: departments.id,
 					name: departments.name,
@@ -204,8 +204,8 @@ export const POST = async ({ request, cookies }: { request: any; cookies: any })
 				lastName: last_name,
 				departmentId: department_id || null,
 				qrSecret,
-				createdAt: new Date(),
-				updatedAt: new Date()
+				created_at: new Date(),
+				updated_at: new Date()
 			})
 			.returning({
 				id: users.id,
@@ -214,8 +214,8 @@ export const POST = async ({ request, cookies }: { request: any; cookies: any })
 				firstName: users.firstName,
 				lastName: users.lastName,
 				departmentId: users.departmentId,
-				createdAt: users.createdAt,
-				updatedAt: users.updatedAt
+				created_at: users.created_at,
+				updated_at: users.updated_at
 			});
 
 		return json({

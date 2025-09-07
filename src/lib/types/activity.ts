@@ -3,7 +3,6 @@ export type ActivityStatus = 'draft' | 'published' | 'ongoing' | 'completed' | '
 export type ParticipationStatus = 'registered' | 'checked_in' | 'checked_out' | 'completed';
 export type ActivityLevel = 'faculty' | 'university';
 
-// Updated to match backend API response structure
 export interface Activity {
 	id: string;
 	title: string;
@@ -12,7 +11,8 @@ export interface Activity {
 	start_time: string; // Full ISO datetime from backend
 	end_time: string; // Full ISO datetime from backend
 	max_participants?: number;
-	current_participants: number;
+	participant_count: number;
+	view_count?: number;
 	status: ActivityStatus;
 	organization_id?: string;
 	organization_name?: string;
@@ -26,23 +26,13 @@ export interface Activity {
 	user_participation_status?: ParticipationStatus;
 	is_eligible: boolean;
 	eligible_organizations: string[];
-	// Legacy fields for backward compatibility
-	activity_name?: string;
-	start_date?: string;
-	end_date?: string;
-	start_time_only?: string;
-	end_time_only?: string;
-	activity_type?: ActivityType;
-	hours?: number;
-	organizer?: string; // deprecated in API input; still returned for display
-	academic_year?: string;
-	name?: string;
+	activity_type: ActivityType;
+	hours: number;
+	organizer: string;
+	organizerType: 'หน่วยงาน' | 'มหาวิทยาลัย';
+	academic_year: string;
+	activity_level: ActivityLevel;
 	require_score?: boolean;
-	organizerType?: 'หน่วยงาน' | 'มหาวิทยาลัย';
-	participantCount?: number;
-	createdAt?: string;
-	updatedAt?: string;
-	activity_level?: ActivityLevel;
 }
 
 // For creating new activities
@@ -87,23 +77,6 @@ export interface Participation {
 	notes?: string;
 }
 
-// Legacy interfaces for backward compatibility
-export interface ActivityFormData {
-	activity_name: string;
-	description: string | null;
-	start_date: string;
-	end_date: string;
-	start_time: string;
-	end_time: string;
-	activity_type: ActivityType;
-	location: string;
-	max_participants?: number;
-	hours: number;
-	organizer: string;
-	eligible_organizations: string;
-	academic_year: string;
-	activity_level: ActivityLevel;
-}
 
 export interface ActivityApiResponse {
 	status: string;

@@ -37,7 +37,7 @@
 			const query = searchQuery.toLowerCase();
 			filtered = filtered.filter(
 				(activity) =>
-					(activity.title || activity.activity_name || '').toLowerCase().includes(query) ||
+					(activity.title || activity.title || '').toLowerCase().includes(query) ||
 					activity.description?.toLowerCase().includes(query)
 			);
 		}
@@ -264,7 +264,7 @@
 												<CardTitle
 													class="line-clamp-2 text-base transition-colors group-hover:text-primary"
 												>
-													{activity.title || activity.activity_name || 'ไม่ระบุชื่อ'}
+													{activity.title || activity.title || 'ไม่ระบุชื่อ'}
 												</CardTitle>
 												<div class="flex items-center gap-2">
 													{#if activity.activity_type}
@@ -300,11 +300,11 @@
 											{/if}
 
 											<!-- Participants -->
-											{#if activity.max_participants || activity.current_participants}
+											{#if activity.max_participants || activity.participant_count}
 												<div class="flex items-center gap-2 text-sm text-muted-foreground">
 													<IconUsers class="size-4 flex-shrink-0" />
 													<span>
-														{activity.current_participants || 0}
+														{activity.participant_count || 0}
 														{#if activity.max_participants}
 															/{activity.max_participants}
 														{/if}

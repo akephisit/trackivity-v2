@@ -24,8 +24,8 @@ export const load: PageServerLoad = async (event) => {
 				code: organizations.code,
 				description: organizations.description,
 				status: organizations.status,
-				created_at: organizations.createdAt,
-				updated_at: organizations.updatedAt
+				created_at: organizations.created_at,
+				updated_at: organizations.updated_at
 			})
 			.from(organizations)
 			.where(eq(organizations.status, true))
@@ -52,20 +52,20 @@ export const load: PageServerLoad = async (event) => {
 				organization_id: (adminRoles as any).organizationId,
 				permissions: adminRoles.permissions,
 				is_enabled: adminRoles.isEnabled,
-				created_at: adminRoles.createdAt,
-				updated_at: adminRoles.updatedAt,
+				created_at: adminRoles.created_at,
+				updated_at: adminRoles.updated_at,
 				user_email: users.email,
 				user_prefix: users.prefix,
 				first_name: users.firstName,
 				last_name: users.lastName,
 				student_id: users.studentId,
 				department_id: users.departmentId,
-				user_created_at: users.createdAt,
-				user_updated_at: users.updatedAt
+				user_created_at: users.created_at,
+				user_updated_at: users.updated_at
 			})
 			.from(adminRoles)
 			.innerJoin(users, eq(adminRoles.userId, users.id))
-			.orderBy(desc(adminRoles.createdAt));
+			.orderBy(desc(adminRoles.created_at));
 
 		const mapAdminLevel = (lvl: string): AdminLevel => {
 			switch (lvl) {
@@ -279,7 +279,7 @@ export const actions: Actions = {
 		try {
 			await db
 				.update(adminRoles)
-				.set({ isEnabled: isActive, updatedAt: new Date() })
+				.set({ isEnabled: isActive, updated_at: new Date() })
 				.where(eq(adminRoles.id, adminId));
 			return { success: true, message: `${isActive ? 'เปิดใช้งาน' : 'ปิดใช้งาน'}แอดมินสำเร็จ` };
 		} catch (error) {
@@ -338,7 +338,7 @@ export const actions: Actions = {
 				firstName: updateData.first_name,
 				lastName: updateData.last_name,
 				email: updateData.email,
-				updatedAt: new Date()
+				updated_at: new Date()
 			};
 			if (updateData.prefix !== undefined) {
 				setObj.prefix = updateData.prefix || 'Generic';
@@ -355,7 +355,7 @@ export const actions: Actions = {
 					.update(adminRoles)
 					.set({
 						organizationId: updateData.organization_id || null,
-						updatedAt: new Date()
+						updated_at: new Date()
 					})
 					.where(eq(adminRoles.userId, targetUserId));
 			}

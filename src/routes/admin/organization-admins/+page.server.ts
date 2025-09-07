@@ -34,8 +34,8 @@ export const load: PageServerLoad = async (event) => {
 				organization_name: organizations.name,
 				organization_code: organizations.code,
 				organization_status: organizations.status,
-				created_at: adminRoles.createdAt,
-				updated_at: adminRoles.updatedAt,
+				created_at: adminRoles.created_at,
+				updated_at: adminRoles.updated_at,
 				permissions: adminRoles.permissions,
 				is_enabled: adminRoles.isEnabled
 			})
@@ -126,8 +126,8 @@ export const load: PageServerLoad = async (event) => {
 					name: organizations.name,
 					code: organizations.code,
 					status: organizations.status,
-					created_at: organizations.createdAt,
-					updated_at: organizations.updatedAt
+					created_at: organizations.created_at,
+					updated_at: organizations.updated_at
 				})
 				.from(organizations)
 				.orderBy(organizations.name);

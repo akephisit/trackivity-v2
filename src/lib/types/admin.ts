@@ -17,7 +17,7 @@ export interface User {
 	employee_id?: string;
 	department_id?: string;
 	organization_id?: string;
-	status: 'active' | 'inactive' | 'suspended' | 'online' | 'offline' | 'disabled';
+	status: 'active' | 'inactive' | 'suspended';
 	role:
 		| 'student'
 		| 'faculty'
@@ -28,8 +28,8 @@ export interface User {
 		| 'regular_admin';
 	phone?: string;
 	avatar?: string;
-	last_login?: string;
-	email_verified_at?: string;
+	last_login_at?: string;
+	login_count?: number;
 	created_at: string;
 	updated_at: string;
 	department?: Department;
@@ -131,7 +131,7 @@ export interface UserFilter {
 	search?: string;
 	organization_id?: string;
 	department_id?: string;
-	status?: 'active' | 'inactive' | 'suspended' | 'online' | 'offline' | 'disabled' | 'all';
+	status?: 'active' | 'inactive' | 'suspended' | 'all';
 	role?:
 		| 'student'
 		| 'faculty'

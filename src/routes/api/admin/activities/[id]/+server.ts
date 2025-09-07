@@ -30,8 +30,8 @@ export const GET: RequestHandler = async (event) => {
 				status: activities.status,
 				organization_id: activities.organizationId,
 				created_by: activities.createdBy,
-				created_at: activities.createdAt,
-				updated_at: activities.updatedAt,
+				created_at: activities.created_at,
+				updated_at: activities.updated_at,
 				activity_level: activities.activityLevel
 			})
 			.from(activities)

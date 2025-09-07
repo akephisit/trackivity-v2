@@ -25,8 +25,8 @@ async function getUsersFromDb(
 			student_id: users.studentId,
 			department_id: users.departmentId,
 			status: users.status,
-			created_at: users.createdAt,
-			updated_at: users.updatedAt,
+			created_at: users.created_at,
+			updated_at: users.updated_at,
 			department_name: departments.name,
 			organization_id: departments.organizationId,
 			organization_name: organizations.name,
@@ -94,7 +94,7 @@ async function getUsersFromDb(
 	}
 
 	// Add ordering and pagination
-	const result = await query.orderBy(desc(users.createdAt)).offset(offset).limit(limit);
+	const result = await query.orderBy(desc(users.created_at)).offset(offset).limit(limit);
 
 	// Get total count for pagination
 	let countQuery = db
@@ -150,7 +150,7 @@ async function getUserStatsFromDb(organizationId: string | null | undefined): Pr
 			const thirtyDaysAgo = new Date();
 			thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-			const recentConditions = [gte(users.createdAt, thirtyDaysAgo), ...baseConditions];
+			const recentConditions = [gte(users.created_at, thirtyDaysAgo), ...baseConditions];
 
 			let q = db
 				.select({ count: count() })
@@ -187,8 +187,8 @@ async function getOrganizationsFromDb(): Promise<Organization[]> {
 			code: organizations.code,
 			description: organizations.description,
 			status: organizations.status,
-			created_at: organizations.createdAt,
-			updated_at: organizations.updatedAt
+			created_at: organizations.created_at,
+			updated_at: organizations.updated_at
 		})
 		.from(organizations)
 		.where(eq(organizations.status, true))
@@ -214,8 +214,8 @@ async function getDepartmentsFromDb(organizationId: string): Promise<Department[
 			organization_id: departments.organizationId,
 			description: departments.description,
 			status: departments.status,
-			created_at: departments.createdAt,
-			updated_at: departments.updatedAt
+			created_at: departments.created_at,
+			updated_at: departments.updated_at
 		})
 		.from(departments)
 		.where(and(eq(departments.organizationId, organizationId), eq(departments.status, true)))

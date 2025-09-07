@@ -87,7 +87,7 @@ export const load: PageServerLoad = async (event) => {
 		const countData = participantCounts.find((pc) => pc.activity_id === activity.id);
 		return {
 			...activity,
-			current_participants: countData?.participant_count || 0
+			participant_count: countData?.participant_count || 0
 		};
 	});
 

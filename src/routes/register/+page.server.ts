@@ -33,8 +33,8 @@ export const load: PageServerLoad = async (event) => {
 				description: organizations.description,
 				organizationType: organizations.organizationType,
 				status: organizations.status,
-				created_at: organizations.createdAt,
-				updated_at: organizations.updatedAt
+				created_at: organizations.created_at,
+				updated_at: organizations.updated_at
 			})
 			.from(organizations)
 			.where(eq(organizations.status, true))

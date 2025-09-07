@@ -28,8 +28,8 @@ async function getUsersFromDb(
 			status: users.status,
 			last_login_at: users.lastLoginAt,
 			login_count: users.loginCount,
-			created_at: users.createdAt,
-			updated_at: users.updatedAt,
+			created_at: users.created_at,
+			updated_at: users.updated_at,
 			department_name: departments.name,
 			organization_id: departments.organizationId,
 			organization_name: organizations.name,
@@ -73,23 +73,9 @@ async function getUsersFromDb(
 		conditions.push(eq(users.departmentId, filters.department_id));
 	}
 
-	// Status filter - map UI status to database enum
+	// Status filter - use database values directly
 	if (filters.status && filters.status !== 'all') {
-		let dbStatus: 'active' | 'inactive' | 'suspended';
-		switch (filters.status) {
-			case 'online':
-				dbStatus = 'active';
-				break;
-			case 'offline':
-				dbStatus = 'inactive';
-				break;
-			case 'disabled':
-				dbStatus = 'suspended';
-				break;
-			default:
-				dbStatus = filters.status as 'active' | 'inactive' | 'suspended';
-		}
-		conditions.push(eq(users.status, dbStatus));
+		conditions.push(eq(users.status, filters.status));
 	}
 
 	// Apply conditions
@@ -98,7 +84,7 @@ async function getUsersFromDb(
 	}
 
 	// Add ordering and pagination
-	const result = await query.orderBy(desc(users.createdAt)).offset(offset).limit(limit);
+	const result = await query.orderBy(desc(users.created_at)).offset(offset).limit(limit);
 
 	// Get total count for pagination
 	let countQuery = db
@@ -158,7 +144,7 @@ async function getUserStatsFromDb(
 
 			let q = db.select({ count: count() }).from(users).$dynamic();
 			const recentConditions = [
-				gte(users.createdAt, thirtyDaysAgo), 
+				gte(users.created_at, thirtyDaysAgo), 
 				sql`${users.deletedAt} IS NULL`, 
 				...baseConditions
 			];
@@ -196,8 +182,8 @@ async function getOrganizationsFromDb(): Promise<Organization[]> {
 			code: organizations.code,
 			description: organizations.description,
 			status: organizations.status,
-			created_at: organizations.createdAt,
-			updated_at: organizations.updatedAt
+			created_at: organizations.created_at,
+			updated_at: organizations.updated_at
 		})
 		.from(organizations)
 		.where(eq(organizations.status, true))
@@ -275,21 +261,8 @@ export const load: PageServerLoad = async (event) => {
 		} as any;
 
 		users = rawUsers.map((u: any) => {
-			// Map database status to User status
-			let status: User['status'];
-			switch (u.status) {
-				case 'active':
-					status = 'online';
-					break;
-				case 'inactive':
-					status = 'offline';
-					break;
-				case 'suspended':
-					status = 'disabled';
-					break;
-				default:
-					status = 'offline';
-			}
+			// Use database status directly - no legacy mapping needed
+			const status = u.status || 'inactive';
 
 			const department = u.department_name
 				? { id: u.department_id, name: u.department_name }
@@ -304,45 +277,27 @@ export const load: PageServerLoad = async (event) => {
 				organization = { id: u.organization_id, name: u.organization_name };
 			}
 
-			// Determine user role based on admin_level
-			let role: User['role'] = 'student'; // default
+			// Determine user role based on admin_level  
+			const role = u.is_admin && u.admin_level ? u.admin_level : 'student';
 
-			if (u.is_admin && u.admin_level) {
-				switch (u.admin_level) {
-					case 'super_admin':
-						role = 'super_admin';
-						break;
-					case 'organization_admin':
-						role = 'organization_admin';
-						break;
-					case 'regular_admin':
-						role = 'regular_admin';
-						break;
-					default:
-						role = 'admin';
-				}
-			}
 			return {
 				id: u.id,
 				email: u.email,
-				prefix: u.prefix || 'Generic',
+				prefix: u.prefix,
 				first_name: u.first_name,
 				last_name: u.last_name,
 				student_id: u.student_id,
-				employee_id: undefined, // Not in database schema yet
 				department_id: u.department_id,
 				organization_id: u.organization_id,
 				status,
 				role,
-				phone: undefined, // Not in database schema yet
-				avatar: undefined, // Not in database schema yet
-				last_login: u.last_login_at ? new Date(u.last_login_at).toISOString() : null,
-				email_verified_at: undefined, // Not in database schema yet
-				created_at: u.created_at ? new Date(u.created_at).toISOString() : new Date().toISOString(),
-				updated_at: u.updated_at ? new Date(u.updated_at).toISOString() : new Date().toISOString(),
+				last_login_at: u.last_login_at,
+				login_count: u.login_count || 0,
+				created_at: u.created_at,
+				updated_at: u.updated_at,
 				department,
 				organization
-			} as User;
+			};
 		});
 
 		// Process stats data

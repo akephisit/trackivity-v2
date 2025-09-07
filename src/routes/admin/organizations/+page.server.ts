@@ -45,11 +45,11 @@ export const load: PageServerLoad = async (event) => {
 				description: organizations.description,
 				organizationType: organizations.organizationType,
 				status: organizations.status,
-				created_at: organizations.createdAt,
-				updated_at: organizations.updatedAt
+				created_at: organizations.created_at,
+				updated_at: organizations.updated_at
 			})
 			.from(organizations)
-			.orderBy(desc(organizations.createdAt));
+			.orderBy(desc(organizations.created_at));
 
 		// Create forms
 		const createForm = await superValidate(zod(facultyCreateSchema));
@@ -129,7 +129,7 @@ export const actions: Actions = {
 					...(form.data.description !== undefined && { description: form.data.description }),
 					...(form.data.organizationType && { organizationType: form.data.organizationType }),
 					...(form.data.status !== undefined && { status: form.data.status }),
-					updatedAt: new Date()
+					updated_at: new Date()
 				})
 				.where(eq(organizations.id, facultyId));
 
@@ -188,7 +188,7 @@ export const actions: Actions = {
 				.update(organizations)
 				.set({
 					status: !currentFaculty.status,
-					updatedAt: new Date()
+					updated_at: new Date()
 				})
 				.where(eq(organizations.id, facultyId));
 

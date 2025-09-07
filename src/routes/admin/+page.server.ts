@@ -57,7 +57,7 @@ export const load: PageServerLoad = async (event) => {
 						.where(
 							and(
 								eq(departments.organizationId, adminOrgId),
-								sql`DATE_TRUNC('month', ${users.createdAt}) = DATE_TRUNC('month', CURRENT_DATE)`
+								sql`DATE_TRUNC('month', ${users.created_at}) = DATE_TRUNC('month', CURRENT_DATE)`
 							)
 						),
 					// Department breakdown
@@ -99,7 +99,7 @@ export const load: PageServerLoad = async (event) => {
 				db
 					.select({ count: count() })
 					.from(users)
-					.where(sql`DATE(${users.createdAt}) = CURRENT_DATE`)
+					.where(sql`DATE(${users.created_at}) = CURRENT_DATE`)
 			]);
 
 			stats = {
@@ -135,7 +135,7 @@ export const load: PageServerLoad = async (event) => {
 					end_date: activities.endDate,
 					activity_type: activities.activityType,
 					status: activities.status,
-					created_at: activities.createdAt,
+					created_at: activities.created_at,
 					action: sql<string>`'activity_created'`.as('action'),
 					type: sql<string>`'success'`.as('type'),
 					user_name: sql<string>`NULL`.as('user_name'),
@@ -146,7 +146,7 @@ export const load: PageServerLoad = async (event) => {
 				.where(
 					sql`${activities.eligibleOrganizations}::jsonb @> ${JSON.stringify([adminOrgId])}::jsonb OR ${activities.activityLevel} = 'university'`
 				)
-				.orderBy(desc(activities.createdAt))
+				.orderBy(desc(activities.created_at))
 				.limit(10);
 		} else {
 			// Super admin gets all activities
@@ -159,7 +159,7 @@ export const load: PageServerLoad = async (event) => {
 					end_date: activities.endDate,
 					activity_type: activities.activityType,
 					status: activities.status,
-					created_at: activities.createdAt,
+					created_at: activities.created_at,
 					action: sql<string>`'activity_created'`.as('action'),
 					type: sql<string>`'success'`.as('type'),
 					user_name: sql<string>`NULL`.as('user_name'),
@@ -167,7 +167,7 @@ export const load: PageServerLoad = async (event) => {
 					faculty_name: sql<string>`NULL`.as('faculty_name')
 				})
 				.from(activities)
-				.orderBy(desc(activities.createdAt))
+				.orderBy(desc(activities.created_at))
 				.limit(10);
 		}
 

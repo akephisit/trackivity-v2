@@ -126,8 +126,8 @@ export const GET: RequestHandler = async ({ cookies }) => {
 				expires_at: decoded.exp
 					? new Date(decoded.exp * 1000).toISOString()
 					: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-				created_at: u?.createdAt ? new Date(u.createdAt).toISOString() : undefined,
-				updated_at: u?.updatedAt ? new Date(u.updatedAt).toISOString() : undefined,
+				created_at: u?.created_at ? new Date(u.created_at).toISOString() : undefined,
+				updated_at: u?.updated_at ? new Date(u.updated_at).toISOString() : undefined,
 				admin_role: decoded.is_admin
 					? {
 							id: `admin_${decoded.user_id}`,

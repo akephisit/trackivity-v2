@@ -136,7 +136,7 @@ export const POST = async ({ request, cookies }: { request: any; cookies: any })
 			.update(users)
 			.set({
 				passwordHash: newPasswordHash,
-				updatedAt: new Date()
+				updated_at: new Date()
 			})
 			.where(eq(users.id, userId));
 

@@ -39,8 +39,8 @@ export const load: PageServerLoad = async (event) => {
 				status: activities.status,
 				organization_id: activities.organizationId,
 				created_by: activities.createdBy,
-				created_at: activities.createdAt,
-				updated_at: activities.updatedAt,
+				created_at: activities.created_at,
+				updated_at: activities.updated_at,
 				organizer_id: activities.organizerId,
 				organizer_name: organizations.name,
 				activity_level: activities.activityLevel
@@ -65,11 +65,11 @@ export const load: PageServerLoad = async (event) => {
 			? baseQuery.where(and(...baseConditions))
 			: baseQuery;
 
-		const rawActivities = await filteredQuery.orderBy(desc(activities.createdAt));
+		const rawActivities = await filteredQuery.orderBy(desc(activities.created_at));
 
 		const activitiesData = rawActivities.map((activity: any) => ({
 			id: activity.id,
-			activity_name: activity.title,
+			title: activity.title,
 			description: activity.description,
 			start_date: activity.start_date,
 			end_date: activity.end_date,
@@ -78,22 +78,17 @@ export const load: PageServerLoad = async (event) => {
 			activity_type: activity.activity_type,
 			location: activity.location,
 			max_participants: activity.max_participants,
+			participant_count: activity.participant_count || 0,
+			view_count: activity.view_count || 0,
 			hours: activity.hours,
-			require_score: false, // Not in current schema
 			organization_id: activity.organization_id,
+			organizer_id: activity.organizer_id,
+			organizer_name: activity.organizer_name,
 			created_by: activity.created_by,
 			created_at: activity.created_at,
 			updated_at: activity.updated_at,
-			// Legacy fields for compatibility
-			name: activity.title,
-			organizer: activity.organizer_name || 'ระบบ',
-			organizer_id: activity.organizer_id,
-			organizer_name: activity.organizer_name,
-			organizerType: 'หน่วยงาน',
-			participantCount: activity.participant_count || 0,
-			view_count: activity.view_count || 0,
-			status: activity.status || 'รอดำเนินการ',
-			activity_level: activity.activity_level || 'faculty'
+			status: activity.status,
+			activity_level: activity.activity_level
 		}));
 
 		return {

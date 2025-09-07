@@ -8,7 +8,7 @@ import type { PageServerLoad, Actions } from './$types';
 // Validation schema for activity creation
 const activityCreateSchema = z
 	.object({
-		activity_name: z
+		title: z
 			.string()
 			.min(1, 'กรุณากรอกชื่อกิจกรรม')
 			.max(255, 'ชื่อกิจกรรมต้องไม่เกิน 255 ตัวอักษร'),
@@ -100,7 +100,7 @@ export const load: PageServerLoad = async (event) => {
 
 	// Set default values
 	form.data = {
-		activity_name: '',
+		title: '',
 		description: '',
 		start_date: '',
 		end_date: '',
@@ -170,7 +170,7 @@ export const actions: Actions = {
 
 			// เตรียมข้อมูลสำหรับส่งไป API
 			const activityData: any = {
-				activity_name: form.data.activity_name,
+				title: form.data.title,
 				description:
 					form.data.description && form.data.description.trim() !== '' ? form.data.description : '',
 				start_date: form.data.start_date,

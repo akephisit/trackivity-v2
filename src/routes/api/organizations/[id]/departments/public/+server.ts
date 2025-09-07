@@ -69,8 +69,8 @@ export const GET: RequestHandler = async ({ params }) => {
 				organization_id: departments.organizationId,
 				description: departments.description,
 				status: departments.status,
-				created_at: departments.createdAt,
-				updated_at: departments.updatedAt
+				created_at: departments.created_at,
+				updated_at: departments.updated_at
 			})
 			.from(departments)
 			.where(and(eq(departments.organizationId, organizationId), eq(departments.status, true)))

@@ -75,7 +75,7 @@
 		completed: activities.filter((a) => a.status === 'completed').length,
 		inProgress: activities.filter((a) => a.status === 'ongoing').length,
 		pending: activities.filter((a) => a.status === 'draft' || a.status === 'published').length,
-		totalParticipants: activities.reduce((sum, a) => sum + (a.participantCount || 0), 0)
+		totalParticipants: activities.reduce((sum, a) => sum + (a.participant_count || 0), 0)
 	});
 </script>
 

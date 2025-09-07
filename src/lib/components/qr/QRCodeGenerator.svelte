@@ -168,11 +168,11 @@
 		if (!$qrCode) return 0;
 
 		const expiresAt = new Date($qrCode.expires_at).getTime();
-		const createdAt = new Date($qrCode.created_at).getTime();
+		const created_at = new Date($qrCode.created_at).getTime();
 		const now = Date.now();
 
-		const totalDuration = expiresAt - createdAt;
-		const elapsed = now - createdAt;
+		const totalDuration = expiresAt - created_at;
+		const elapsed = now - created_at;
 
 		return Math.min(100, Math.max(0, (elapsed / totalDuration) * 100));
 	}

@@ -16,7 +16,7 @@ export const activityColumns: ColumnDef<Activity>[] = [
 				createRawSnippet(() => ({
 					render: () => `
 						<div class="font-medium">
-							${activity.name || activity.title || 'ไม่ระบุชื่อกิจกรรม'}
+							${activity.title || 'ไม่ระบุชื่อกิจกรรม'}
 						</div>
 					`
 				}))
@@ -110,7 +110,7 @@ export const activityColumns: ColumnDef<Activity>[] = [
 		}
 	},
 	{
-		accessorKey: 'participantCount',
+		accessorKey: 'participant_count',
 		header: () =>
 			renderSnippet(
 				createRawSnippet(() => ({
@@ -118,7 +118,7 @@ export const activityColumns: ColumnDef<Activity>[] = [
 				}))
 			),
 		cell: ({ row }) => {
-			const count = row.getValue('participantCount') as number;
+			const count = row.getValue('participant_count') as number;
 			const safeCount = count ?? 0;
 			return renderSnippet(
 				createRawSnippet(() => ({
@@ -169,10 +169,10 @@ export const activityColumns: ColumnDef<Activity>[] = [
 		}
 	},
 	{
-		accessorKey: 'createdAt',
+		accessorKey: 'created_at',
 		header: 'วันที่สร้าง',
 		cell: ({ row }) => {
-			const dateValue = row.getValue('createdAt') as string;
+			const dateValue = row.getValue('created_at') as string;
 			const activity = row.original;
 			const safeDateValue = dateValue || activity.created_at || new Date().toISOString();
 			const date = new Date(safeDateValue);

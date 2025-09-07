@@ -140,7 +140,7 @@ export interface Activity {
 	start_date: Timestamp;
 	end_date: Timestamp;
 	max_participants?: number;
-	current_participants: number;
+	participant_count: number;
 	is_active: boolean;
 	created_by: UUID;
 	created_at: Timestamp;

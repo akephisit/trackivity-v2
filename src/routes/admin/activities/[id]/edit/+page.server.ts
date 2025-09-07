@@ -34,8 +34,8 @@ export const load: PageServerLoad = async (event) => {
 				status: activities.status,
 				organization_id: activities.organizationId,
 				created_by: activities.createdBy,
-				created_at: activities.createdAt,
-				updated_at: activities.updatedAt,
+				created_at: activities.created_at,
+				updated_at: activities.updated_at,
 				registration_open: activities.registrationOpen,
 				activity_level: activities.activityLevel
 			})
@@ -70,7 +70,7 @@ export const load: PageServerLoad = async (event) => {
 			start_time: startIso,
 			end_time: endIso,
 			max_participants: a.max_participants ?? undefined,
-			current_participants: participationRows.length,
+			participant_count: participationRows.length,
 			status: a.status as any,
 			organization_id: a.organization_id || undefined,
 			faculty_name: undefined,
@@ -215,7 +215,7 @@ export const actions: Actions = {
 				maxParticipants,
 				status: status as any,
 				eligibleOrganizations: eligibleOrganizations as any,
-				updatedAt: new Date(),
+				updated_at: new Date(),
 				registrationOpen: registrationOpen
 			};
 

@@ -64,11 +64,8 @@
 	// Status options
 	const statusOptions = [
 		{ value: 'all', label: 'ทุกสถานะ' },
-		{ value: 'online', label: 'ใช้งานอยู่' },
-		{ value: 'offline', label: 'ไม่ออนไลน์' },
-		{ value: 'disabled', label: 'ปิดใช้งาน' },
-		{ value: 'active', label: 'เปิดใช้งาน' },
-		{ value: 'inactive', label: 'ปิดใช้งาน' },
+		{ value: 'active', label: 'ใช้งานอยู่' },
+		{ value: 'inactive', label: 'ไม่ใช้งาน' },
 		{ value: 'suspended', label: 'ถูกระงับ' }
 	];
 

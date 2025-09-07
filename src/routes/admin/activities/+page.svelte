@@ -42,7 +42,7 @@
 		sports: data.activities.filter((a) => a.activity_type === 'Sports').length,
 		cultural: data.activities.filter((a) => a.activity_type === 'Cultural').length,
 		ongoing: data.activities.filter((a) => getActivityStatus(a).label === 'กำลังดำเนินการ').length,
-		totalParticipants: data.activities.reduce((sum, a) => sum + (a.participantCount || 0), 0),
+		totalParticipants: data.activities.reduce((sum, a) => sum + (a.participant_count || 0), 0),
 		totalViews: data.activities.reduce((sum, a) => sum + (a.view_count || 0), 0)
 	});
 
@@ -51,7 +51,7 @@
 		data.activities.filter((activity) => {
 			const matchesSearch =
 				searchTerm === '' ||
-				activity.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+				activity.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
 				activity.location?.toLowerCase().includes(searchTerm.toLowerCase());
 
 			const matchesType = selectedType === 'all' || activity.activity_type === selectedType;
@@ -337,7 +337,7 @@
 									<Table.Cell>
 										<div class="min-w-0 space-y-1">
 											<p class="truncate font-medium text-foreground">
-												{activity.name || 'ไม่ระบุ'}
+												{activity.title || 'ไม่ระบุ'}
 											</p>
 											{#if activity.description}
 												<p class="line-clamp-2 text-sm text-muted-foreground">
@@ -377,7 +377,7 @@
 										<div class="flex min-w-0 items-center gap-2 text-sm">
 											<div class="flex items-center gap-1">
 												<IconUsers class="h-3 w-3 flex-shrink-0 text-muted-foreground" />
-												<span class="font-medium">{formatParticipantCount(activity.participantCount || 0, activity.max_participants)}</span>
+												<span class="font-medium">{formatParticipantCount(activity.participant_count || 0, activity.max_participants)}</span>
 											</div>
 											{#if activity.view_count && activity.view_count > 0}
 												<div class="flex items-center gap-1 text-xs text-muted-foreground">

@@ -45,8 +45,8 @@ export const load: PageServerLoad = async (event) => {
 				location: activities.location,
 				max_participants: activities.maxParticipants,
 				eligible_organizations: activities.eligibleOrganizations,
-				created_at: activities.createdAt,
-				updated_at: activities.updatedAt,
+				created_at: activities.created_at,
+				updated_at: activities.updated_at,
 				organizer_id: activities.organizerId,
 				organization_id: activities.organizationId,
 				organization_name: organizations.name,
@@ -57,7 +57,7 @@ export const load: PageServerLoad = async (event) => {
 			.leftJoin(organizations, eq(activities.organizerId, organizations.id))
 			.leftJoin(dbUsers, eq(activities.createdBy, dbUsers.id))
 			.where(ne(activities.status, 'draft'))
-			.orderBy(desc(activities.createdAt))
+			.orderBy(desc(activities.created_at))
 			.limit(100);
 
 		// Get user's participation status for each activity
@@ -120,7 +120,7 @@ export const load: PageServerLoad = async (event) => {
 				activity_type: r.activity_type,
 				status: r.status,
 				max_participants: r.max_participants ?? undefined,
-				current_participants: undefined,
+				participant_count: r.participant_count || 0,
 				created_at: r.created_at,
 				updated_at: r.updated_at,
 				organization_id: r.organization_id || r.organizer_id || undefined,

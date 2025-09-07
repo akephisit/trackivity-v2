@@ -68,14 +68,14 @@
 	);
 
 	function getStatusBadgeVariant(status: string): 'default' | 'secondary' | 'destructive' {
-		if (status === 'online') return 'default';
-		if (status === 'disabled') return 'destructive';
+		if (status === 'active') return 'default';
+		if (status === 'suspended') return 'destructive';
 		return 'secondary';
 	}
 
 	function getStatusText(status: string): string {
-		if (status === 'online') return 'ใช้งานอยู่';
-		if (status === 'disabled') return 'ถูกระงับ';
+		if (status === 'active') return 'ใช้งานอยู่';
+		if (status === 'suspended') return 'ถูกระงับ';
 		return 'ไม่ใช้งาน';
 	}
 
@@ -222,17 +222,17 @@
 						<Select.Trigger class="w-full sm:w-48">
 							{selectedStatus === 'all'
 								? 'ทุกสถานะ'
-								: selectedStatus === 'online'
+								: selectedStatus === 'active'
 									? 'ใช้งานอยู่'
-									: selectedStatus === 'disabled'
+									: selectedStatus === 'suspended'
 										? 'ถูกระงับ'
 										: 'ไม่ใช้งาน'}
 						</Select.Trigger>
 						<Select.Content>
 							<Select.Item value="all">ทุกสถานะ</Select.Item>
-							<Select.Item value="online">ใช้งานอยู่</Select.Item>
-							<Select.Item value="offline">ไม่ใช้งาน</Select.Item>
-							<Select.Item value="disabled">ถูกระงับ</Select.Item>
+							<Select.Item value="active">ใช้งานอยู่</Select.Item>
+							<Select.Item value="inactive">ไม่ใช้งาน</Select.Item>
+							<Select.Item value="suspended">ถูกระงับ</Select.Item>
 						</Select.Content>
 					</Select.Root>
 

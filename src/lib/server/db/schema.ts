@@ -85,8 +85,8 @@ export const organizations = pgTable(
 		description: text('description'),
 		organizationType: organizationType('organization_type').notNull().default('faculty'),
 		status: boolean('status').notNull().default(true),
-		createdAt: timestamp('created_at', { withTimezone: true }).default(sql`NOW()`),
-		updatedAt: timestamp('updated_at', { withTimezone: true }).default(sql`NOW()`)
+		created_at: timestamp('created_at', { withTimezone: true }).default(sql`NOW()`),
+		updated_at: timestamp('updated_at', { withTimezone: true }).default(sql`NOW()`)
 	},
 	(table) => {
 		return {
@@ -110,8 +110,8 @@ export const departments = pgTable(
 			.references(() => organizations.id, { onDelete: 'cascade' }),
 		description: text('description'),
 		status: boolean('status').notNull().default(true),
-		createdAt: timestamp('created_at', { withTimezone: true }).default(sql`NOW()`),
-		updatedAt: timestamp('updated_at', { withTimezone: true }).default(sql`NOW()`)
+		created_at: timestamp('created_at', { withTimezone: true }).default(sql`NOW()`),
+		updated_at: timestamp('updated_at', { withTimezone: true }).default(sql`NOW()`)
 	},
 	(table) => {
 		return {
@@ -144,10 +144,10 @@ export const users = pgTable(
 		// Performance tracking
 		lastLoginAt: timestamp('last_login_at', { withTimezone: true }),
 		loginCount: integer('login_count').default(0),
-		createdAt: timestamp('created_at', { withTimezone: true })
+		created_at: timestamp('created_at', { withTimezone: true })
 			.notNull()
 			.default(sql`NOW()`),
-		updatedAt: timestamp('updated_at', { withTimezone: true })
+		updated_at: timestamp('updated_at', { withTimezone: true })
 			.notNull()
 			.default(sql`NOW()`)
 	},
@@ -187,8 +187,8 @@ export const adminRoles = pgTable(
 			.default(sql`'{}'`),
 		isEnabled: boolean('is_enabled').notNull().default(true),
 		lastSessionId: varchar('last_session_id', { length: 255 }),
-		createdAt: timestamp('created_at', { withTimezone: true }).default(sql`NOW()`),
-		updatedAt: timestamp('updated_at', { withTimezone: true }).default(sql`NOW()`)
+		created_at: timestamp('created_at', { withTimezone: true }).default(sql`NOW()`),
+		updated_at: timestamp('updated_at', { withTimezone: true }).default(sql`NOW()`)
 	},
 	(table) => {
 		return {
@@ -240,10 +240,10 @@ export const activities = pgTable(
 		viewCount: integer('view_count').default(0),
 		// Soft delete support
 		deletedAt: timestamp('deleted_at', { withTimezone: true }),
-		createdAt: timestamp('created_at', { withTimezone: true })
+		created_at: timestamp('created_at', { withTimezone: true })
 			.notNull()
 			.default(sql`NOW()`),
-		updatedAt: timestamp('updated_at', { withTimezone: true })
+		updated_at: timestamp('updated_at', { withTimezone: true })
 			.notNull()
 			.default(sql`NOW()`)
 	},
@@ -318,8 +318,8 @@ export const subscriptions = pgTable(
 		subscriptionType: subscriptionType('subscription_type').notNull(),
 		expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
 		isActive: boolean('is_active').notNull().default(true),
-		createdAt: timestamp('created_at', { withTimezone: true }).default(sql`NOW()`),
-		updatedAt: timestamp('updated_at', { withTimezone: true }).default(sql`NOW()`)
+		created_at: timestamp('created_at', { withTimezone: true }).default(sql`NOW()`),
+		updated_at: timestamp('updated_at', { withTimezone: true }).default(sql`NOW()`)
 	},
 	(table) => {
 		return {
@@ -342,7 +342,7 @@ export const sessions = pgTable(
 		userAgent: text('user_agent'),
 		// Session metadata
 		loginMethod: varchar('login_method', { length: 20 }).default('password'), // 'password', 'oauth', etc.
-		createdAt: timestamp('created_at', { withTimezone: true })
+		created_at: timestamp('created_at', { withTimezone: true })
 			.notNull()
 			.default(sql`NOW()`),
 		lastAccessed: timestamp('last_accessed', { withTimezone: true })
@@ -444,8 +444,8 @@ export const organizationActivityRequirements = pgTable(
 			.unique(),
 		requiredFacultyHours: integer('required_faculty_hours').notNull().default(0),
 		requiredUniversityHours: integer('required_university_hours').notNull().default(0),
-		createdAt: timestamp('created_at', { withTimezone: true }).default(sql`NOW()`),
-		updatedAt: timestamp('updated_at', { withTimezone: true }).default(sql`NOW()`),
+		created_at: timestamp('created_at', { withTimezone: true }).default(sql`NOW()`),
+		updated_at: timestamp('updated_at', { withTimezone: true }).default(sql`NOW()`),
 		createdBy: uuid('created_by')
 			.notNull()
 			.references(() => users.id, { onDelete: 'cascade' })
@@ -484,8 +484,8 @@ export const subscriptionNotifications = pgTable(
 		sseSent: boolean('sse_sent').default(false),
 		adminNotified: boolean('admin_notified').default(false),
 		metadata: jsonb('metadata').default(sql`'{}'`),
-		createdAt: timestamp('created_at', { withTimezone: true }).default(sql`NOW()`),
-		updatedAt: timestamp('updated_at', { withTimezone: true }).default(sql`NOW()`)
+		created_at: timestamp('created_at', { withTimezone: true }).default(sql`NOW()`),
+		updated_at: timestamp('updated_at', { withTimezone: true }).default(sql`NOW()`)
 	},
 	(table) => {
 		return {
@@ -521,8 +521,8 @@ export const emailQueue = pgTable(
 		sentAt: timestamp('sent_at', { withTimezone: true }),
 		errorMessage: text('error_message'),
 		metadata: jsonb('metadata').default(sql`'{}'`),
-		createdAt: timestamp('created_at', { withTimezone: true }).default(sql`NOW()`),
-		updatedAt: timestamp('updated_at', { withTimezone: true }).default(sql`NOW()`)
+		created_at: timestamp('created_at', { withTimezone: true }).default(sql`NOW()`),
+		updated_at: timestamp('updated_at', { withTimezone: true }).default(sql`NOW()`)
 	},
 	(table) => {
 		return {

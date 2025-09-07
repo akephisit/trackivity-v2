@@ -86,7 +86,7 @@
 	export let status: string | undefined = undefined;
 	export let phone: string | undefined = undefined;
 	export let lastLogin: string | undefined = undefined;
-	export let createdAt: string | undefined = undefined;
+	export let created_at: string | undefined = undefined;
 	export let emailVerifiedAt: string | undefined = undefined;
 	export let checked: boolean | undefined = undefined;
 	export let indeterminate: boolean | undefined = undefined;
@@ -193,10 +193,10 @@
 {/if}
 
 <!-- Created At Cell Component -->
-{#if createdAt}
+{#if created_at}
 	<div class="flex items-center gap-2">
 		<IconCalendar class="h-4 w-4 text-muted-foreground" />
-		<span class="text-sm">{formatDate(createdAt)}</span>
+		<span class="text-sm">{formatDate(created_at)}</span>
 	</div>
 {/if}
 

@@ -47,7 +47,7 @@ export const POST: RequestHandler = async (event) => {
 			if (newStatus !== a.status) {
 				await db
 					.update(activities)
-					.set({ status: newStatus, updatedAt: new Date() })
+					.set({ status: newStatus, updated_at: new Date() })
 					.where(eq(activities.id, a.id));
 				updated++;
 			}

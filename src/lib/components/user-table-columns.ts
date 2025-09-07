@@ -142,7 +142,7 @@ export const userTableColumns: ColumnDef<User>[] = [
 	{
 		accessorKey: 'created_at',
 		header: 'วันที่สมัคร',
-		cell: ({ row }) => renderSnippet(CreatedAtCell, { createdAt: row.original.created_at }),
+		cell: ({ row }) => renderSnippet(CreatedAtCell, { created_at: row.original.created_at }),
 		size: 120,
 		sortingFn: 'datetime',
 		meta: {

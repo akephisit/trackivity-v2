@@ -30,8 +30,8 @@ export const load: PageServerLoad = async (event) => {
 				status: activities.status,
 				location: activities.location,
 				max_participants: activities.maxParticipants,
-				created_at: activities.createdAt,
-				updated_at: activities.updatedAt,
+				created_at: activities.created_at,
+				updated_at: activities.updated_at,
 				created_by: activities.createdBy,
 				organizer_id: activities.organizerId,
 				organization_id: activities.organizationId,
@@ -78,7 +78,7 @@ export const load: PageServerLoad = async (event) => {
 			start_time: toISODateTime(row.start_date, row.start_time_only),
 			end_time: toISODateTime(row.end_date, row.end_time_only),
 			max_participants: row.max_participants ?? undefined,
-			current_participants: 0,
+			participant_count: 0,
 			status: row.status as any,
 			created_by: row.created_by || '',
 			created_by_name: [row.creator_first_name, row.creator_last_name].filter(Boolean).join(' '),
@@ -125,7 +125,7 @@ export const load: PageServerLoad = async (event) => {
 			checked_out_at: p.checked_out_at ? (p.checked_out_at as Date).toISOString() : undefined
 		}));
 
-		activity.current_participants = participationsList.length;
+		activity.participant_count = participationsList.length;
 		const mine = participationsList.find((p) => p.user_id === user.user_id);
 		activity.is_registered = !!mine;
 		if (mine) {

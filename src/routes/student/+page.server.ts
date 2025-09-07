@@ -25,15 +25,15 @@ export const load: PageServerLoad = async (event) => {
 				location: activities.location,
 				max_participants: activities.maxParticipants,
 				status: activities.status,
-				created_at: activities.createdAt,
+				created_at: activities.created_at,
 				hours: activities.hours
 			})
 			.from(activities)
 			.where(eq(activities.status, 'ongoing'))
-			.orderBy(desc(activities.createdAt))
+			.orderBy(desc(activities.created_at))
 			.limit(5);
 
-		// Transform data to include current_participants count
+		// Transform data to include participant_count count
 		recentActivities = await Promise.all(
 			result.map(async (activity) => {
 				const [participantCount] = await db
@@ -45,7 +45,7 @@ export const load: PageServerLoad = async (event) => {
 
 				return {
 					...activity,
-					current_participants: participantCount?.count || 0
+					participant_count: participantCount?.count || 0
 				};
 			})
 		);

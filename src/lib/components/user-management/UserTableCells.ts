@@ -255,15 +255,15 @@ export const LastLoginCell = createRawSnippet<[{ lastLogin?: string }]>((getProp
 });
 
 // Created At Cell Snippet
-export const CreatedAtCell = createRawSnippet<[{ createdAt: string }]>((getProps) => {
-	const { createdAt } = getProps();
+export const CreatedAtCell = createRawSnippet<[{ created_at: string }]>((getProps) => {
+	const { created_at } = getProps();
 	return {
 		render: () => `
 			<div class="flex items-center gap-2">
 				<svg class="h-4 w-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v14a2 2 0 002 2z"/>
 				</svg>
-				<span class="text-sm">${formatDate(createdAt)}</span>
+				<span class="text-sm">${formatDate(created_at)}</span>
 			</div>
 		`
 	};

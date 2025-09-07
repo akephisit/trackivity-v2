@@ -15,7 +15,7 @@ export const POST: RequestHandler = async (event) => {
 	}
 
 	const required = [
-		'activity_name',
+		'title',
 		'start_date',
 		'end_date',
 		'start_time',
@@ -92,7 +92,7 @@ export const POST: RequestHandler = async (event) => {
 		const [inserted] = await db
 			.insert(activities)
 			.values({
-				title: body.activity_name,
+				title: body.title,
 				description: (body.description ?? '').toString(),
 				location: body.location,
 				activityType: body.activity_type,

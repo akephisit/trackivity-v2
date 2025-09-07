@@ -75,7 +75,7 @@ export const POST: RequestHandler = async ({
 					.set({
 						requiredFacultyHours: validatedData.requiredFacultyHours,
 						requiredUniversityHours: validatedData.requiredUniversityHours,
-						updatedAt: new Date()
+						updated_at: new Date()
 					})
 					.where(eq(organizationActivityRequirements.organizationId, organizationId));
 			} else {

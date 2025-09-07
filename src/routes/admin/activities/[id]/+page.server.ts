@@ -34,8 +34,8 @@ export const load: PageServerLoad = async (event) => {
 				status: activities.status,
 				organization_id: activities.organizationId,
 				created_by: activities.createdBy,
-				created_at: activities.createdAt,
-				updated_at: activities.updatedAt,
+				created_at: activities.created_at,
+				updated_at: activities.updated_at,
 				registration_open: activities.registrationOpen,
 				organization_name: orgOwner.name,
 				creator_first: users.firstName,
@@ -100,7 +100,7 @@ export const load: PageServerLoad = async (event) => {
 			start_time: startIso,
 			end_time: endIso,
 			max_participants: a.max_participants ?? undefined,
-			current_participants: participationRows.length,
+			participant_count: participationRows.length,
 			status: a.status as any,
 			organization_id: a.organization_id || undefined,
 			organization_name: a.organization_name || undefined,
@@ -184,7 +184,7 @@ export const actions: Actions = {
 		try {
 			await db
 				.update(activities)
-				.set({ status: status as any, updatedAt: new Date() })
+				.set({ status: status as any, updated_at: new Date() })
 				.where(eq(activities.id, params.id));
 			return { success: true } as const;
 		} catch (e) {
@@ -206,7 +206,7 @@ export const actions: Actions = {
 		try {
 			await db
 				.update(activities)
-				.set({ registrationOpen: open as any, updatedAt: new Date() })
+				.set({ registrationOpen: open as any, updated_at: new Date() })
 				.where(eq(activities.id, params.id));
 			return { success: true } as const;
 		} catch (e) {

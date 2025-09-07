@@ -48,8 +48,8 @@ export const GET = async ({ params, cookies }: { params: any; cookies: any }) =>
 				firstName: users.firstName,
 				lastName: users.lastName,
 				departmentId: users.departmentId,
-				createdAt: users.createdAt,
-				updatedAt: users.updatedAt,
+				created_at: users.created_at,
+				updated_at: users.updated_at,
 				department: {
 					id: departments.id,
 					name: departments.name,
@@ -144,7 +144,7 @@ export const PUT = async ({
 
 		// Prepare update data
 		const updateData: any = {
-			updatedAt: new Date()
+			updated_at: new Date()
 		};
 
 		if (userData.student_id) updateData.studentId = userData.student_id;
@@ -170,8 +170,8 @@ export const PUT = async ({
 				firstName: users.firstName,
 				lastName: users.lastName,
 				departmentId: users.departmentId,
-				createdAt: users.createdAt,
-				updatedAt: users.updatedAt
+				created_at: users.created_at,
+				updated_at: users.updated_at
 			});
 
 		return json({

@@ -454,7 +454,7 @@
 					<div>
 						<p class="font-medium">ผู้เข้าร่วม</p>
 						<p class="text-sm text-muted-foreground">
-							{activity.current_participants}
+							{activity.participant_count}
 							{#if activity.max_participants}
 								/ {activity.max_participants}
 							{/if}

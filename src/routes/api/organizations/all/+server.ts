@@ -13,8 +13,8 @@ export const GET = async () => {
 				description: organizations.description,
 				status: organizations.status,
 				organizationType: organizations.organizationType,
-				createdAt: organizations.createdAt,
-				updatedAt: organizations.updatedAt
+				created_at: organizations.created_at,
+				updated_at: organizations.updated_at
 			})
 			.from(organizations)
 			.where(eq(organizations.status, true))

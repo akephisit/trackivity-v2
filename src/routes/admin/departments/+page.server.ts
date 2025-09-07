@@ -52,8 +52,8 @@ export const load: PageServerLoad = async (event) => {
 					organization_id: departments.organizationId,
 					description: departments.description,
 					status: departments.status,
-					created_at: departments.createdAt,
-					updated_at: departments.updatedAt,
+					created_at: departments.created_at,
+					updated_at: departments.updated_at,
 					students_count: sql<number>`CAST(COUNT(DISTINCT ${users.id}) AS INTEGER)`,
 					// Count admins for this organization (organization-level admins)
 					admins_count: sql<number>`0` // Will calculate separately
@@ -68,10 +68,10 @@ export const load: PageServerLoad = async (event) => {
 					departments.organizationId,
 					departments.description,
 					departments.status,
-					departments.createdAt,
-					departments.updatedAt
+					departments.created_at,
+					departments.updated_at
 				)
-				.orderBy(desc(departments.createdAt));
+				.orderBy(desc(departments.created_at));
 
 			// Get admin count for the organization
 			const adminCountResult = await db
@@ -99,8 +99,8 @@ export const load: PageServerLoad = async (event) => {
 					organization_id: departments.organizationId,
 					description: departments.description,
 					status: departments.status,
-					created_at: departments.createdAt,
-					updated_at: departments.updatedAt,
+					created_at: departments.created_at,
+					updated_at: departments.updated_at,
 					organization_name: organizations.name,
 					students_count: sql<number>`CAST(COUNT(DISTINCT ${users.id}) AS INTEGER)`
 				})
@@ -114,11 +114,11 @@ export const load: PageServerLoad = async (event) => {
 					departments.organizationId,
 					departments.description,
 					departments.status,
-					departments.createdAt,
-					departments.updatedAt,
+					departments.created_at,
+					departments.updated_at,
 					organizations.name
 				)
-				.orderBy(desc(departments.createdAt));
+				.orderBy(desc(departments.created_at));
 
 			// Get total admin count for SuperAdmin view
 			const adminCountResult = await db.select({ count: count() }).from(adminRoles);
@@ -145,8 +145,8 @@ export const load: PageServerLoad = async (event) => {
 					description: organizations.description,
 					organizationType: organizations.organizationType,
 					status: organizations.status,
-					created_at: organizations.createdAt,
-					updated_at: organizations.updatedAt
+					created_at: organizations.created_at,
+					updated_at: organizations.updated_at
 				})
 				.from(organizations)
 				.where(eq(organizations.id, (admin_role as any).organization_id))
@@ -179,8 +179,8 @@ export const load: PageServerLoad = async (event) => {
 					description: organizations.description,
 					organizationType: organizations.organizationType,
 					status: organizations.status,
-					created_at: organizations.createdAt,
-					updated_at: organizations.updatedAt
+					created_at: organizations.created_at,
+					updated_at: organizations.updated_at
 				})
 				.from(organizations)
 				.where(and(eq(organizations.status, true), eq(organizations.organizationType, 'faculty')))
@@ -347,7 +347,7 @@ export const actions: Actions = {
 					...(form.data.code && { code: form.data.code }),
 					...(form.data.description !== undefined && { description: form.data.description }),
 					...(form.data.status !== undefined && { status: form.data.status }),
-					updatedAt: new Date()
+					updated_at: new Date()
 				})
 				.where(eq(departments.id, departmentId));
 
@@ -428,7 +428,7 @@ export const actions: Actions = {
 				.update(departments)
 				.set({
 					status: !currentDepartment.status,
-					updatedAt: new Date()
+					updated_at: new Date()
 				})
 				.where(eq(departments.id, departmentId));
 

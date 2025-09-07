@@ -197,16 +197,16 @@ export async function authenticateAndIssueToken(input: AuthInput): Promise<AuthR
 		session_id: sessionId,
 		permissions,
 		expires_at: expiresAt.toISOString(),
-		created_at: foundUser.createdAt?.toISOString(),
-		updated_at: foundUser.updatedAt?.toISOString(),
+		created_at: foundUser.created_at?.toISOString(),
+		updated_at: foundUser.updated_at?.toISOString(),
 		admin_role: isAdmin
 			? {
 					id: adminRoleRes[0].id,
 					admin_level: convertedAdminLevel as any,
 					organization_id: (adminRoleRes[0] as any).organizationId || undefined,
 					permissions,
-					created_at: adminRoleRes[0].createdAt?.toISOString() || new Date().toISOString(),
-					updated_at: adminRoleRes[0].updatedAt?.toISOString() || new Date().toISOString()
+					created_at: adminRoleRes[0].created_at?.toISOString() || new Date().toISOString(),
+					updated_at: adminRoleRes[0].updated_at?.toISOString() || new Date().toISOString()
 				}
 			: undefined
 	};

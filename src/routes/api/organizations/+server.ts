@@ -23,8 +23,8 @@ export const GET = async ({ cookies }: { cookies: any }) => {
 				description: organizations.description,
 				status: organizations.status,
 				organizationType: organizations.organizationType,
-				createdAt: organizations.createdAt,
-				updatedAt: organizations.updatedAt
+				created_at: organizations.created_at,
+				updated_at: organizations.updated_at
 			})
 			.from(organizations)
 			.where(and(eq(organizations.status, true), eq(organizations.organizationType, 'faculty')))
@@ -112,8 +112,8 @@ export const POST = async ({ request, cookies }: { request: any; cookies: any })
 				code,
 				description: description || null,
 				status: true,
-				createdAt: new Date(),
-				updatedAt: new Date()
+				created_at: new Date(),
+				updated_at: new Date()
 			})
 			.returning({
 				id: organizations.id,
@@ -121,8 +121,8 @@ export const POST = async ({ request, cookies }: { request: any; cookies: any })
 				code: organizations.code,
 				description: organizations.description,
 				status: organizations.status,
-				createdAt: organizations.createdAt,
-				updatedAt: organizations.updatedAt
+				created_at: organizations.created_at,
+				updated_at: organizations.updated_at
 			});
 
 		return json({

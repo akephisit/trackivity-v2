@@ -231,7 +231,7 @@
 					<div>
 						<p class="font-medium">ผู้เข้าร่วม</p>
 						<p class="text-sm text-muted-foreground">
-							{activity.current_participants}
+							{activity.participant_count}
 							{#if activity.max_participants}
 								/ {activity.max_participants}
 							{/if}
@@ -311,7 +311,7 @@
 						</AlertDescription>
 					</Alert>
 				{:else if activity.status === 'published' && activity.registration_open}
-					{#if activity.max_participants && activity.current_participants >= activity.max_participants}
+					{#if activity.max_participants && activity.participant_count >= activity.max_participants}
 						<Alert variant="destructive">
 							<IconInfoCircle class="size-4" />
 							<AlertDescription>กิจกรรมนี้มีผู้เข้าร่วมครบแล้ว</AlertDescription>

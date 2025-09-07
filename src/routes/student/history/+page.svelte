@@ -31,7 +31,7 @@
 	let loading = $state(true);
 	let error: string | null = $state(null);
 	let searchQuery = $state('');
-	let sortBy = $state('recent'); // recent, oldest, activity_name, duration
+	let sortBy = $state('recent'); // recent, oldest, title, duration
 	let filterBy = $state('all'); // all, this_month, last_month, this_year, completed, in_progress
 
 	// Stats
@@ -134,7 +134,7 @@
 		if (searchQuery.trim()) {
 			const query = searchQuery.toLowerCase();
 			filtered = filtered.filter((p) => {
-				const name = (p.activity?.name || (p as any).activity?.title || '').toLowerCase();
+				const name = (p.activity?.title || '').toLowerCase();
 				const desc = (p.activity?.description || '').toLowerCase();
 				return name.includes(query) || desc.includes(query);
 			});
@@ -184,8 +184,8 @@
 					(a, b) => new Date(a.participated_at).getTime() - new Date(b.participated_at).getTime()
 				);
 				break;
-			case 'activity_name':
-				filtered.sort((a, b) => (a.activity?.name || '').localeCompare(b.activity?.name || ''));
+			case 'title':
+				filtered.sort((a, b) => (a.activity?.title || '').localeCompare(b.activity?.title || ''));
 				break;
 			case 'duration':
 				filtered.sort((a, b) => {
@@ -427,7 +427,7 @@
 			>
 				<option value="recent">ล่าสุดก่อน</option>
 				<option value="oldest">เก่าก่อน</option>
-				<option value="activity_name">ชื่อกิจกรรม</option>
+				<option value="title">ชื่อกิจกรรม</option>
 				<option value="duration">ระยะเวลาเข้าร่วม</option>
 			</select>
 
@@ -495,9 +495,7 @@
 											</div>
 											<div class="flex-1 space-y-1">
 												<h3 class="text-base leading-tight font-medium">
-													{participation.activity?.name ||
-														participation.activity?.title ||
-														'ไม่ระบุชื่อกิจกรรม'}
+													{participation.activity?.title || 'ไม่ระบุชื่อกิจกรรม'}
 												</h3>
 												{#if participation.activity?.description}
 													<p class="line-clamp-2 text-sm text-muted-foreground">
