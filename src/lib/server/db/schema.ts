@@ -160,11 +160,8 @@ export const users = pgTable(
 			lastLoginIdx: index('idx_users_last_login').on(table.lastLoginAt),
 			// Compound index for active users lookup
 			activeUsersIdx: index('idx_users_active_department').on(table.status, table.departmentId),
-			// Full text search index for names
-			nameSearchIdx: index('idx_users_name_search').using(
-				'gin',
-				sql`to_tsvector('thai', first_name || ' ' || last_name)`
-			)
+			// Simple text search index for names (using regular btree)
+			nameSearchIdx: index('idx_users_name_search').on(table.firstName, table.lastName)
 		};
 	}
 );
@@ -272,11 +269,8 @@ export const activities = pgTable(
 				table.registrationOpen,
 				table.startDate
 			),
-			// Full text search
-			titleSearchIdx: index('idx_activities_title_search').using(
-				'gin',
-				sql`to_tsvector('thai', title || ' ' || description)`
-			)
+			// Simple title search index
+			titleSearchIdx: index('idx_activities_title_search').on(table.title)
 		};
 	}
 );
@@ -373,7 +367,7 @@ export const sessions = pgTable(
 export const auditLogs = pgTable(
 	'audit_logs',
 	{
-		id: bigint('id', { mode: 'bigint' }).primaryKey(), // Use bigint for high-volume logs
+		id: bigint('id', { mode: 'bigint' }).notNull(), // Use bigint for high-volume logs, not primary key here
 		logDate: date('log_date').notNull(), // Partitioning key
 		userId: uuid('user_id').references(() => users.id, { onDelete: 'set null' }),
 		sessionId: varchar('session_id', { length: 128 }),
@@ -431,7 +425,7 @@ export const activityViews = pgTable(
 			uniqueViewIdx: index('idx_activity_views_unique').on(
 				table.activityId,
 				table.userId,
-				sql`date(viewed_at)`
+				table.viewedAt
 			)
 		};
 	}
@@ -439,7 +433,7 @@ export const activityViews = pgTable(
 
 // Organization activity requirements table
 export const organizationActivityRequirements = pgTable(
-	'organization_activity_requirements',
+	'org_activity_requirements',
 	{
 		id: uuid('id')
 			.primaryKey()
@@ -458,7 +452,7 @@ export const organizationActivityRequirements = pgTable(
 	},
 	(table) => {
 		return {
-			organizationIdIdx: index('idx_organization_activity_requirements_organization_id').on(
+			organizationIdIdx: index('idx_org_activity_reqs_org_id').on(
 				table.organizationId
 			)
 		};
