@@ -16,12 +16,12 @@
 
 <MetaTags title="แดชบอร์ดนักศึกษา" description="ติดตามกิจกรรมและผลงานของคุณ" />
 
-<!-- Welcome Banner for Mobile -->
-<div class="mb-6 rounded-lg bg-gradient-to-r from-primary/10 to-secondary/10 p-4 lg:hidden">
-	<h2 class="mb-1 text-lg font-semibold">
-		ยินดีต้อนรับ, {$currentUser?.first_name}!
+<!-- Welcome Banner for Desktop and Mobile -->
+<div class="mb-6 rounded-lg bg-gradient-to-r from-primary/10 via-primary/5 to-transparent p-4 lg:p-6">
+	<h2 class="admin-page-title mb-1">
+		สวัสดี, {$currentUser?.first_name}!
 	</h2>
-	<p class="text-sm text-muted-foreground">ติดตามกิจกรรมและผลงานของคุณได้ที่นี่</p>
+	<p class="text-sm lg:text-base text-muted-foreground">ติดตามกิจกรรมและผลงานของคุณได้ที่นี่</p>
 </div>
 
 <StudentDashboard
