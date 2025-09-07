@@ -49,7 +49,7 @@
 	import { enhance } from '$app/forms';
 	import { invalidateAll } from '$app/navigation';
 	import { toast } from 'svelte-sonner';
-    import { Switch } from '$lib/components/ui/switch';
+	import { Switch } from '$lib/components/ui/switch';
 
 	const { data, form } = $props<{
 		data: {
@@ -77,46 +77,48 @@
 
 	let showParticipations = $state(true);
 	let showStats = $state(true);
-    let updatingStatus = $state(false);
-    let registrationOpen = $state(false);
-    $effect(() => {
-        registrationOpen = !!activity.registration_open;
-    });
-    let regToggleBusy = $state(false);
+	let updatingStatus = $state(false);
+	let registrationOpen = $state(false);
+	$effect(() => {
+		registrationOpen = !!activity.registration_open;
+	});
+	let regToggleBusy = $state(false);
 
-    async function onToggleRegistration(newVal: boolean) {
-        if (regToggleBusy) return;
-        regToggleBusy = true;
-        try {
-            const fd = new FormData();
-            fd.append('registration_open', newVal ? '1' : '0');
-            const res = await fetch('?/toggleRegistration', { method: 'POST', body: fd });
-            const result = await res.json().catch(() => ({}));
-            if (res.ok && (result.success === true || result.type === 'success')) {
-                toast.success(newVal ? 'เปิดให้นักศึกษาลงทะเบียนล่วงหน้าแล้ว' : 'ปิดรับลงทะเบียนล่วงหน้าแล้ว');
-            } else {
-                toast.error(result.error || 'อัปเดตไม่สำเร็จ');
-                registrationOpen = !newVal;
-            }
-        } catch (e) {
-            toast.error('เกิดข้อผิดพลาดในการเชื่อมต่อ');
-            registrationOpen = !newVal;
-        } finally {
-            regToggleBusy = false;
-        }
-    }
+	async function onToggleRegistration(newVal: boolean) {
+		if (regToggleBusy) return;
+		regToggleBusy = true;
+		try {
+			const fd = new FormData();
+			fd.append('registration_open', newVal ? '1' : '0');
+			const res = await fetch('?/toggleRegistration', { method: 'POST', body: fd });
+			const result = await res.json().catch(() => ({}));
+			if (res.ok && (result.success === true || result.type === 'success')) {
+				toast.success(
+					newVal ? 'เปิดให้นักศึกษาลงทะเบียนล่วงหน้าแล้ว' : 'ปิดรับลงทะเบียนล่วงหน้าแล้ว'
+				);
+			} else {
+				toast.error(result.error || 'อัปเดตไม่สำเร็จ');
+				registrationOpen = !newVal;
+			}
+		} catch (e) {
+			toast.error('เกิดข้อผิดพลาดในการเชื่อมต่อ');
+			registrationOpen = !newVal;
+		} finally {
+			regToggleBusy = false;
+		}
+	}
 
-    function handleRegistrationToggleClick() {
-        if (regToggleBusy) return;
-        const next = !registrationOpen;
-        // Optimistic UI update; revert on failure inside onToggleRegistration
-        registrationOpen = next;
-        onToggleRegistration(next);
-    }
-    let selectedStatus = $state('');
-    $effect(() => {
-        selectedStatus = activity.status;
-    });
+	function handleRegistrationToggleClick() {
+		if (regToggleBusy) return;
+		const next = !registrationOpen;
+		// Optimistic UI update; revert on failure inside onToggleRegistration
+		registrationOpen = next;
+		onToggleRegistration(next);
+	}
+	let selectedStatus = $state('');
+	$effect(() => {
+		selectedStatus = activity.status;
+	});
 
 	// Participant management states
 	let editingParticipant: Participation | null = $state(null);
@@ -185,8 +187,8 @@
 		variant: 'default' | 'secondary' | 'outline' | 'destructive';
 	} {
 		switch (status) {
-            case 'registered':
-                return { text: 'ลงทะเบียนล่วงหน้าแล้ว', variant: 'outline' };
+			case 'registered':
+				return { text: 'ลงทะเบียนล่วงหน้าแล้ว', variant: 'outline' };
 			case 'checked_in':
 				return { text: 'เช็คอินแล้ว', variant: 'secondary' };
 			case 'checked_out':
@@ -245,7 +247,7 @@
 				'อีเมล',
 				'สาขา',
 				'สถานะ',
-            'ลงทะเบียนล่วงหน้าเมื่อ',
+				'ลงทะเบียนล่วงหน้าเมื่อ',
 				'เช็คอินเมื่อ',
 				'เช็คเอาต์เมื่อ',
 				'หมายเหตุ'
@@ -281,7 +283,7 @@
 	];
 
 	const participationStatusOptions: { value: ParticipationStatus; label: string }[] = [
-        { value: 'registered', label: 'ลงทะเบียนล่วงหน้าแล้ว' },
+		{ value: 'registered', label: 'ลงทะเบียนล่วงหน้าแล้ว' },
 		{ value: 'checked_in', label: 'เช็คอินแล้ว' },
 		{ value: 'checked_out', label: 'เช็คเอาต์แล้ว' },
 		{ value: 'completed', label: 'เสร็จสิ้น' }
@@ -311,7 +313,10 @@
 			กลับ
 		</Button>
 		<div class="flex-1">
-			<h1 class="admin-page-title"><IconCalendar class="size-6 text-primary" /> {activity.title}</h1>
+			<h1 class="admin-page-title">
+				<IconCalendar class="size-6 text-primary" />
+				{activity.title}
+			</h1>
 			<p class="text-muted-foreground">จัดการกิจกรรม - Trackivity</p>
 		</div>
 		<div class="flex gap-2">
@@ -332,16 +337,18 @@
 	</div>
 
 	<!-- Registration toggle quick control -->
-		<div
-			class="flex items-center gap-3 rounded-md border p-3 cursor-pointer"
-			role="button"
-			tabindex="0"
-			onclick={handleRegistrationToggleClick}
-			onkeydown={(e) => (e.key === 'Enter' || e.key === ' ') && handleRegistrationToggleClick()}
+	<div
+		class="flex cursor-pointer items-center gap-3 rounded-md border p-3"
+		role="button"
+		tabindex="0"
+		onclick={handleRegistrationToggleClick}
+		onkeydown={(e) => (e.key === 'Enter' || e.key === ' ') && handleRegistrationToggleClick()}
+	>
+		<Switch bind:checked={registrationOpen} class="pointer-events-none" />
+		<span class="text-sm"
+			>{registrationOpen ? 'เปิดให้นักศึกษาลงทะเบียนล่วงหน้า' : 'ปิดรับลงทะเบียนล่วงหน้า'}</span
 		>
-			<Switch bind:checked={registrationOpen} class="pointer-events-none" />
-			<span class="text-sm">{registrationOpen ? 'เปิดให้นักศึกษาลงทะเบียนล่วงหน้า' : 'ปิดรับลงทะเบียนล่วงหน้า'}</span>
-		</div>
+	</div>
 
 	<!-- Quick Stats Cards -->
 	{#if showStats}
@@ -513,7 +520,9 @@
 						<IconCategory class="mt-0.5 size-5 flex-shrink-0 text-muted-foreground" />
 						<div>
 							<p class="font-medium">ประเภทกิจกรรม</p>
-							<p class="text-sm text-muted-foreground">{getActivityTypeDisplayName(activity.activity_type)}</p>
+							<p class="text-sm text-muted-foreground">
+								{getActivityTypeDisplayName(activity.activity_type)}
+							</p>
 						</div>
 					</div>
 				{/if}
@@ -626,7 +635,7 @@
 									<TableHead>รหัสนักศึกษา</TableHead>
 									<TableHead>สาขา</TableHead>
 									<TableHead>สถานะ</TableHead>
-										<TableHead>ลงทะเบียนล่วงหน้าเมื่อ</TableHead>
+									<TableHead>ลงทะเบียนล่วงหน้าเมื่อ</TableHead>
 									<TableHead>เช็คอิน</TableHead>
 									<TableHead>เช็คเอาต์</TableHead>
 									<TableHead class="text-right">การดำเนินการ</TableHead>

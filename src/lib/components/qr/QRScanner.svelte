@@ -31,13 +31,13 @@
 	} from '@tabler/icons-svelte';
 
 	// Types and imports
-	import { 
-		type QRScanResult, 
-		type StatusCode, 
+	import {
+		type QRScanResult,
+		type StatusCode,
 		type StatusCategory,
-		processQRScanResult, 
-		getStatusConfig, 
-		playStatusSound, 
+		processQRScanResult,
+		getStatusConfig,
+		playStatusSound,
 		triggerStatusVibration,
 		formatStatusDetails
 	} from '$lib/utils/qr-status';
@@ -126,9 +126,11 @@
 	let statusProgress = $state<number>(100);
 	let statusProgressTimer = $state<NodeJS.Timeout | null>(null);
 	let lastStatusHash = ''; // Track last status to prevent duplicate displays
-	
+
 	// Enhanced duplicate tracking
-	let recentlyScannedUsers = $state<Map<string, { timestamp: number; scanMode: string; status: string }>>(new Map());
+	let recentlyScannedUsers = $state<
+		Map<string, { timestamp: number; scanMode: string; status: string }>
+	>(new Map());
 	let duplicateAttemptCount = $state<number>(0);
 
 	// Scan mode: check-in or check-out
@@ -287,7 +289,10 @@
 							'x',
 							videoElement.offsetHeight
 						);
-						console.log('Video element styles:', browser ? window.getComputedStyle(videoElement) : 'N/A (SSR)');
+						console.log(
+							'Video element styles:',
+							browser ? window.getComputedStyle(videoElement) : 'N/A (SSR)'
+						);
 						debugInfo.videoReady = true;
 						debugInfo.streamActive = true;
 						resolve(true);
@@ -534,7 +539,7 @@
 
 		// Create canvas to capture video frame (only in browser)
 		if (!browser) return;
-		
+
 		const canvas = document.createElement('canvas');
 		const ctx = canvas.getContext('2d');
 
@@ -624,7 +629,7 @@
 						category: 'error'
 					}
 				});
-				
+
 				displayStatus(errorResult);
 				return;
 			}
@@ -639,7 +644,7 @@
 			});
 
 			const result = await response.json();
-			
+
 			// Process the API response through our status system
 			const processedResult = processQRScanResult(result);
 			displayStatus(processedResult);
@@ -680,7 +685,9 @@
 					message: processedResult.message,
 					category: processedResult.category,
 					statusCode: processedResult.error?.code,
-					details: processedResult.error?.details ? formatStatusDetails(processedResult.error.details) : undefined
+					details: processedResult.error?.details
+						? formatStatusDetails(processedResult.error.details)
+						: undefined
 				};
 
 				onScan?.(scanResult, qrData);
@@ -695,7 +702,7 @@
 					category: 'error'
 				}
 			});
-			
+
 			displayStatus(errorResult);
 			onError?.(errorResult.message);
 		} finally {
@@ -709,31 +716,32 @@
 	function displayStatus(result: QRScanResult) {
 		// Handle duplicate detection with minimal feedback for new flexible flow
 		const now = Date.now();
-		const isDuplicateSuccess = result.success && result.data && 
-			((result.data as any).is_duplicate === true);
-		
+		const isDuplicateSuccess =
+			result.success && result.data && (result.data as any).is_duplicate === true;
+
 		// Minimal tracking for duplicate attempts - less intrusive
 		if (isDuplicateSuccess) {
 			// Simple duplicate counter without complex timing logic
 			duplicateAttemptCount = (duplicateAttemptCount || 0) + 1;
-			
+
 			// Minimal message enhancement for duplicates
-			if (duplicateAttemptCount > 2) { // Only show after multiple duplicates
+			if (duplicateAttemptCount > 2) {
+				// Only show after multiple duplicates
 				result = {
 					...result,
-					message: `${result.message} (สแกนซ้ำ ${duplicateAttemptCount} ครั้ง)`,
+					message: `${result.message} (สแกนซ้ำ ${duplicateAttemptCount} ครั้ง)`
 				};
 			}
 		}
-		
+
 		// Track this user's recent scan with minimal data
 		if (result.data?.student_id) {
 			recentlyScannedUsers.set(result.data.student_id, {
 				timestamp: now,
 				scanMode: scanMode,
-				status: result.success ? 'SUCCESS' : (result.error?.code || 'ERROR')
+				status: result.success ? 'SUCCESS' : result.error?.code || 'ERROR'
 			});
-			
+
 			// Clean up old entries (older than 2 minutes)
 			for (const [studentId, data] of recentlyScannedUsers.entries()) {
 				if (now - data.timestamp > 120000) {
@@ -741,7 +749,7 @@
 				}
 			}
 		}
-		
+
 		// Create a hash of the current status to prevent duplicate displays
 		const statusHash = JSON.stringify({
 			success: result.success,
@@ -750,58 +758,66 @@
 			userData: result.data?.student_id, // Use student_id as unique identifier
 			duplicateCount: duplicateAttemptCount
 		});
-		
+
 		// Skip if this is the same status as the last one displayed within a short time
 		if (statusHash === lastStatusHash) {
 			console.log('Duplicate status display prevented');
 			return;
 		}
-		
+
 		// Clear any existing status display
 		clearStatusDisplay();
-		
+
 		// Set the current status and update last status hash
 		currentStatus = result;
 		lastStatusHash = statusHash;
-		
+
 		// Determine status code for configuration
-		const statusCode = result.error?.code || (result.success ? (scanMode === 'checkin' ? 'CHECKIN_SUCCESS' : 'CHECKOUT_SUCCESS') : 'INTERNAL_ERROR');
+		const statusCode =
+			result.error?.code ||
+			(result.success
+				? scanMode === 'checkin'
+					? 'CHECKIN_SUCCESS'
+					: 'CHECKOUT_SUCCESS'
+				: 'INTERNAL_ERROR');
 		const config = getStatusConfig(statusCode);
-		
+
 		// Minimal duration for all statuses - less intrusive
-		const displayDuration = isDuplicateSuccess ? Math.min(config.duration, 2500) : Math.min(config.duration, 4000);
-		
+		const displayDuration = isDuplicateSuccess
+			? Math.min(config.duration, 2500)
+			: Math.min(config.duration, 4000);
+
 		// Audio feedback
 		if (soundEnabled) {
 			playStatusSound(statusCode);
 		}
-		
+
 		// Minimal haptic feedback
 		if (vibrationEnabled) {
 			// Use standard vibration for all cases, no special handling for duplicates
 			triggerStatusVibration(statusCode);
 		}
-		
+
 		// Start progress animation
 		statusProgress = 100;
 		statusProgressTimer = setInterval(() => {
-			statusProgress -= (100 / (displayDuration / 100));
+			statusProgress -= 100 / (displayDuration / 100);
 			if (statusProgress <= 0) {
 				clearStatusDisplay();
 			}
 		}, 100);
-		
+
 		// Auto-hide after duration
 		statusDisplayTimer = setTimeout(() => {
 			clearStatusDisplay();
 		}, displayDuration);
-		
+
 		// Reset duplicate count after successful non-duplicate scans
 		if (!isDuplicateSuccess) {
 			duplicateAttemptCount = 0;
 		}
 	}
-	
+
 	/**
 	 * Clear status display timers and reset state
 	 */
@@ -810,52 +826,52 @@
 			clearTimeout(statusDisplayTimer);
 			statusDisplayTimer = null;
 		}
-		
+
 		if (statusProgressTimer) {
 			clearInterval(statusProgressTimer);
 			statusProgressTimer = null;
 		}
-		
+
 		currentStatus = null;
 		statusProgress = 100;
-		
+
 		// Clear last status hash after a delay to allow new statuses
 		setTimeout(() => {
 			lastStatusHash = '';
 		}, 1000);
 	}
-	
+
 	/**
 	 * Get appropriate icon component for status
 	 */
 	function getStatusIcon(statusCode: StatusCode) {
 		const iconMap: Record<StatusCode, any> = {
-			'CHECKIN_SUCCESS': IconCheck,
-			'CHECKOUT_SUCCESS': IconCheck,
-			'ALREADY_CHECKED_IN': IconInfoCircle,
-			'ALREADY_CHECKED_OUT': IconInfoCircle,
-			'ALREADY_COMPLETED': IconInfoCircle,
-			'REPEATED_DUPLICATE_ATTEMPT': IconAlertTriangle,
-			'FACULTY_RESTRICTION': IconShieldExclamation,
-			'ACTIVITY_NOT_ONGOING': IconClock,
-			'ACTIVITY_EXPIRED': IconClockX,
-			'ACTIVITY_NOT_STARTED': IconClock,
-			'MAX_PARTICIPANTS_REACHED': IconUsers,
-			'NOT_CHECKED_IN': IconUserCheck,
-			'NOT_CHECKED_IN_YET': IconUserCheck,
-			'STUDENT_ACCOUNT_INACTIVE': IconUserX,
-			'QR_EXPIRED': IconQrcodeOff,
-			'INVALID_CHECKOUT_STATUS': IconX,
-			'ACTIVITY_NOT_FOUND': IconAlertTriangle,
-			'STUDENT_NOT_FOUND': IconUserX,
-			'QR_INVALID': IconQrcodeOff,
-			'DEPARTMENT_NOT_FOUND': IconBuilding,
-			'NO_DEPARTMENT': IconBuilding,
-			'AUTH_ERROR': IconShieldX,
-			'VALIDATION_ERROR': IconAlertTriangle,
-			'INTERNAL_ERROR': IconAlertTriangle
+			CHECKIN_SUCCESS: IconCheck,
+			CHECKOUT_SUCCESS: IconCheck,
+			ALREADY_CHECKED_IN: IconInfoCircle,
+			ALREADY_CHECKED_OUT: IconInfoCircle,
+			ALREADY_COMPLETED: IconInfoCircle,
+			REPEATED_DUPLICATE_ATTEMPT: IconAlertTriangle,
+			FACULTY_RESTRICTION: IconShieldExclamation,
+			ACTIVITY_NOT_ONGOING: IconClock,
+			ACTIVITY_EXPIRED: IconClockX,
+			ACTIVITY_NOT_STARTED: IconClock,
+			MAX_PARTICIPANTS_REACHED: IconUsers,
+			NOT_CHECKED_IN: IconUserCheck,
+			NOT_CHECKED_IN_YET: IconUserCheck,
+			STUDENT_ACCOUNT_INACTIVE: IconUserX,
+			QR_EXPIRED: IconQrcodeOff,
+			INVALID_CHECKOUT_STATUS: IconX,
+			ACTIVITY_NOT_FOUND: IconAlertTriangle,
+			STUDENT_NOT_FOUND: IconUserX,
+			QR_INVALID: IconQrcodeOff,
+			DEPARTMENT_NOT_FOUND: IconBuilding,
+			NO_DEPARTMENT: IconBuilding,
+			AUTH_ERROR: IconShieldX,
+			VALIDATION_ERROR: IconAlertTriangle,
+			INTERNAL_ERROR: IconAlertTriangle
 		};
-		
+
 		return iconMap[statusCode] || IconAlertTriangle;
 	}
 
@@ -937,7 +953,7 @@
 			if (!browser) {
 				return false; // Skip validation on server-side
 			}
-			
+
 			const decoded = atob(qrData);
 			const obj = JSON.parse(decoded);
 			// Check if it has required fields
@@ -1013,7 +1029,7 @@
 				category: 'error' as const
 			}
 		};
-		
+
 		displayStatus(invalidResult);
 		console.log('Invalid code detected:', {
 			data,
@@ -1158,7 +1174,7 @@
 		const deviceType = debugInfo.deviceType;
 		const isDesktop = debugInfo.isDesktop;
 		const orientation = getDeviceOrientation();
-		
+
 		console.log('Camera constraints calculation:', {
 			deviceType,
 			isDesktop,
@@ -1381,10 +1397,12 @@
 			<div class="relative">
 				<div
 					class="relative overflow-hidden rounded-lg border-2 border-dashed bg-muted {debugInfo.isDesktop
-						? 'aspect-video' 
+						? 'aspect-video'
 						: debugInfo.deviceOrientation === 'portrait'
 							? 'aspect-[3/4]'
-							: 'aspect-video'} max-h-[600px] min-h-[300px] {debugInfo.isDesktop ? 'max-w-2xl mx-auto' : ''}"
+							: 'aspect-video'} max-h-[600px] min-h-[300px] {debugInfo.isDesktop
+						? 'mx-auto max-w-2xl'
+						: ''}"
 					id="video-container"
 				>
 					{#if cameraStatus === 'active' || cameraStatus === 'requesting'}
@@ -1440,7 +1458,9 @@
 						{#if import.meta.env.DEV}
 							<div class="absolute top-2 left-2 z-30 rounded bg-black/70 p-2 text-xs text-white">
 								Status: {cameraStatus}<br />
-								Device: {debugInfo.deviceType} ({debugInfo.isDesktop ? 'Desktop' : 'Mobile/Tablet'})<br />
+								Device: {debugInfo.deviceType} ({debugInfo.isDesktop
+									? 'Desktop'
+									: 'Mobile/Tablet'})<br />
 								Orientation: {debugInfo.deviceOrientation}<br />
 								Stream: {debugInfo.streamActive ? 'Yes' : 'No'}<br />
 								Video: {videoElement?.videoWidth || 0}x{videoElement?.videoHeight || 0}<br />
@@ -1559,28 +1579,37 @@
 
 			<!-- Enhanced Status Display -->
 			{#if currentStatus}
-				{@const statusCode = currentStatus.error?.code || (currentStatus.success ? 'CHECKIN_SUCCESS' : 'INTERNAL_ERROR')}
+				{@const statusCode =
+					currentStatus.error?.code ||
+					(currentStatus.success ? 'CHECKIN_SUCCESS' : 'INTERNAL_ERROR')}
 				{@const config = getStatusConfig(statusCode)}
 				{@const StatusIcon = getStatusIcon(statusCode)}
-				
-				<div class="relative overflow-hidden rounded-lg border-2 {config.borderColor} {config.bgColor} p-4 transition-all duration-300">
+
+				<div
+					class="relative overflow-hidden rounded-lg border-2 {config.borderColor} {config.bgColor} p-4 transition-all duration-300"
+				>
 					<!-- Progress bar -->
-					<div class="absolute top-0 left-0 h-1 {config.borderColor.replace('border-', 'bg-')} transition-all duration-100" 
-						 style="width: {statusProgress}%"></div>
-					
+					<div
+						class="absolute top-0 left-0 h-1 {config.borderColor.replace(
+							'border-',
+							'bg-'
+						)} transition-all duration-100"
+						style="width: {statusProgress}%"
+					></div>
+
 					<div class="flex items-start gap-3">
 						<!-- Status Icon -->
 						<div class="flex-shrink-0 {config.iconColor}">
 							<StatusIcon class="size-6" />
 						</div>
-						
+
 						<!-- Status Content -->
-						<div class="flex-1 min-w-0">
+						<div class="min-w-0 flex-1">
 							<!-- Main message -->
 							<div class="font-medium {config.color} mb-1">
 								{currentStatus.message}
 							</div>
-							
+
 							<!-- User information for successful scans -->
 							{#if currentStatus.success && currentStatus.data}
 								<div class="text-sm {config.color.replace('700', '600')} space-y-1">
@@ -1593,23 +1622,27 @@
 											{/if}
 										</div>
 									{/if}
-									
+
 									{#if currentStatus.data.checked_in_at || currentStatus.data.checked_out_at}
 										<div class="flex items-center gap-2">
 											<IconClock class="size-4" />
 											<span class="text-xs">
-												{new Date(currentStatus.data.checked_in_at || currentStatus.data.checked_out_at || '').toLocaleString('th-TH', { 
-													day: '2-digit', 
-													month: '2-digit', 
-													hour: '2-digit', 
-													minute: '2-digit' 
+												{new Date(
+													currentStatus.data.checked_in_at ||
+														currentStatus.data.checked_out_at ||
+														''
+												).toLocaleString('th-TH', {
+													day: '2-digit',
+													month: '2-digit',
+													hour: '2-digit',
+													minute: '2-digit'
 												})}
 											</span>
 										</div>
 									{/if}
 								</div>
 							{/if}
-							
+
 							<!-- Minimal additional details for errors -->
 							{#if currentStatus.error?.details && formatStatusDetails(currentStatus.error.details).length > 0}
 								<div class="mt-2 text-xs {config.color.replace('700', '600')} space-y-1">
@@ -1619,22 +1652,25 @@
 											<span>{detail}</span>
 										</div>
 									{/each}
-									
+
 									<!-- Simplified flow violation warning -->
 									{#if currentStatus.error?.category === 'flow_violation'}
-										<div class="mt-2 p-2 bg-red-50 border border-red-200 rounded text-red-700">
-											<div class="text-xs font-medium mb-1">⚠️ ไม่สามารถดำเนินการได้</div>
+										<div class="mt-2 rounded border border-red-200 bg-red-50 p-2 text-red-700">
+											<div class="mb-1 text-xs font-medium">⚠️ ไม่สามารถดำเนินการได้</div>
 											<p class="text-xs">หลังเช็คเอาท์แล้ว ไม่สามารถเช็คอินอีกครั้งได้</p>
 										</div>
 									{/if}
 								</div>
 							{/if}
 						</div>
-						
+
 						<!-- Manual close button -->
-						<button 
+						<button
 							onclick={clearStatusDisplay}
-							class="flex-shrink-0 {config.color.replace('700', '400')} hover:{config.color.replace('700', '600')} transition-colors"
+							class="flex-shrink-0 {config.color.replace('700', '400')} hover:{config.color.replace(
+								'700',
+								'600'
+							)} transition-colors"
 							type="button"
 						>
 							<IconX class="size-4" />
@@ -1648,7 +1684,7 @@
 				<!-- Mode toggle with enhanced visual feedback -->
 				<div class="inline-flex overflow-hidden rounded-md border bg-background">
 					<button
-						class={`px-4 py-2 text-sm font-medium transition-all duration-200 ${scanMode === 'checkin' ? 'bg-green-600 text-white shadow-md' : 'hover:bg-muted text-muted-foreground hover:text-foreground'}`}
+						class={`px-4 py-2 text-sm font-medium transition-all duration-200 ${scanMode === 'checkin' ? 'bg-green-600 text-white shadow-md' : 'text-muted-foreground hover:bg-muted hover:text-foreground'}`}
 						onclick={() => {
 							scanMode = 'checkin';
 							duplicateAttemptCount = 0; // Reset duplicate count when changing modes
@@ -1659,13 +1695,13 @@
 					>
 						<div class="flex items-center gap-2">
 							{#if scanMode === 'checkin'}
-								<div class="w-2 h-2 bg-white rounded-full"></div>
+								<div class="h-2 w-2 rounded-full bg-white"></div>
 							{/if}
 							เช็คอิน
 						</div>
 					</button>
 					<button
-						class={`px-4 py-2 text-sm font-medium transition-all duration-200 ${scanMode === 'checkout' ? 'bg-orange-600 text-white shadow-md' : 'hover:bg-muted text-muted-foreground hover:text-foreground'}`}
+						class={`px-4 py-2 text-sm font-medium transition-all duration-200 ${scanMode === 'checkout' ? 'bg-orange-600 text-white shadow-md' : 'text-muted-foreground hover:bg-muted hover:text-foreground'}`}
 						onclick={() => {
 							scanMode = 'checkout';
 							duplicateAttemptCount = 0; // Reset duplicate count when changing modes
@@ -1676,15 +1712,15 @@
 					>
 						<div class="flex items-center gap-2">
 							{#if scanMode === 'checkout'}
-								<div class="w-2 h-2 bg-white rounded-full"></div>
+								<div class="h-2 w-2 rounded-full bg-white"></div>
 							{/if}
 							เช็คเอาท์
 						</div>
 					</button>
 				</div>
-				
+
 				<!-- Mode indicator -->
-				<div class="text-xs text-muted-foreground text-center">
+				<div class="text-center text-xs text-muted-foreground">
 					{#if scanMode === 'checkin'}
 						<span class="text-green-600">โหมดเช็คอิน - สำหรับการเข้าร่วมกิจกรรม</span>
 					{:else}
@@ -1693,35 +1729,27 @@
 				</div>
 
 				<!-- Camera controls with status indicators -->
-				<div class="flex justify-center items-center gap-3">
+				<div class="flex items-center justify-center gap-3">
 					{#if cameraStatus === 'idle' || cameraStatus === 'error'}
-						<Button 
-							onclick={startCamera} 
-							disabled={!activity_id}
-							class="px-6 py-2 font-medium"
-						>
+						<Button onclick={startCamera} disabled={!activity_id} class="px-6 py-2 font-medium">
 							<IconCamera class="mr-2 size-4" />
 							เริ่มสแกน
 						</Button>
 					{:else if cameraStatus === 'active' || cameraStatus === 'requesting'}
-						<Button 
-							onclick={stopCamera} 
-							variant="outline"
-							class="px-6 py-2 font-medium"
-						>
+						<Button onclick={stopCamera} variant="outline" class="px-6 py-2 font-medium">
 							<IconCameraOff class="mr-2 size-4" />
 							หยุดสแกน
 						</Button>
-						
+
 						<!-- Reset duplicate counter button -->
 						{#if duplicateAttemptCount > 0}
-							<Button 
+							<Button
 								onclick={() => {
 									duplicateAttemptCount = 0;
 									recentlyScannedUsers.clear();
 									clearStatusDisplay();
 								}}
-								variant="ghost" 
+								variant="ghost"
 								size="sm"
 								class="text-orange-600 hover:text-orange-800"
 							>
@@ -1749,19 +1777,19 @@
 					<div class="space-y-2">
 						<p>วาง QR Code ของนักศึกษาให้อยู่ในกรอบเพื่อสแกน</p>
 						<p>ระบบจะประมวลผลอัตโนมัติเมื่อตรวจพบ QR Code</p>
-						
+
 						<!-- Minimal recent activity indicator -->
 						{#if recentlyScannedUsers.size > 0}
-							<div class="mt-2 p-2 bg-green-50 border border-green-200 rounded-md">
+							<div class="mt-2 rounded-md border border-green-200 bg-green-50 p-2">
 								<div class="text-xs text-green-700">
 									✅ สแกนล่าสุด: {recentlyScannedUsers.size} คน
 								</div>
 							</div>
 						{/if}
-						
+
 						<!-- Minimal duplicate notice (only for excessive duplicates) -->
 						{#if duplicateAttemptCount > 3}
-							<div class="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded-md">
+							<div class="mt-2 rounded-md border border-yellow-200 bg-yellow-50 p-2">
 								<div class="text-xs text-yellow-700">
 									ℹ️ การสแกนซ้ำ {duplicateAttemptCount} ครั้ง (ปกติ)
 								</div>
@@ -1776,7 +1804,11 @@
 						<p class="mb-1 text-xs font-semibold">Debug Info:</p>
 						<div class="space-y-1 text-xs">
 							<p>Camera Status: {cameraStatus}</p>
-							<p>Device Type: {debugInfo.deviceType} ({debugInfo.isDesktop ? 'Desktop' : 'Mobile/Tablet'})</p>
+							<p>
+								Device Type: {debugInfo.deviceType} ({debugInfo.isDesktop
+									? 'Desktop'
+									: 'Mobile/Tablet'})
+							</p>
 							<p>Orientation: {debugInfo.deviceOrientation}</p>
 							<p>Request In Progress: {cameraRequestInProgress}</p>
 							<p>Retry Count: {retryCount}/{maxRetries}</p>

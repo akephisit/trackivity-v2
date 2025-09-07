@@ -15,9 +15,9 @@ export interface Activity {
 	current_participants: number;
 	status: ActivityStatus;
 	organization_id?: string;
-    organization_name?: string;
-    organizer_id?: string;
-    organizer_name?: string;
+	organization_name?: string;
+	organizer_id?: string;
+	organizer_name?: string;
 	created_by: string;
 	created_by_name: string;
 	created_at: string;
@@ -34,7 +34,7 @@ export interface Activity {
 	end_time_only?: string;
 	activity_type?: ActivityType;
 	hours?: number;
-    organizer?: string; // deprecated in API input; still returned for display
+	organizer?: string; // deprecated in API input; still returned for display
 	academic_year?: string;
 	name?: string;
 	require_score?: boolean;
@@ -53,9 +53,9 @@ export interface ActivityCreateData {
 	start_time: string; // ISO datetime
 	end_time: string; // ISO datetime
 	max_participants?: number;
-    organization_id?: string;
-    organizer_id?: string;
-    department_id?: string;
+	organization_id?: string;
+	organizer_id?: string;
+	department_id?: string;
 }
 
 // For updating activities
@@ -67,9 +67,9 @@ export interface ActivityUpdateData {
 	end_time?: string;
 	max_participants?: number;
 	status?: ActivityStatus;
-    organization_id?: string;
-    organizer_id?: string;
-    department_id?: string;
+	organization_id?: string;
+	organizer_id?: string;
+	department_id?: string;
 }
 
 // Participation data

@@ -11,14 +11,14 @@ export const POST: RequestHandler = async ({ cookies }) => {
 	try {
 		// Get session token before deleting it
 		const sessionToken = cookies.get('session_token');
-		
+
 		// Mark session as inactive in database
 		if (sessionToken) {
 			try {
 				// Extract session ID from JWT token payload
 				const decoded = jwt.verify(sessionToken, env.JWT_SECRET!) as any;
 				const sessionId = decoded.session_id;
-				
+
 				if (sessionId) {
 					await deactivateSession(sessionId);
 				}

@@ -57,7 +57,6 @@ export const GET: RequestHandler = async ({ cookies }) => {
 				});
 			}
 
-
 			// Build permissions array based on admin status
 			const permissions: Permission[] = [];
 			if (decoded.is_admin) {

@@ -1,14 +1,7 @@
 <script lang="ts">
 	import { Button } from '$lib/components/ui/button';
 	import { cn } from '$lib/utils';
-	import {
-		IconLogout,
-		IconSun,
-		IconMoon,
-		IconMenu,
-		IconX,
-		IconShield
-	} from '@tabler/icons-svelte';
+	import { IconLogout, IconSun, IconMoon, IconMenu, IconX, IconShield } from '@tabler/icons-svelte';
 	import { mode, setMode } from 'mode-watcher';
 	import { toast } from 'svelte-sonner';
 	import { goto } from '$app/navigation';
@@ -138,14 +131,16 @@
 
 	<div class="flex">
 		<!-- Desktop Sidebar -->
-		<div class="hidden lg:block fixed top-0 left-0 h-screen w-64 border-r bg-card">
-			<aside class="relative h-full flex flex-col overflow-hidden">
+		<div class="fixed top-0 left-0 hidden h-screen w-64 border-r bg-card lg:block">
+			<aside class="relative flex h-full flex-col overflow-hidden">
 				<!-- Logo -->
 				<div class="border-b p-6">
 					{#if showLogo}
 						{@const IconComponent = logoIcon}
 						<div class="flex items-center space-x-3">
-							<div class="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-primary">
+							<div
+								class="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-primary"
+							>
 								<IconComponent class="!h-5 !w-5 text-primary-foreground" />
 							</div>
 							<div class="flex flex-col items-start">
@@ -164,7 +159,7 @@
 				</div>
 
 				<!-- Navigation -->
-				<nav class="flex-1 overflow-y-auto space-y-2 px-4 py-6 pb-28">
+				<nav class="flex-1 space-y-2 overflow-y-auto px-4 py-6 pb-28">
 					{#each navigationItems as item}
 						{@const IconComponent = item.icon}
 						<a
@@ -183,7 +178,9 @@
 
 					{#if quickActions.length > 0}
 						<div class="pt-6">
-							<p class="px-3 pb-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+							<p
+								class="px-3 pb-2 text-xs font-semibold tracking-wide text-muted-foreground uppercase"
+							>
 								การดำเนินการด่วน
 							</p>
 							{#each quickActions as action}
@@ -207,7 +204,7 @@
 
 				<!-- User Info -->
 				{#if user}
-					<div class="border-t p-4 shrink-0">
+					<div class="shrink-0 border-t p-4">
 						<div class="space-y-2">
 							<div class="flex items-center space-x-3">
 								<div class="flex-shrink-0">
@@ -219,7 +216,9 @@
 								</div>
 								<div class="min-w-0 flex-1">
 									<p class="truncate text-sm font-medium text-foreground">
-										{user.first_name ? `${user.first_name} ${user.last_name || ''}`.trim() : user.email || 'User'}
+										{user.first_name
+											? `${user.first_name} ${user.last_name || ''}`.trim()
+											: user.email || 'User'}
 									</p>
 								</div>
 							</div>
@@ -245,7 +244,7 @@
 		<!-- Mobile Sidebar -->
 		<aside
 			class={cn(
-				'fixed top-0 left-0 z-50 h-screen w-64 transform flex flex-col overflow-hidden border-r bg-card transition-transform duration-300 lg:hidden',
+				'fixed top-0 left-0 z-50 flex h-screen w-64 transform flex-col overflow-hidden border-r bg-card transition-transform duration-300 lg:hidden',
 				mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
 			)}
 		>
@@ -254,7 +253,9 @@
 				<div class="flex items-center space-x-3">
 					{#if showLogo}
 						{@const IconComponent = logoIcon}
-						<div class="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-primary">
+						<div
+							class="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-primary"
+						>
 							<IconComponent class="!h-5 !w-5 text-primary-foreground" />
 						</div>
 					{/if}
@@ -271,7 +272,7 @@
 			</div>
 
 			<!-- Navigation -->
-			<nav class="flex-1 overflow-y-auto space-y-2 px-4 py-6">
+			<nav class="flex-1 space-y-2 overflow-y-auto px-4 py-6">
 				{#each navigationItems as item}
 					{@const IconComponent = item.icon}
 					<a
@@ -291,7 +292,9 @@
 
 				{#if quickActions.length > 0}
 					<div class="pt-6">
-						<p class="px-3 pb-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+						<p
+							class="px-3 pb-2 text-xs font-semibold tracking-wide text-muted-foreground uppercase"
+						>
 							การดำเนินการด่วน
 						</p>
 						{#each quickActions as action}
@@ -316,7 +319,7 @@
 
 			<!-- User Info -->
 			{#if user}
-				<div class="border-t p-4 shrink-0">
+				<div class="shrink-0 border-t p-4">
 					<div class="space-y-2">
 						<div class="flex items-center space-x-3">
 							<div class="flex-shrink-0">
@@ -328,7 +331,9 @@
 							</div>
 							<div class="min-w-0 flex-1">
 								<p class="truncate text-sm font-medium text-foreground">
-									{user.first_name ? `${user.first_name} ${user.last_name || ''}`.trim() : user.email || 'User'}
+									{user.first_name
+										? `${user.first_name} ${user.last_name || ''}`.trim()
+										: user.email || 'User'}
 								</p>
 							</div>
 						</div>
@@ -351,9 +356,9 @@
 		</aside>
 
 		<!-- Main Content -->
-		<main class="flex-1 lg:ml-64 min-h-screen overflow-x-hidden">
+		<main class="min-h-screen flex-1 overflow-x-hidden lg:ml-64">
 			<!-- Desktop Top Bar -->
-			<header class="hidden lg:block fixed top-0 left-64 right-0 z-40 border-b bg-card">
+			<header class="fixed top-0 right-0 left-64 z-40 hidden border-b bg-card lg:block">
 				<div class="flex items-center justify-between px-6 py-3">
 					<h1 class="text-lg font-semibold">{appTitle}</h1>
 					<div class="flex items-center gap-2">
@@ -373,8 +378,10 @@
 					</div>
 				</div>
 			</header>
-			
-			<div class="pt-4 lg:pt-20 container mx-auto max-w-7xl px-4 py-6 lg:px-6 lg:py-4 w-full overflow-x-hidden">
+
+			<div
+				class="container mx-auto w-full max-w-7xl overflow-x-hidden px-4 py-6 pt-4 lg:px-6 lg:py-4 lg:pt-20"
+			>
 				{@render children()}
 			</div>
 		</main>

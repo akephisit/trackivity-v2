@@ -26,6 +26,8 @@ async function getUsersFromDb(
 			student_id: users.studentId,
 			department_id: users.departmentId,
 			status: users.status,
+			last_login_at: users.lastLoginAt,
+			login_count: users.loginCount,
 			created_at: users.createdAt,
 			updated_at: users.updatedAt,
 			department_name: departments.name,
@@ -328,7 +330,7 @@ export const load: PageServerLoad = async (event) => {
 				role,
 				phone: undefined, // Not in database schema yet
 				avatar: undefined, // Not in database schema yet
-				last_login: undefined, // TODO: Add last login tracking
+				last_login: u.last_login_at ? new Date(u.last_login_at).toISOString() : null,
 				email_verified_at: undefined, // Not in database schema yet
 				created_at: u.created_at ? new Date(u.created_at).toISOString() : new Date().toISOString(),
 				updated_at: u.updated_at ? new Date(u.updated_at).toISOString() : new Date().toISOString(),

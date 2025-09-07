@@ -57,7 +57,6 @@
 	// Track if form has changes to show save button
 	let hasFormChanges = $state(false);
 
-
 	// Password form data
 	let passwordData: ChangePasswordFormData = $state({
 		current_password: '',
@@ -76,22 +75,20 @@
 		}
 	});
 
-	// Watch for form changes to show/hide save button  
+	// Watch for form changes to show/hide save button
 	$effect(() => {
 		if ($currentUser && editing) {
-			hasFormChanges = (
+			hasFormChanges =
 				formData.prefix !== ($currentUser.prefix || '') ||
 				formData.first_name !== ($currentUser.first_name || '') ||
 				formData.last_name !== ($currentUser.last_name || '') ||
 				formData.email !== ($currentUser.email || '') ||
 				formData.phone !== ($currentUser.phone || '') ||
-				formData.address !== ($currentUser.address || '')
-			);
+				formData.address !== ($currentUser.address || '');
 		} else {
 			hasFormChanges = false;
 		}
 	});
-
 
 	function initializeFormData() {
 		if ($currentUser) {
@@ -253,7 +250,7 @@
 
 	function getPrefixLabel(prefixValue?: string): string {
 		if (!prefixValue) return 'ไม่ระบุ';
-		const prefix = PrefixOptions.find(p => p.value === prefixValue);
+		const prefix = PrefixOptions.find((p) => p.value === prefixValue);
 		return prefix ? prefix.label : 'ไม่ระบุ';
 	}
 
@@ -264,36 +261,45 @@
 	function isFormValid(): boolean {
 		// Check required fields - prefix is optional in validation but required fields must have values
 		const hasRequiredFields = !!(
-			formData.first_name && 
+			formData.first_name &&
 			formData.first_name.trim() !== '' &&
-			formData.last_name && 
+			formData.last_name &&
 			formData.last_name.trim() !== '' &&
-			formData.email && 
+			formData.email &&
 			formData.email.trim() !== ''
 		);
-		
+
 		// If prefix is provided, it must not be empty
 		const prefixValid = !formData.prefix || formData.prefix.trim() !== '';
-		
+
 		return hasRequiredFields && prefixValid;
 	}
 
 	function isPasswordFormValid(): boolean {
 		// Check if all fields are filled
-		const allFieldsFilled = !!(passwordData.current_password && passwordData.new_password && passwordData.confirm_password);
-		
+		const allFieldsFilled = !!(
+			passwordData.current_password &&
+			passwordData.new_password &&
+			passwordData.confirm_password
+		);
+
 		// Check if new password meets requirements
-		const newPasswordValid = passwordData.new_password.length >= 8 && 
+		const newPasswordValid =
+			passwordData.new_password.length >= 8 &&
 			/^(?=.*[A-Za-z])(?=.*\d).{8,}$/.test(passwordData.new_password);
-		
+
 		// Check if passwords match
 		const passwordsMatch = passwordData.new_password === passwordData.confirm_password;
-		
+
 		return allFieldsFilled && newPasswordValid && passwordsMatch;
 	}
 
 	function getPasswordMatchError(): string {
-		if (passwordData.confirm_password && passwordData.new_password && passwordData.new_password !== passwordData.confirm_password) {
+		if (
+			passwordData.confirm_password &&
+			passwordData.new_password &&
+			passwordData.new_password !== passwordData.confirm_password
+		) {
 			return 'การยืนยันรหัสผ่านไม่ตรงกัน';
 		}
 		return '';
@@ -301,15 +307,15 @@
 
 	function getNewPasswordStrengthError(): string {
 		if (!passwordData.new_password) return '';
-		
+
 		if (passwordData.new_password.length < 8) {
 			return 'รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร';
 		}
-		
+
 		if (!/^(?=.*[A-Za-z])(?=.*\d).{8,}$/.test(passwordData.new_password)) {
 			return 'รหัสผ่านต้องมีตัวอักษรและตัวเลขอย่างน้อย 1 ตัว';
 		}
-		
+
 		return '';
 	}
 </script>
@@ -360,8 +366,11 @@
 							<div class="space-y-2">
 								<Label for="prefix">คำนำหน้า <span class="text-red-500">*</span></Label>
 								<Select.Root type="single" bind:value={formData.prefix}>
-									<Select.Trigger class={getFieldError('prefix', fieldErrors) ? 'border-red-500' : ''}>
-										{PrefixOptions.find((opt) => opt.value === formData.prefix)?.label ?? 'เลือกคำนำหน้า'}
+									<Select.Trigger
+										class={getFieldError('prefix', fieldErrors) ? 'border-red-500' : ''}
+									>
+										{PrefixOptions.find((opt) => opt.value === formData.prefix)?.label ??
+											'เลือกคำนำหน้า'}
 									</Select.Trigger>
 									<Select.Content>
 										{#each PrefixOptions as option}
@@ -379,9 +388,9 @@
 							<div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
 								<div class="space-y-2">
 									<Label for="first_name">ชื่อ <span class="text-red-500">*</span></Label>
-									<Input 
-										id="first_name" 
-										bind:value={formData.first_name} 
+									<Input
+										id="first_name"
+										bind:value={formData.first_name}
 										placeholder="กรอกชื่อ"
 										class={getFieldError('first_name', fieldErrors) ? 'border-red-500' : ''}
 									/>
@@ -391,9 +400,9 @@
 								</div>
 								<div class="space-y-2">
 									<Label for="last_name">นามสกุล <span class="text-red-500">*</span></Label>
-									<Input 
-										id="last_name" 
-										bind:value={formData.last_name} 
+									<Input
+										id="last_name"
+										bind:value={formData.last_name}
 										placeholder="กรอกนามสกุล"
 										class={getFieldError('last_name', fieldErrors) ? 'border-red-500' : ''}
 									/>
@@ -454,9 +463,9 @@
 
 							<!-- Action buttons - always show save/cancel when editing -->
 							<div class="flex gap-2">
-								<Button 
-									onclick={saveProfile} 
-									disabled={loading || !hasFormChanges || !isFormValid()} 
+								<Button
+									onclick={saveProfile}
+									disabled={loading || !hasFormChanges || !isFormValid()}
 									class="flex-1"
 								>
 									{#if loading}
@@ -472,10 +481,10 @@
 								</Button>
 							</div>
 							{#if !hasFormChanges}
-								<p class="text-sm text-muted-foreground text-center">ไม่มีการเปลี่ยนแปลงข้อมูล</p>
+								<p class="text-center text-sm text-muted-foreground">ไม่มีการเปลี่ยนแปลงข้อมูล</p>
 							{/if}
 							{#if !isFormValid()}
-								<p class="text-sm text-red-500 text-center">กรุณากรอกข้อมูลที่จำเป็นให้ครบถ้วน</p>
+								<p class="text-center text-sm text-red-500">กรุณากรอกข้อมูลที่จำเป็นให้ครบถ้วน</p>
 							{/if}
 						</div>
 					{:else}
@@ -585,7 +594,9 @@
 				<CardContent class="space-y-4">
 					<div class="space-y-4">
 						<div class="space-y-2">
-							<Label for="current_password">รหัสผ่านปัจจุบัน <span class="text-red-500">*</span></Label>
+							<Label for="current_password"
+								>รหัสผ่านปัจจุบัน <span class="text-red-500">*</span></Label
+							>
 							<div class="relative">
 								<Input
 									id="current_password"
@@ -593,13 +604,15 @@
 									bind:value={passwordData.current_password}
 									placeholder="กรอกรหัสผ่านปัจจุบัน"
 									autocomplete="current-password"
-									class={getFieldError('current_password', passwordFieldErrors) ? 'border-red-500' : ''}
+									class={getFieldError('current_password', passwordFieldErrors)
+										? 'border-red-500'
+										: ''}
 								/>
 								<Button
 									variant="ghost"
 									size="sm"
-									class="absolute right-0 top-0 h-full px-3"
-									onclick={() => showCurrentPassword = !showCurrentPassword}
+									class="absolute top-0 right-0 h-full px-3"
+									onclick={() => (showCurrentPassword = !showCurrentPassword)}
 									type="button"
 								>
 									{#if showCurrentPassword}
@@ -610,7 +623,9 @@
 								</Button>
 							</div>
 							{#if getFieldError('current_password', passwordFieldErrors)}
-								<p class="text-sm text-red-500">{getFieldError('current_password', passwordFieldErrors)}</p>
+								<p class="text-sm text-red-500">
+									{getFieldError('current_password', passwordFieldErrors)}
+								</p>
 							{/if}
 						</div>
 
@@ -623,13 +638,20 @@
 									bind:value={passwordData.new_password}
 									placeholder="กรอกรหัสผ่านใหม่ (อย่างน้อย 8 ตัวอักษร มีตัวอักษรและตัวเลข)"
 									autocomplete="new-password"
-									class={getFieldError('new_password', passwordFieldErrors) || getNewPasswordStrengthError() ? 'border-red-500' : passwordData.new_password && passwordData.new_password.length >= 8 && /^(?=.*[A-Za-z])(?=.*\d).{8,}$/.test(passwordData.new_password) ? 'border-green-500' : ''}
+									class={getFieldError('new_password', passwordFieldErrors) ||
+									getNewPasswordStrengthError()
+										? 'border-red-500'
+										: passwordData.new_password &&
+											  passwordData.new_password.length >= 8 &&
+											  /^(?=.*[A-Za-z])(?=.*\d).{8,}$/.test(passwordData.new_password)
+											? 'border-green-500'
+											: ''}
 								/>
 								<Button
 									variant="ghost"
 									size="sm"
-									class="absolute right-0 top-0 h-full px-3"
-									onclick={() => showNewPassword = !showNewPassword}
+									class="absolute top-0 right-0 h-full px-3"
+									onclick={() => (showNewPassword = !showNewPassword)}
 									type="button"
 								>
 									{#if showNewPassword}
@@ -640,7 +662,9 @@
 								</Button>
 							</div>
 							{#if getFieldError('new_password', passwordFieldErrors)}
-								<p class="text-sm text-red-500">{getFieldError('new_password', passwordFieldErrors)}</p>
+								<p class="text-sm text-red-500">
+									{getFieldError('new_password', passwordFieldErrors)}
+								</p>
 							{:else if getNewPasswordStrengthError()}
 								<p class="text-sm text-red-500">{getNewPasswordStrengthError()}</p>
 							{:else if passwordData.new_password && passwordData.new_password.length >= 8 && /^(?=.*[A-Za-z])(?=.*\d).{8,}$/.test(passwordData.new_password)}
@@ -649,7 +673,9 @@
 						</div>
 
 						<div class="space-y-2">
-							<Label for="confirm_password">ยืนยันรหัสผ่านใหม่ <span class="text-red-500">*</span></Label>
+							<Label for="confirm_password"
+								>ยืนยันรหัสผ่านใหม่ <span class="text-red-500">*</span></Label
+							>
 							<div class="relative">
 								<Input
 									id="confirm_password"
@@ -657,13 +683,20 @@
 									bind:value={passwordData.confirm_password}
 									placeholder="กรอกรหัสผ่านใหม่อีกครั้ง"
 									autocomplete="new-password"
-									class={getFieldError('confirm_password', passwordFieldErrors) || getPasswordMatchError() ? 'border-red-500' : passwordData.confirm_password && passwordData.new_password && passwordData.new_password === passwordData.confirm_password ? 'border-green-500' : ''}
+									class={getFieldError('confirm_password', passwordFieldErrors) ||
+									getPasswordMatchError()
+										? 'border-red-500'
+										: passwordData.confirm_password &&
+											  passwordData.new_password &&
+											  passwordData.new_password === passwordData.confirm_password
+											? 'border-green-500'
+											: ''}
 								/>
 								<Button
 									variant="ghost"
 									size="sm"
-									class="absolute right-0 top-0 h-full px-3"
-									onclick={() => showConfirmPassword = !showConfirmPassword}
+									class="absolute top-0 right-0 h-full px-3"
+									onclick={() => (showConfirmPassword = !showConfirmPassword)}
 									type="button"
 								>
 									{#if showConfirmPassword}
@@ -674,7 +707,9 @@
 								</Button>
 							</div>
 							{#if getFieldError('confirm_password', passwordFieldErrors)}
-								<p class="text-sm text-red-500">{getFieldError('confirm_password', passwordFieldErrors)}</p>
+								<p class="text-sm text-red-500">
+									{getFieldError('confirm_password', passwordFieldErrors)}
+								</p>
 							{:else if getPasswordMatchError()}
 								<p class="text-sm text-red-500">{getPasswordMatchError()}</p>
 							{:else if passwordData.confirm_password && passwordData.new_password && passwordData.new_password === passwordData.confirm_password}
@@ -690,7 +725,11 @@
 						{/if}
 
 						<div class="flex gap-2">
-							<Button onclick={changePassword} disabled={passwordLoading || !isPasswordFormValid()} class="flex-1">
+							<Button
+								onclick={changePassword}
+								disabled={passwordLoading || !isPasswordFormValid()}
+								class="flex-1"
+							>
 								{#if passwordLoading}
 									กำลังเปลี่ยน...
 								{:else}
@@ -698,16 +737,21 @@
 									เปลี่ยนรหัสผ่าน
 								{/if}
 							</Button>
-							<Button variant="outline" onclick={cancelPasswordChange} disabled={passwordLoading} class="flex-1">
+							<Button
+								variant="outline"
+								onclick={cancelPasswordChange}
+								disabled={passwordLoading}
+								class="flex-1"
+							>
 								<IconX class="mr-2 size-4" />
 								ยกเลิก
 							</Button>
 						</div>
-						
+
 						{#if !isPasswordFormValid() && (passwordData.current_password || passwordData.new_password || passwordData.confirm_password)}
-							<div class="mt-2 p-3 bg-muted/50 rounded-lg">
-								<p class="text-sm text-muted-foreground mb-2">กรุณาตรวจสอบ:</p>
-								<ul class="text-sm text-muted-foreground space-y-1">
+							<div class="mt-2 rounded-lg bg-muted/50 p-3">
+								<p class="mb-2 text-sm text-muted-foreground">กรุณาตรวจสอบ:</p>
+								<ul class="space-y-1 text-sm text-muted-foreground">
 									{#if !passwordData.current_password}
 										<li class="flex items-center gap-2">
 											<IconX class="size-3 text-red-500" />

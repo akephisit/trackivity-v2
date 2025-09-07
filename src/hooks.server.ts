@@ -166,9 +166,9 @@ export const handle: Handle = async ({ event, resolve }) => {
 
 			// Extract session ID from JWT payload
 			const sessionId = (decoded as any).session_id;
-			
+
 			// Update session last_accessed asynchronously (don't block request)
-			updateSessionLastAccessed(sessionId).catch(err => 
+			updateSessionLastAccessed(sessionId).catch((err) =>
 				console.warn('Failed to update session last accessed:', err)
 			);
 		} else {

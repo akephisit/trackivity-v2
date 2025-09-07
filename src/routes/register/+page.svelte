@@ -29,7 +29,7 @@
 	import { toast } from 'svelte-sonner';
 	import type { Department } from '$lib/types/admin';
 	import { BasicPrefixOptions } from '$lib/schemas/auth';
-    import MetaTags from '$lib/components/seo/MetaTags.svelte';
+	import MetaTags from '$lib/components/seo/MetaTags.svelte';
 
 	let { data } = $props();
 

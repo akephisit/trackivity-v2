@@ -2,23 +2,23 @@
 	import type { Activity } from '$lib/types/activity';
 	import { getActivityTypeDisplayName } from '$lib/utils/activity';
 	import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
-    import { Button } from '$lib/components/ui/button';
-    import { Badge } from '$lib/components/ui/badge';
-    import { Skeleton } from '$lib/components/ui/skeleton';
-    import { Alert, AlertDescription } from '$lib/components/ui/alert';
-    import { Tabs, TabsList, TabsTrigger } from '$lib/components/ui/tabs';
-    import { Input } from '$lib/components/ui/input';
-    import MetaTags from '$lib/components/seo/MetaTags.svelte';
-    import {
-        IconCalendarEvent,
-        IconClock,
-        IconUsers,
-        IconMapPin,
-        IconSearch,
-        IconAlertCircle,
-        IconChevronRight
-    } from '@tabler/icons-svelte';
-    import { goto } from '$app/navigation';
+	import { Button } from '$lib/components/ui/button';
+	import { Badge } from '$lib/components/ui/badge';
+	import { Skeleton } from '$lib/components/ui/skeleton';
+	import { Alert, AlertDescription } from '$lib/components/ui/alert';
+	import { Tabs, TabsList, TabsTrigger } from '$lib/components/ui/tabs';
+	import { Input } from '$lib/components/ui/input';
+	import MetaTags from '$lib/components/seo/MetaTags.svelte';
+	import {
+		IconCalendarEvent,
+		IconClock,
+		IconUsers,
+		IconMapPin,
+		IconSearch,
+		IconAlertCircle,
+		IconChevronRight
+	} from '@tabler/icons-svelte';
+	import { goto } from '$app/navigation';
 
 	const { data } = $props<{ data: { activities: Activity[] } }>();
 	let activities: Activity[] = $state(data?.activities ?? []);
@@ -121,7 +121,6 @@
 		}
 	}
 
-
 	function getActivityStatus(activity: Activity): {
 		text: string;
 		variant: 'default' | 'outline' | 'destructive';
@@ -158,7 +157,6 @@
 		}
 	}
 
-
 	function resetFilters() {
 		searchQuery = '';
 		selectedTab = 'all';
@@ -169,13 +167,13 @@
 		goto(`/student/activities/${activityId}`);
 	}
 
-    // Edit functionality is not available for students; handled in admin only
+	// Edit functionality is not available for students; handled in admin only
 </script>
 
 <MetaTags
-    title="กิจกรรมทั้งหมด"
-    description="เรียกดูกิจกรรมทั้งหมดที่เปิดให้ลงทะเบียนและกำลังจะมาถึง"
-    type="website"
+	title="กิจกรรมทั้งหมด"
+	description="เรียกดูกิจกรรมทั้งหมดที่เปิดให้ลงทะเบียนและกำลังจะมาถึง"
+	type="website"
 />
 
 <div class="space-y-6">
@@ -212,160 +210,156 @@
 					</TabsList>
 
 					<div class="mt-6">
-				<!-- Error State -->
-				{#if error}
-					<Alert variant="destructive">
-						<IconAlertCircle class="size-4" />
-						<AlertDescription>{error}</AlertDescription>
-					</Alert>
-					<!-- Loading State -->
-				{:else if loading}
-					<div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-						{#each Array(6) as _}
-							<Card>
-								<CardHeader>
-									<div class="space-y-2">
-										<Skeleton class="h-4 w-3/4" />
-										<Skeleton class="h-3 w-1/2" />
-									</div>
-								</CardHeader>
-								<CardContent>
-									<div class="space-y-2">
-										<Skeleton class="h-3 w-full" />
-										<Skeleton class="h-3 w-full" />
-										<Skeleton class="h-8 w-20" />
-									</div>
-								</CardContent>
-							</Card>
-						{/each}
-					</div>
-					<!-- Empty State -->
-				{:else if filteredActivities.length === 0}
-					<div class="py-12 text-center">
-						<IconCalendarEvent class="mx-auto mb-4 size-12 text-muted-foreground/50" />
-						<h3 class="mb-2 text-lg font-medium">ไม่พบกิจกรรม</h3>
-						<p class="text-muted-foreground">
-							{searchQuery ? 'ลองเปลี่ยนคำค้นหาหรือตัวกรอง' : 'ยังไม่มีกิจกรรมในระบบ'}
-						</p>
-						{#if searchQuery}
-							<Button
-								variant="outline"
-								onclick={resetFilters}
-								class="mt-4"
-							>
-								ล้างการค้นหา
-							</Button>
-						{/if}
-					</div>
-					<!-- Activities Grid -->
-				{:else}
-					<div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-						{#each filteredActivities as activity}
-							<Card
-								class="group cursor-pointer transition-shadow hover:shadow-md"
-								onclick={() => goToActivity(activity.id)}
-							>
-								<CardHeader class="pb-3">
-									<div class="flex items-start justify-between gap-2">
-										<CardTitle
-											class="line-clamp-2 text-base transition-colors group-hover:text-primary"
-										>
-											{activity.title || activity.activity_name || 'ไม่ระบุชื่อ'}
-										</CardTitle>
-										<div class="flex items-center gap-2">
-											{#if activity.activity_type}
-												<Badge variant={getActivityBadgeVariant(activity.activity_type)}>
-													{getActivityTypeDisplayName(activity.activity_type)}
-												</Badge>
+						<!-- Error State -->
+						{#if error}
+							<Alert variant="destructive">
+								<IconAlertCircle class="size-4" />
+								<AlertDescription>{error}</AlertDescription>
+							</Alert>
+							<!-- Loading State -->
+						{:else if loading}
+							<div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+								{#each Array(6) as _}
+									<Card>
+										<CardHeader>
+											<div class="space-y-2">
+												<Skeleton class="h-4 w-3/4" />
+												<Skeleton class="h-3 w-1/2" />
+											</div>
+										</CardHeader>
+										<CardContent>
+											<div class="space-y-2">
+												<Skeleton class="h-3 w-full" />
+												<Skeleton class="h-3 w-full" />
+												<Skeleton class="h-8 w-20" />
+											</div>
+										</CardContent>
+									</Card>
+								{/each}
+							</div>
+							<!-- Empty State -->
+						{:else if filteredActivities.length === 0}
+							<div class="py-12 text-center">
+								<IconCalendarEvent class="mx-auto mb-4 size-12 text-muted-foreground/50" />
+								<h3 class="mb-2 text-lg font-medium">ไม่พบกิจกรรม</h3>
+								<p class="text-muted-foreground">
+									{searchQuery ? 'ลองเปลี่ยนคำค้นหาหรือตัวกรอง' : 'ยังไม่มีกิจกรรมในระบบ'}
+								</p>
+								{#if searchQuery}
+									<Button variant="outline" onclick={resetFilters} class="mt-4">
+										ล้างการค้นหา
+									</Button>
+								{/if}
+							</div>
+							<!-- Activities Grid -->
+						{:else}
+							<div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+								{#each filteredActivities as activity}
+									<Card
+										class="group cursor-pointer transition-shadow hover:shadow-md"
+										onclick={() => goToActivity(activity.id)}
+									>
+										<CardHeader class="pb-3">
+											<div class="flex items-start justify-between gap-2">
+												<CardTitle
+													class="line-clamp-2 text-base transition-colors group-hover:text-primary"
+												>
+													{activity.title || activity.activity_name || 'ไม่ระบุชื่อ'}
+												</CardTitle>
+												<div class="flex items-center gap-2">
+													{#if activity.activity_type}
+														<Badge variant={getActivityBadgeVariant(activity.activity_type)}>
+															{getActivityTypeDisplayName(activity.activity_type)}
+														</Badge>
+													{/if}
+													<!-- Edit is not available for students -->
+												</div>
+											</div>
+											{#if activity.description}
+												<p class="mt-2 line-clamp-2 text-sm text-muted-foreground">
+													{activity.description}
+												</p>
 											{/if}
-                                    <!-- Edit is not available for students -->
-										</div>
-									</div>
-									{#if activity.description}
-										<p class="mt-2 line-clamp-2 text-sm text-muted-foreground">
-											{activity.description}
-										</p>
-									{/if}
-								</CardHeader>
+										</CardHeader>
 
-								<CardContent class="space-y-3">
-									<!-- Date and Time -->
-									<div class="flex items-center gap-2 text-sm text-muted-foreground">
-										<IconClock class="size-4 flex-shrink-0" />
-										<span class="line-clamp-1">
-											{formatDateRange(activity)}
-										</span>
-									</div>
+										<CardContent class="space-y-3">
+											<!-- Date and Time -->
+											<div class="flex items-center gap-2 text-sm text-muted-foreground">
+												<IconClock class="size-4 flex-shrink-0" />
+												<span class="line-clamp-1">
+													{formatDateRange(activity)}
+												</span>
+											</div>
 
-									<!-- Location -->
-									{#if activity.location}
-										<div class="flex items-center gap-2 text-sm text-muted-foreground">
-											<IconMapPin class="size-4 flex-shrink-0" />
-											<span class="line-clamp-1">{activity.location}</span>
-										</div>
-									{/if}
+											<!-- Location -->
+											{#if activity.location}
+												<div class="flex items-center gap-2 text-sm text-muted-foreground">
+													<IconMapPin class="size-4 flex-shrink-0" />
+													<span class="line-clamp-1">{activity.location}</span>
+												</div>
+											{/if}
 
-									<!-- Participants -->
-									{#if activity.max_participants || activity.current_participants}
-										<div class="flex items-center gap-2 text-sm text-muted-foreground">
-											<IconUsers class="size-4 flex-shrink-0" />
-											<span>
-												{activity.current_participants || 0}
-												{#if activity.max_participants}
-													/{activity.max_participants}
-												{/if}
-												คน
-											</span>
-										</div>
-									{/if}
+											<!-- Participants -->
+											{#if activity.max_participants || activity.current_participants}
+												<div class="flex items-center gap-2 text-sm text-muted-foreground">
+													<IconUsers class="size-4 flex-shrink-0" />
+													<span>
+														{activity.current_participants || 0}
+														{#if activity.max_participants}
+															/{activity.max_participants}
+														{/if}
+														คน
+													</span>
+												</div>
+											{/if}
 
-									<!-- Organization -->
-									{#if activity.organization_name}
-										<div class="flex items-center gap-2 text-sm text-muted-foreground">
-											<IconMapPin class="size-4 flex-shrink-0" />
-											<span class="line-clamp-1">{activity.organization_name}</span>
-										</div>
-									{/if}
+											<!-- Organization -->
+											{#if activity.organization_name}
+												<div class="flex items-center gap-2 text-sm text-muted-foreground">
+													<IconMapPin class="size-4 flex-shrink-0" />
+													<span class="line-clamp-1">{activity.organization_name}</span>
+												</div>
+											{/if}
 
-									<!-- Status and Action -->
-									<div class="flex items-center justify-between pt-2">
-										{#snippet statusBadge()}
-											{@const status = getActivityStatus(activity)}
-											<Badge variant={status.variant}>
-												{status.text}
-											</Badge>
-										{/snippet}
-										{@render statusBadge()}
+											<!-- Status and Action -->
+											<div class="flex items-center justify-between pt-2">
+												{#snippet statusBadge()}
+													{@const status = getActivityStatus(activity)}
+													<Badge variant={status.variant}>
+														{status.text}
+													</Badge>
+												{/snippet}
+												{@render statusBadge()}
 
-										<div class="flex items-center gap-2">
-                                    {#if activity.is_registered}
-                                        <Badge variant="outline" class="text-xs">ลงทะเบียนแล้ว</Badge>
-                                    {:else if !activity.is_eligible}
-                                        <Badge variant="destructive" class="text-xs">ไม่สามารถเข้าร่วม</Badge>
-                                    {/if}
-											<Button
-												size="sm"
-												variant="ghost"
-												class="transition-colors group-hover:bg-primary group-hover:text-primary-foreground"
-											>
-												ดูรายละเอียด
-												<IconChevronRight class="ml-1 size-4" />
-											</Button>
-										</div>
-									</div>
-								</CardContent>
-							</Card>
-						{/each}
-					</div>
+												<div class="flex items-center gap-2">
+													{#if activity.is_registered}
+														<Badge variant="outline" class="text-xs">ลงทะเบียนแล้ว</Badge>
+													{:else if !activity.is_eligible}
+														<Badge variant="destructive" class="text-xs">ไม่สามารถเข้าร่วม</Badge>
+													{/if}
+													<Button
+														size="sm"
+														variant="ghost"
+														class="transition-colors group-hover:bg-primary group-hover:text-primary-foreground"
+													>
+														ดูรายละเอียด
+														<IconChevronRight class="ml-1 size-4" />
+													</Button>
+												</div>
+											</div>
+										</CardContent>
+									</Card>
+								{/each}
+							</div>
 
-					<!-- Results Count -->
-					<div class="mt-6 text-center text-sm text-muted-foreground">
-						พบ {filteredActivities.length} กิจกรรม
-						{#if searchQuery}
-							จากการค้นหา "{searchQuery}"
+							<!-- Results Count -->
+							<div class="mt-6 text-center text-sm text-muted-foreground">
+								พบ {filteredActivities.length} กิจกรรม
+								{#if searchQuery}
+									จากการค้นหา "{searchQuery}"
+								{/if}
+							</div>
 						{/if}
-					</div>
-				{/if}
 					</div>
 				</Tabs>
 			</div>

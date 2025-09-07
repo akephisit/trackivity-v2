@@ -31,15 +31,17 @@ const updateProfileSchema = z.object({
 	first_name: z.string().min(1, 'ชื่อจำเป็น').max(100, 'ชื่อยาวเกินไป'),
 	last_name: z.string().min(1, 'นามสกุลจำเป็น').max(100, 'นามสกุลยาวเกินไป'),
 	email: z.string().email('รูปแบบอีเมลไม่ถูกต้อง').max(255, 'อีเมลยาวเกินไป'),
-	phone: z.string().optional().refine((phone) => {
-		if (!phone || phone.trim() === '') return true;
-		// Thai phone number validation (10 digits, starting with 0)
-		const phoneRegex = /^0[0-9]{9}$/;
-		return phoneRegex.test(phone.replace(/[^\d]/g, ''));
-	}, 'รูปแบบเบอร์โทรศัพท์ไม่ถูกต้อง (ต้องเป็น 10 หลัก เริ่มด้วย 0)'),
+	phone: z
+		.string()
+		.optional()
+		.refine((phone) => {
+			if (!phone || phone.trim() === '') return true;
+			// Thai phone number validation (10 digits, starting with 0)
+			const phoneRegex = /^0[0-9]{9}$/;
+			return phoneRegex.test(phone.replace(/[^\d]/g, ''));
+		}, 'รูปแบบเบอร์โทรศัพท์ไม่ถูกต้อง (ต้องเป็น 10 หลัก เริ่มด้วย 0)'),
 	address: z.string().max(500, 'ที่อยู่ยาวเกินไป').optional()
 });
-
 
 /**
  * GET /api/student/profile - Get current student's profile
@@ -137,14 +139,16 @@ export const GET = async ({ cookies }: { cookies: any }) => {
 			organization_id: user.organization?.id || undefined,
 			organization_name: user.organization?.name || undefined,
 			department_name: user.department?.name || undefined,
-			admin_role: user.adminRole?.id ? {
-				id: user.adminRole.id,
-				admin_level: user.adminRole.adminLevel as any,
-				organization_id: user.adminRole.organizationId || undefined,
-				permissions: user.adminRole.permissions || [],
-				created_at: new Date().toISOString(),
-				updated_at: new Date().toISOString()
-			} : undefined,
+			admin_role: user.adminRole?.id
+				? {
+						id: user.adminRole.id,
+						admin_level: user.adminRole.adminLevel as any,
+						organization_id: user.adminRole.organizationId || undefined,
+						permissions: user.adminRole.permissions || [],
+						created_at: new Date().toISOString(),
+						updated_at: new Date().toISOString()
+					}
+				: undefined,
 			session_id: decoded.session_id || '',
 			permissions: user.adminRole?.permissions || ['ViewPersonalQR', 'ViewPersonalHistory'],
 			expires_at: new Date(decoded.exp * 1000).toISOString(),
@@ -213,8 +217,8 @@ export const PATCH = async ({ request, cookies }: { request: any; cookies: any }
 			return json(
 				{
 					success: false,
-					error: { 
-						code: 'VALIDATION_ERROR', 
+					error: {
+						code: 'VALIDATION_ERROR',
 						message: 'ข้อมูลไม่ถูกต้อง',
 						field_errors: fieldErrors
 					}
@@ -250,8 +254,8 @@ export const PATCH = async ({ request, cookies }: { request: any; cookies: any }
 				return json(
 					{
 						success: false,
-						error: { 
-							code: 'EMAIL_TAKEN', 
+						error: {
+							code: 'EMAIL_TAKEN',
 							message: 'อีเมลนี้ถูกใช้งานแล้ว',
 							field_errors: { email: ['อีเมลนี้ถูกใช้งานแล้ว'] }
 						}
@@ -315,4 +319,3 @@ export const PATCH = async ({ request, cookies }: { request: any; cookies: any }
 		);
 	}
 };
-

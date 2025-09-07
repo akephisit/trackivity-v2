@@ -1,32 +1,32 @@
 <script lang="ts">
 	import type { Activity, Participation } from '$lib/types/activity';
 	import { getActivityTypeDisplayName } from '$lib/utils/activity';
-    import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
-    import { Button } from '$lib/components/ui/button';
-    import { Badge } from '$lib/components/ui/badge';
-    import { Alert, AlertDescription } from '$lib/components/ui/alert';
-    import { Separator } from '$lib/components/ui/separator';
-    import MetaTags from '$lib/components/seo/MetaTags.svelte';
-    import {
-        Table,
-        TableBody,
-        TableCell,
-        TableHead,
-        TableHeader,
-        TableRow
-    } from '$lib/components/ui/table';
-    import {
-        IconClock,
-        IconUsers,
-        IconMapPin,
-        IconArrowLeft,
-        IconUserCheck,
-        IconInfoCircle,
-        IconBuildingBank,
-        IconUser
-    } from '@tabler/icons-svelte';
-    import { goto } from '$app/navigation';
-    import { toast } from 'svelte-sonner';
+	import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
+	import { Button } from '$lib/components/ui/button';
+	import { Badge } from '$lib/components/ui/badge';
+	import { Alert, AlertDescription } from '$lib/components/ui/alert';
+	import { Separator } from '$lib/components/ui/separator';
+	import MetaTags from '$lib/components/seo/MetaTags.svelte';
+	import {
+		Table,
+		TableBody,
+		TableCell,
+		TableHead,
+		TableHeader,
+		TableRow
+	} from '$lib/components/ui/table';
+	import {
+		IconClock,
+		IconUsers,
+		IconMapPin,
+		IconArrowLeft,
+		IconUserCheck,
+		IconInfoCircle,
+		IconBuildingBank,
+		IconUser
+	} from '@tabler/icons-svelte';
+	import { goto } from '$app/navigation';
+	import { toast } from 'svelte-sonner';
 
 	const { data } = $props<{ data: { activity: Activity; participations: Participation[] } }>();
 	const { activity, participations } = data;
@@ -85,13 +85,13 @@
 		}
 	}
 
-    function getParticipationStatusBadge(status: string): {
-        text: string;
-        variant: 'default' | 'secondary' | 'outline' | 'destructive';
-    } {
-        switch (status) {
-            case 'registered':
-                return { text: 'ลงทะเบียนล่วงหน้าแล้ว', variant: 'outline' };
+	function getParticipationStatusBadge(status: string): {
+		text: string;
+		variant: 'default' | 'secondary' | 'outline' | 'destructive';
+	} {
+		switch (status) {
+			case 'registered':
+				return { text: 'ลงทะเบียนล่วงหน้าแล้ว', variant: 'outline' };
 			case 'checked_in':
 				return { text: 'เช็คอินแล้ว', variant: 'secondary' };
 			case 'checked_out':
@@ -102,7 +102,6 @@
 				return { text: status, variant: 'outline' };
 		}
 	}
-
 
 	function getActivityBadgeVariant(type: string): 'default' | 'secondary' | 'outline' {
 		switch (type) {
@@ -156,7 +155,7 @@
 		showParticipations = !showParticipations;
 	}
 
-    // Students cannot edit activities; edits are in admin only
+	// Students cannot edit activities; edits are in admin only
 
 	function goBack() {
 		goto('/student/activities');
@@ -164,9 +163,9 @@
 </script>
 
 <MetaTags
-  title={`${activity.title} — รายละเอียดกิจกรรม`}
-  description={activity.description || 'รายละเอียดกิจกรรมจากระบบติดตามกิจกรรม'}
-  type="article"
+	title={`${activity.title} — รายละเอียดกิจกรรม`}
+	description={activity.description || 'รายละเอียดกิจกรรมจากระบบติดตามกิจกรรม'}
+	type="article"
 />
 
 <div class="space-y-6">
@@ -180,7 +179,7 @@
 			<h1 class="text-2xl font-bold lg:text-3xl">{activity.title}</h1>
 			<p class="text-muted-foreground">รายละเอียดกิจกรรม</p>
 		</div>
-    <!-- Edit button removed for students -->
+		<!-- Edit button removed for students -->
 	</div>
 
 	<!-- Activity Details Card -->
@@ -293,13 +292,13 @@
 
 			<!-- Registration Status and Actions -->
 			<div class="space-y-4">
-    <h3 class="text-lg font-semibold">สถานะการลงทะเบียนล่วงหน้า</h3>
+				<h3 class="text-lg font-semibold">สถานะการลงทะเบียนล่วงหน้า</h3>
 
 				{#if activity.is_registered}
 					<Alert>
 						<IconUserCheck class="size-4" />
 						<AlertDescription>
-                        คุณได้ลงทะเบียนล่วงหน้าสำหรับกิจกรรมนี้แล้ว
+							คุณได้ลงทะเบียนล่วงหน้าสำหรับกิจกรรมนี้แล้ว
 							{#if activity.user_participation_status}
 								{#snippet participationBadge()}
 									{@const status = getParticipationStatusBadge(activity.user_participation_status)}
@@ -311,24 +310,24 @@
 							{/if}
 						</AlertDescription>
 					</Alert>
-    {:else if activity.status === 'published' && activity.registration_open}
-        {#if activity.max_participants && activity.current_participants >= activity.max_participants}
-            <Alert variant="destructive">
-                <IconInfoCircle class="size-4" />
-                <AlertDescription>กิจกรรมนี้มีผู้เข้าร่วมครบแล้ว</AlertDescription>
-            </Alert>
-        {:else}
-            <Button onclick={registerForActivity} disabled={registering} class="w-full sm:w-auto">
-                <IconUserCheck class="mr-2 size-4" />
-                {registering ? 'กำลังลงทะเบียนล่วงหน้า...' : 'ลงทะเบียนล่วงหน้า'}
-            </Button>
-        {/if}
-    {:else}
-        <Alert>
-            <IconInfoCircle class="size-4" />
-            <AlertDescription>กิจกรรมนี้ไม่เปิดให้ลงทะเบียนล่วงหน้า</AlertDescription>
-        </Alert>
-    {/if}
+				{:else if activity.status === 'published' && activity.registration_open}
+					{#if activity.max_participants && activity.current_participants >= activity.max_participants}
+						<Alert variant="destructive">
+							<IconInfoCircle class="size-4" />
+							<AlertDescription>กิจกรรมนี้มีผู้เข้าร่วมครบแล้ว</AlertDescription>
+						</Alert>
+					{:else}
+						<Button onclick={registerForActivity} disabled={registering} class="w-full sm:w-auto">
+							<IconUserCheck class="mr-2 size-4" />
+							{registering ? 'กำลังลงทะเบียนล่วงหน้า...' : 'ลงทะเบียนล่วงหน้า'}
+						</Button>
+					{/if}
+				{:else}
+					<Alert>
+						<IconInfoCircle class="size-4" />
+						<AlertDescription>กิจกรรมนี้ไม่เปิดให้ลงทะเบียนล่วงหน้า</AlertDescription>
+					</Alert>
+				{/if}
 			</div>
 
 			<!-- Participations Section (if available) -->
@@ -352,7 +351,7 @@
 										<TableHead>รหัสนักศึกษา</TableHead>
 										<TableHead>สาขา</TableHead>
 										<TableHead>สถานะ</TableHead>
-                    <TableHead>ลงทะเบียนล่วงหน้าเมื่อ</TableHead>
+										<TableHead>ลงทะเบียนล่วงหน้าเมื่อ</TableHead>
 									</TableRow>
 								</TableHeader>
 								<TableBody>

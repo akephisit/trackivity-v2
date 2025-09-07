@@ -29,7 +29,7 @@ export const load: PageServerLoad = async (event) => {
 	// Query only ongoing activities; if OrganizationAdmin, scope by organization
 	// Include activities where:
 	// 1. Admin's organization is the organizer (organizerId)
-	// 2. Admin's organization is in the legacy organizationId field  
+	// 2. Admin's organization is in the legacy organizationId field
 	// 3. Admin's organization is in the eligibleOrganizations array
 	const whereClause =
 		user.admin_role?.admin_level === 'OrganizationAdmin' && facultyId
@@ -43,28 +43,28 @@ export const load: PageServerLoad = async (event) => {
 				)
 			: eq(activities.status, 'ongoing');
 
-  const orgOrganizer = alias(organizations, 'org_organizer');
-  const rows = await db
-    .select({
-      id: activities.id,
-      title: activities.title,
-      description: activities.description,
-      start_date: activities.startDate,
-      end_date: activities.endDate,
-      start_time: activities.startTimeOnly,
-      end_time: activities.endTimeOnly,
-      activity_type: activities.activityType,
-      location: activities.location,
-      max_participants: activities.maxParticipants,
-      hours: activities.hours,
-      status: activities.status,
-      faculty_id: activities.organizationId,
-      organizer_id: activities.organizerId,
-      organizer: orgOrganizer.name
-    })
-    .from(activities)
-    .leftJoin(orgOrganizer, eq(activities.organizerId, orgOrganizer.id))
-    .where(whereClause);
+	const orgOrganizer = alias(organizations, 'org_organizer');
+	const rows = await db
+		.select({
+			id: activities.id,
+			title: activities.title,
+			description: activities.description,
+			start_date: activities.startDate,
+			end_date: activities.endDate,
+			start_time: activities.startTimeOnly,
+			end_time: activities.endTimeOnly,
+			activity_type: activities.activityType,
+			location: activities.location,
+			max_participants: activities.maxParticipants,
+			hours: activities.hours,
+			status: activities.status,
+			faculty_id: activities.organizationId,
+			organizer_id: activities.organizerId,
+			organizer: orgOrganizer.name
+		})
+		.from(activities)
+		.leftJoin(orgOrganizer, eq(activities.organizerId, orgOrganizer.id))
+		.where(whereClause);
 
 	// Get participant counts for all activities
 	const participantCounts = await Promise.all(
@@ -73,10 +73,7 @@ export const load: PageServerLoad = async (event) => {
 				.select({ count: sql<number>`cast(count(*) as int)` })
 				.from(participations)
 				.where(
-					and(
-						eq(participations.activityId, activity.id),
-						eq(participations.status, 'checked_in')
-					)
+					and(eq(participations.activityId, activity.id), eq(participations.status, 'checked_in'))
 				);
 			return {
 				activity_id: activity.id,
@@ -86,8 +83,8 @@ export const load: PageServerLoad = async (event) => {
 	);
 
 	// Add participant counts to activity data
-	const activitiesWithCounts = rows.map(activity => {
-		const countData = participantCounts.find(pc => pc.activity_id === activity.id);
+	const activitiesWithCounts = rows.map((activity) => {
+		const countData = participantCounts.find((pc) => pc.activity_id === activity.id);
 		return {
 			...activity,
 			current_participants: countData?.participant_count || 0

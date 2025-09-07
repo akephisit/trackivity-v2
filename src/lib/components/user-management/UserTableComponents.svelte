@@ -62,7 +62,6 @@
 		return formatDate(dateString);
 	}
 
-
 	function getStatusLabel(status: string): string {
 		const statusLabels = {
 			active: 'เปิดใช้งาน',

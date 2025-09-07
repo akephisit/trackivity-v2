@@ -13,7 +13,11 @@ import {
 	unique,
 	index,
 	pgEnum,
-	inet
+	inet,
+	bigint,
+	smallint,
+	primaryKey,
+	foreignKey
 } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 
@@ -59,12 +63,12 @@ export const notificationStatus = pgEnum('notification_status', [
 	'delivered'
 ]);
 export const organizationType = pgEnum('organization_type', [
-	'faculty',  // คณะ - can have departments and allow student registration
-	'office'    // หน่วยงาน - no departments, no student registration
+	'faculty', // คณะ - can have departments and allow student registration
+	'office' // หน่วยงาน - no departments, no student registration
 ]);
 export const activityLevel = pgEnum('activity_level', [
-	'faculty',    // คณะ - Faculty level activities  
-	'university'  // มหาวิทยาลัย - University level activities
+	'faculty', // คณะ - Faculty level activities
+	'university' // มหาวิทยาลัย - University level activities
 ]);
 
 // ===== CORE TABLES =====
@@ -116,7 +120,7 @@ export const departments = pgTable(
 	}
 );
 
-// Users table
+// Users table - Optimized
 export const users = pgTable(
 	'users',
 	{
@@ -127,22 +131,40 @@ export const users = pgTable(
 		email: varchar('email', { length: 255 }).notNull().unique(),
 		passwordHash: varchar('password_hash', { length: 255 }).notNull(),
 		// Title prefix (e.g., Mr, Mrs, Miss, Dr, etc.)
-		prefix: varchar('prefix', { length: 50 }).notNull().default('Generic'),
+		prefix: varchar('prefix', { length: 20 }).notNull().default('Generic'),
 		firstName: varchar('first_name', { length: 100 }).notNull(),
 		lastName: varchar('last_name', { length: 100 }).notNull(),
-		phone: varchar('phone', { length: 20 }),
+		phone: varchar('phone', { length: 15 }),
 		address: text('address'),
-		qrSecret: varchar('qr_secret', { length: 255 }).notNull().unique(),
+		qrSecret: varchar('qr_secret', { length: 128 }).notNull().unique(),
 		status: userStatus('status').notNull().default('active'),
 		departmentId: uuid('department_id').references(() => departments.id, { onDelete: 'restrict' }),
-		createdAt: timestamp('created_at', { withTimezone: true }).default(sql`NOW()`),
-		updatedAt: timestamp('updated_at', { withTimezone: true }).default(sql`NOW()`)
+		// Soft delete support
+		deletedAt: timestamp('deleted_at', { withTimezone: true }),
+		// Performance tracking
+		lastLoginAt: timestamp('last_login_at', { withTimezone: true }),
+		loginCount: integer('login_count').default(0),
+		createdAt: timestamp('created_at', { withTimezone: true })
+			.notNull()
+			.default(sql`NOW()`),
+		updatedAt: timestamp('updated_at', { withTimezone: true })
+			.notNull()
+			.default(sql`NOW()`)
 	},
 	(table) => {
 		return {
 			studentIdIdx: index('idx_users_student_id').on(table.studentId),
 			emailIdx: index('idx_users_email').on(table.email),
-			departmentIdIdx: index('idx_users_department_id').on(table.departmentId)
+			departmentIdIdx: index('idx_users_department_id').on(table.departmentId),
+			statusIdx: index('idx_users_status').on(table.status),
+			lastLoginIdx: index('idx_users_last_login').on(table.lastLoginAt),
+			// Compound index for active users lookup
+			activeUsersIdx: index('idx_users_active_department').on(table.status, table.departmentId),
+			// Full text search index for names
+			nameSearchIdx: index('idx_users_name_search').using(
+				'gin',
+				sql`to_tsvector('thai', first_name || ' ' || last_name)`
+			)
 		};
 	}
 );
@@ -181,7 +203,7 @@ export const adminRoles = pgTable(
 	}
 );
 
-// Activities table
+// Activities table - Optimized
 export const activities = pgTable(
 	'activities',
 	{
@@ -192,7 +214,7 @@ export const activities = pgTable(
 		description: text('description').notNull(),
 		location: varchar('location', { length: 255 }).notNull(),
 		activityType: activityType('activity_type'),
-		academicYear: varchar('academic_year', { length: 20 }).notNull(),
+		academicYear: smallint('academic_year').notNull(), // Use smallint instead of varchar
 		// organizerId replaces legacy text organizer; references organizations
 		organizerId: uuid('organizer_id')
 			.notNull()
@@ -206,18 +228,27 @@ export const activities = pgTable(
 		endDate: date('end_date').notNull(),
 		startTimeOnly: time('start_time_only').notNull(),
 		endTimeOnly: time('end_time_only').notNull(),
-		hours: integer('hours').notNull(),
+		hours: smallint('hours').notNull(), // Use smallint for hours (0-999)
 		maxParticipants: integer('max_participants'),
-        registrationOpen: boolean('registration_open').notNull().default(false),
+		registrationOpen: boolean('registration_open').notNull().default(false),
 		status: activityStatus('status').notNull().default('draft'),
 		organizationId: uuid('organization_id').references(() => organizations.id, {
 			onDelete: 'set null'
 		}),
 		createdBy: uuid('created_by')
 			.notNull()
-			.references(() => users.id, { onDelete: 'cascade' }),
-		createdAt: timestamp('created_at', { withTimezone: true }).default(sql`NOW()`),
-		updatedAt: timestamp('updated_at', { withTimezone: true }).default(sql`NOW()`)
+			.references(() => users.id, { onDelete: 'restrict' }),
+		// Performance counters
+		participantCount: integer('participant_count').default(0),
+		viewCount: integer('view_count').default(0),
+		// Soft delete support
+		deletedAt: timestamp('deleted_at', { withTimezone: true }),
+		createdAt: timestamp('created_at', { withTimezone: true })
+			.notNull()
+			.default(sql`NOW()`),
+		updatedAt: timestamp('updated_at', { withTimezone: true })
+			.notNull()
+			.default(sql`NOW()`)
 	},
 	(table) => {
 		return {
@@ -232,6 +263,19 @@ export const activities = pgTable(
 			eligibleOrganizationsIdx: index('idx_activities_eligible_organizations').using(
 				'gin',
 				table.eligibleOrganizations
+			),
+			// Compound indexes for common queries
+			statusOrgIdx: index('idx_activities_status_org').on(table.status, table.organizerId),
+			dateStatusIdx: index('idx_activities_date_status').on(table.startDate, table.status),
+			activeActivitiesIdx: index('idx_activities_active').on(
+				table.status,
+				table.registrationOpen,
+				table.startDate
+			),
+			// Full text search
+			titleSearchIdx: index('idx_activities_title_search').using(
+				'gin',
+				sql`to_tsvector('thai', title || ' ' || description)`
 			)
 		};
 	}
@@ -291,115 +335,107 @@ export const subscriptions = pgTable(
 	}
 );
 
-// Sessions table
+// Sessions table - Optimized (consider moving to Redis in production)
 export const sessions = pgTable(
 	'sessions',
 	{
-		id: varchar('id', { length: 255 }).primaryKey(),
+		id: varchar('id', { length: 128 }).primaryKey(), // Shorter session IDs
 		userId: uuid('user_id')
 			.notNull()
 			.references(() => users.id, { onDelete: 'cascade' }),
-		deviceInfo: jsonb('device_info').default(sql`'{}'`),
+		deviceFingerprint: varchar('device_fingerprint', { length: 64 }), // Hash of device info
 		ipAddress: inet('ip_address'),
 		userAgent: text('user_agent'),
-		createdAt: timestamp('created_at', { withTimezone: true }).default(sql`NOW()`),
-		lastAccessed: timestamp('last_accessed', { withTimezone: true }).default(sql`NOW()`),
+		// Session metadata
+		loginMethod: varchar('login_method', { length: 20 }).default('password'), // 'password', 'oauth', etc.
+		createdAt: timestamp('created_at', { withTimezone: true })
+			.notNull()
+			.default(sql`NOW()`),
+		lastAccessed: timestamp('last_accessed', { withTimezone: true })
+			.notNull()
+			.default(sql`NOW()`),
 		expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
-		isActive: boolean('is_active').default(true)
+		isActive: boolean('is_active').notNull().default(true)
 	},
 	(table) => {
 		return {
 			userIdIdx: index('idx_sessions_user_id').on(table.userId),
 			expiresAtIdx: index('idx_sessions_expires_at').on(table.expiresAt),
-			isActiveIdx: index('idx_sessions_is_active').on(table.isActive),
+			activeSessionsIdx: index('idx_sessions_active_expires').on(table.isActive, table.expiresAt),
 			lastAccessedIdx: index('idx_sessions_last_accessed').on(table.lastAccessed)
 		};
 	}
 );
 
-// ===== ANALYTICS TABLES =====
+// ===== AUDIT & LOGS TABLES =====
 
-// Organization analytics table
-export const organizationAnalytics = pgTable(
-	'organization_analytics',
+// Audit logs table - Partitioned by date for performance
+export const auditLogs = pgTable(
+	'audit_logs',
 	{
-		id: uuid('id')
-			.primaryKey()
-			.default(sql`gen_random_uuid()`),
-		organizationId: uuid('organization_id')
+		id: bigint('id', { mode: 'bigint' }).primaryKey(), // Use bigint for high-volume logs
+		logDate: date('log_date').notNull(), // Partitioning key
+		userId: uuid('user_id').references(() => users.id, { onDelete: 'set null' }),
+		sessionId: varchar('session_id', { length: 128 }),
+		action: varchar('action', { length: 50 }).notNull(), // 'create', 'update', 'delete', 'login', etc.
+		entityType: varchar('entity_type', { length: 30 }).notNull(), // 'user', 'activity', etc.
+		entityId: uuid('entity_id'),
+		oldValues: jsonb('old_values'),
+		newValues: jsonb('new_values'),
+		ipAddress: inet('ip_address'),
+		userAgent: text('user_agent'),
+		timestamp: timestamp('timestamp', { withTimezone: true })
 			.notNull()
-			.references(() => organizations.id, { onDelete: 'cascade' })
-			.unique(),
-		totalStudents: integer('total_students').default(0),
-		activeStudents: integer('active_students').default(0),
-		totalActivities: integer('total_activities').default(0),
-		completedActivities: integer('completed_activities').default(0),
-		averageParticipationRate: decimal('average_participation_rate', {
-			precision: 5,
-			scale: 2
-		}).default('0.00'),
-		monthlyActivityCount: integer('monthly_activity_count').default(0),
-		departmentCount: integer('department_count').default(0),
-		calculatedAt: timestamp('calculated_at', { withTimezone: true }).default(sql`NOW()`),
-		createdAt: timestamp('created_at', { withTimezone: true }).default(sql`NOW()`),
-		updatedAt: timestamp('updated_at', { withTimezone: true }).default(sql`NOW()`)
+			.default(sql`NOW()`)
 	},
 	(table) => {
 		return {
-			organizationIdIdx: index('idx_organization_analytics_organization_id').on(
-				table.organizationId
-			),
-			calculatedAtIdx: index('idx_organization_analytics_calculated_at').on(table.calculatedAt)
+			// Compound primary key for partitioning
+			primaryIdx: primaryKey({ columns: [table.logDate, table.id] }),
+			userIdIdx: index('idx_audit_logs_user_id').on(table.userId),
+			sessionIdIdx: index('idx_audit_logs_session_id').on(table.sessionId),
+			actionIdx: index('idx_audit_logs_action').on(table.action),
+			entityIdx: index('idx_audit_logs_entity').on(table.entityType, table.entityId),
+			timestampIdx: index('idx_audit_logs_timestamp').on(table.timestamp),
+			// Composite indexes for common audit queries
+			userActionIdx: index('idx_audit_logs_user_action').on(
+				table.userId,
+				table.action,
+				table.logDate
+			)
 		};
 	}
 );
 
-// Department analytics table
-export const departmentAnalytics = pgTable(
-	'department_analytics',
+// Activity views table - For tracking popularity
+export const activityViews = pgTable(
+	'activity_views',
 	{
-		id: uuid('id')
-			.primaryKey()
-			.default(sql`gen_random_uuid()`),
-		departmentId: uuid('department_id')
+		id: bigint('id', { mode: 'bigint' }).primaryKey(),
+		activityId: uuid('activity_id')
 			.notNull()
-			.references(() => departments.id, { onDelete: 'cascade' }),
-		organizationId: uuid('organization_id')
+			.references(() => activities.id, { onDelete: 'cascade' }),
+		userId: uuid('user_id').references(() => users.id, { onDelete: 'set null' }),
+		viewedAt: timestamp('viewed_at', { withTimezone: true })
 			.notNull()
-			.references(() => organizations.id, { onDelete: 'cascade' }),
-		totalStudents: integer('total_students').default(0),
-		activeStudents: integer('active_students').default(0),
-		totalActivities: integer('total_activities').default(0),
-		participationRate: decimal('participation_rate', { precision: 5, scale: 2 }).default('0.00'),
-		calculatedAt: timestamp('calculated_at', { withTimezone: true }).default(sql`NOW()`),
-		createdAt: timestamp('created_at', { withTimezone: true }).default(sql`NOW()`),
-		updatedAt: timestamp('updated_at', { withTimezone: true }).default(sql`NOW()`)
+			.default(sql`NOW()`),
+		ipAddress: inet('ip_address'),
+		sessionId: varchar('session_id', { length: 128 })
 	},
 	(table) => {
 		return {
-			departmentIdIdx: index('idx_department_analytics_department_id').on(table.departmentId),
-			organizationIdIdx: index('idx_department_analytics_organization_id').on(table.organizationId)
+			activityIdIdx: index('idx_activity_views_activity_id').on(table.activityId),
+			userIdIdx: index('idx_activity_views_user_id').on(table.userId),
+			viewedAtIdx: index('idx_activity_views_viewed_at').on(table.viewedAt),
+			// Composite index for deduplication
+			uniqueViewIdx: index('idx_activity_views_unique').on(
+				table.activityId,
+				table.userId,
+				sql`date(viewed_at)`
+			)
 		};
 	}
 );
-
-// System analytics table
-export const systemAnalytics = pgTable('system_analytics', {
-	id: uuid('id')
-		.primaryKey()
-		.default(sql`gen_random_uuid()`),
-	totalOrganizations: integer('total_organizations').default(0),
-	totalDepartments: integer('total_departments').default(0),
-	totalUsers: integer('total_users').default(0),
-	totalActivities: integer('total_activities').default(0),
-	activeSubscriptions: integer('active_subscriptions').default(0),
-	expiringSubscriptions7d: integer('expiring_subscriptions_7d').default(0),
-	expiringSubscriptions1d: integer('expiring_subscriptions_1d').default(0),
-	systemUptimeHours: decimal('system_uptime_hours', { precision: 10, scale: 2 }).default('0'),
-	avgResponseTimeMs: decimal('avg_response_time_ms', { precision: 8, scale: 2 }).default('0'),
-	calculatedAt: timestamp('calculated_at', { withTimezone: true }).default(sql`NOW()`),
-	createdAt: timestamp('created_at', { withTimezone: true }).default(sql`NOW()`)
-});
 
 // Organization activity requirements table
 export const organizationActivityRequirements = pgTable(
@@ -536,7 +572,8 @@ export const subscriptionExpiryLog = pgTable(
 
 // ===== RELATIONS & TYPES =====
 
-// Type exports for use in application
+// ===== TYPE EXPORTS =====
+
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
 export type Organization = typeof organizations.$inferSelect;
@@ -554,4 +591,20 @@ export type NewSubscription = typeof subscriptions.$inferInsert;
 export type Session = typeof sessions.$inferSelect;
 export type NewSession = typeof sessions.$inferInsert;
 export type OrganizationActivityRequirement = typeof organizationActivityRequirements.$inferSelect;
-export type NewOrganizationActivityRequirement = typeof organizationActivityRequirements.$inferInsert;
+export type NewOrganizationActivityRequirement =
+	typeof organizationActivityRequirements.$inferInsert;
+export type AuditLog = typeof auditLogs.$inferSelect;
+export type NewAuditLog = typeof auditLogs.$inferInsert;
+export type ActivityView = typeof activityViews.$inferSelect;
+export type NewActivityView = typeof activityViews.$inferInsert;
+
+// ===== UTILITY TYPES =====
+
+export type EntityType =
+	| 'user'
+	| 'activity'
+	| 'organization'
+	| 'department'
+	| 'participation'
+	| 'admin_role';
+export type AuditAction = 'create' | 'update' | 'delete' | 'login' | 'logout' | 'view' | 'export';

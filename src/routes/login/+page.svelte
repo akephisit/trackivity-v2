@@ -44,7 +44,7 @@
 	function togglePasswordVisibility() {
 		showPassword = !showPassword;
 	}
-    import MetaTags from '$lib/components/seo/MetaTags.svelte';
+	import MetaTags from '$lib/components/seo/MetaTags.svelte';
 </script>
 
 <MetaTags title="เข้าสู่ระบบ" description="เข้าสู่ระบบสำหรับนักศึกษา" />
@@ -137,7 +137,6 @@
 						</Form.Control>
 						<Form.FieldErrors />
 					</Form.Field>
-
 
 					<Button type="submit" class="w-full" disabled={$submitting}>
 						{#if $submitting}

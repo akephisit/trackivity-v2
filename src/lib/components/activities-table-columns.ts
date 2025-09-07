@@ -46,7 +46,7 @@ export const activityColumns: ColumnDef<Activity>[] = [
 		cell: ({ row }) => {
 			const activity = row.original;
 			const type = activity.activity_type;
-			
+
 			if (!type) {
 				return renderSnippet(
 					createRawSnippet(() => ({
@@ -59,20 +59,20 @@ export const activityColumns: ColumnDef<Activity>[] = [
 
 			const displayName = getActivityTypeDisplayName(type);
 			const variantMap: Record<string, string> = {
-				'Academic': 'default',
-				'Sports': 'secondary', 
-				'Cultural': 'outline',
-				'Social': 'default',
-				'Other': 'secondary'
+				Academic: 'default',
+				Sports: 'secondary',
+				Cultural: 'outline',
+				Social: 'default',
+				Other: 'secondary'
 			};
 			const variant = variantMap[type] || 'outline';
-			
+
 			return renderSnippet(
 				createRawSnippet(() => ({
 					render: () => `
 						<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-							variant === 'default' 
-								? 'bg-primary/10 text-primary' 
+							variant === 'default'
+								? 'bg-primary/10 text-primary'
 								: variant === 'secondary'
 									? 'bg-secondary text-secondary-foreground'
 									: 'bg-muted text-muted-foreground border'
@@ -91,14 +91,14 @@ export const activityColumns: ColumnDef<Activity>[] = [
 			const activity = row.original;
 			const level = activity.activity_level || 'faculty';
 			const displayName = getActivityLevelDisplayName(level);
-			
+
 			return renderSnippet(
 				createRawSnippet(() => ({
 					render: () => `
 						<div class="flex items-center gap-2">
 							<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-								level === 'university' 
-									? 'bg-purple-100 text-purple-800' 
+								level === 'university'
+									? 'bg-purple-100 text-purple-800'
 									: 'bg-blue-100 text-blue-800'
 							}">
 								${displayName}

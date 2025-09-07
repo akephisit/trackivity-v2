@@ -137,50 +137,51 @@ export async function authenticateAndIssueToken(input: AuthInput): Promise<AuthR
 	};
 
 	// Generate preliminary token for fallback session ID
-	const preliminaryToken = jwt.sign(preliminaryPayload, env.JWT_SECRET!, { expiresIn: expiresInSeconds });
-	
+	const preliminaryToken = jwt.sign(preliminaryPayload, env.JWT_SECRET!, {
+		expiresIn: expiresInSeconds
+	});
+
 	// Create session record for tracking last access with robust collision handling
 	let sessionId: string;
 	let token: string;
-	
+
 	try {
 		// Run cleanup asynchronously to prevent old sessions from accumulating
-		cleanupExpiredSessions().catch(err => 
+		cleanupExpiredSessions().catch((err) =>
 			console.warn('Background session cleanup failed:', err)
 		);
-		
+
 		// Create session with collision handling and retry logic
 		const sessionResult = await createSessionWithRetry(
 			foundUser.id,
 			expiresAt,
 			{}, // deviceInfo - could be populated from request headers
 			null, // ipAddress - could be populated from request
-			null  // userAgent - could be populated from request
+			null // userAgent - could be populated from request
 		);
-		
+
 		sessionId = sessionResult.sessionId;
-		
+
 		if (!sessionResult.created) {
 			console.log(`[Auth] Reused existing session ${sessionId} for user ${foundUser.id}`);
 		}
-		
+
 		// Create final JWT payload with the actual session ID
 		const finalPayload = {
 			...preliminaryPayload,
 			session_id: sessionId
 		};
-		
+
 		// Generate final token with session ID included
 		token = jwt.sign(finalPayload, env.JWT_SECRET!, { expiresIn: expiresInSeconds });
-		
 	} catch (error) {
 		// Don't fail login if session creation fails, but log the error
 		console.error('Failed to create session record:', error);
-		
+
 		// Fall back to using a portion of the token as session ID for compatibility
 		sessionId = preliminaryToken.slice(0, 16);
 		console.warn(`[Auth] Using fallback session ID ${sessionId} for user ${foundUser.id}`);
-		
+
 		// Use preliminary token as the final token
 		token = preliminaryToken;
 	}

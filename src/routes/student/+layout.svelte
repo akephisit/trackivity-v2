@@ -57,7 +57,7 @@
 				if (user && (user as any).user_role) {
 					const userRole = (user as any).user_role;
 					console.log('User role:', userRole); // Debug log
-					
+
 					if (userRole !== 'Student') {
 						// Redirect based on their actual role
 						switch (userRole) {
@@ -104,4 +104,3 @@
 >
 	{@render children?.()}
 </AppLayout>
-

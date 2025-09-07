@@ -1,6 +1,12 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card';
+	import {
+		Card,
+		CardContent,
+		CardDescription,
+		CardHeader,
+		CardTitle
+	} from '$lib/components/ui/card';
 	import { Label } from '$lib/components/ui/label';
 	import { Input } from '$lib/components/ui/input';
 	import { Button } from '$lib/components/ui/button';
@@ -18,7 +24,7 @@
 	import { toast } from 'svelte-sonner';
 
 	let { data, form } = $props();
-	
+
 	let isSubmitting = $state(false);
 	let requiredFacultyHours = $state(data.currentRequirements.requiredFacultyHours);
 	let requiredUniversityHours = $state(data.currentRequirements.requiredUniversityHours);
@@ -44,7 +50,7 @@
 <div class="space-y-4 lg:space-y-6">
 	<!-- Header -->
 	<div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-		<div class="space-y-1 min-w-0">
+		<div class="min-w-0 space-y-1">
 			<h1 class="admin-page-title"><IconSettings class="size-6 text-primary" /> ตั้งค่าระบบ</h1>
 			<p class="text-muted-foreground">จัดการการตั้งค่าองค์กรและระบบกิจกรรม</p>
 		</div>
@@ -90,12 +96,12 @@
 				กำหนดจำนวนชั่วโมงขั้นต่ำที่นักศึกษาต้องสะสมจากการเข้าร่วมกิจกรรมตลอดการศึกษา
 			</CardDescription>
 		</CardHeader>
-		<CardContent class="space-y-4 lg:space-y-6 p-4 lg:p-6">
+		<CardContent class="space-y-4 p-4 lg:space-y-6 lg:p-6">
 			<!-- Info Alert -->
 			<Alert>
 				<IconInfoCircle class="size-4" />
 				<AlertDescription>
-					การตั้งค่านี้จะใช้สำหรับคำนวณความก้าวหน้าของนักศึกษาในการสะสมชั่วโมงกิจกรรมตลอดการศึกษา 
+					การตั้งค่านี้จะใช้สำหรับคำนวณความก้าวหน้าของนักศึกษาในการสะสมชั่วโมงกิจกรรมตลอดการศึกษา
 					และแสดงผลใน Progress Bar ในหน้าสรุปกิจกรรมของนักศึกษา
 				</AlertDescription>
 			</Alert>
@@ -173,17 +179,19 @@
 								required
 							/>
 							<p class="text-xs text-muted-foreground">
-								นักศึกษาต้องสะสมชั่วโมงจากกิจกรรมระดับมหาวิทยาลัยอย่างน้อย {requiredUniversityHours} ชั่วโมง
+								นักศึกษาต้องสะสมชั่วโมงจากกิจกรรมระดับมหาวิทยาลัยอย่างน้อย {requiredUniversityHours}
+								ชั่วโมง
 							</p>
 						</div>
 					</div>
 
-
 					<!-- Action Buttons -->
-					<div class="flex flex-col sm:flex-row gap-3">
-						<Button type="submit" disabled={isSubmitting} class="gap-2 w-full sm:w-auto">
+					<div class="flex flex-col gap-3 sm:flex-row">
+						<Button type="submit" disabled={isSubmitting} class="w-full gap-2 sm:w-auto">
 							{#if isSubmitting}
-								<div class="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"></div>
+								<div
+									class="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"
+								></div>
 							{:else}
 								<IconCheck class="h-4 w-4" />
 							{/if}
@@ -208,8 +216,10 @@
 							<p class="text-sm font-medium">ข้อมูลสรุป</p>
 						</div>
 						<p class="mt-2 text-sm text-blue-600">
-							นักศึกษาจะต้องสะสมชั่วโมงกิจกรรมรวมทั้งหมดอย่างน้อย 
-							<span class="font-semibold">{requiredFacultyHours + requiredUniversityHours} ชั่วโมง</span>
+							นักศึกษาจะต้องสะสมชั่วโมงกิจกรรมรวมทั้งหมดอย่างน้อย
+							<span class="font-semibold"
+								>{requiredFacultyHours + requiredUniversityHours} ชั่วโมง</span
+							>
 							ตลอดการศึกษาเพื่อผ่านเกณฑ์การสำเร็จการศึกษา
 						</p>
 					</div>

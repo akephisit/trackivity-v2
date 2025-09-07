@@ -37,7 +37,13 @@ export const GET: RequestHandler = async ({ url, locals }: { url: URL; locals: a
 	}
 };
 
-export const POST: RequestHandler = async ({ request, locals }: { request: Request; locals: any }) => {
+export const POST: RequestHandler = async ({
+	request,
+	locals
+}: {
+	request: Request;
+	locals: any;
+}) => {
 	try {
 		const session = locals.session;
 		if (!session?.user?.id || !session?.adminRole?.organizationId) {
@@ -83,16 +89,16 @@ export const POST: RequestHandler = async ({ request, locals }: { request: Reque
 			}
 		});
 
-		return json({ 
+		return json({
 			data: {
 				...validatedData,
 				organizationId
 			},
-			message: 'Activity requirements updated successfully' 
+			message: 'Activity requirements updated successfully'
 		});
 	} catch (error) {
 		console.error('Failed to update activity requirements:', error);
-		
+
 		if (error instanceof z.ZodError) {
 			return json({ error: 'Invalid input data', details: error.errors }, { status: 400 });
 		}

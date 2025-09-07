@@ -68,7 +68,9 @@
 
 	// Use $derived for computed values to avoid circular dependencies
 	const selectedActivity = $derived(
-		selectedActivityId ? data.activities?.find((a: any) => a.id === selectedActivityId) || null : null
+		selectedActivityId
+			? data.activities?.find((a: any) => a.id === selectedActivityId) || null
+			: null
 	);
 
 	// Use base participant count from activity data, plus any manual increments from scanning
@@ -79,7 +81,7 @@
 	// Track URL updates separately to prevent infinite loops
 	let isUpdatingUrl = $state(false);
 	let lastUrlActivityId = $state('');
-	
+
 	$effect(() => {
 		// Only update URL if we're in browser and not currently updating URL
 		if (browser && !isUpdatingUrl && selectedActivityId !== lastUrlActivityId) {
@@ -88,22 +90,22 @@
 				const url = new URL(window.location.href);
 				return url.searchParams.get('activity_id') || '';
 			});
-			
+
 			if (selectedActivityId !== currentUrlActivityId) {
 				isUpdatingUrl = true;
 				const url = new URL(window.location.href);
-				
+
 				if (selectedActivityId) {
 					url.searchParams.set('activity_id', selectedActivityId);
 				} else {
 					url.searchParams.delete('activity_id');
 				}
-				
+
 				goto(url.toString(), { replaceState: true, noScroll: true }).finally(() => {
 					isUpdatingUrl = false;
 				});
 			}
-			
+
 			lastUrlActivityId = selectedActivityId;
 		}
 	});
@@ -112,10 +114,10 @@
 		// Initialize URL tracking state first to prevent URL updates during initialization
 		const url = new URL(window.location.href);
 		lastUrlActivityId = url.searchParams.get('activity_id') || '';
-		
+
 		if (data.selectedActivityId && (data.activities?.length || 0) > 0) {
 			selectedActivityId = data.selectedActivityId;
-			const activity = data.activities?.find(a => a.id === selectedActivityId);
+			const activity = data.activities?.find((a) => a.id === selectedActivityId);
 			if (activity) {
 				selectedActivityOption = { value: activity.id, label: activity.title };
 			}
@@ -160,12 +162,9 @@
 		// Error handling is done by QRScanner component
 	}
 
-
 	function handleStatusChange(status: typeof scannerStatus) {
 		scannerStatus = status;
 	}
-
-
 
 	function formatDate(dateString?: string): string {
 		if (!dateString) return 'ไม่ระบุ';
@@ -183,7 +182,6 @@
 	function formatTime(timeString?: string): string {
 		return timeString || 'ไม่ระบุ';
 	}
-
 </script>
 
 <svelte:head>
@@ -194,7 +192,7 @@
 <div class="space-y-4 lg:space-y-6">
 	<!-- Header -->
 	<div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-		<div class="space-y-1 min-w-0">
+		<div class="min-w-0 space-y-1">
 			<h1 class="admin-page-title flex items-center gap-2">
 				<IconQrcode class="h-6 w-6" />
 				ระบบสแกน QR Code
@@ -202,7 +200,7 @@
 			<p class="text-muted-foreground">สแกน QR Code เพื่อบันทึกการเข้าร่วมกิจกรรม</p>
 		</div>
 
-		<Button variant="outline" onclick={() => goto('/admin')} class="gap-2 w-full sm:w-auto">
+		<Button variant="outline" onclick={() => goto('/admin')} class="w-full gap-2 sm:w-auto">
 			<IconArrowBack class="h-4 w-4" />
 			กลับหน้าหลัก
 		</Button>
@@ -261,7 +259,7 @@
 						bind:value={selectedActivityOption as any}
 						onValueChange={(value) => {
 							if (value && value !== selectedActivityId) {
-								const activity = data.activities?.find(a => a.id === value);
+								const activity = data.activities?.find((a) => a.id === value);
 								if (activity) {
 									selectedActivityOption = { value: activity.id, label: activity.title };
 								}
@@ -377,9 +375,12 @@
 							</span>
 						</div>
 						<div class="h-2 w-full rounded-full bg-muted">
-							<div 
-								class="h-2 rounded-full bg-blue-600 transition-all duration-300" 
-								style="width: {Math.min((currentParticipantCount / selectedActivity.max_participants) * 100, 100)}%"
+							<div
+								class="h-2 rounded-full bg-blue-600 transition-all duration-300"
+								style="width: {Math.min(
+									(currentParticipantCount / selectedActivity.max_participants) * 100,
+									100
+								)}%"
 							></div>
 						</div>
 					</div>
@@ -434,7 +435,10 @@
 				</div>
 				<div class="flex items-start gap-2">
 					<IconCheck class="mt-0.5 h-4 w-4 text-green-600" />
-					<span>เลือกโหมดการสแกน: <strong>เช็คอิน</strong> สำหรับเข้าร่วม หรือ <strong>เช็คเอาท์</strong> สำหรับออกจากกิจกรรม (รองรับการเริ่มต้นด้วยโหมดใดก็ได้)</span>
+					<span
+						>เลือกโหมดการสแกน: <strong>เช็คอิน</strong> สำหรับเข้าร่วม หรือ
+						<strong>เช็คเอาท์</strong> สำหรับออกจากกิจกรรม (รองรับการเริ่มต้นด้วยโหมดใดก็ได้)</span
+					>
 				</div>
 				<div class="flex items-start gap-2">
 					<IconCheck class="mt-0.5 h-4 w-4 text-green-600" />
@@ -448,24 +452,28 @@
 					<IconCheck class="mt-0.5 h-4 w-4 text-green-600" />
 					<span>ระบบจะบันทึกและแสดงผลการสแกนอัตโนมัติ พร้อมการแจ้งเตือนแบบเรียบง่าย</span>
 				</div>
-				
+
 				<!-- New flexible flow control info -->
-				<div class="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-					<div class="font-medium text-blue-800 mb-2 flex items-center gap-2">
+				<div class="mt-4 rounded-lg border border-blue-200 bg-blue-50 p-3">
+					<div class="mb-2 flex items-center gap-2 font-medium text-blue-800">
 						<IconCheck class="size-4" />
 						ระบบใหม่: การสแกนที่ยืดหยุ่นและใช้งานง่าย
 					</div>
 					<div class="space-y-2 text-xs text-blue-700">
-						<div class="font-medium text-blue-800 mb-1">✅ สิ่งที่สามารถทำได้:</div>
+						<div class="mb-1 font-medium text-blue-800">✅ สิ่งที่สามารถทำได้:</div>
 						<p>• <strong>เริ่มต้นด้วยเช็คอิน:</strong> ยังไม่เริ่ม → เช็คอิน → เช็คเอาท์</p>
-						<p>• <strong>เริ่มต้นด้วยเช็คเอาท์:</strong> ยังไม่เริ่ม → เช็คเอาท์ (สำหรับกิจกรรมที่ไม่ต้องการเช็คอิน)</p>
+						<p>
+							• <strong>เริ่มต้นด้วยเช็คเอาท์:</strong> ยังไม่เริ่ม → เช็คเอาท์ (สำหรับกิจกรรมที่ไม่ต้องการเช็คอิน)
+						</p>
 						<p>• <strong>เช็คอินซ้ำ:</strong> อนุญาตให้สแกนเช็คอินหลายครั้ง (แสดงผลสำเร็จ)</p>
 						<p>• <strong>เช็คเอาท์ซ้ำ:</strong> อนุญาตให้สแกนเช็คเอาท์หลายครั้ง (แสดงผลสำเร็จ)</p>
-						
-						<div class="font-medium text-red-800 mb-1 mt-2">❌ ข้อจำกัดเดียว:</div>
-						<p>• <strong>ห้ามย้อนกลับ:</strong> หลังเช็คเอาท์แล้วไม่สามารถเช็คอินอีกได้ (ป้องกันการไหลย้อนกลับ)</p>
-						
-						<div class="font-medium text-green-800 mb-1 mt-2">🎯 เป้าหมาย:</div>
+
+						<div class="mt-2 mb-1 font-medium text-red-800">❌ ข้อจำกัดเดียว:</div>
+						<p>
+							• <strong>ห้ามย้อนกลับ:</strong> หลังเช็คเอาท์แล้วไม่สามารถเช็คอินอีกได้ (ป้องกันการไหลย้อนกลับ)
+						</p>
+
+						<div class="mt-2 mb-1 font-medium text-green-800">🎯 เป้าหมาย:</div>
 						<p>• ลดการแจ้งเตือนที่น่ารำคาญ และทำให้ระบบใช้งานได้ง่ายขึ้น</p>
 						<p>• รองรับกิจกรรมหลากหลายประเภท (บางกิจกรรมไม่ต้องการเช็คอิน)</p>
 					</div>

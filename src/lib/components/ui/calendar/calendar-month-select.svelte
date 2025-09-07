@@ -33,7 +33,7 @@
 				{/each}
 			</select>
 			<span
-				class="flex h-8 w-fit items-center justify-between gap-2 rounded-md px-3 py-2 text-sm whitespace-nowrap font-medium select-none [&>svg]:size-3.5 [&>svg]:text-muted-foreground"
+				class="flex h-8 w-fit items-center justify-between gap-2 rounded-md px-3 py-2 text-sm font-medium whitespace-nowrap select-none [&>svg]:size-3.5 [&>svg]:text-muted-foreground"
 				aria-hidden="true"
 			>
 				{monthItems.find((item) => item.value === value)?.label || selectedMonthItem.label}

@@ -13,7 +13,9 @@ export const load: LayoutServerLoad = async (event) => {
 	const user = requireAdmin(event);
 
 	// หากเป็น OrganizationAdmin ให้ดึงประเภทหน่วยงานแนบไปด้วย
-	let organization: { id: string; name: string; organizationType: 'faculty' | 'office' } | undefined;
+	let organization:
+		| { id: string; name: string; organizationType: 'faculty' | 'office' }
+		| undefined;
 	try {
 		const role = user.admin_role as any;
 		if (role?.admin_level === 'OrganizationAdmin' && role?.organization_id) {

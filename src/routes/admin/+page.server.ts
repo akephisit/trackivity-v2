@@ -30,51 +30,48 @@ export const load: PageServerLoad = async (event) => {
 
 		if (isOrgAdmin && adminOrgId) {
 			// Organization Admin specific queries - use departments to find users
-			const [
-				orgUsers,
-				departmentsCount,
-				activeUsers,
-				newUsersMonth,
-				departmentBreakdown
-			] = await Promise.all([
-				// Count users in this organization through departments
-				db.select({ count: count(users.id) })
-					.from(users)
-					.innerJoin(departments, eq(users.departmentId, departments.id))
-					.where(eq(departments.organizationId, adminOrgId)),
-				// Count departments in this organization
-				db.select({ count: count() }).from(departments).where(eq(departments.organizationId, adminOrgId)),
-				// Active users (using a simpler approach since we don't have lastLogin)
-				db.select({ count: count(users.id) })
-					.from(users)
-					.innerJoin(departments, eq(users.departmentId, departments.id))
-					.where(
-						and(
-							eq(departments.organizationId, adminOrgId),
-							eq(users.status, 'active')
-						)
-					),
-				// New users this month
-				db.select({ count: count(users.id) })
-					.from(users)
-					.innerJoin(departments, eq(users.departmentId, departments.id))
-					.where(
-						and(
-							eq(departments.organizationId, adminOrgId),
-							sql`DATE_TRUNC('month', ${users.createdAt}) = DATE_TRUNC('month', CURRENT_DATE)`
-						)
-					),
-				// Department breakdown
-				db.select({
-					id: departments.id,
-					name: departments.name,
-					user_count: count(users.id)
-				})
-				.from(departments)
-				.leftJoin(users, eq(users.departmentId, departments.id))
-				.where(eq(departments.organizationId, adminOrgId))
-				.groupBy(departments.id, departments.name)
-			]);
+			const [orgUsers, departmentsCount, activeUsers, newUsersMonth, departmentBreakdown] =
+				await Promise.all([
+					// Count users in this organization through departments
+					db
+						.select({ count: count(users.id) })
+						.from(users)
+						.innerJoin(departments, eq(users.departmentId, departments.id))
+						.where(eq(departments.organizationId, adminOrgId)),
+					// Count departments in this organization
+					db
+						.select({ count: count() })
+						.from(departments)
+						.where(eq(departments.organizationId, adminOrgId)),
+					// Active users (using a simpler approach since we don't have lastLogin)
+					db
+						.select({ count: count(users.id) })
+						.from(users)
+						.innerJoin(departments, eq(users.departmentId, departments.id))
+						.where(and(eq(departments.organizationId, adminOrgId), eq(users.status, 'active'))),
+					// New users this month
+					db
+						.select({ count: count(users.id) })
+						.from(users)
+						.innerJoin(departments, eq(users.departmentId, departments.id))
+						.where(
+							and(
+								eq(departments.organizationId, adminOrgId),
+								sql`DATE_TRUNC('month', ${users.createdAt}) = DATE_TRUNC('month', CURRENT_DATE)`
+							)
+						),
+					// Department breakdown
+					db
+						.select({
+							id: departments.id,
+							name: departments.name,
+							user_count: count(users.id)
+						})
+						.from(departments)
+						.leftJoin(users, eq(users.departmentId, departments.id))
+						.where(eq(departments.organizationId, adminOrgId))
+						.groupBy(departments.id, departments.name)
+				]);
 
 			stats = {
 				...stats,
@@ -99,9 +96,10 @@ export const load: PageServerLoad = async (event) => {
 				db.select({ count: count() }).from(participations),
 				db.select({ count: count() }).from(adminRoles).where(eq(adminRoles.isEnabled, true)),
 				db.select({ count: count() }).from(activities).where(eq(activities.status, 'ongoing')),
-				db.select({ count: count() }).from(users).where(
-					sql`DATE(${users.createdAt}) = CURRENT_DATE`
-				)
+				db
+					.select({ count: count() })
+					.from(users)
+					.where(sql`DATE(${users.createdAt}) = CURRENT_DATE`)
 			]);
 
 			stats = {
@@ -125,7 +123,7 @@ export const load: PageServerLoad = async (event) => {
 		const adminOrgId = (user.admin_role as any)?.organization_id;
 
 		let dbActivities;
-		
+
 		if (isOrgAdmin && adminOrgId) {
 			// Filter activities for organization admin
 			dbActivities = await db
@@ -173,7 +171,7 @@ export const load: PageServerLoad = async (event) => {
 				.limit(10);
 		}
 
-		recentActivities = dbActivities.map(activity => ({
+		recentActivities = dbActivities.map((activity) => ({
 			...activity,
 			title: activity.title || 'กิจกรรมใหม่',
 			description: activity.description || activity.title || 'มีกิจกรรมใหม่ในระบบ'

@@ -2,12 +2,12 @@
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
 	import { Badge } from '$lib/components/ui/badge';
-	import { 
-		IconUser, 
-		IconLogout, 
-		IconCalendar, 
-		IconMapPin, 
-		IconUsers, 
+	import {
+		IconUser,
+		IconLogout,
+		IconCalendar,
+		IconMapPin,
+		IconUsers,
 		IconClock,
 		IconArrowRight,
 		IconTrendingUp,
@@ -21,7 +21,7 @@
 	import { auth } from '$lib/stores/auth';
 	import { goto, invalidateAll } from '$app/navigation';
 	import { mode, setMode } from 'mode-watcher';
-    import MetaTags from '$lib/components/seo/MetaTags.svelte';
+	import MetaTags from '$lib/components/seo/MetaTags.svelte';
 	import { getActivityTypeDisplayName } from '$lib/utils/activity';
 
 	let { data }: { data: PageData } = $props();
@@ -44,9 +44,9 @@
 </script>
 
 <MetaTags
-    title="ระบบติดตามกิจกรรม"
-    description="จัดการและติดตามกิจกรรมทั้งหมดของมหาวิทยาลัยในที่เดียว"
-    type="website"
+	title="ระบบติดตามกิจกรรม"
+	description="จัดการและติดตามกิจกรรมทั้งหมดของมหาวิทยาลัยในที่เดียว"
+	type="website"
 />
 
 <div class="min-h-screen bg-background">
@@ -140,60 +140,60 @@
 	</header>
 
 	<!-- Main Content -->
-	<main class="container mx-auto px-4 py-8 space-y-12">
+	<main class="container mx-auto space-y-12 px-4 py-8">
 		<!-- Summary Stats -->
 		{#if data.activities}
-			<section class="grid gap-6 grid-cols-2 lg:grid-cols-4">
-				<Card.Root class="bg-gradient-to-r from-blue-500 to-blue-600 text-white border-0">
+			<section class="grid grid-cols-2 gap-6 lg:grid-cols-4">
+				<Card.Root class="border-0 bg-gradient-to-r from-blue-500 to-blue-600 text-white">
 					<Card.Content class="p-6">
 						<div class="flex items-center justify-between">
 							<div>
-								<p class="text-blue-100 text-sm font-medium">กิจกรรมใหม่</p>
+								<p class="text-sm font-medium text-blue-100">กิจกรรมใหม่</p>
 								<p class="text-3xl font-bold">{data.activities.recent.length}</p>
 							</div>
-							<div class="bg-blue-400 bg-opacity-30 rounded-lg p-3">
+							<div class="bg-opacity-30 rounded-lg bg-blue-400 p-3">
 								<IconCalendarEvent class="h-6 w-6" />
 							</div>
 						</div>
 					</Card.Content>
 				</Card.Root>
 
-				<Card.Root class="bg-gradient-to-r from-green-500 to-green-600 text-white border-0">
+				<Card.Root class="border-0 bg-gradient-to-r from-green-500 to-green-600 text-white">
 					<Card.Content class="p-6">
 						<div class="flex items-center justify-between">
 							<div>
-								<p class="text-green-100 text-sm font-medium">เปิดรับสมัคร</p>
+								<p class="text-sm font-medium text-green-100">เปิดรับสมัคร</p>
 								<p class="text-3xl font-bold">{data.activities.openRegistration.length}</p>
 							</div>
-							<div class="bg-green-400 bg-opacity-30 rounded-lg p-3">
+							<div class="bg-opacity-30 rounded-lg bg-green-400 p-3">
 								<IconUserPlus class="h-6 w-6" />
 							</div>
 						</div>
 					</Card.Content>
 				</Card.Root>
 
-				<Card.Root class="bg-gradient-to-r from-purple-500 to-purple-600 text-white border-0">
+				<Card.Root class="border-0 bg-gradient-to-r from-purple-500 to-purple-600 text-white">
 					<Card.Content class="p-6">
 						<div class="flex items-center justify-between">
 							<div>
-								<p class="text-purple-100 text-sm font-medium">กำลังจะมาถึง</p>
+								<p class="text-sm font-medium text-purple-100">กำลังจะมาถึง</p>
 								<p class="text-3xl font-bold">{data.activities.upcoming.length}</p>
 							</div>
-							<div class="bg-purple-400 bg-opacity-30 rounded-lg p-3">
+							<div class="bg-opacity-30 rounded-lg bg-purple-400 p-3">
 								<IconCalendar class="h-6 w-6" />
 							</div>
 						</div>
 					</Card.Content>
 				</Card.Root>
 
-				<Card.Root class="bg-gradient-to-r from-orange-500 to-orange-600 text-white border-0">
+				<Card.Root class="border-0 bg-gradient-to-r from-orange-500 to-orange-600 text-white">
 					<Card.Content class="p-6">
 						<div class="flex items-center justify-between">
 							<div>
-								<p class="text-orange-100 text-sm font-medium">ยอดนิยม</p>
+								<p class="text-sm font-medium text-orange-100">ยอดนิยม</p>
 								<p class="text-3xl font-bold">{data.activities.popular.length}</p>
 							</div>
-							<div class="bg-orange-400 bg-opacity-30 rounded-lg p-3">
+							<div class="bg-opacity-30 rounded-lg bg-orange-400 p-3">
 								<IconTrendingUp class="h-6 w-6" />
 							</div>
 						</div>
@@ -210,7 +210,7 @@
 					<div class="flex items-center justify-between">
 						<div>
 							<h2 class="text-2xl font-bold text-foreground">เปิดรับสมัครแล้ว</h2>
-							<p class="text-muted-foreground mt-1">กิจกรรมที่เปิดให้ลงทะเบียนเข้าร่วม</p>
+							<p class="mt-1 text-muted-foreground">กิจกรรมที่เปิดให้ลงทะเบียนเข้าร่วม</p>
 						</div>
 						<Button variant="outline" href="/student/activities">
 							ดูทั้งหมด
@@ -219,20 +219,26 @@
 					</div>
 					<div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
 						{#each data.activities.openRegistration as activity}
-							<Card.Root 
+							<Card.Root
 								onclick={() => goto(`/student/activities/${activity.id}`)}
-								class="hover:shadow-lg transition-shadow cursor-pointer border-green-200 bg-green-50/50"
+								class="cursor-pointer border-green-200 bg-green-50/50 transition-shadow hover:shadow-lg"
 							>
 								<Card.Content class="p-6">
 									<div class="space-y-4">
 										<div class="flex items-start justify-between">
 											<div class="space-y-1">
-												<h3 class="font-semibold text-lg leading-tight line-clamp-2">{activity.title}</h3>
-												<p class="text-sm text-muted-foreground line-clamp-2">{activity.description}</p>
+												<h3 class="line-clamp-2 text-lg leading-tight font-semibold">
+													{activity.title}
+												</h3>
+												<p class="line-clamp-2 text-sm text-muted-foreground">
+													{activity.description}
+												</p>
 											</div>
-											<Badge variant="default" class="bg-green-500 text-white shrink-0 ml-2">เปิดรับสมัคร</Badge>
+											<Badge variant="default" class="ml-2 shrink-0 bg-green-500 text-white"
+												>เปิดรับสมัคร</Badge
+											>
 										</div>
-										
+
 										<div class="space-y-2 text-sm text-muted-foreground">
 											<div class="flex items-center gap-2">
 												<IconCalendar class="h-4 w-4" />
@@ -281,7 +287,7 @@
 					<div class="flex items-center justify-between">
 						<div>
 							<h2 class="text-2xl font-bold text-foreground">กำลังจะมาถึง</h2>
-							<p class="text-muted-foreground mt-1">กิจกรรมที่จะจัดขึ้นในอนาคตอันใกล้</p>
+							<p class="mt-1 text-muted-foreground">กิจกรรมที่จะจัดขึ้นในอนาคตอันใกล้</p>
 						</div>
 						<Button variant="outline" href="/student/activities">
 							ดูทั้งหมด
@@ -290,22 +296,29 @@
 					</div>
 					<div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
 						{#each data.activities.upcoming as activity}
-							<Card.Root 
+							<Card.Root
 								onclick={() => goto(`/student/activities/${activity.id}`)}
-								class="hover:shadow-lg transition-shadow cursor-pointer border-purple-200 bg-purple-50/50"
+								class="cursor-pointer border-purple-200 bg-purple-50/50 transition-shadow hover:shadow-lg"
 							>
 								<Card.Content class="p-6">
 									<div class="space-y-4">
 										<div class="flex items-start justify-between">
 											<div class="space-y-1">
-												<h3 class="font-semibold text-lg leading-tight line-clamp-2">{activity.title}</h3>
-												<p class="text-sm text-muted-foreground line-clamp-2">{activity.description}</p>
+												<h3 class="line-clamp-2 text-lg leading-tight font-semibold">
+													{activity.title}
+												</h3>
+												<p class="line-clamp-2 text-sm text-muted-foreground">
+													{activity.description}
+												</p>
 											</div>
-											<Badge variant="secondary" class="bg-purple-100 text-purple-700 shrink-0 ml-2">
+											<Badge
+												variant="secondary"
+												class="ml-2 shrink-0 bg-purple-100 text-purple-700"
+											>
 												{activity.status === 'published' ? 'เผยแพร่' : 'กำลังดำเนินการ'}
 											</Badge>
 										</div>
-										
+
 										<div class="space-y-2 text-sm text-muted-foreground">
 											<div class="flex items-center gap-2">
 												<IconCalendar class="h-4 w-4" />
@@ -354,7 +367,7 @@
 					<div class="flex items-center justify-between">
 						<div>
 							<h2 class="text-2xl font-bold text-foreground">กิจกรรมล่าสุด</h2>
-							<p class="text-muted-foreground mt-1">กิจกรรมที่เพิ่งเผยแพร่ใหม่</p>
+							<p class="mt-1 text-muted-foreground">กิจกรรมที่เพิ่งเผยแพร่ใหม่</p>
 						</div>
 						<Button variant="outline" href="/student/activities">
 							ดูทั้งหมด
@@ -363,20 +376,26 @@
 					</div>
 					<div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
 						{#each data.activities.recent as activity}
-							<Card.Root 
+							<Card.Root
 								onclick={() => goto(`/student/activities/${activity.id}`)}
-								class="hover:shadow-lg transition-shadow cursor-pointer border-blue-200 bg-blue-50/50"
+								class="cursor-pointer border-blue-200 bg-blue-50/50 transition-shadow hover:shadow-lg"
 							>
 								<Card.Content class="p-6">
 									<div class="space-y-4">
 										<div class="flex items-start justify-between">
 											<div class="space-y-1">
-												<h3 class="font-semibold text-lg leading-tight line-clamp-2">{activity.title}</h3>
-												<p class="text-sm text-muted-foreground line-clamp-2">{activity.description}</p>
+												<h3 class="line-clamp-2 text-lg leading-tight font-semibold">
+													{activity.title}
+												</h3>
+												<p class="line-clamp-2 text-sm text-muted-foreground">
+													{activity.description}
+												</p>
 											</div>
-											<Badge variant="default" class="bg-blue-500 text-white shrink-0 ml-2">ใหม่</Badge>
+											<Badge variant="default" class="ml-2 shrink-0 bg-blue-500 text-white"
+												>ใหม่</Badge
+											>
 										</div>
-										
+
 										<div class="space-y-2 text-sm text-muted-foreground">
 											<div class="flex items-center gap-2">
 												<IconCalendar class="h-4 w-4" />
@@ -425,7 +444,7 @@
 					<div class="flex items-center justify-between">
 						<div>
 							<h2 class="text-2xl font-bold text-foreground">กิจกรรมยอดนิยม</h2>
-							<p class="text-muted-foreground mt-1">กิจกรรมที่ได้รับความสนใจมากที่สุด</p>
+							<p class="mt-1 text-muted-foreground">กิจกรรมที่ได้รับความสนใจมากที่สุด</p>
 						</div>
 						<Button variant="outline" href="/student/activities">
 							ดูทั้งหมด
@@ -434,20 +453,26 @@
 					</div>
 					<div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
 						{#each data.activities.popular as activity}
-							<Card.Root 
+							<Card.Root
 								onclick={() => goto(`/student/activities/${activity.id}`)}
-								class="hover:shadow-lg transition-shadow cursor-pointer border-orange-200 bg-orange-50/50"
+								class="cursor-pointer border-orange-200 bg-orange-50/50 transition-shadow hover:shadow-lg"
 							>
 								<Card.Content class="p-6">
 									<div class="space-y-4">
 										<div class="flex items-start justify-between">
 											<div class="space-y-1">
-												<h3 class="font-semibold text-lg leading-tight line-clamp-2">{activity.title}</h3>
-												<p class="text-sm text-muted-foreground line-clamp-2">{activity.description}</p>
+												<h3 class="line-clamp-2 text-lg leading-tight font-semibold">
+													{activity.title}
+												</h3>
+												<p class="line-clamp-2 text-sm text-muted-foreground">
+													{activity.description}
+												</p>
 											</div>
-											<Badge variant="default" class="bg-orange-500 text-white shrink-0 ml-2">ยอดนิยม</Badge>
+											<Badge variant="default" class="ml-2 shrink-0 bg-orange-500 text-white"
+												>ยอดนิยม</Badge
+											>
 										</div>
-										
+
 										<div class="space-y-2 text-sm text-muted-foreground">
 											<div class="flex items-center gap-2">
 												<IconCalendar class="h-4 w-4" />
@@ -491,19 +516,19 @@
 			{/if}
 		{:else}
 			<!-- Loading or Empty State -->
-			<div class="text-center py-12">
+			<div class="py-12 text-center">
 				<p class="text-muted-foreground">กำลังโหลดข้อมูลกิจกรรม...</p>
 			</div>
 		{/if}
 
 		<!-- Quick Actions -->
-		<section class="bg-muted/50 rounded-lg p-8">
-			<div class="text-center space-y-4">
+		<section class="rounded-lg bg-muted/50 p-8">
+			<div class="space-y-4 text-center">
 				<h2 class="text-2xl font-bold">เริ่มต้นใช้งาน</h2>
-				<p class="text-muted-foreground max-w-2xl mx-auto">
+				<p class="mx-auto max-w-2xl text-muted-foreground">
 					เข้าสู่ระบบเพื่อลงทะเบียนเข้าร่วมกิจกรรม ติดตามความคืบหน้า และรับข่าวสารล่าสุด
 				</p>
-				<div class="flex flex-col sm:flex-row gap-4 justify-center">
+				<div class="flex flex-col justify-center gap-4 sm:flex-row">
 					{#if !data.user}
 						<Button href="/login" size="lg" class="flex items-center gap-2">
 							<IconUser class="h-5 w-5" />
@@ -513,17 +538,11 @@
 							เรียกดูกิจกรรมทั้งหมด
 						</Button>
 					{:else}
-						<Button href="/student/activities" size="lg">
-							เรียกดูกิจกรรมทั้งหมด
-						</Button>
+						<Button href="/student/activities" size="lg">เรียกดูกิจกรรมทั้งหมด</Button>
 						{#if data.user.admin_role}
-							<Button href="/admin" variant="outline" size="lg">
-								จัดการระบบ
-							</Button>
+							<Button href="/admin" variant="outline" size="lg">จัดการระบบ</Button>
 						{:else}
-							<Button href="/student" variant="outline" size="lg">
-								หน้าผู้ใช้
-							</Button>
+							<Button href="/student" variant="outline" size="lg">หน้าผู้ใช้</Button>
 						{/if}
 					{/if}
 				</div>

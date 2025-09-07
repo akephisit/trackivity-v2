@@ -21,68 +21,73 @@ export const load: PageServerLoad = async (event) => {
 		}
 
 		// Query activities directly from database
-    const baseQuery = db
-      .select({
-        id: activities.id,
-        title: activities.title,
-        description: activities.description,
-        start_date: activities.startDate,
-        end_date: activities.endDate,
-        start_time: activities.startTimeOnly,
-        end_time: activities.endTimeOnly,
-        activity_type: activities.activityType,
-        location: activities.location,
-        max_participants: activities.maxParticipants,
-        hours: activities.hours,
-        status: activities.status,
-        organization_id: activities.organizationId,
-        created_by: activities.createdBy,
-        created_at: activities.createdAt,
-        updated_at: activities.updatedAt,
-        organizer_id: activities.organizerId,
-        organizer_name: organizations.name,
-        activity_level: activities.activityLevel
-      })
-      .from(activities)
-      .leftJoin(organizations, eq(activities.organizerId, organizations.id));
+		const baseQuery = db
+			.select({
+				id: activities.id,
+				title: activities.title,
+				description: activities.description,
+				start_date: activities.startDate,
+				end_date: activities.endDate,
+				start_time: activities.startTimeOnly,
+				end_time: activities.endTimeOnly,
+				activity_type: activities.activityType,
+				location: activities.location,
+				max_participants: activities.maxParticipants,
+				participant_count: activities.participantCount,
+				view_count: activities.viewCount,
+				hours: activities.hours,
+				status: activities.status,
+				organization_id: activities.organizationId,
+				created_by: activities.createdBy,
+				created_at: activities.createdAt,
+				updated_at: activities.updatedAt,
+				organizer_id: activities.organizerId,
+				organizer_name: organizations.name,
+				activity_level: activities.activityLevel
+			})
+			.from(activities)
+			.leftJoin(organizations, eq(activities.organizerId, organizations.id));
 
 		// Apply faculty filtering for FacultyAdmin
 		const filteredQuery =
 			adminLevel === AdminLevel.OrganizationAdmin && organizationId
 				? baseQuery.where(
-					or(eq(activities.organizationId, organizationId), eq(activities.organizerId, organizationId))
-				  )
+						or(
+							eq(activities.organizationId, organizationId),
+							eq(activities.organizerId, organizationId)
+						)
+					)
 				: baseQuery;
 
 		const rawActivities = await filteredQuery.orderBy(desc(activities.createdAt));
 
-    const activitiesData = rawActivities.map((activity: any) => ({
-      id: activity.id,
-      activity_name: activity.title,
-      description: activity.description,
-      start_date: activity.start_date,
-      end_date: activity.end_date,
-      start_time: activity.start_time,
-      end_time: activity.end_time,
-      activity_type: activity.activity_type,
-      location: activity.location,
-      max_participants: activity.max_participants,
-      hours: activity.hours,
-      require_score: false, // Not in current schema
-      organization_id: activity.organization_id,
-      created_by: activity.created_by,
-      created_at: activity.created_at,
-      updated_at: activity.updated_at,
-      // Legacy fields for compatibility
-      name: activity.title,
-      organizer: activity.organizer_name || 'ระบบ',
-      organizer_id: activity.organizer_id,
-      organizer_name: activity.organizer_name,
-      organizerType: 'หน่วยงาน',
-      participantCount: 0, // TODO: Count from participations table
-      status: activity.status || 'รอดำเนินการ',
-      activity_level: activity.activity_level || 'faculty'
-    }));
+		const activitiesData = rawActivities.map((activity: any) => ({
+			id: activity.id,
+			activity_name: activity.title,
+			description: activity.description,
+			start_date: activity.start_date,
+			end_date: activity.end_date,
+			start_time: activity.start_time,
+			end_time: activity.end_time,
+			activity_type: activity.activity_type,
+			location: activity.location,
+			max_participants: activity.max_participants,
+			hours: activity.hours,
+			require_score: false, // Not in current schema
+			organization_id: activity.organization_id,
+			created_by: activity.created_by,
+			created_at: activity.created_at,
+			updated_at: activity.updated_at,
+			// Legacy fields for compatibility
+			name: activity.title,
+			organizer: activity.organizer_name || 'ระบบ',
+			organizer_id: activity.organizer_id,
+			organizer_name: activity.organizer_name,
+			organizerType: 'หน่วยงาน',
+			participantCount: activity.participant_count || 0,
+			status: activity.status || 'รอดำเนินการ',
+			activity_level: activity.activity_level || 'faculty'
+		}));
 
 		return {
 			activities: activitiesData,

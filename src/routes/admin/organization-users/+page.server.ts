@@ -93,7 +93,6 @@ async function getUsersFromDb(
 		query = query.where(and(...conditions));
 	}
 
-
 	// Add ordering and pagination
 	const result = await query.orderBy(desc(users.createdAt)).offset(offset).limit(limit);
 

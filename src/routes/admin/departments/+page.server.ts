@@ -13,11 +13,13 @@ const departmentCreateSchema = z.object({
 	name: z.string().min(1, 'กรุณากรอกชื่อภาควิชา'),
 	code: z.string().min(1, 'กรุณากรอกรหัสภาควิชา'),
 	description: z.string().optional(),
-	status: z.preprocess((val) => {
-		if (val === 'true' || val === true) return true;
-		if (val === 'false' || val === false) return false;
-		return true; // default value
-	}, z.boolean()).default(true),
+	status: z
+		.preprocess((val) => {
+			if (val === 'true' || val === true) return true;
+			if (val === 'false' || val === false) return false;
+			return true; // default value
+		}, z.boolean())
+		.default(true),
 	// สำหรับ SuperAdmin ต้องเลือกหน่วยงาน
 	organization_id: z.string().uuid('รหัสหน่วยงานไม่ถูกต้อง').optional()
 });
@@ -59,7 +61,16 @@ export const load: PageServerLoad = async (event) => {
 				.from(departments)
 				.leftJoin(users, eq(departments.id, users.departmentId))
 				.where(eq(departments.organizationId, (admin_role as any).organization_id))
-				.groupBy(departments.id, departments.name, departments.code, departments.organizationId, departments.description, departments.status, departments.createdAt, departments.updatedAt)
+				.groupBy(
+					departments.id,
+					departments.name,
+					departments.code,
+					departments.organizationId,
+					departments.description,
+					departments.status,
+					departments.createdAt,
+					departments.updatedAt
+				)
 				.orderBy(desc(departments.createdAt));
 
 			// Get admin count for the organization
@@ -67,7 +78,7 @@ export const load: PageServerLoad = async (event) => {
 				.select({ count: count() })
 				.from(adminRoles)
 				.where(eq(adminRoles.organizationId, (admin_role as any).organization_id));
-			
+
 			const totalAdmins = adminCountResult[0]?.count || 0;
 
 			departmentsData = rows.map((d) => ({
@@ -96,7 +107,17 @@ export const load: PageServerLoad = async (event) => {
 				.from(departments)
 				.leftJoin(organizations, eq(departments.organizationId, organizations.id))
 				.leftJoin(users, eq(departments.id, users.departmentId))
-				.groupBy(departments.id, departments.name, departments.code, departments.organizationId, departments.description, departments.status, departments.createdAt, departments.updatedAt, organizations.name)
+				.groupBy(
+					departments.id,
+					departments.name,
+					departments.code,
+					departments.organizationId,
+					departments.description,
+					departments.status,
+					departments.createdAt,
+					departments.updatedAt,
+					organizations.name
+				)
 				.orderBy(desc(departments.createdAt));
 
 			// Get total admin count for SuperAdmin view

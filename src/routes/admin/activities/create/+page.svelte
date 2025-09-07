@@ -31,12 +31,7 @@
 	import { toast } from 'svelte-sonner';
 	import { goto } from '$app/navigation';
 	import type { ActivityType } from '$lib/types/activity';
-	import {
-		type DateValue,
-		getLocalTimeZone,
-		today,
-		parseDate
-	} from '@internationalized/date';
+	import { type DateValue, getLocalTimeZone, today, parseDate } from '@internationalized/date';
 	import { cn } from '$lib/utils';
 	import { buttonVariants } from '$lib/components/ui/button';
 
@@ -86,9 +81,7 @@
 				.min(1, 'กรุณากรอกจำนวนชั่วโมง')
 				.regex(/^\d+$/, 'ชั่วโมงต้องเป็นจำนวนเต็ม')
 				.refine((v) => parseInt(v) > 0, 'ชั่วโมงต้องมากกว่า 0'),
-			organizer_id: z
-				.string()
-				.min(1, 'กรุณาเลือกหน่วยงานที่จัดกิจกรรม'),
+			organizer_id: z.string().min(1, 'กรุณาเลือกหน่วยงานที่จัดกิจกรรม'),
 			eligible_organizations: z
 				.string()
 				.min(1, 'กรุณาเลือกคณะที่สามารถเข้าร่วมได้')
@@ -159,20 +152,20 @@
 
 	// Parse organization data from API - now includes both faculty and office types
 	const organizationData = data.organizations || { all: [], grouped: { faculty: [], office: [] } };
-	
+
 	// Create options for each organization type with Thai labels
 	const facultyOptions = organizationData.grouped.faculty.map((faculty: any) => ({
 		value: faculty.id,
 		label: faculty.name,
 		type: 'faculty' as const
 	}));
-	
+
 	const officeOptions = organizationData.grouped.office.map((office: any) => ({
 		value: office.id,
 		label: office.name,
 		type: 'office' as const
 	}));
-	
+
 	// Combine all options for form processing
 	const allOrganizationOptions = [...facultyOptions, ...officeOptions];
 
@@ -195,39 +188,44 @@
 	// Import utility functions and options
 	import { activityLevelOptions } from '$lib/utils/activity';
 	import { formatThaiDate } from '$lib/utils/thai-date';
-	
+
 	// Note: We now use Thai formatting utilities instead of the standard DateFormatter
-	
+
 	// Create custom month and year formatting functions for calendar
 	function formatCalendarMonth(monthNumber: number): string {
 		const monthIndex = monthNumber - 1; // Convert to 0-based index
 		return formatThaiMonth(monthIndex, 'long');
 	}
-	
+
 	function formatCalendarYear(year: number): string {
 		return toBuddhistEra(year).toString();
 	}
-	
+
 	// Import Thai date utilities for calendar customization
 	import { formatThaiMonth, toBuddhistEra } from '$lib/utils/thai-date';
-	
+
 	// Activity level options with English values and Thai labels
 
 	// Selected values for selects - sync with form defaults
 	let selectedActivityType = $state<{ value: ActivityType; label: string } | undefined>(
-		activityTypeOptions.find(opt => opt.value === $formData.activity_type)
+		activityTypeOptions.find((opt) => opt.value === $formData.activity_type)
 	);
 	// For multiple select, we use array of strings (organization IDs) as that's what bits-ui expects
 	let selectedOrganizationIds = $state<string[]>([]);
 	// Derive organization objects for display purposes (กรองเฉพาะคณะที่เลือก)
 	let selectedOrganizations = $derived(
-		selectedOrganizationIds.map(id => {
-			const org = facultyOptions.find((o: any) => o.value === id); // ใช้เฉพาะ facultyOptions
-			return org ? { value: id, label: org.label, type: org.type } : null;
-		}).filter(Boolean) as { value: string; label: string; type: 'faculty' }[]
+		selectedOrganizationIds
+			.map((id) => {
+				const org = facultyOptions.find((o: any) => o.value === id); // ใช้เฉพาะ facultyOptions
+				return org ? { value: id, label: org.label, type: org.type } : null;
+			})
+			.filter(Boolean) as { value: string; label: string; type: 'faculty' }[]
 	);
 	let selectedAcademicYear = $state<{ value: string; label: string } | undefined>(undefined);
-	let selectedActivityLevel = $state<{ value: string; label: string } | undefined>({ value: 'faculty', label: 'คณะ' });
+	let selectedActivityLevel = $state<{ value: string; label: string } | undefined>({
+		value: 'faculty',
+		label: 'คณะ'
+	});
 
 	// Date picker values
 	let startDateValue = $state<DateValue | undefined>(undefined);
@@ -262,7 +260,6 @@
 
 	const hourOptions = generateHourOptions();
 	const minuteOptions = generateMinuteOptions();
-
 
 	// Synchronize DateValue with form data
 	$effect(() => {
@@ -342,7 +339,7 @@
 </script>
 
 <svelte:head>
-    <title>สร้างกิจกรรมใหม่ - Trackivity</title>
+	<title>สร้างกิจกรรมใหม่ - Trackivity</title>
 </svelte:head>
 
 <div class="space-y-6">
@@ -354,7 +351,9 @@
 				กลับ
 			</Button>
 			<div>
-				<h1 class="admin-page-title"><IconCalendar class="size-6 text-primary" /> สร้างกิจกรรมใหม่</h1>
+				<h1 class="admin-page-title">
+					<IconCalendar class="size-6 text-primary" /> สร้างกิจกรรมใหม่
+				</h1>
 				<p class="mt-2 text-lg text-gray-600 dark:text-gray-400">
 					กรอกข้อมูลเพื่อสร้างกิจกรรมใหม่ในระบบ
 				</p>
@@ -533,7 +532,7 @@
 								</Form.Field>
 							</div>
 
-			<!-- Organizer (select from organizations) -->
+							<!-- Organizer (select from organizations) -->
 							<div>
 								<Form.Field {form} name="organizer_id">
 									<Form.Control>
@@ -541,7 +540,11 @@
 											<Label for={props.id} class="text-base font-medium"
 												>หน่วยงานที่จัดกิจกรรม *</Label
 											>
-											<input type="hidden" name="organizer_id" bind:value={$formData.organizer_id} />
+											<input
+												type="hidden"
+												name="organizer_id"
+												bind:value={$formData.organizer_id}
+											/>
 											<Select.Root
 												type="single"
 												bind:value={$formData.organizer_id as any}
@@ -549,7 +552,10 @@
 											>
 												<Select.Trigger>
 													{#if $formData.organizer_id}
-														{allOrganizationOptions.find((o: { value: string; label: string }) => o.value === $formData.organizer_id)?.label || 'เลือกหน่วยงานผู้จัด'}
+														{allOrganizationOptions.find(
+															(o: { value: string; label: string }) =>
+																o.value === $formData.organizer_id
+														)?.label || 'เลือกหน่วยงานผู้จัด'}
 													{:else}
 														เลือกหน่วยงานผู้จัด
 													{/if}
@@ -557,31 +563,31 @@
 												<Select.Content>
 													<!-- คณะ Section -->
 													{#if facultyOptions.length > 0}
-														<div class="px-2 py-1.5 text-sm font-semibold text-gray-700 bg-gray-50">
+														<div class="bg-gray-50 px-2 py-1.5 text-sm font-semibold text-gray-700">
 															คณะ
 														</div>
 														{#each facultyOptions as option}
 															<Select.Item value={option.value}>
 																<div class="flex items-center gap-2">
-																	<div class="w-2 h-2 rounded-full bg-blue-500"></div>
+																	<div class="h-2 w-2 rounded-full bg-blue-500"></div>
 																	{option.label}
 																</div>
 															</Select.Item>
 														{/each}
 													{/if}
-													
+
 													<!-- หน่วยงาน Section -->
 													{#if officeOptions.length > 0}
 														{#if facultyOptions.length > 0}
-															<div class="border-t my-1"></div>
+															<div class="my-1 border-t"></div>
 														{/if}
-														<div class="px-2 py-1.5 text-sm font-semibold text-gray-700 bg-gray-50">
+														<div class="bg-gray-50 px-2 py-1.5 text-sm font-semibold text-gray-700">
 															หน่วยงาน
 														</div>
 														{#each officeOptions as option}
 															<Select.Item value={option.value}>
 																<div class="flex items-center gap-2">
-																	<div class="w-2 h-2 rounded-full bg-green-500"></div>
+																	<div class="h-2 w-2 rounded-full bg-green-500"></div>
 																	{option.label}
 																</div>
 															</Select.Item>
@@ -640,7 +646,7 @@
 													if (values && Array.isArray(values)) {
 														// กรองเฉพาะ faculty IDs ที่ถูกต้อง
 														const facultyIds = facultyOptions.map((f: any) => f.value);
-														const validValues = values.filter(id => facultyIds.includes(id));
+														const validValues = values.filter((id) => facultyIds.includes(id));
 														selectedOrganizationIds = validValues;
 														$formData.eligible_organizations = validValues.join(',');
 														console.log(
@@ -669,10 +675,12 @@
 																		{#if selectedOrganizationIds.includes(option.value)}
 																			<div class="h-3 w-3 rounded-sm bg-blue-600"></div>
 																		{:else}
-																			<div class="h-3 w-3 rounded-sm border border-gray-300 bg-white"></div>
+																			<div
+																				class="h-3 w-3 rounded-sm border border-gray-300 bg-white"
+																			></div>
 																		{/if}
 																	</div>
-																	<div class="w-2 h-2 rounded-full bg-blue-500 mr-1"></div>
+																	<div class="mr-1 h-2 w-2 rounded-full bg-blue-500"></div>
 																	{option.label}
 																</div>
 															</Select.Item>
@@ -685,14 +693,16 @@
 													{#each selectedOrganizations as org}
 														<span
 															class={`inline-flex items-center gap-1 rounded-md px-2 py-1 text-sm ${
-																org.type === 'faculty' 
-																	? 'bg-blue-100 text-blue-800' 
+																org.type === 'faculty'
+																	? 'bg-blue-100 text-blue-800'
 																	: 'bg-green-100 text-green-800'
 															}`}
 														>
-															<div class={`w-2 h-2 rounded-full ${
-																org.type === 'faculty' ? 'bg-blue-500' : 'bg-green-500'
-															}`}></div>
+															<div
+																class={`h-2 w-2 rounded-full ${
+																	org.type === 'faculty' ? 'bg-blue-500' : 'bg-green-500'
+																}`}
+															></div>
 															{org.label}
 															<button
 																type="button"
@@ -700,7 +710,8 @@
 																	selectedOrganizationIds = selectedOrganizationIds.filter(
 																		(id: string) => id !== org.value
 																	);
-																	$formData.eligible_organizations = selectedOrganizationIds.join(',');
+																	$formData.eligible_organizations =
+																		selectedOrganizationIds.join(',');
 																}}
 																class={`hover:opacity-75 ${
 																	org.type === 'faculty' ? 'text-blue-600' : 'text-green-600'
@@ -756,24 +767,20 @@
 									<Form.Control>
 										{#snippet children({ props })}
 											<Label for={props.id} class="text-base font-medium">วันที่เริ่ม *</Label>
-											<input
-												type="hidden"
-												name="start_date"
-												bind:value={$formData.start_date}
-											/>
+											<input type="hidden" name="start_date" bind:value={$formData.start_date} />
 											<Popover.Root>
 												<Popover.Trigger
 													class={cn(
 														buttonVariants({
-															variant: "outline",
-															class: "w-full justify-start text-left font-normal text-base"
+															variant: 'outline',
+															class: 'w-full justify-start text-left text-base font-normal'
 														}),
-														!startDateValue && "text-muted-foreground"
+														!startDateValue && 'text-muted-foreground'
 													)}
 													disabled={$submitting}
 												>
 													<IconCalendar class="mr-2 h-4 w-4" />
-													{startDateValue ? formatThaiDate(startDateValue) : "เลือกวันที่เริ่ม"}
+													{startDateValue ? formatThaiDate(startDateValue) : 'เลือกวันที่เริ่ม'}
 												</Popover.Trigger>
 												<Popover.Content class="w-auto p-0">
 													<Calendar
@@ -800,24 +807,20 @@
 									<Form.Control>
 										{#snippet children({ props })}
 											<Label for={props.id} class="text-base font-medium">วันที่สิ้นสุด *</Label>
-											<input
-												type="hidden"
-												name="end_date"
-												bind:value={$formData.end_date}
-											/>
+											<input type="hidden" name="end_date" bind:value={$formData.end_date} />
 											<Popover.Root>
 												<Popover.Trigger
 													class={cn(
 														buttonVariants({
-															variant: "outline",
-															class: "w-full justify-start text-left font-normal text-base"
+															variant: 'outline',
+															class: 'w-full justify-start text-left text-base font-normal'
 														}),
-														!endDateValue && "text-muted-foreground"
+														!endDateValue && 'text-muted-foreground'
 													)}
 													disabled={$submitting}
 												>
 													<IconCalendar class="mr-2 h-4 w-4" />
-													{endDateValue ? formatThaiDate(endDateValue) : "เลือกวันที่สิ้นสุด"}
+													{endDateValue ? formatThaiDate(endDateValue) : 'เลือกวันที่สิ้นสุด'}
 												</Popover.Trigger>
 												<Popover.Content class="w-auto p-0">
 													<Calendar
@@ -847,11 +850,7 @@
 												<IconClock class="h-4 w-4" />
 												เวลาเริ่ม *
 											</Label>
-											<input
-												type="hidden"
-												name="start_time"
-												bind:value={$formData.start_time}
-											/>
+											<input type="hidden" name="start_time" bind:value={$formData.start_time} />
 											<div class="flex gap-2">
 												<Select.Root
 													type="single"
@@ -902,11 +901,7 @@
 												<IconClock class="h-4 w-4" />
 												เวลาสิ้นสุด *
 											</Label>
-											<input
-												type="hidden"
-												name="end_time"
-												bind:value={$formData.end_time}
-											/>
+											<input type="hidden" name="end_time" bind:value={$formData.end_time} />
 											<div class="flex gap-2">
 												<Select.Root
 													type="single"

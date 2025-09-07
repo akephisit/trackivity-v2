@@ -457,18 +457,16 @@
 </script>
 
 <svelte:head>
-    <title>{pageTitle} - Trackivity</title>
+	<title>{pageTitle} - Trackivity</title>
 </svelte:head>
 
 <div class="space-y-6">
 	<!-- Header -->
 	<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
 		<div>
-			<h1
-				id="faculty-admin-management-heading"
-				class="admin-page-title"
-			>
-				<IconShield class="size-6 text-primary" /> {pageTitle}
+			<h1 id="faculty-admin-management-heading" class="admin-page-title">
+				<IconShield class="size-6 text-primary" />
+				{pageTitle}
 			</h1>
 			<p class="mt-3 text-lg text-gray-600 dark:text-gray-400">
 				{#if data.isSuperAdmin}

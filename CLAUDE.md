@@ -9,7 +9,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ```bash
 # Development
 bun run dev              # Start dev server with database push
-bun run dev:db          # Start dev server with fresh database push  
+bun run dev:db          # Start dev server with fresh database push
 bun run dev:db:migrate  # Start dev server with database migration
 bun run dev:watch       # Hot reload development with file watching
 
@@ -42,8 +42,9 @@ bun run clean              # Clean build artifacts and cache
 **Trackivity v2** is a Thai university activity tracking system built with SvelteKit 2 (Svelte 5), PostgreSQL, and Drizzle ORM.
 
 ### Tech Stack
+
 - **Frontend:** SvelteKit 2 with Svelte 5 (runes syntax)
-- **Runtime:** Bun (primary), Node.js (fallback)  
+- **Runtime:** Bun (primary), Node.js (fallback)
 - **Database:** PostgreSQL with Drizzle ORM
 - **UI:** shadcn/ui-svelte components + Tailwind CSS
 - **Icons:** Tabler Icons for Svelte
@@ -59,6 +60,7 @@ The system supports three admin levels with different capabilities:
 3. **RegularAdmin**: Basic activity scanning and assigned activity management
 
 **Key Role Restrictions:**
+
 - **Reports menu**: Removed from ALL admin levels
 - **Settings menu**: Only available for OrganizationAdmin with `organizationType === 'faculty'`
 
@@ -89,6 +91,7 @@ src/
 ### Database Schema
 
 Located at `src/lib/server/db/schema.ts` using Drizzle ORM with PostgreSQL. Main entities include:
+
 - Users (students/staff with roles)
 - Organizations (faculties/offices)
 - Activities (academic/sports/cultural events)
@@ -107,6 +110,7 @@ Located at `src/lib/server/db/schema.ts` using Drizzle ORM with PostgreSQL. Main
 **Current Active Layout:** `admin-app-layout.svelte` → `app-layout.svelte`
 
 The system uses a centralized layout approach:
+
 - Main admin interface routes through `/routes/admin/+layout.svelte`
 - Navigation items and quick actions are defined in `admin-app-layout.svelte`
 - `isActiveRoute()` function handles menu highlighting with exact path matching
@@ -114,11 +118,12 @@ The system uses a centralized layout approach:
 ### Navigation Logic
 
 Menu item active states use:
+
 ```typescript
 function isActiveRoute(href: string, exact: boolean = false): boolean {
-  const currentPath = $page.url.pathname;
-  if (exact) return currentPath === href;
-  return currentPath === href || currentPath.startsWith(href + '/');
+	const currentPath = $page.url.pathname;
+	if (exact) return currentPath === href;
+	return currentPath === href || currentPath.startsWith(href + '/');
 }
 ```
 
@@ -127,6 +132,7 @@ function isActiveRoute(href: string, exact: boolean = false): boolean {
 ### Organization Types
 
 The system supports two organization types:
+
 - `faculty`: Full feature access including settings menu
 - `office`: Limited feature set, no settings menu
 
@@ -135,16 +141,19 @@ The system supports two organization types:
 **Language:** All UI text, comments, and documentation use Thai language. System code uses English.
 
 **Component Patterns:**
+
 - Use Svelte 5 runes syntax (`$state`, `$derived`, `$props`)
 - Components follow shadcn/ui patterns for consistency
 - Form handling with Superforms + Zod validation
 
 **Database Operations:**
+
 - Always run `bun run db:push` after schema changes during development
 - Use `bun run db:studio` for database inspection
 - Migrations are generated with `bun run db:generate`
 
 **Permission Checking:**
+
 - Navigation items include `permissions` and `admin_levels` arrays
 - Role-based filtering occurs at both route and component levels
 - Organization-type specific features are handled in layout components
@@ -152,6 +161,7 @@ The system supports two organization types:
 ## Thai Language Context
 
 This is a Thai university system where:
+
 - **หน่วยงาน (Organization)** = Faculty or administrative office
 - **คณะ (Faculty)** = Academic faculty (has departments)
 - **สำนักงาน (Office)** = Administrative office (no departments)

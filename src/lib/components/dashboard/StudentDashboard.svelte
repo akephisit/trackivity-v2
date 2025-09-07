@@ -74,7 +74,6 @@
 				return 'outline';
 		}
 	}
-
 </script>
 
 <div class="space-y-6">
@@ -224,11 +223,15 @@
 					</div>
 				{:else if recentActivities.length === 0}
 					<div class="py-8 text-center text-muted-foreground">
-						<div class="mx-auto mb-3 flex size-12 items-center justify-center rounded-full bg-muted">
+						<div
+							class="mx-auto mb-3 flex size-12 items-center justify-center rounded-full bg-muted"
+						>
 							<IconCalendarEvent class="size-6 opacity-60" />
 						</div>
 						<p class="font-medium">ยังไม่มีกิจกรรม</p>
-						<p class="mt-1 text-sm text-muted-foreground">กิจกรรมใหม่จะปรากฏที่นี่เมื่อมีการเพิ่ม</p>
+						<p class="mt-1 text-sm text-muted-foreground">
+							กิจกรรมใหม่จะปรากฏที่นี่เมื่อมีการเพิ่ม
+						</p>
 						<Button class="mt-3" size="sm" href="/student/activities">
 							<IconCalendarEvent class="mr-2 size-4" />
 							ดูกิจกรรมทั้งหมด
@@ -296,11 +299,15 @@
 					</div>
 				{:else if participationHistory.length === 0}
 					<div class="py-8 text-center text-muted-foreground">
-						<div class="mx-auto mb-3 flex size-12 items-center justify-center rounded-full bg-muted">
+						<div
+							class="mx-auto mb-3 flex size-12 items-center justify-center rounded-full bg-muted"
+						>
 							<IconHistory class="size-6 opacity-60" />
 						</div>
 						<p class="font-medium">ยังไม่มีประวัติการเข้าร่วม</p>
-						<p class="mt-1 text-sm text-muted-foreground">เมื่อคุณเข้าร่วมกิจกรรมแล้ว ประวัติจะแสดงที่นี่</p>
+						<p class="mt-1 text-sm text-muted-foreground">
+							เมื่อคุณเข้าร่วมกิจกรรมแล้ว ประวัติจะแสดงที่นี่
+						</p>
 						<Button class="mt-3" size="sm" href="/student/activities">
 							<IconCalendarEvent class="mr-2 size-4" />
 							ดูกิจกรรม
@@ -310,7 +317,9 @@
 					<div class="space-y-3">
 						{#each participationHistory as participation}
 							<div class="space-y-2 rounded-lg border p-3">
-								<h4 class="text-sm font-medium">{participation.activity?.name || participation.activity?.title}</h4>
+								<h4 class="text-sm font-medium">
+									{participation.activity?.name || participation.activity?.title}
+								</h4>
 								<div class="flex items-center gap-4 text-xs text-muted-foreground">
 									<span class="flex items-center gap-1">
 										<IconClock class="size-3" />

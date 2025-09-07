@@ -18,11 +18,11 @@ export function generateSecureSessionId(): string {
 		.replace(/\+/g, '-')
 		.replace(/\//g, '_')
 		.replace(/=/g, '');
-	
+
 	// Add timestamp prefix to ensure uniqueness even with identical random values
 	const timestamp = Date.now().toString(36); // Base36 timestamp
 	const nanoTime = process.hrtime.bigint().toString(36); // High-resolution time
-	
+
 	return `${timestamp}-${nanoTime.slice(-8)}-${randomId.slice(0, 24)}`;
 }
 
@@ -32,20 +32,18 @@ export function generateSecureSessionId(): string {
  */
 export async function cleanupExpiredSessions(): Promise<number> {
 	try {
-		const result = await db
-			.delete(sessions)
-			.where(
-				or(
-					lt(sessions.expiresAt, new Date()), // Expired sessions
-					eq(sessions.isActive, false) // Inactive sessions
-				)
-			);
+		const result = await db.delete(sessions).where(
+			or(
+				lt(sessions.expiresAt, new Date()), // Expired sessions
+				eq(sessions.isActive, false) // Inactive sessions
+			)
+		);
 
 		const deletedCount = result.length || 0;
 		if (deletedCount > 0) {
 			console.log(`[Session Cleanup] Removed ${deletedCount} expired/inactive sessions`);
 		}
-		
+
 		return deletedCount;
 	} catch (error) {
 		console.error('[Session Cleanup] Failed to clean up expired sessions:', error);
@@ -72,18 +70,16 @@ export async function cleanupUserSessions(userId: string, keepLatest: number = 5
 
 		// Delete all but the most recent sessions
 		const sessionsToDelete = userSessions.slice(keepLatest);
-		const sessionIds = sessionsToDelete.map(s => s.id);
+		const sessionIds = sessionsToDelete.map((s) => s.id);
 
 		if (sessionIds.length > 0) {
-			const result = await db
-				.delete(sessions)
-				.where(
-					and(
-						eq(sessions.userId, userId),
-						// Only delete the specific old sessions
-						or(...sessionIds.map(id => eq(sessions.id, id)))
-					)
-				);
+			const result = await db.delete(sessions).where(
+				and(
+					eq(sessions.userId, userId),
+					// Only delete the specific old sessions
+					or(...sessionIds.map((id) => eq(sessions.id, id)))
+				)
+			);
 
 			const deletedCount = result.length || 0;
 			console.log(`[Session Cleanup] Removed ${deletedCount} old sessions for user ${userId}`);
@@ -102,7 +98,7 @@ export async function cleanupUserSessions(userId: string, keepLatest: number = 5
  * Handles duplicate key errors gracefully with retry mechanism
  */
 export async function createSessionWithRetry(
-	userId: string, 
+	userId: string,
 	expiresAt: Date,
 	deviceInfo: any = {},
 	ipAddress: string | null = null,
@@ -110,19 +106,19 @@ export async function createSessionWithRetry(
 	maxRetries: number = 3
 ): Promise<{ sessionId: string; created: boolean }> {
 	let lastError: Error | null = null;
-	
+
 	// Clean up user's old sessions before creating a new one
 	await cleanupUserSessions(userId, 3);
-	
+
 	for (let attempt = 1; attempt <= maxRetries; attempt++) {
 		try {
 			const sessionId = generateSecureSessionId();
-			
+
 			// Attempt to insert the session
 			await db.insert(sessions).values({
 				id: sessionId,
 				userId,
-				deviceInfo: deviceInfo || {},
+				deviceFingerprint: deviceInfo ? JSON.stringify(deviceInfo).slice(0, 64) : null,
 				ipAddress,
 				userAgent,
 				createdAt: new Date(),
@@ -134,15 +130,17 @@ export async function createSessionWithRetry(
 			return { sessionId, created: true };
 		} catch (error: any) {
 			lastError = error;
-			
+
 			// Check if it's a duplicate key error
 			if (error?.code === '23505' && error?.constraint === 'sessions_pkey') {
-				console.warn(`[Session] Duplicate session ID on attempt ${attempt}/${maxRetries}, retrying...`);
-				
+				console.warn(
+					`[Session] Duplicate session ID on attempt ${attempt}/${maxRetries}, retrying...`
+				);
+
 				if (attempt === maxRetries) {
 					// On final attempt, try to find existing session or clean up
 					console.error('[Session] Max retries reached, attempting session recovery');
-					
+
 					try {
 						// Try to find and reuse an existing session for this user
 						const existingSessions = await db
@@ -161,24 +159,24 @@ export async function createSessionWithRetry(
 
 						if (existingSessions.length > 0) {
 							const existingSession = existingSessions[0];
-									return { sessionId: existingSession.id, created: false };
+							return { sessionId: existingSession.id, created: false };
 						}
 					} catch (recoveryError) {
 						console.error('[Session] Session recovery failed:', recoveryError);
 					}
 				}
-				
+
 				// Wait briefly before retry to avoid rapid collision
-				await new Promise(resolve => setTimeout(resolve, 10 * attempt));
+				await new Promise((resolve) => setTimeout(resolve, 10 * attempt));
 				continue;
 			}
-			
+
 			// Non-duplicate key error, don't retry
 			console.error(`[Session] Non-recoverable session creation error:`, error);
 			throw error;
 		}
 	}
-	
+
 	// All retries failed
 	throw new Error(`Failed to create session after ${maxRetries} attempts: ${lastError?.message}`);
 }
@@ -191,7 +189,7 @@ export async function updateSessionLastAccessed(sessionId: string): Promise<void
 	try {
 		await db
 			.update(sessions)
-			.set({ 
+			.set({
 				lastAccessed: new Date(),
 				isActive: true // Ensure session is marked active
 			})
@@ -207,7 +205,6 @@ export async function updateSessionLastAccessed(sessionId: string): Promise<void
  */
 export async function deactivateSession(sessionId: string): Promise<boolean> {
 	try {
-			
 		// First, check if session exists and get its current state
 		const existingSession = await db
 			.select({ id: sessions.id, isActive: sessions.isActive })
@@ -235,7 +232,7 @@ export async function deactivateSession(sessionId: string): Promise<boolean> {
 			.returning({ id: sessions.id });
 
 		const success = result.length > 0;
-			
+
 		return success;
 	} catch (error) {
 		console.error(`[Session] Failed to deactivate session ${sessionId}:`, error);
@@ -248,11 +245,7 @@ export async function deactivateSession(sessionId: string): Promise<boolean> {
  */
 export async function getSession(sessionId: string) {
 	try {
-		const result = await db
-			.select()
-			.from(sessions)
-			.where(eq(sessions.id, sessionId))
-			.limit(1);
+		const result = await db.select().from(sessions).where(eq(sessions.id, sessionId)).limit(1);
 
 		return result.length > 0 ? result[0] : null;
 	} catch (error) {
@@ -260,4 +253,3 @@ export async function getSession(sessionId: string) {
 		return null;
 	}
 }
-

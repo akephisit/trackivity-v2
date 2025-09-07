@@ -165,7 +165,7 @@ export const load: PageServerLoad = async (event) => {
 		};
 	} catch (error) {
 		console.error('Error loading activities:', error);
-		
+
 		// Return user data with empty activities on error
 		return {
 			user,

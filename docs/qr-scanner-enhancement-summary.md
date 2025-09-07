@@ -9,10 +9,12 @@ The QR Code scanner has been comprehensively enhanced with detailed status handl
 ### 1. Enhanced API Endpoints
 
 **Files Modified:**
+
 - `/src/routes/api/activities/[id]/checkin/+server.ts`
 - `/src/routes/api/activities/[id]/checkout/+server.ts`
 
 **New Features:**
+
 - Comprehensive validation and error handling
 - Faculty/department restriction checking
 - User account status validation
@@ -22,6 +24,7 @@ The QR Code scanner has been comprehensively enhanced with detailed status handl
 - Enhanced Thai error messages
 
 **Status Codes Added:**
+
 - `ALREADY_CHECKED_IN` - Already participated
 - `FACULTY_RESTRICTION` - Not in correct faculty/department
 - `ACTIVITY_NOT_ONGOING` - Activity not in ongoing status
@@ -35,9 +38,11 @@ The QR Code scanner has been comprehensively enhanced with detailed status handl
 ### 2. Status Response Mapping
 
 **File Created:**
+
 - `/src/lib/utils/qr-status.ts`
 
 **Features:**
+
 - Comprehensive status configuration mapping
 - Visual feedback configuration (colors, icons, duration)
 - Audio and haptic feedback settings
@@ -48,13 +53,15 @@ The QR Code scanner has been comprehensively enhanced with detailed status handl
 ### 3. Enhanced QRScanner Component
 
 **File Modified:**
+
 - `/src/lib/components/qr/QRScanner.svelte`
 
 **New Features:**
+
 - Real-time status display with progress bar
 - Category-based color coding:
   - **Green**: Success (เข้าร่วมสำเร็จ)
-  - **Blue**: Already done (เข้าร่วมแล้ว/เช็คอินแล้ว) 
+  - **Blue**: Already done (เข้าร่วมแล้ว/เช็คอินแล้ว)
   - **Orange**: Restricted access (ไม่มีสิทธิ์เข้าร่วม)
   - **Red**: System errors (ข้อผิดพลาดระบบ)
 - Appropriate icons for each status type
@@ -66,6 +73,7 @@ The QR Code scanner has been comprehensively enhanced with detailed status handl
 ### 4. Visual Feedback System
 
 **Features Implemented:**
+
 - Color-coded status display based on category
 - Context-appropriate icons for each status
 - Progress bar showing remaining display time
@@ -77,16 +85,18 @@ The QR Code scanner has been comprehensively enhanced with detailed status handl
 ### 5. Audio & Haptic Feedback
 
 **Features Implemented:**
+
 - Sound notification system for different outcomes
 - Haptic feedback (vibration) for mobile devices
 - Configurable enable/disable options
 - Different audio files for different status categories:
   - `success.mp3` - Success scans
   - `info.mp3` - Already done notifications
-  - `warning.mp3` - Restricted access warnings  
+  - `warning.mp3` - Restricted access warnings
   - `error.mp3` - System errors
 
 **Directory Created:**
+
 - `/static/sounds/` with documentation
 
 ## 📱 User Experience Improvements
@@ -100,7 +110,7 @@ The QR Code scanner has been comprehensively enhanced with detailed status handl
    - Success sound + gentle vibration
 
 2. **Already Done (เข้าร่วมแล้ว)**
-   - Blue color scheme  
+   - Blue color scheme
    - Info icon
    - Shows previous check-in time
    - Info sound + short vibration
@@ -133,6 +143,7 @@ The QR Code scanner has been comprehensively enhanced with detailed status handl
 ## 🔧 Technical Implementation
 
 ### Backend Enhancements
+
 - Database queries for faculty/department validation
 - Participation count checking for maximum limits
 - User account status validation
@@ -140,6 +151,7 @@ The QR Code scanner has been comprehensively enhanced with detailed status handl
 - Comprehensive error response structure
 
 ### Frontend Enhancements
+
 - Status-based UI rendering with dynamic colors and icons
 - Progress bar animations for timed status display
 - Responsive design for different screen sizes
@@ -147,6 +159,7 @@ The QR Code scanner has been comprehensively enhanced with detailed status handl
 - Toast notifications with category-appropriate styling
 
 ### Configuration System
+
 - Centralized status configuration in `/src/lib/utils/qr-status.ts`
 - Easy to extend with new status codes
 - Configurable display durations and feedback settings
@@ -163,7 +176,7 @@ The enhanced system now handles:
 
 2. **Already Participated Scenarios**
    - Already checked in to same activity ✅
-   - Already checked out from activity ✅ 
+   - Already checked out from activity ✅
    - Already completed activity ✅
 
 3. **Access Restrictions**
@@ -209,7 +222,7 @@ The enhanced system now handles:
 
 - Comprehensive inline code comments
 - Type definitions for all new interfaces
-- README for sound files directory  
+- README for sound files directory
 - Status code documentation
 - Configuration examples
 
@@ -225,7 +238,7 @@ The enhanced system now handles:
 
 1. **Add Sound Files**: Create actual audio files for feedback
 2. **Performance Testing**: Test with high-volume scanning
-3. **Accessibility Testing**: Verify screen reader compatibility  
+3. **Accessibility Testing**: Verify screen reader compatibility
 4. **Browser Testing**: Test across different browsers/devices
 5. **Analytics**: Add scanning statistics tracking
 6. **Internationalization**: Support for additional languages

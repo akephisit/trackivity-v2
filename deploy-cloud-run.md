@@ -3,6 +3,7 @@
 ## 📋 Prerequisites
 
 1. **Google Cloud Project Setup:**
+
 ```bash
 gcloud config set project YOUR_PROJECT_ID
 gcloud auth login
@@ -10,6 +11,7 @@ gcloud services enable run.googleapis.com cloudbuild.googleapis.com sqladmin.goo
 ```
 
 2. **Database Setup:**
+
 ```bash
 # Create Cloud SQL PostgreSQL instance
 gcloud sql instances create trackivity-db \
@@ -31,6 +33,7 @@ gcloud sql users create trackivity-user \
 ### Option 1: Cloud Build (Recommended)
 
 1. **Update `cloudbuild.yaml`:**
+
 ```yaml
 substitutions:
   _CLOUDSQL_CONNECTION_NAME: 'your-project:asia-southeast1:trackivity-db'
@@ -40,6 +43,7 @@ substitutions:
 ```
 
 2. **Deploy:**
+
 ```bash
 gcloud builds submit --config cloudbuild.yaml \
   --substitutions=_DATABASE_URL='postgresql://user:pass@host:5432/db?sslmode=require',_JWT_SECRET='your-long-random-secret'
@@ -84,12 +88,14 @@ gcloud run services update trackivity-v2 \
 ## 📊 Performance Optimizations
 
 ### Cloud Run Configuration:
+
 - **Memory**: 1Gi (Bun uses ~30% less than Node.js)
 - **CPU**: 1 CPU (sufficient for Bun's performance)
 - **Concurrency**: 100 (Bun handles concurrent requests well)
 - **Max Instances**: 10 (adjust based on traffic)
 
 ### Database Connection:
+
 - Use connection pooling
 - Configure Cloud SQL Proxy for secure connections
 - Set appropriate connection limits
@@ -97,6 +103,7 @@ gcloud run services update trackivity-v2 \
 ## 🔍 Health Monitoring
 
 Cloud Run will use the built-in health check:
+
 ```dockerfile
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD bun --version || exit 1
@@ -105,22 +112,26 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
 ## 🚀 Expected Performance
 
 ### Cold Start Times:
+
 - **Bun**: ~400-800ms (60-70% faster than Node.js)
 - **Node.js**: ~1.2-2.0s
 
 ### Memory Usage:
+
 - **Bun**: ~120-180MB baseline (30-40% less)
 - **Node.js**: ~180-250MB baseline
 
 ### Request Response:
+
 - **API Routes**: 30-35% faster than Node.js
 - **QR Generation**: 30-40% faster
 
 ## 💰 Cost Estimates
 
 With Bun optimizations:
+
 - **CPU Usage**: 30-40% reduction
-- **Memory Usage**: 30-40% reduction  
+- **Memory Usage**: 30-40% reduction
 - **Cold Starts**: 60-70% reduction
 - **Overall Savings**: 25-35% on Cloud Run costs
 
@@ -129,27 +140,32 @@ With Bun optimizations:
 ### Common Issues:
 
 1. **Database Connection:**
+
 ```bash
 # Check Cloud SQL connection
 gcloud sql instances describe trackivity-db
 ```
 
 2. **Container Logs:**
+
 ```bash
 gcloud run logs tail trackivity-v2 --region=asia-southeast1
 ```
 
 3. **Build Issues:**
+
 ```bash
 gcloud builds log BUILD_ID
 ```
 
 ### Debug Mode:
+
 Set `LOG_LEVEL=debug` in environment variables for detailed logging.
 
 ## 🔄 CI/CD Integration
 
 For automated deployments, connect to GitHub:
+
 ```bash
 gcloud builds triggers create github \
   --repo-name=trackivity-v2 \

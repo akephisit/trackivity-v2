@@ -40,12 +40,9 @@ export const load: PageServerLoad = async (event) => {
 					.select({ count: count() })
 					.from(participations)
 					.where(
-						and(
-							eq(participations.activityId, activity.id),
-							eq(participations.status, 'completed')
-						)
+						and(eq(participations.activityId, activity.id), eq(participations.status, 'completed'))
 					);
-				
+
 				return {
 					...activity,
 					current_participants: participantCount?.count || 0
@@ -101,18 +98,13 @@ export const load: PageServerLoad = async (event) => {
 		const [totalCount] = await db
 			.select({ count: count() })
 			.from(participations)
-			.where(
-				and(
-					eq(participations.userId, user.user_id),
-					eq(participations.status, 'completed')
-				)
-			);
+			.where(and(eq(participations.userId, user.user_id), eq(participations.status, 'completed')));
 
 		// This month participations
 		const startOfMonth = new Date();
 		startOfMonth.setDate(1);
 		startOfMonth.setHours(0, 0, 0, 0);
-		
+
 		const endOfMonth = new Date();
 		endOfMonth.setMonth(endOfMonth.getMonth() + 1);
 		endOfMonth.setDate(0);

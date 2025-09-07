@@ -12,20 +12,20 @@ const activityRequirementsSchema = z.object({
 
 export const load: ServerLoad = async (event) => {
 	const { requireOrganizationAdmin } = await import('$lib/server/auth-utils');
-	
+
 	// Get authenticated user and ensure they have OrganizationAdmin or SuperAdmin privileges
 	const user = requireOrganizationAdmin(event);
 	const adminLevel = user.admin_role?.admin_level;
-	
+
 	// Get organization ID from admin role or URL params for SuperAdmin
 	let organizationId = user.admin_role?.organization_id;
-	
+
 	// For SuperAdmin, they can manage any organization (future: get from URL params)
 	if (adminLevel === 'SuperAdmin' && !organizationId) {
 		// For now, SuperAdmin can only access if they have an assigned organization
 		throw error(400, 'SuperAdmin organization management coming soon.');
 	}
-	
+
 	if (!organizationId) {
 		throw error(400, 'Organization ID not found.');
 	}
@@ -75,19 +75,19 @@ export const actions: Actions = {
 	updateRequirements: async (event) => {
 		const { request } = event;
 		const { requireOrganizationAdmin } = await import('$lib/server/auth-utils');
-		
+
 		// Get authenticated user and ensure they have OrganizationAdmin or SuperAdmin privileges
 		const user = requireOrganizationAdmin(event);
 		const adminLevel = user.admin_role?.admin_level;
-		
+
 		// Get organization ID from admin role
 		let organizationId = user.admin_role?.organization_id;
-		
+
 		// For SuperAdmin, they can manage any organization (future: get from URL params)
 		if (adminLevel === 'SuperAdmin' && !organizationId) {
 			return fail(400, { error: 'SuperAdmin organization management coming soon' });
 		}
-		
+
 		if (!organizationId) {
 			return fail(400, { error: 'Organization ID not found' });
 		}
@@ -137,11 +137,11 @@ export const actions: Actions = {
 			};
 		} catch (err) {
 			console.error('Failed to update requirements:', err);
-			
+
 			if (err instanceof z.ZodError) {
-				return fail(400, { 
+				return fail(400, {
 					error: 'ข้อมูลไม่ถูกต้อง',
-					details: err.errors 
+					details: err.errors
 				});
 			}
 

@@ -23,12 +23,7 @@
 	import { goto } from '$app/navigation';
 	import { enhance } from '$app/forms';
 	import { toast } from 'svelte-sonner';
-	import {
-		type DateValue,
-		getLocalTimeZone,
-		today,
-		parseDate
-	} from '@internationalized/date';
+	import { type DateValue, getLocalTimeZone, today, parseDate } from '@internationalized/date';
 	import { cn } from '$lib/utils';
 	import { buttonVariants } from '$lib/components/ui/button';
 	import { formatThaiDate, formatThaiMonth, toBuddhistEra } from '$lib/utils/thai-date';
@@ -60,21 +55,25 @@
 	}));
 
 	// Organizer selection state
-	let selectedOrganizerId = $state((form as any)?.formData?.organizer_id || activity.organizer_id || '');
-	const isSuperAdmin = (data?.user?.admin_role?.admin_level === 'SuperAdmin');
+	let selectedOrganizerId = $state(
+		(form as any)?.formData?.organizer_id || activity.organizer_id || ''
+	);
+	const isSuperAdmin = data?.user?.admin_role?.admin_level === 'SuperAdmin';
 
 	// Import activity level options from utils
 	import { activityLevelOptions } from '$lib/utils/activity';
 
 	// Activity level selection state - convert display value to storage value
-	let selectedActivityLevel = $state((form as any)?.formData?.activity_level || activity.activity_level || 'faculty');
+	let selectedActivityLevel = $state(
+		(form as any)?.formData?.activity_level || activity.activity_level || 'faculty'
+	);
 
 	// Thai date formatting functions for calendar
 	function formatCalendarMonth(monthNumber: number): string {
 		const monthIndex = monthNumber - 1; // Convert to 0-based index
 		return formatThaiMonth(monthIndex, 'long');
 	}
-	
+
 	function formatCalendarYear(year: number): string {
 		return toBuddhistEra(year).toString();
 	}
@@ -133,7 +132,7 @@
 
 	function extractTimeFromActivity(activity: any, isStart: boolean = true): string {
 		const timeField = isStart ? 'start_time_only' : 'end_time_only';
-		
+
 		// Use the dedicated time field from database (PostgreSQL time type)
 		if (activity[timeField]) {
 			// The database time field is already in HH:MM:SS format
@@ -147,7 +146,7 @@
 				}
 			}
 		}
-		
+
 		return '';
 	}
 
@@ -210,7 +209,8 @@
 
 		// Initialize end date
 		if (!endDateValue) {
-			const dateStr = (form as any)?.formData?.end_date || (activity.end_date || extractDateFromActivity(activity));
+			const dateStr =
+				(form as any)?.formData?.end_date || activity.end_date || extractDateFromActivity(activity);
 			if (dateStr) {
 				try {
 					endDateValue = parseDate(dateStr);
@@ -222,7 +222,8 @@
 
 		// Initialize start time
 		if (!startTimeHour) {
-			const timeStr = (form as any)?.formData?.start_time || extractTimeFromActivity(activity, true);
+			const timeStr =
+				(form as any)?.formData?.start_time || extractTimeFromActivity(activity, true);
 			if (timeStr) {
 				const [hour, minute] = timeStr.split(':');
 				startTimeHour = hour || '';
@@ -243,7 +244,7 @@
 </script>
 
 <svelte:head>
-    <title>แก้ไข{activity.title} - Trackivity</title>
+	<title>แก้ไข{activity.title} - Trackivity</title>
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
 </svelte:head>
 
@@ -256,7 +257,7 @@
 		</Button>
 		<div class="flex-1">
 			<h1 class="admin-page-title"><IconCalendar class="size-6 text-primary" /> แก้ไขกิจกรรม</h1>
-                <p class="text-muted-foreground">{activity.title} - Trackivity</p>
+			<p class="text-muted-foreground">{activity.title} - Trackivity</p>
 		</div>
 		<Button variant="outline" size="sm" onclick={previewActivity}>
 			<IconEye class="mr-2 size-4" />
@@ -376,7 +377,8 @@
 					>
 						<Select.Trigger>
 							{#if selectedOrganizerId}
-								{(facultyOptions.find((o) => o.value === selectedOrganizerId) || {}).label || 'เลือกหน่วยงานผู้จัด'}
+								{(facultyOptions.find((o) => o.value === selectedOrganizerId) || {}).label ||
+									'เลือกหน่วยงานผู้จัด'}
 							{:else}
 								เลือกหน่วยงานผู้จัด
 							{/if}
@@ -421,7 +423,7 @@
 						<IconCalendar class="h-5 w-5 text-blue-600" />
 						วันที่และเวลา
 					</h3>
-					
+
 					<div class="grid gap-4 md:grid-cols-2">
 						<!-- Start Date -->
 						<div class="space-y-2">
@@ -429,21 +431,23 @@
 							<input
 								type="hidden"
 								name="start_date"
-								value={startDateValue ? startDateValue.toString() : (form?.formData?.start_date || extractDateFromActivity(activity))}
+								value={startDateValue
+									? startDateValue.toString()
+									: form?.formData?.start_date || extractDateFromActivity(activity)}
 							/>
 							<Popover.Root>
 								<Popover.Trigger
 									class={cn(
 										buttonVariants({
-											variant: "outline",
-											class: "w-full justify-start text-left font-normal text-base"
+											variant: 'outline',
+											class: 'w-full justify-start text-left text-base font-normal'
 										}),
-										!startDateValue && "text-muted-foreground"
+										!startDateValue && 'text-muted-foreground'
 									)}
 									disabled={submitting}
 								>
 									<IconCalendar class="mr-2 h-4 w-4" />
-									{startDateValue ? formatThaiDate(startDateValue) : "เลือกวันที่เริ่ม"}
+									{startDateValue ? formatThaiDate(startDateValue) : 'เลือกวันที่เริ่ม'}
 								</Popover.Trigger>
 								<Popover.Content class="w-auto p-0">
 									<Calendar
@@ -466,21 +470,25 @@
 							<input
 								type="hidden"
 								name="end_date"
-								value={endDateValue ? endDateValue.toString() : (form?.formData?.end_date || (activity.end_date || extractDateFromActivity(activity)))}
+								value={endDateValue
+									? endDateValue.toString()
+									: form?.formData?.end_date ||
+										activity.end_date ||
+										extractDateFromActivity(activity)}
 							/>
 							<Popover.Root>
 								<Popover.Trigger
 									class={cn(
 										buttonVariants({
-											variant: "outline",
-											class: "w-full justify-start text-left font-normal text-base"
+											variant: 'outline',
+											class: 'w-full justify-start text-left text-base font-normal'
 										}),
-										!endDateValue && "text-muted-foreground"
+										!endDateValue && 'text-muted-foreground'
 									)}
 									disabled={submitting}
 								>
 									<IconCalendar class="mr-2 h-4 w-4" />
-									{endDateValue ? formatThaiDate(endDateValue) : "เลือกวันที่สิ้นสุด"}
+									{endDateValue ? formatThaiDate(endDateValue) : 'เลือกวันที่สิ้นสุด'}
 								</Popover.Trigger>
 								<Popover.Content class="w-auto p-0">
 									<Calendar
@@ -506,14 +514,12 @@
 							<input
 								type="hidden"
 								name="start_time"
-								value={startTimeHour && startTimeMinute ? `${startTimeHour}:${startTimeMinute}` : (form?.formData?.start_time || extractTimeFromActivity(activity, true))}
+								value={startTimeHour && startTimeMinute
+									? `${startTimeHour}:${startTimeMinute}`
+									: form?.formData?.start_time || extractTimeFromActivity(activity, true)}
 							/>
 							<div class="flex gap-2">
-								<Select.Root
-									type="single"
-									bind:value={startTimeHour as any}
-									disabled={submitting}
-								>
+								<Select.Root type="single" bind:value={startTimeHour as any} disabled={submitting}>
 									<Select.Trigger class="w-20">
 										{startTimeHour || 'ชม'}
 									</Select.Trigger>
@@ -554,14 +560,12 @@
 							<input
 								type="hidden"
 								name="end_time"
-								value={endTimeHour && endTimeMinute ? `${endTimeHour}:${endTimeMinute}` : (form?.formData?.end_time || extractTimeFromActivity(activity, false))}
+								value={endTimeHour && endTimeMinute
+									? `${endTimeHour}:${endTimeMinute}`
+									: form?.formData?.end_time || extractTimeFromActivity(activity, false)}
 							/>
 							<div class="flex gap-2">
-								<Select.Root
-									type="single"
-									bind:value={endTimeHour as any}
-									disabled={submitting}
-								>
+								<Select.Root type="single" bind:value={endTimeHour as any} disabled={submitting}>
 									<Select.Trigger class="w-20">
 										{endTimeHour || 'ชม'}
 									</Select.Trigger>
@@ -574,11 +578,7 @@
 									</Select.Content>
 								</Select.Root>
 								<span class="flex items-center text-gray-500">:</span>
-								<Select.Root
-									type="single"
-									bind:value={endTimeMinute as any}
-									disabled={submitting}
-								>
+								<Select.Root type="single" bind:value={endTimeMinute as any} disabled={submitting}>
 									<Select.Trigger class="w-20">
 										{endTimeMinute || 'นาที'}
 									</Select.Trigger>
@@ -745,7 +745,9 @@
 					{#if activity.activity_type}
 						<div>
 							<Label>ประเภทกิจกรรม</Label>
-							<p class="text-sm text-muted-foreground">{getActivityTypeDisplayName(activity.activity_type)}</p>
+							<p class="text-sm text-muted-foreground">
+								{getActivityTypeDisplayName(activity.activity_type)}
+							</p>
 						</div>
 					{/if}
 					{#if activity.academic_year}

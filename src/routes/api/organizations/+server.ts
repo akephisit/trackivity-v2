@@ -27,10 +27,7 @@ export const GET = async ({ cookies }: { cookies: any }) => {
 				updatedAt: organizations.updatedAt
 			})
 			.from(organizations)
-			.where(and(
-				eq(organizations.status, true),
-				eq(organizations.organizationType, 'faculty')
-			))
+			.where(and(eq(organizations.status, true), eq(organizations.organizationType, 'faculty')))
 			.orderBy(organizations.name);
 
 		return json({

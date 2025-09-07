@@ -52,7 +52,10 @@ export const GET: RequestHandler = async ({ params }) => {
 			return json(
 				{
 					success: false,
-					error: { code: 'ACCESS_DENIED', message: 'Departments are only available for faculty organizations' }
+					error: {
+						code: 'ACCESS_DENIED',
+						message: 'Departments are only available for faculty organizations'
+					}
 				},
 				{ status: 403 }
 			);

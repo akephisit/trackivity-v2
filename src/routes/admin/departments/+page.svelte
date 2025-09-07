@@ -314,13 +314,13 @@
 </script>
 
 <svelte:head>
-    <title>{pageTitle} - Trackivity</title>
+	<title>{pageTitle} - Trackivity</title>
 </svelte:head>
 
 <div class="space-y-4 lg:space-y-6">
 	<!-- Header -->
 	<div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-		<div class="space-y-1 min-w-0">
+		<div class="min-w-0 space-y-1">
 			<h1 class="admin-page-title">
 				<IconBuilding class="size-6 text-primary" />
 				{#if data.userRole === 'OrganizationAdmin' && data.currentFaculty}
@@ -338,7 +338,7 @@
 			</p>
 		</div>
 		{#if canCreateDepartments}
-			<Button onclick={openCreateDialog} class="gap-2 w-full sm:w-auto">
+			<Button onclick={openCreateDialog} class="w-full gap-2 sm:w-auto">
 				<IconPlus class="h-4 w-4" />
 				เพิ่มภาควิชาใหม่
 			</Button>
@@ -346,14 +346,14 @@
 	</div>
 
 	<!-- Stats Cards -->
-	<div class="grid gap-3 lg:gap-4 grid-cols-2 lg:grid-cols-5">
+	<div class="grid grid-cols-2 gap-3 lg:grid-cols-5 lg:gap-4">
 		<Card>
 			<CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
-				<CardTitle class="text-xs lg:text-sm font-medium truncate">ภาควิชาทั้งหมด</CardTitle>
-				<IconBuilding class="h-4 w-4 lg:w-5 lg:h-5 text-muted-foreground flex-shrink-0" />
+				<CardTitle class="truncate text-xs font-medium lg:text-sm">ภาควิชาทั้งหมด</CardTitle>
+				<IconBuilding class="h-4 w-4 flex-shrink-0 text-muted-foreground lg:h-5 lg:w-5" />
 			</CardHeader>
 			<CardContent class="p-4 lg:p-6">
-				<div class="text-lg lg:text-2xl font-bold">{stats.total}</div>
+				<div class="text-lg font-bold lg:text-2xl">{stats.total}</div>
 			</CardContent>
 		</Card>
 
@@ -418,7 +418,9 @@
 			<div class="flex flex-col gap-4 sm:flex-row">
 				<div class="flex-1">
 					<div class="relative">
-						<IconSearch class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+						<IconSearch
+							class="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+						/>
 						<Input
 							bind:value={searchQuery}
 							placeholder="ค้นหาภาควิชา, รหัสภาค, หรือคำอธิบาย..."
@@ -510,13 +512,15 @@
 							<Table.Header>
 								<Table.Row class="bg-gray-50 dark:bg-gray-800">
 									<Table.Head class="font-semibold">ชื่อภาควิชา</Table.Head>
-									<Table.Head class="font-semibold hidden sm:table-cell">รหัส</Table.Head>
+									<Table.Head class="hidden font-semibold sm:table-cell">รหัส</Table.Head>
 									{#if data.userRole === 'SuperAdmin'}
-										<Table.Head class="font-semibold hidden md:table-cell">หน่วยงาน</Table.Head>
+										<Table.Head class="hidden font-semibold md:table-cell">หน่วยงาน</Table.Head>
 									{/if}
-									<Table.Head class="text-center font-semibold hidden sm:table-cell">จำนวนนักศึกษา</Table.Head>
+									<Table.Head class="hidden text-center font-semibold sm:table-cell"
+										>จำนวนนักศึกษา</Table.Head
+									>
 									<Table.Head class="font-semibold">สถานะ</Table.Head>
-									<Table.Head class="font-semibold hidden lg:table-cell">วันที่สร้าง</Table.Head>
+									<Table.Head class="hidden font-semibold lg:table-cell">วันที่สร้าง</Table.Head>
 									<Table.Head class="text-right font-semibold">การดำเนินการ</Table.Head>
 								</Table.Row>
 							</Table.Header>
@@ -525,7 +529,9 @@
 									<Table.Row class="hover:bg-muted/50">
 										<Table.Cell class="py-4 font-medium">
 											<div class="flex items-center gap-3">
-												<div class="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100">
+												<div
+													class="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100"
+												>
 													<IconBuilding class="h-5 w-5 text-blue-600" />
 												</div>
 												<div class="min-w-0 flex-1">
@@ -537,20 +543,22 @@
 														<span>นักศึกษา: {department.students_count || 0} คน</span>
 													</div>
 													{#if department.description}
-														<div class="max-w-xs truncate text-sm text-muted-foreground hidden sm:block">
+														<div
+															class="hidden max-w-xs truncate text-sm text-muted-foreground sm:block"
+														>
 															{department.description}
 														</div>
 													{/if}
 												</div>
 											</div>
 										</Table.Cell>
-										<Table.Cell class="py-4 hidden sm:table-cell">
+										<Table.Cell class="hidden py-4 sm:table-cell">
 											<Badge variant="outline">
 												{department.code}
 											</Badge>
 										</Table.Cell>
 										{#if data.userRole === 'SuperAdmin'}
-											<Table.Cell class="py-4 hidden md:table-cell">
+											<Table.Cell class="hidden py-4 md:table-cell">
 												{#if department.organization}
 													<Badge variant="outline">
 														{department.organization.name}
@@ -560,7 +568,7 @@
 												{/if}
 											</Table.Cell>
 										{/if}
-										<Table.Cell class="py-4 text-center hidden sm:table-cell">
+										<Table.Cell class="hidden py-4 text-center sm:table-cell">
 											<Badge variant="secondary">
 												{department.students_count || 0}
 											</Badge>
@@ -575,7 +583,7 @@
 												{department.status ? 'เปิดใช้งาน' : 'ปิดใช้งาน'}
 											</Badge>
 										</Table.Cell>
-										<Table.Cell class="py-4 text-sm text-muted-foreground hidden lg:table-cell">
+										<Table.Cell class="hidden py-4 text-sm text-muted-foreground lg:table-cell">
 											{formatDateTime(department.created_at)}
 										</Table.Cell>
 										<Table.Cell class="py-4 text-right">
@@ -699,7 +707,6 @@
 				<Form.FieldErrors />
 			</Form.Field>
 
-
 			{#if data.userRole !== 'OrganizationAdmin'}
 				<Form.Field form={createForm} name="organization_id">
 					<Form.Control>
@@ -730,10 +737,10 @@
 				<Form.Control>
 					{#snippet children({ props })}
 						<div class="flex items-center space-x-2">
-							<Switch 
+							<Switch
 								{...props}
-								bind:checked={$createFormData.status} 
-								disabled={$createSubmitting} 
+								bind:checked={$createFormData.status}
+								disabled={$createSubmitting}
 							/>
 							<Label for={props.id}>เปิดใช้งานทันทีหลังสร้าง</Label>
 						</div>
@@ -787,7 +794,6 @@
 						rows={3}
 					/>
 				</div>
-
 
 				<div class="flex items-center space-x-2">
 					<Switch bind:checked={editFormData.status} />

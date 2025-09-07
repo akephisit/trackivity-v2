@@ -41,20 +41,20 @@
 
 	let { data } = $props();
 	let refreshing = $state(false);
-	
+
 	// Search and filter states
 	let searchQuery = $state('');
 	let levelFilter = $state<AdminLevel | 'all'>('all');
-	
+
 	function clearSearch() {
 		searchQuery = '';
 		levelFilter = 'all';
 	}
-	
+
 	// Filtered admins for search
 	let filteredAdmins = $derived.by(() => {
 		let filtered = data.admins || [];
-		
+
 		// Apply search filter
 		if (searchQuery.trim()) {
 			const query = searchQuery.toLowerCase();
@@ -64,12 +64,12 @@
 				return fullName.includes(query) || email.includes(query);
 			});
 		}
-		
+
 		// Apply level filter
 		if (levelFilter !== 'all') {
 			filtered = filtered.filter((admin: any) => admin.admin_level === levelFilter);
 		}
-		
+
 		return filtered;
 	});
 
@@ -512,33 +512,33 @@
 </script>
 
 <svelte:head>
-    <title>จัดการแอดมิน - Trackivity</title>
+	<title>จัดการแอดมิน - Trackivity</title>
 </svelte:head>
 
 <div class="space-y-4 lg:space-y-6">
 	<!-- Header -->
 	<div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-		<div class="space-y-1 min-w-0">
+		<div class="min-w-0 space-y-1">
 			<h1 class="admin-page-title"><IconShield class="size-6 text-primary" /> จัดการแอดมิน</h1>
 			<p class="text-muted-foreground">
 				จัดการผู้ดูแลระบบและกำหนดสิทธิ์การเข้าถึง แยกตามระดับและหน่วยงาน
 			</p>
 		</div>
-		<Button onclick={openDialog} class="gap-2 w-full sm:w-auto">
+		<Button onclick={openDialog} class="w-full gap-2 sm:w-auto">
 			<IconPlus class="h-4 w-4" />
 			เพิ่มแอดมิน
 		</Button>
 	</div>
 
 	<!-- Stats Cards -->
-	<div class="grid gap-3 lg:gap-4 grid-cols-2 lg:grid-cols-4">
+	<div class="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
 		<Card>
 			<CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
-				<CardTitle class="text-xs lg:text-sm font-medium truncate">แอดมินทั้งหมด</CardTitle>
-				<IconUsers class="h-4 w-4 lg:w-5 lg:h-5 text-muted-foreground flex-shrink-0" />
+				<CardTitle class="truncate text-xs font-medium lg:text-sm">แอดมินทั้งหมด</CardTitle>
+				<IconUsers class="h-4 w-4 flex-shrink-0 text-muted-foreground lg:h-5 lg:w-5" />
 			</CardHeader>
 			<CardContent class="p-4 lg:p-6">
-				<div class="text-lg lg:text-2xl font-bold">
+				<div class="text-lg font-bold lg:text-2xl">
 					{groupedAdmins.superAdmins.length +
 						groupedAdmins.facultyGroups.reduce((acc, [, group]) => acc + group.admins.length, 0)}
 				</div>
@@ -547,11 +547,11 @@
 
 		<Card>
 			<CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
-				<CardTitle class="text-xs lg:text-sm font-medium truncate">ซุปเปอร์แอดมิน</CardTitle>
-				<IconShield class="h-4 w-4 lg:w-5 lg:h-5 text-red-500 flex-shrink-0" />
+				<CardTitle class="truncate text-xs font-medium lg:text-sm">ซุปเปอร์แอดมิน</CardTitle>
+				<IconShield class="h-4 w-4 flex-shrink-0 text-red-500 lg:h-5 lg:w-5" />
 			</CardHeader>
 			<CardContent class="p-4 lg:p-6">
-				<div class="text-lg lg:text-2xl font-bold text-red-600">
+				<div class="text-lg font-bold text-red-600 lg:text-2xl">
 					{groupedAdmins.superAdmins.length}
 				</div>
 			</CardContent>
@@ -559,11 +559,11 @@
 
 		<Card>
 			<CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
-				<CardTitle class="text-xs lg:text-sm font-medium truncate">แอดมินหน่วยงาน</CardTitle>
-				<IconShield class="h-4 w-4 lg:w-5 lg:h-5 text-blue-500 flex-shrink-0" />
+				<CardTitle class="truncate text-xs font-medium lg:text-sm">แอดมินหน่วยงาน</CardTitle>
+				<IconShield class="h-4 w-4 flex-shrink-0 text-blue-500 lg:h-5 lg:w-5" />
 			</CardHeader>
 			<CardContent class="p-4 lg:p-6">
-				<div class="text-lg lg:text-2xl font-bold text-blue-600">
+				<div class="text-lg font-bold text-blue-600 lg:text-2xl">
 					{groupedAdmins.facultyGroups.reduce((acc, [, group]) => acc + group.admins.length, 0)}
 				</div>
 			</CardContent>
@@ -571,11 +571,13 @@
 
 		<Card>
 			<CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
-				<CardTitle class="text-xs lg:text-sm font-medium truncate">แอดมินหน่วยงานและทั่วไป</CardTitle>
-				<IconUsers class="h-4 w-4 lg:w-5 lg:h-5 text-gray-500 flex-shrink-0" />
+				<CardTitle class="truncate text-xs font-medium lg:text-sm"
+					>แอดมินหน่วยงานและทั่วไป</CardTitle
+				>
+				<IconUsers class="h-4 w-4 flex-shrink-0 text-gray-500 lg:h-5 lg:w-5" />
 			</CardHeader>
 			<CardContent class="p-4 lg:p-6">
-				<div class="text-lg lg:text-2xl font-bold text-gray-600">
+				<div class="text-lg font-bold text-gray-600 lg:text-2xl">
 					{groupedAdmins.facultyGroups.reduce((acc, [, group]) => acc + group.admins.length, 0)}
 				</div>
 				<p class="text-xs text-muted-foreground">รวมแอดมินในหน่วยงานทั้งหมด</p>
@@ -592,18 +594,16 @@
 			</CardTitle>
 		</CardHeader>
 		<CardContent class="space-y-4">
-			<div class="space-y-4 sm:space-y-0 sm:flex sm:flex-col lg:flex-row lg:gap-4">
+			<div class="space-y-4 sm:flex sm:flex-col sm:space-y-0 lg:flex-row lg:gap-4">
 				<div class="flex-1">
 					<div class="relative">
-						<IconSearch class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-						<Input
-							bind:value={searchQuery}
-							placeholder="ค้นหาชื่อแอดมิน อีเมล..."
-							class="pl-10"
+						<IconSearch
+							class="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground"
 						/>
+						<Input bind:value={searchQuery} placeholder="ค้นหาชื่อแอดมิน อีเมล..." class="pl-10" />
 					</div>
 				</div>
-				<div class="flex flex-col sm:flex-row gap-2">
+				<div class="flex flex-col gap-2 sm:flex-row">
 					<Button
 						variant={levelFilter === 'all' ? 'default' : 'outline'}
 						size="sm"
@@ -615,7 +615,9 @@
 					<Button
 						variant={levelFilter === AdminLevel.SuperAdmin ? 'default' : 'outline'}
 						size="sm"
-						class="w-full sm:w-auto {levelFilter === AdminLevel.SuperAdmin ? '' : 'border-red-600 text-red-600 hover:bg-red-50'}"
+						class="w-full sm:w-auto {levelFilter === AdminLevel.SuperAdmin
+							? ''
+							: 'border-red-600 text-red-600 hover:bg-red-50'}"
 						onclick={() => (levelFilter = AdminLevel.SuperAdmin)}
 					>
 						ซุปเปอร์แอดมิน
@@ -623,7 +625,9 @@
 					<Button
 						variant={levelFilter === AdminLevel.OrganizationAdmin ? 'default' : 'outline'}
 						size="sm"
-						class="w-full sm:w-auto {levelFilter === AdminLevel.OrganizationAdmin ? '' : 'border-blue-600 text-blue-600 hover:bg-blue-50'}"
+						class="w-full sm:w-auto {levelFilter === AdminLevel.OrganizationAdmin
+							? ''
+							: 'border-blue-600 text-blue-600 hover:bg-blue-50'}"
 						onclick={() => (levelFilter = AdminLevel.OrganizationAdmin)}
 					>
 						แอดมินหน่วยงาน
@@ -631,7 +635,9 @@
 					<Button
 						variant={levelFilter === AdminLevel.RegularAdmin ? 'default' : 'outline'}
 						size="sm"
-						class="w-full sm:w-auto {levelFilter === AdminLevel.RegularAdmin ? '' : 'border-gray-600 text-gray-600 hover:bg-gray-50'}"
+						class="w-full sm:w-auto {levelFilter === AdminLevel.RegularAdmin
+							? ''
+							: 'border-gray-600 text-gray-600 hover:bg-gray-50'}"
 						onclick={() => (levelFilter = AdminLevel.RegularAdmin)}
 					>
 						แอดมินทั่วไป
@@ -714,7 +720,9 @@
 											<Table.Row class="hover:bg-red-50/50">
 												<Table.Cell class="py-4 font-medium">
 													<div class="flex items-center gap-3">
-														<div class="flex h-8 w-8 items-center justify-center rounded-full bg-red-100">
+														<div
+															class="flex h-8 w-8 items-center justify-center rounded-full bg-red-100"
+														>
 															<IconShield class="h-4 w-4 text-red-600" />
 														</div>
 														<span>

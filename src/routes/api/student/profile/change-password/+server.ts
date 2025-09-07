@@ -20,20 +20,23 @@ function verifyToken(token: string) {
 /**
  * Password change validation schema
  */
-const changePasswordSchema = z.object({
-	current_password: z.string().min(1, 'รหัสผ่านปัจจุบันจำเป็น'),
-	new_password: z.string()
-		.min(8, 'รหัสผ่านต้องมีความยาวอย่างน้อย 8 ตัวอักษร')
-		.max(128, 'รหัสผ่านยาวเกินไป')
-		.refine((password) => {
-			// Password must contain at least one letter and one number
-			return /^(?=.*[A-Za-z])(?=.*\d).{8,}$/.test(password);
-		}, 'รหัสผ่านต้องมีตัวอักษรและตัวเลขอย่างน้อย 1 ตัว'),
-	confirm_password: z.string().min(1, 'กรุณายืนยันรหัสผ่าน')
-}).refine((data) => data.new_password === data.confirm_password, {
-	message: 'การยืนยันรหัสผ่านไม่ตรงกัน',
-	path: ['confirm_password']
-});
+const changePasswordSchema = z
+	.object({
+		current_password: z.string().min(1, 'รหัสผ่านปัจจุบันจำเป็น'),
+		new_password: z
+			.string()
+			.min(8, 'รหัสผ่านต้องมีความยาวอย่างน้อย 8 ตัวอักษร')
+			.max(128, 'รหัสผ่านยาวเกินไป')
+			.refine((password) => {
+				// Password must contain at least one letter and one number
+				return /^(?=.*[A-Za-z])(?=.*\d).{8,}$/.test(password);
+			}, 'รหัสผ่านต้องมีตัวอักษรและตัวเลขอย่างน้อย 1 ตัว'),
+		confirm_password: z.string().min(1, 'กรุณายืนยันรหัสผ่าน')
+	})
+	.refine((data) => data.new_password === data.confirm_password, {
+		message: 'การยืนยันรหัสผ่านไม่ตรงกัน',
+		path: ['confirm_password']
+	});
 
 /**
  * POST /api/student/profile/change-password - Change current student's password
@@ -80,8 +83,8 @@ export const POST = async ({ request, cookies }: { request: any; cookies: any })
 			return json(
 				{
 					success: false,
-					error: { 
-						code: 'VALIDATION_ERROR', 
+					error: {
+						code: 'VALIDATION_ERROR',
 						message: 'ข้อมูลไม่ถูกต้อง',
 						field_errors: fieldErrors
 					}
@@ -115,8 +118,8 @@ export const POST = async ({ request, cookies }: { request: any; cookies: any })
 			return json(
 				{
 					success: false,
-					error: { 
-						code: 'INVALID_PASSWORD', 
+					error: {
+						code: 'INVALID_PASSWORD',
 						message: 'รหัสผ่านปัจจุบันไม่ถูกต้อง',
 						field_errors: { current_password: ['รหัสผ่านปัจจุบันไม่ถูกต้อง'] }
 					}

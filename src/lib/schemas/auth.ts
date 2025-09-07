@@ -183,21 +183,23 @@ export const profileUpdateSchema = z.object({
 });
 
 // Password change schema
-export const changePasswordSchema = z.object({
-	current_password: z.string().min(1, 'กรุณาใส่รหัสผ่านปัจจุบัน'),
-	new_password: z
-		.string()
-		.min(8, 'รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร')
-		.max(128, 'รหัสผ่านยาวเกินไป')
-		.refine((password) => {
-			// Password must contain at least one letter and one number
-			return /^(?=.*[A-Za-z])(?=.*\d).{8,}$/.test(password);
-		}, 'รหัสผ่านต้องมีตัวอักษรและตัวเลขอย่างน้อย 1 ตัว'),
-	confirm_password: z.string().min(1, 'กรุณายืนยันรหัสผ่าน')
-}).refine((data) => data.new_password === data.confirm_password, {
-	message: 'การยืนยันรหัสผ่านไม่ตรงกัน',
-	path: ['confirm_password']
-});
+export const changePasswordSchema = z
+	.object({
+		current_password: z.string().min(1, 'กรุณาใส่รหัสผ่านปัจจุบัน'),
+		new_password: z
+			.string()
+			.min(8, 'รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร')
+			.max(128, 'รหัสผ่านยาวเกินไป')
+			.refine((password) => {
+				// Password must contain at least one letter and one number
+				return /^(?=.*[A-Za-z])(?=.*\d).{8,}$/.test(password);
+			}, 'รหัสผ่านต้องมีตัวอักษรและตัวเลขอย่างน้อย 1 ตัว'),
+		confirm_password: z.string().min(1, 'กรุณายืนยันรหัสผ่าน')
+	})
+	.refine((data) => data.new_password === data.confirm_password, {
+		message: 'การยืนยันรหัสผ่านไม่ตรงกัน',
+		path: ['confirm_password']
+	});
 
 export type LoginFormData = z.infer<typeof loginSchema>;
 export type AdminLoginFormData = z.infer<typeof adminLoginSchema>;

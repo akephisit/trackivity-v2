@@ -155,8 +155,8 @@
 
 @layer components {
 	/* Mobile-first responsive utilities */
-    .admin-page-title {
-		@apply flex items-center gap-2 text-2xl lg:text-3xl font-bold text-foreground;
+	.admin-page-title {
+		@apply flex items-center gap-2 text-2xl font-bold text-foreground lg:text-3xl;
 	}
 	.mobile-container {
 		@apply mx-auto w-full max-w-sm px-4;

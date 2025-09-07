@@ -69,8 +69,8 @@ export function getActivityLevelDisplayName(level: string): string {
  */
 export function convertActivityLevelFromThai(thaiLevel: string): string {
 	const levelMapping: Record<string, string> = {
-		'คณะ': 'faculty',
-		'มหาวิทยาลัย': 'university'
+		คณะ: 'faculty',
+		มหาวิทยาลัย: 'university'
 	};
 
 	return levelMapping[thaiLevel] || 'faculty'; // Default to faculty
@@ -108,11 +108,11 @@ export function getActivityTypeDisplayName(type: string): string {
  */
 export function convertActivityTypeFromThai(thaiType: string): string {
 	const typeMapping: Record<string, string> = {
-		'วิชาการ': 'Academic',
-		'กีฬา': 'Sports',
-		'วัฒนธรรม': 'Cultural',
-		'สังคม': 'Social',
-		'อื่นๆ': 'Other'
+		วิชาการ: 'Academic',
+		กีฬา: 'Sports',
+		วัฒนธรรม: 'Cultural',
+		สังคม: 'Social',
+		อื่นๆ: 'Other'
 	};
 
 	return typeMapping[thaiType] || 'Other'; // Default to Other
@@ -130,30 +130,30 @@ export function isValidActivityType(type: string): boolean {
  * รายการตัวเลือก ActivityType พร้อม label ภาษาไทย
  */
 export const activityTypeOptions = [
-	{ 
-		value: 'Academic' as const, 
-		label: 'วิชาการ', 
-		description: 'กิจกรรมทางการศึกษาและการเรียนรู้' 
+	{
+		value: 'Academic' as const,
+		label: 'วิชาการ',
+		description: 'กิจกรรมทางการศึกษาและการเรียนรู้'
 	},
-	{ 
-		value: 'Sports' as const, 
-		label: 'กีฬา', 
-		description: 'กิจกรรมกีฬาและการออกกำลังกาย' 
+	{
+		value: 'Sports' as const,
+		label: 'กีฬา',
+		description: 'กิจกรรมกีฬาและการออกกำลังกาย'
 	},
-	{ 
-		value: 'Cultural' as const, 
-		label: 'วัฒนธรรม', 
-		description: 'กิจกรรมด้านศิลปะและวัฒนธรรม' 
+	{
+		value: 'Cultural' as const,
+		label: 'วัฒนธรรม',
+		description: 'กิจกรรมด้านศิลปะและวัฒนธรรม'
 	},
-	{ 
-		value: 'Social' as const, 
-		label: 'สังคม', 
-		description: 'กิจกรรมเพื่อสังคมและการพัฒนาชุมชน' 
+	{
+		value: 'Social' as const,
+		label: 'สังคม',
+		description: 'กิจกรรมเพื่อสังคมและการพัฒนาชุมชน'
 	},
-	{ 
-		value: 'Other' as const, 
-		label: 'อื่นๆ', 
-		description: 'กิจกรรมประเภทอื่นๆ' 
+	{
+		value: 'Other' as const,
+		label: 'อื่นๆ',
+		description: 'กิจกรรมประเภทอื่นๆ'
 	}
 ];
 
@@ -161,14 +161,14 @@ export const activityTypeOptions = [
  * รายการตัวเลือก ActivityLevel พร้อม label ภาษาไทย
  */
 export const activityLevelOptions = [
-	{ 
-		value: 'faculty' as const, 
-		label: 'คณะ', 
-		description: 'กิจกรรมระดับคณะ' 
+	{
+		value: 'faculty' as const,
+		label: 'คณะ',
+		description: 'กิจกรรมระดับคณะ'
 	},
-	{ 
-		value: 'university' as const, 
-		label: 'มหาวิทยาลัย', 
-		description: 'กิจกรรมระดับมหาวิทยาลัย' 
+	{
+		value: 'university' as const,
+		label: 'มหาวิทยาลัย',
+		description: 'กิจกรรมระดับมหาวิทยาลัย'
 	}
 ];

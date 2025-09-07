@@ -30,7 +30,7 @@ export function getRoleText(role: string): string {
 		student: 'นิสิต',
 		user: 'ผู้ใช้'
 	};
-	
+
 	return roleTranslations[role] || role;
 }
 
@@ -39,7 +39,9 @@ export function getRoleText(role: string): string {
  * @param role - The role value from database
  * @returns Badge variant for UI styling
  */
-export function getRoleBadgeVariant(role: string): 'default' | 'secondary' | 'destructive' | 'outline' {
+export function getRoleBadgeVariant(
+	role: string
+): 'default' | 'secondary' | 'destructive' | 'outline' {
 	const variants: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
 		super_admin: 'destructive',
 		organization_admin: 'default',
@@ -52,6 +54,6 @@ export function getRoleBadgeVariant(role: string): 'default' | 'secondary' | 'de
 		student: 'outline',
 		user: 'outline'
 	};
-	
+
 	return variants[role] || 'outline';
 }

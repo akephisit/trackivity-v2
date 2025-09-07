@@ -19,15 +19,15 @@ export function startSessionCleanup(intervalMinutes: number = 30): void {
 	}
 
 	const intervalMs = intervalMinutes * 60 * 1000;
-	
+
 	// Run initial cleanup
 	cleanupExpiredSessions()
-		.then(count => {
+		.then((count) => {
 			if (count > 0) {
 				console.log(`[Session Cleanup] Initial cleanup removed ${count} expired sessions`);
 			}
 		})
-		.catch(err => console.error('[Session Cleanup] Initial cleanup failed:', err));
+		.catch((err) => console.error('[Session Cleanup] Initial cleanup failed:', err));
 
 	// Schedule periodic cleanup
 	cleanupInterval = setInterval(async () => {
@@ -41,7 +41,9 @@ export function startSessionCleanup(intervalMinutes: number = 30): void {
 		}
 	}, intervalMs);
 
-	console.log(`[Session Cleanup] Started session cleanup scheduler (every ${intervalMinutes} minutes)`);
+	console.log(
+		`[Session Cleanup] Started session cleanup scheduler (every ${intervalMinutes} minutes)`
+	);
 }
 
 /**

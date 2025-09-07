@@ -55,14 +55,16 @@ export interface RequirementProgress {
  * Calculate cumulative activity hours from participation history
  * Only counts activities where the student has completed participation (checked out or completed status)
  */
-export function calculateCumulativeHours(participations: ParticipationWithActivity[]): HoursSummary {
+export function calculateCumulativeHours(
+	participations: ParticipationWithActivity[]
+): HoursSummary {
 	let facultyHours = 0;
 	let universityHours = 0;
 	let completedActivities = 0;
 
 	const countedActivities = new Set<string>();
 
-	participations.forEach(participation => {
+	participations.forEach((participation) => {
 		const { activity, status } = participation;
 
 		// Only count completed activities (checked_out or completed status)
@@ -123,18 +125,19 @@ export function calculateRequirementProgress(
 		};
 	}
 
-	const facultyPercentage = requirements.requiredFacultyHours > 0 
-		? Math.min((currentHours.facultyHours / requirements.requiredFacultyHours) * 100, 100)
-		: 100;
+	const facultyPercentage =
+		requirements.requiredFacultyHours > 0
+			? Math.min((currentHours.facultyHours / requirements.requiredFacultyHours) * 100, 100)
+			: 100;
 
-	const universityPercentage = requirements.requiredUniversityHours > 0 
-		? Math.min((currentHours.universityHours / requirements.requiredUniversityHours) * 100, 100)
-		: 100;
+	const universityPercentage =
+		requirements.requiredUniversityHours > 0
+			? Math.min((currentHours.universityHours / requirements.requiredUniversityHours) * 100, 100)
+			: 100;
 
 	const requiredTotal = requirements.requiredFacultyHours + requirements.requiredUniversityHours;
-	const overallPercentage = requiredTotal > 0 
-		? Math.min((currentHours.totalHours / requiredTotal) * 100, 100)
-		: 100;
+	const overallPercentage =
+		requiredTotal > 0 ? Math.min((currentHours.totalHours / requiredTotal) * 100, 100) : 100;
 
 	return {
 		facultyHours: {
@@ -153,7 +156,8 @@ export function calculateRequirementProgress(
 			currentTotal: currentHours.totalHours,
 			requiredTotal,
 			percentage: overallPercentage,
-			isComplete: currentHours.totalHours >= requiredTotal &&
+			isComplete:
+				currentHours.totalHours >= requiredTotal &&
 				currentHours.facultyHours >= requirements.requiredFacultyHours &&
 				currentHours.universityHours >= requirements.requiredUniversityHours
 		}
@@ -208,7 +212,10 @@ export function calculateRemainingHours(progress: RequirementProgress): {
 } {
 	return {
 		facultyRemaining: Math.max(0, progress.facultyHours.required - progress.facultyHours.current),
-		universityRemaining: Math.max(0, progress.universityHours.required - progress.universityHours.current),
+		universityRemaining: Math.max(
+			0,
+			progress.universityHours.required - progress.universityHours.current
+		),
 		totalRemaining: Math.max(0, progress.overall.requiredTotal - progress.overall.currentTotal)
 	};
 }

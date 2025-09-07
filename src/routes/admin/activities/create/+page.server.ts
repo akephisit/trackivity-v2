@@ -49,9 +49,7 @@ const activityCreateSchema = z
 			.min(1, 'กรุณากรอกจำนวนชั่วโมง')
 			.regex(/^\d+$/, 'ชั่วโมงต้องเป็นจำนวนเต็ม')
 			.refine((v) => parseInt(v) > 0, 'ชั่วโมงต้องมากกว่า 0'),
-    organizer_id: z
-      .string()
-      .min(1, 'กรุณาเลือกหน่วยงานที่จัดกิจกรรม'),
+		organizer_id: z.string().min(1, 'กรุณาเลือกหน่วยงานที่จัดกิจกรรม'),
 		eligible_organizations: z
 			.string()
 			.min(1, 'กรุณาเลือกหน่วยงานที่สามารถเข้าร่วมได้')
@@ -112,7 +110,7 @@ export const load: PageServerLoad = async (event) => {
 		location: '',
 		max_participants: '',
 		hours: '1',
-    organizer_id: '',
+		organizer_id: '',
 		eligible_organizations: '',
 		academic_year: '',
 		activity_level: 'faculty'
@@ -171,8 +169,8 @@ export const actions: Actions = {
 				: [];
 
 			// เตรียมข้อมูลสำหรับส่งไป API
-      const activityData: any = {
-        activity_name: form.data.activity_name,
+			const activityData: any = {
+				activity_name: form.data.activity_name,
 				description:
 					form.data.description && form.data.description.trim() !== '' ? form.data.description : '',
 				start_date: form.data.start_date,
@@ -182,12 +180,12 @@ export const actions: Actions = {
 				activity_type: form.data.activity_type,
 				location: form.data.location,
 				max_participants: form.data.max_participants ? parseInt(form.data.max_participants) : null,
-        hours: form.data.hours ? parseInt(form.data.hours) : 1,
-        organizer_id: form.data.organizer_id,
-        eligible_organizations: eligibleOrganizationsArray,
-        academic_year: form.data.academic_year,
-        activity_level: form.data.activity_level
-      };
+				hours: form.data.hours ? parseInt(form.data.hours) : 1,
+				organizer_id: form.data.organizer_id,
+				eligible_organizations: eligibleOrganizationsArray,
+				academic_year: form.data.academic_year,
+				activity_level: form.data.activity_level
+			};
 
 			// เรียก API ผ่าน internal route
 			const response = await event.fetch('/api/admin/activities', {

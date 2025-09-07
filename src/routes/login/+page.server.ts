@@ -84,7 +84,7 @@ export const actions: Actions = {
 				error && typeof error === 'object' && 'code' in error ? (error as any).code : undefined;
 			let message = 'เกิดข้อผิดพลาดในการเชื่อมต่อ กรุณาลองใหม่';
 			let status = 500;
-			
+
 			if (code === 'PASSWORD_DISABLED') {
 				message = 'บัญชีนี้ปิดการเข้าสู่ระบบด้วยรหัสผ่าน กรุณาติดต่อผู้ดูแลหรือใช้วิธีอื่น';
 				status = 403;
@@ -95,7 +95,7 @@ export const actions: Actions = {
 				message = 'ข้อมูลไม่ครบถ้วน กรุณากรอกรหัสนักศึกษาและรหัสผ่าน';
 				status = 400;
 			}
-			
+
 			console.error('[Auth] Login form error:', { code, message });
 			return fail(status, { form, message });
 		}

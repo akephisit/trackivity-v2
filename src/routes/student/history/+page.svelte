@@ -25,11 +25,11 @@
 	} from '@tabler/icons-svelte';
 	import { getActivityLevelDisplayName, getActivityTypeDisplayName } from '$lib/utils/activity';
 
-let { data } = $props<{ data: { history: any[] } }>();
-let participationHistory: any[] = $state(data?.history || []);
-let filteredHistory: any[] = $state([]);
-let loading = $state(true);
-let error: string | null = $state(null);
+	let { data } = $props<{ data: { history: any[] } }>();
+	let participationHistory: any[] = $state(data?.history || []);
+	let filteredHistory: any[] = $state([]);
+	let loading = $state(true);
+	let error: string | null = $state(null);
 	let searchQuery = $state('');
 	let sortBy = $state('recent'); // recent, oldest, activity_name, duration
 	let filterBy = $state('all'); // all, this_month, last_month, this_year, completed, in_progress
@@ -48,10 +48,10 @@ let error: string | null = $state(null);
 		universityActivities: 0
 	});
 
-// Initialize from server data
-loading = false;
-filteredHistory = participationHistory;
-calculateStats(participationHistory);
+	// Initialize from server data
+	loading = false;
+	filteredHistory = participationHistory;
+	calculateStats(participationHistory);
 
 	function calculateStats(data: any[]) {
 		const now = new Date();
@@ -71,8 +71,10 @@ calculateStats(participationHistory);
 		});
 		const uniqueData = Array.from(uniqueActivities.values());
 
-		const completedActivities = uniqueData.filter((p) => p.status === 'completed' || p.status === 'checked_out');
-		
+		const completedActivities = uniqueData.filter(
+			(p) => p.status === 'completed' || p.status === 'checked_out'
+		);
+
 		// Calculate hours by activity level
 		let totalHours = 0;
 		let facultyHours = 0;
@@ -84,7 +86,7 @@ calculateStats(participationHistory);
 			if (p.activity?.hours && (p.status === 'completed' || p.status === 'checked_out')) {
 				const hours = p.activity.hours || 0;
 				totalHours += hours;
-				
+
 				if (p.activity.activity_level === 'faculty') {
 					facultyHours += hours;
 					facultyActivities++;
@@ -118,7 +120,10 @@ calculateStats(participationHistory);
 			const activityId = p.activity?.id;
 			if (activityId) {
 				const existingParticipation = activityMap.get(activityId);
-				if (!existingParticipation || new Date(p.participated_at) > new Date(existingParticipation.participated_at)) {
+				if (
+					!existingParticipation ||
+					new Date(p.participated_at) > new Date(existingParticipation.participated_at)
+				) {
 					activityMap.set(activityId, p);
 				}
 			}
@@ -128,11 +133,11 @@ calculateStats(participationHistory);
 		// Search filter
 		if (searchQuery.trim()) {
 			const query = searchQuery.toLowerCase();
-        filtered = filtered.filter((p) => {
-            const name = (p.activity?.name || (p as any).activity?.title || '').toLowerCase();
-            const desc = (p.activity?.description || '').toLowerCase();
-            return name.includes(query) || desc.includes(query);
-        });
+			filtered = filtered.filter((p) => {
+				const name = (p.activity?.name || (p as any).activity?.title || '').toLowerCase();
+				const desc = (p.activity?.description || '').toLowerCase();
+				return name.includes(query) || desc.includes(query);
+			});
 		}
 
 		// Time and status filter
@@ -218,7 +223,6 @@ calculateStats(participationHistory);
 		});
 	}
 
-
 	function getActivityBadgeVariant(type: string): 'default' | 'secondary' | 'outline' {
 		switch (type) {
 			case 'Academic':
@@ -267,7 +271,9 @@ calculateStats(participationHistory);
 		return statusMap[status] || status;
 	}
 
-	function getStatusBadgeVariant(status: string): 'default' | 'secondary' | 'outline' | 'destructive' {
+	function getStatusBadgeVariant(
+		status: string
+	): 'default' | 'secondary' | 'outline' | 'destructive' {
 		switch (status) {
 			case 'completed':
 			case 'checked_out':
@@ -298,7 +304,6 @@ calculateStats(participationHistory);
 				return IconClock2;
 		}
 	}
-
 </script>
 
 <svelte:head>
@@ -314,7 +319,7 @@ calculateStats(participationHistory);
 	</div>
 
 	<!-- Statistics -->
-	<div class="grid gap-4 grid-cols-2 lg:grid-cols-3 xl:grid-cols-8">
+	<div class="grid grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-8">
 		<Card>
 			<CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
 				<CardTitle class="text-sm font-medium">ทั้งหมด</CardTitle>
@@ -488,9 +493,11 @@ calculateStats(participationHistory);
 											<div class="mt-1">
 												<StatusIcon class="size-5 text-muted-foreground" />
 											</div>
-											<div class="space-y-1 flex-1">
-												<h3 class="text-base font-medium leading-tight">
-													{participation.activity?.name || participation.activity?.title || 'ไม่ระบุชื่อกิจกรรม'}
+											<div class="flex-1 space-y-1">
+												<h3 class="text-base leading-tight font-medium">
+													{participation.activity?.name ||
+														participation.activity?.title ||
+														'ไม่ระบุชื่อกิจกรรม'}
 												</h3>
 												{#if participation.activity?.description}
 													<p class="line-clamp-2 text-sm text-muted-foreground">
@@ -511,14 +518,23 @@ calculateStats(participationHistory);
 											{getParticipationStatusText(participation.status)}
 										</Badge>
 										{#if participation.activity?.activity_level}
-											{@const LevelIcon = getActivityLevelIcon(participation.activity.activity_level)}
-											<Badge variant={getActivityLevelBadgeVariant(participation.activity.activity_level)} class="gap-1">
+											{@const LevelIcon = getActivityLevelIcon(
+												participation.activity.activity_level
+											)}
+											<Badge
+												variant={getActivityLevelBadgeVariant(
+													participation.activity.activity_level
+												)}
+												class="gap-1"
+											>
 												<LevelIcon class="size-3" />
 												{getActivityLevelDisplayName(participation.activity.activity_level)}
 											</Badge>
 										{/if}
 										{#if participation.activity?.activity_type}
-											<Badge variant={getActivityBadgeVariant(participation.activity.activity_type)}>
+											<Badge
+												variant={getActivityBadgeVariant(participation.activity.activity_type)}
+											>
 												{getActivityTypeDisplayName(participation.activity.activity_type)}
 											</Badge>
 										{/if}
@@ -526,7 +542,7 @@ calculateStats(participationHistory);
 								</div>
 
 								<!-- Timeline Details -->
-								<div class="border-l-2 border-muted pl-4 space-y-3">
+								<div class="space-y-3 border-l-2 border-muted pl-4">
 									<!-- Activity Schedule -->
 									<div class="grid grid-cols-1 gap-2 text-sm">
 										{#if participation.activity?.start_date}
@@ -538,7 +554,7 @@ calculateStats(participationHistory);
 												{/if}
 											</div>
 										{/if}
-										
+
 										{#if participation.activity?.location}
 											<div class="flex items-center gap-2 text-muted-foreground">
 												<IconMapPin class="size-4 flex-shrink-0" />
@@ -555,21 +571,20 @@ calculateStats(participationHistory);
 												<span>ลงทะเบียน: {formatDateShort(participation.registered_at)}</span>
 											</div>
 										{/if}
-										
+
 										{#if participation.checked_in_at}
 											<div class="flex items-center gap-2 text-sm text-muted-foreground">
 												<IconLogin class="size-4 flex-shrink-0" />
 												<span>เช็คอิน: {formatDateShort(participation.checked_in_at)}</span>
 											</div>
 										{/if}
-										
+
 										{#if participation.checked_out_at}
 											<div class="flex items-center gap-2 text-sm text-muted-foreground">
 												<IconLogout class="size-4 flex-shrink-0" />
 												<span>เช็คเอาท์: {formatDateShort(participation.checked_out_at)}</span>
 											</div>
 										{/if}
-
 
 										{#if participation.activity?.hours}
 											<div class="flex items-center gap-2 text-sm text-muted-foreground">
@@ -581,7 +596,7 @@ calculateStats(participationHistory);
 
 									<!-- Notes -->
 									{#if participation.notes}
-										<div class="pt-2 border-t text-sm">
+										<div class="border-t pt-2 text-sm">
 											<p class="text-muted-foreground">หมายเหตุ:</p>
 											<p class="text-foreground">{participation.notes}</p>
 										</div>

@@ -70,9 +70,9 @@ export function formatThaiDate(date: DateValue, format: 'short' | 'long' = 'long
 	const day = jsDate.getDate();
 	const month = jsDate.getMonth();
 	const year = toBuddhistEra(jsDate.getFullYear());
-	
+
 	const monthNames = format === 'short' ? THAI_MONTHS_SHORT : THAI_MONTHS_FULL;
-	
+
 	return `${day} ${monthNames[month]} ${year}`;
 }
 
@@ -86,7 +86,7 @@ export function formatThaiMonth(monthIndex: number, format: 'short' | 'long' = '
 	if (monthIndex < 0 || monthIndex > 11) {
 		throw new Error('Month index must be between 0 and 11');
 	}
-	
+
 	const monthNames = format === 'short' ? THAI_MONTHS_SHORT : THAI_MONTHS_FULL;
 	return monthNames[monthIndex];
 }
@@ -107,7 +107,7 @@ export function formatThaiYear(year: number): string {
  */
 export function getThaiMonthOptions(format: 'short' | 'long' = 'long') {
 	const monthNames = format === 'short' ? THAI_MONTHS_SHORT : THAI_MONTHS_FULL;
-	
+
 	return monthNames.map((name, index) => ({
 		value: index + 1,
 		label: name
@@ -122,14 +122,14 @@ export function getThaiMonthOptions(format: 'short' | 'long' = 'long') {
  */
 export function getThaiYearOptions(startYear: number, endYear: number) {
 	const options = [];
-	
+
 	for (let year = startYear; year <= endYear; year++) {
 		options.push({
 			value: year,
 			label: toBuddhistEra(year).toString()
 		});
 	}
-	
+
 	return options;
 }
 
@@ -138,28 +138,31 @@ export function getThaiYearOptions(startYear: number, endYear: number) {
  */
 export class ThaiDateFormatter {
 	private locale: string;
-	
+
 	constructor(locale: string = 'th-TH') {
 		this.locale = locale;
 	}
-	
+
 	/**
 	 * Format a DateValue with Thai month names and Buddhist Era
 	 * @param date - DateValue to format
 	 * @param options - Formatting options
 	 * @returns Formatted date string
 	 */
-	format(date: DateValue, options?: {
-		year?: 'numeric' | '2-digit';
-		month?: 'numeric' | '2-digit' | 'long' | 'short';
-		day?: 'numeric' | '2-digit';
-		era?: boolean;
-	}): string {
+	format(
+		date: DateValue,
+		options?: {
+			year?: 'numeric' | '2-digit';
+			month?: 'numeric' | '2-digit' | 'long' | 'short';
+			day?: 'numeric' | '2-digit';
+			era?: boolean;
+		}
+	): string {
 		const jsDate = date.toDate(getLocalTimeZone());
 		const day = jsDate.getDate();
 		const month = jsDate.getMonth();
 		const year = jsDate.getFullYear();
-		
+
 		const opts = {
 			year: 'numeric',
 			month: 'long',
@@ -167,16 +170,16 @@ export class ThaiDateFormatter {
 			era: true,
 			...options
 		};
-		
+
 		let result = '';
-		
+
 		// Format day
 		if (opts.day === 'numeric') {
 			result += day;
 		} else if (opts.day === '2-digit') {
 			result += day.toString().padStart(2, '0');
 		}
-		
+
 		// Format month
 		if (opts.month === 'long') {
 			result += ` ${THAI_MONTHS_FULL[month]}`;
@@ -187,7 +190,7 @@ export class ThaiDateFormatter {
 		} else if (opts.month === '2-digit') {
 			result += `/${(month + 1).toString().padStart(2, '0')}`;
 		}
-		
+
 		// Format year
 		if (opts.era) {
 			if (opts.year === 'numeric') {
@@ -202,7 +205,7 @@ export class ThaiDateFormatter {
 				result += ` ${year.toString().slice(-2)}`;
 			}
 		}
-		
+
 		return result.trim();
 	}
 }
