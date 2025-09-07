@@ -374,7 +374,7 @@
 				</div>
 			</header>
 			
-			<div class="pt-16 container mx-auto max-w-7xl px-4 py-6 lg:px-6 w-full overflow-x-hidden">
+			<div class="pt-4 lg:pt-20 container mx-auto max-w-7xl px-4 py-6 lg:px-6 lg:py-4 w-full overflow-x-hidden">
 				{@render children()}
 			</div>
 		</main>
