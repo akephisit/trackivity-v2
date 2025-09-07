@@ -116,13 +116,6 @@ export const ROUTES: RouteConfig[] = [
 				icon: 'event'
 			},
 			{
-				path: '/admin/organization/reports',
-				title: 'รายงาน',
-				permissions: ['ViewOrganizationAnalytics'],
-				admin_levels: ['OrganizationAdmin', 'SuperAdmin'],
-				icon: 'assessment'
-			},
-			{
 				path: '/admin/organization/sessions',
 				title: 'จัดการเซสชัน',
 				permissions: ['ViewOrganizationSessions', 'ManageOrganizationSessions'],
@@ -175,13 +168,6 @@ export const ROUTES: RouteConfig[] = [
 				admin_levels: ['SuperAdmin'],
 				icon: 'security'
 			},
-			{
-				path: '/admin/system/settings',
-				title: 'ตั้งค่าระบบ',
-				permissions: ['ViewSystemAnalytics'],
-				admin_levels: ['SuperAdmin'],
-				icon: 'settings'
-			}
 		]
 	}
 ];
@@ -375,7 +361,6 @@ export const ROLE_MENUS = {
 		{ title: 'แดชบอร์ดหน่วยงาน', url: '/admin/organization/dashboard', icon: 'analytics' },
 		{ title: 'จัดการนักศึกษา', url: '/admin/organization/students', icon: 'group' },
 		{ title: 'จัดการกิจกรรม', url: '/admin/organization/activities', icon: 'event' },
-		{ title: 'รายงาน', url: '/admin/organization/reports', icon: 'assessment' },
 		{ title: 'จัดการเซสชัน', url: '/admin/organization/sessions', icon: 'security' },
 		{ title: 'สแกน QR', url: '/admin/scanner', icon: 'qr_code_scanner' },
 		{ title: 'โปรไฟล์', url: '/profile', icon: 'person' }
@@ -387,7 +372,6 @@ export const ROLE_MENUS = {
 		{ title: 'จัดการผู้ใช้', url: '/admin/system/users', icon: 'people' },
 		{ title: 'จัดการผู้ดูแลระบบ', url: '/admin/system/admins', icon: 'admin_panel_settings' },
 		{ title: 'จัดการเซสชัน', url: '/admin/system/sessions', icon: 'security' },
-		{ title: 'ตั้งค่าระบบ', url: '/admin/system/settings', icon: 'settings' },
 		{ title: 'โปรไฟล์', url: '/profile', icon: 'person' }
 	]
 };
@@ -407,7 +391,6 @@ export const QUICK_ACTIONS = {
 	faculty_admin: [
 		{ title: 'สแกน QR', url: '/admin/scanner', icon: 'qr_code_scanner' },
 		{ title: 'สร้างกิจกรรม', url: '/admin/organization/activities/create', icon: 'add' },
-		{ title: 'รายงานวันนี้', url: '/admin/organization/reports?date=today', icon: 'assessment' }
 	],
 
 	super_admin: [

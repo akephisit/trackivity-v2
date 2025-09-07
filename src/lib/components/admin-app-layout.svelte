@@ -6,13 +6,12 @@
 		IconUsers,
 		IconBuilding,
 		IconQrcode,
-		IconChartBar,
-		IconSettings,
 		IconUserCheck,
 		IconPlus,
 		IconShield,
 		IconBuildingStore,
-		IconUserCog
+		IconUserCog,
+		IconSettings
 	} from '@tabler/icons-svelte';
 
 	type AdminLevel = 'SuperAdmin' | 'OrganizationAdmin';
@@ -99,15 +98,8 @@
 			);
 		}
 
-		// รายงาน
-		baseItems.push({
-			title: 'รายงาน',
-			href: '/admin/reports',
-			icon: IconChartBar
-		});
-
-		// Show settings menu for SuperAdmin or faculty-type organizations only
-		if (adminLevel === 'SuperAdmin' || organization?.organizationType === 'faculty') {
+		// Show settings menu only for faculty-type organizations
+		if (organization?.organizationType === 'faculty') {
 			baseItems.push({
 				title: 'ตั้งค่า',
 				href: '/admin/settings',

@@ -7,7 +7,6 @@
 		IconLayoutDashboard,
 		IconUsers,
 		IconBuilding,
-		IconSettings,
 		IconLogout,
 		IconShield,
 		IconBuildingStore,
@@ -134,15 +133,6 @@
             );
         }
 
-		// Show settings menu for SuperAdmin or faculty-type organizations only
-		if (adminLevel === 'SuperAdmin' || organization?.organizationType === 'faculty') {
-			baseItems.push({
-				title: 'ตั้งค่า',
-				href: '/admin/settings',
-				icon: IconSettings,
-				active: page.url.pathname.startsWith('/admin/settings')
-			});
-		}
 
 		return baseItems;
 	}
@@ -159,12 +149,6 @@
 					icon: IconCalendarEvent,
 					active: page.url.pathname === '/admin/activities/create'
 				},
-				{
-					title: 'รายงานหน่วยงาน',
-					href: '/admin/reports',
-					icon: IconUsers,
-					active: page.url.pathname.startsWith('/admin/reports')
-				}
 			];
 		}
 		return [];
@@ -218,22 +202,6 @@
 		if (onCloseMobileMenu) {
 			onCloseMobileMenu();
 		}
-	}
-
-	// Page title for headers (mobile)
-	function getPageTitle() {
-		if (page.url.pathname === '/admin') return 'แดชบอร์ด';
-		if (page.url.pathname.startsWith('/admin/activities')) return 'จัดการกิจกรรม';
-		if (page.url.pathname.startsWith('/admin/organizations')) return 'จัดการหน่วยงาน';
-		if (page.url.pathname.startsWith('/admin/users')) return 'จัดการผู้ใช้';
-		if (page.url.pathname.startsWith('/admin/admins')) return 'จัดการแอดมิน';
-		if (page.url.pathname.startsWith('/admin/departments')) return 'จัดการภาควิชา';
-		if (page.url.pathname.startsWith('/admin/organization-users')) return 'จัดการผู้ใช้หน่วยงาน';
-		if (page.url.pathname.startsWith('/admin/organization-admins')) return 'จัดการแอดมินหน่วยงาน';
-		if (page.url.pathname.startsWith('/admin/qr-scanner')) return 'สแกน QR Code';
-		if (page.url.pathname.startsWith('/admin/reports')) return 'รายงานหน่วยงาน';
-		if (page.url.pathname.startsWith('/admin/settings')) return 'ตั้งค่า';
-		return 'Trackivity';
 	}
 </script>
 
