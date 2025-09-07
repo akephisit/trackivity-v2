@@ -1066,13 +1066,13 @@
 
 <!-- Create Admin Dialog -->
 <Dialog.Root bind:open={dialogOpen}>
-	<Dialog.Content class="sm:max-w-md">
+	<Dialog.Content class="max-w-[95vw] sm:max-w-lg max-h-[90vh] overflow-y-auto">
 		<Dialog.Header>
 			<Dialog.Title>เพิ่มแอดมินใหม่</Dialog.Title>
 			<Dialog.Description>กรอกข้อมูลเพื่อสร้างผู้ดูแลระบบใหม่</Dialog.Description>
 		</Dialog.Header>
 
-		<form method="POST" action="?/create" use:enhance class="space-y-4">
+		<form method="POST" action="?/create" use:enhance class="space-y-3 px-1 sm:space-y-4 sm:px-0">
 			{#if $errors._errors}
 				<Alert variant="destructive">
 					<AlertDescription>
@@ -1111,7 +1111,7 @@
 				<Form.FieldErrors />
 			</Form.Field>
 
-			<div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+			<div class="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
 				<Form.Field {form} name="first_name">
 					<Form.Control>
 						{#snippet children({ props })}
@@ -1240,12 +1240,6 @@
 							{#if selectedAdminLevel === AdminLevel.OrganizationAdmin && !selectedFaculty}
 								<p class="mt-1 text-sm text-red-600">กรุณาเลือกหน่วยงานสำหรับแอดมินระดับหน่วยงาน</p>
 							{/if}
-							<!-- Debug info -->
-							{#if selectedAdminLevel === AdminLevel.OrganizationAdmin}
-								<div class="mt-1 rounded border bg-gray-50 p-2 text-xs text-gray-500">
-									Debug: selectedFaculty = {selectedFaculty}, formData.organization_id = {$formData.organization_id}
-								</div>
-							{/if}
 						{/snippet}
 					</Form.Control>
 					<Form.FieldErrors />
@@ -1279,21 +1273,9 @@
 				<input type="hidden" name="organization_id" bind:value={$formData.organization_id} />
 			{/if}
 
-			<!-- Debug section for development -->
-			<div class="mt-4 rounded border bg-gray-50 p-2 text-xs text-gray-500">
-				<div><strong>Debug Information:</strong></div>
-				<div>Selected Admin Level: {selectedAdminLevel}</div>
-				<div>Selected Faculty: {selectedFaculty}</div>
-				<div>Selected Prefix: {selectedPrefix}</div>
-				<div>Form Data Admin Level: {$formData.admin_level}</div>
-				<div>Form Data Organization ID: {$formData.organization_id}</div>
-				<div>Form Data Prefix: {$formData.prefix}</div>
-				<div>Form Data First Name: {$formData.first_name}</div>
-				<div>Form Data Last Name: {$formData.last_name}</div>
-			</div>
 
-			<Dialog.Footer>
-				<Button type="button" variant="outline" onclick={() => (dialogOpen = false)}>ยกเลิก</Button>
+			<Dialog.Footer class="flex flex-col gap-2 sm:flex-row sm:gap-4">
+				<Button type="button" variant="outline" onclick={() => (dialogOpen = false)} class="order-2 sm:order-1">ยกเลิก</Button>
 				<Button
 					type="submit"
 					disabled={$submitting ||
@@ -1311,6 +1293,7 @@
 						console.log('last_name in formData:', $formData.last_name);
 						console.log('===============================');
 					}}
+					class="order-1 sm:order-2"
 				>
 					{#if $submitting}
 						<IconLoader class="mr-2 h-4 w-4 animate-spin" />
@@ -1326,14 +1309,14 @@
 
 <!-- Edit Admin Dialog -->
 <Dialog.Root bind:open={editDialogOpen}>
-	<Dialog.Content class="sm:max-w-md">
+	<Dialog.Content class="max-w-[95vw] sm:max-w-lg max-h-[90vh] overflow-y-auto">
 		<Dialog.Header>
 			<Dialog.Title>แก้ไขแอดมิน</Dialog.Title>
 			<Dialog.Description>แก้ไขข้อมูลและสิทธิ์ของแอดมิน</Dialog.Description>
 		</Dialog.Header>
 
 		{#if editingAdmin && editingAdmin.user}
-			<div class="space-y-4">
+			<div class="space-y-3 px-1 sm:space-y-4 sm:px-0">
 				<div class="space-y-2">
 					<Label>คำนำหน้า</Label>
 					<Select.Root type="single" bind:value={editSelectedPrefix}>
@@ -1402,8 +1385,8 @@
 					</div>
 				{/if}
 
-				<Dialog.Footer>
-					<Button type="button" variant="outline" onclick={() => (editDialogOpen = false)}>
+				<Dialog.Footer class="flex flex-col gap-2 sm:flex-row sm:gap-4">
+					<Button type="button" variant="outline" onclick={() => (editDialogOpen = false)} class="order-2 sm:order-1">
 						ยกเลิก
 					</Button>
 					<Button
@@ -1421,6 +1404,7 @@
 								});
 							}
 						}}
+						class="order-1 sm:order-2"
 					>
 						บันทึกการแก้ไข
 					</Button>
