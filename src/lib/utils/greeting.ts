@@ -11,79 +11,94 @@ export interface GreetingMessage {
 const morningGreetings = [
 	{ greeting: "สวัสดีตอนเช้า", subtitle: "เริ่มวันใหม่ด้วยพลังงานเต็มเปี่ยม" },
 	{ greeting: "อรุณสวัสดิ์", subtitle: "หวังว่าคุณจะมีวันที่ดี" },
-	{ greeting: "สวัสดีครับ/ค่ะ", subtitle: "พร้อมสำหรับวันใหม่แล้วใช่ไหม" },
+	{ greeting: "สวัสดี", subtitle: "พร้อมสำหรับวันใหม่แล้วใช่ไหม" },
 	{ greeting: "เช้าที่สดใส", subtitle: "ขอให้มีวันที่สดใสและมีความสุข" },
-	{ greeting: "สวัสดี", subtitle: "ทานข้าวเช้าแล้วหรือยัง" }
+	{ greeting: "ทานข้าวเช้าแล้วหรือยัง", subtitle: "เริ่มวันด้วยอาหารมื้อสำคัญ" }
+];
+
+const preNoonGreetings = [
+	{ greeting: "หิวข้าวหรือยัง", subtitle: "เกือบเที่ยงแล้วนะ" },
+	{ greeting: "อยากทานอะไรไหม", subtitle: "มาดูกิจกรรมเสร็จแล้วค่อยไปกิน" },
+	{ greeting: "เตรียมทานข้าวกันหรือยัง", subtitle: "ใกล้เที่ยงแล้ว" },
+	{ greeting: "ใกล้เที่ยงแล้วนะ", subtitle: "หิวไหม" },
+	{ greeting: "วันนี้จะทานข้าวที่ไหนดี", subtitle: "เช็คกิจกรรมเสร็จแล้วค่อยไป" },
+	{ greeting: "เกือบเที่ยงแล้ว", subtitle: "พร้อมไปทานข้าวหรือยัง" }
 ];
 
 const afternoonGreetings = [
 	{ greeting: "สวัสดีตอนบ่าย", subtitle: "หวังว่าวันนี้จะเป็นวันที่ดี" },
-	{ greeting: "สวัสดี", subtitle: "ทานข้าวเที่ยงแล้วหรือยัง" },
+	{ greeting: "ทานข้าวเที่ยงแล้วหรือยัง", subtitle: "มาดูกิจกรรมต่อกัน" },
 	{ greeting: "สบายดีไหม", subtitle: "ติดตามกิจกรรมและผลงานได้ที่นี่" },
 	{ greeting: "วันนี้เป็นอย่างไรบ้าง", subtitle: "มาดูความคืบหน้าของคุณกัน" },
-	{ greeting: "สวัสดี", subtitle: "กิจกรรมวันนี้เยอะไหม" }
+	{ greeting: "กิจกรรมวันนี้เยอะไหม", subtitle: "มาเช็คดูกัน" },
+	{ greeting: "อิ่มแล้วใช่ไหม", subtitle: "พร้อมทำกิจกรรมต่อหรือยัง" }
 ];
 
 const eveningGreetings = [
 	{ greeting: "สวัสดีตอนเย็น", subtitle: "เหนื่อยมากไหมวันนี้" },
-	{ greeting: "สวัสดี", subtitle: "วันนี้ทำกิจกรรมอะไรไปบ้าง" },
+	{ greeting: "วันนี้ทำกิจกรรมอะไรไปบ้าง", subtitle: "มาดูสรุปกัน" },
 	{ greeting: "เย็นสบายนะ", subtitle: "มาดูสรุปกิจกรรมกัน" },
-	{ greeting: "สวัสดี", subtitle: "เหนื่อยอีกแล้วใช่ไหม" },
-	{ greeting: "สบายเย็นดี", subtitle: "ติดตามผลงานของคุณได้ที่นี่" }
+	{ greeting: "เหนื่อยอีกแล้วใช่ไหม", subtitle: "พักบ้างนะ" },
+	{ greeting: "สวัสดีตอนเย็น", subtitle: "ติดตามผลงานของคุณได้ที่นี่" },
+	{ greeting: "วันนี้เป็นยังไงบ้าง", subtitle: "เช็คกิจกรรมก่อนกลับบ้านไหม" }
 ];
 
 const nightGreetings = [
-	{ greeting: "สวัสดีค่ำ", subtitle: "ยังทำงานอยู่เหรอ" },
+	{ greeting: "สวัสดีตอนค่ำ", subtitle: "ยังทำงานอยู่เหรอ" },
 	{ greeting: "ดึกแล้วนะ", subtitle: "อย่าลืมพักผ่อนด้วย" },
-	{ greeting: "สวัสดี", subtitle: "วันนี้ทำงานหนักมากไหม" },
-	{ greeting: "สวัสดีตอนค่ำครับ/ค่ะ", subtitle: "เช็คความคืบหน้าก่อนนอนไหม" },
-	{ greeting: "สวัสดี", subtitle: "หวังว่าวันนี้จะเป็นวันที่ดี" }
+	{ greeting: "วันนี้ทำงานหนักมากไหม", subtitle: "พักบ้างนะ" },
+	{ greeting: "สวัสดีตอนค่ำ", subtitle: "เช็คความคืบหน้าก่อนนอนไหม" },
+	{ greeting: "ยังไม่นอนเหรอ", subtitle: "ดูแลสุขภาพด้วยนะ" },
+	{ greeting: "วันนี้เป็นยังไงบ้าง", subtitle: "หวังว่าจะเป็นวันที่ดี" }
 ];
 
 // Special day-based greetings
 const mondayGreetings = [
 	{ greeting: "สวัสดีวันจันทร์", subtitle: "เริ่มสัปดาห์ใหม่กันเถอะ" },
 	{ greeting: "วันจันทร์มาแล้ว", subtitle: "พร้อมสำหรับสัปดาห์ใหม่หรือยัง" },
-	{ greeting: "สวัสดี", subtitle: "สัปดาห์ใหม่ มีแผนอะไรบ้าง" }
+	{ greeting: "สัปดาห์ใหม่มาแล้ว", subtitle: "มีแผนอะไรบ้าง" }
 ];
 
 const fridayGreetings = [
-	{ greeting: "สวัสดีวันศุกร์", subtitle: "เก่งมาก เกือบจะครบสัปดาห์แล้ว" },
+	{ greeting: "สวัสดีวันศุกร์", subtitle: "เก่งมาก เกือบครบสัปดาห์แล้ว" },
 	{ greeting: "วันศุกร์แล้วนะ", subtitle: "วันหยุดใกล้เข้ามาแล้ว" },
-	{ greeting: "สวัสดี", subtitle: "รอวันหยุดอยู่ใช่ไหม" }
+	{ greeting: "รอวันหยุดอยู่ใช่ไหม", subtitle: "อีกนิดเดียวเท่านั้น" }
 ];
 
 const weekendGreetings = [
 	{ greeting: "สวัสดีวันหยุด", subtitle: "หวังว่าจะได้พักผ่อน" },
-	{ greeting: "วันหยุดสบายดี", subtitle: "ยังคงสนใจกิจกรรมอยู่เหรอ" },
+	{ greeting: "วันหยุด สบายดี", subtitle: "ยังคงสนใจกิจกรรมอยู่เหรอ" },
 	{ greeting: "สุขสันต์วันหยุด", subtitle: "วันหยุดก็อย่าลืมดูกิจกรรมนะ" }
 ];
 
 // Admin-specific greetings
 const adminGreetings = [
-	{ greeting: "สวัสดี", subtitle: "มีกิจกรรมใหม่ที่ต้องดูแลไหม" },
-	{ greeting: "สวัสดีครับ/ค่ะ", subtitle: "วันนี้มีงานเยอะไหม" },
-	{ greeting: "สวัสดี", subtitle: "จัดการระบบไปเรื่อยๆ นะ" },
-	{ greeting: "ยินดีต้อนรับ", subtitle: "พร้อมจัดการกิจกรรมแล้วใช่ไหม" },
-	{ greeting: "สวัสดี", subtitle: "ระบบพร้อมใช้งานแล้ว" }
+	{ greeting: "มีกิจกรรมใหม่ที่ต้องดูแลไหม", subtitle: "เช็คระบบกันเถอะ" },
+	{ greeting: "วันนี้มีงานเยอะไหม", subtitle: "จัดการไปทีละน้อยนะ" },
+	{ greeting: "จัดการระบบไปเรื่อยๆ นะ", subtitle: "คุณทำได้ดีมาก" },
+	{ greeting: "พร้อมจัดการกิจกรรมแล้วใช่ไหม", subtitle: "ระบบพร้อมใช้งานแล้ว" },
+	{ greeting: "วันนี้มีอะไรต้องอนุมัติไหม", subtitle: "มาดูกันเลย" },
+	{ greeting: "ระบบเป็นยังไงบ้าง", subtitle: "ทุกอย่างเรียบร้อยดีไหม" }
 ];
 
 // Student-specific greetings  
 const studentGreetings = [
-	{ greeting: "สวัสดี", subtitle: "มีกิจกรรมใหม่ที่น่าสนใจไหม" },
-	{ greeting: "สวัสดี", subtitle: "วันนี้เรียนหนักไหม" },
-	{ greeting: "สวัสดี", subtitle: "ลองดูกิจกรรมใหม่ๆ ไหม" },
-	{ greeting: "ยินดีต้อนรับ", subtitle: "เตรียมตัวเข้าร่วมกิจกรรมหรือยัง" },
-	{ greeting: "สวัสดี", subtitle: "ชั่วโมงกิจกรรมสะสมไปแค่ไหนแล้ว" }
+	{ greeting: "มีกิจกรรมใหม่ที่น่าสนใจไหม", subtitle: "มาดูกันเลย" },
+	{ greeting: "วันนี้เรียนหนักไหม", subtitle: "พักสมองด้วยกิจกรรมสนุกๆ ไหม" },
+	{ greeting: "ลองดูกิจกรรมใหม่ๆ ไหม", subtitle: "อาจจะมีอะไรน่าสนใจ" },
+	{ greeting: "เตรียมตัวเข้าร่วมกิจกรรมหรือยัง", subtitle: "มีหลายอย่างให้เลือก" },
+	{ greeting: "ชั่วโมงกิจกรรมสะสมไปแค่ไหนแล้ว", subtitle: "เช็คความคืบหน้ากัน" },
+	{ greeting: "วันนี้มีแผนเข้ากิจกรรมไหม", subtitle: "มาดูตัวเลือกกันเถอะ" }
 ];
 
 /**
  * Get time period based on current hour
  */
-function getTimePeriod(): 'morning' | 'afternoon' | 'evening' | 'night' {
+function getTimePeriod(): 'morning' | 'prenoon' | 'afternoon' | 'evening' | 'night' {
 	const hour = new Date().getHours();
 	
-	if (hour >= 5 && hour < 12) return 'morning';
+	if (hour >= 5 && hour < 10) return 'morning';
+	if (hour >= 10 && hour < 12) return 'prenoon';
 	if (hour >= 12 && hour < 17) return 'afternoon';  
 	if (hour >= 17 && hour < 21) return 'evening';
 	return 'night';
@@ -117,6 +132,9 @@ export function getDynamicGreeting(
 	switch (timePeriod) {
 		case 'morning':
 			availableGreetings.push(...morningGreetings, ...morningGreetings);
+			break;
+		case 'prenoon':
+			availableGreetings.push(...preNoonGreetings, ...preNoonGreetings);
 			break;
 		case 'afternoon':
 			availableGreetings.push(...afternoonGreetings, ...afternoonGreetings);
@@ -165,17 +183,21 @@ export function getDynamicGreeting(
 }
 
 /**
- * Get greeting for display (cached version to prevent flickering)
- * This version uses a daily seed to ensure consistency within the same day
+ * Get time-sensitive greeting that changes throughout the day
+ * Uses user-based seed for variety while respecting time periods
  */
 export function getDailyGreeting(
 	firstName?: string,
 	userType: 'student' | 'admin' = 'student'
 ): GreetingMessage {
-	// Create a daily seed based on date and user
+	// Create seed based on user but not time (so it changes by time period)
 	const today = new Date().toDateString();
 	const userSeed = firstName || 'anonymous';
-	const seed = `${today}-${userSeed}-${userType}`;
+	const timePeriod = getTimePeriod();
+	const dayOfWeek = getDayOfWeek();
+	
+	// Create seed that includes time period so it changes throughout the day
+	const seed = `${today}-${userSeed}-${userType}-${timePeriod}`;
 	
 	// Simple hash function for consistent randomness
 	let hash = 0;
@@ -185,16 +207,15 @@ export function getDailyGreeting(
 		hash = hash & hash; // Convert to 32bit integer
 	}
 	
-	// Use seeded random for consistency
-	const timePeriod = getTimePeriod();
-	const dayOfWeek = getDayOfWeek();
-	
 	let availableGreetings: GreetingMessage[] = [];
 	
-	// Same logic as getDynamicGreeting but with seeded selection
+	// Add time-based greetings (most weight)
 	switch (timePeriod) {
 		case 'morning':
 			availableGreetings.push(...morningGreetings, ...morningGreetings);
+			break;
+		case 'prenoon':
+			availableGreetings.push(...preNoonGreetings, ...preNoonGreetings);
 			break;
 		case 'afternoon':
 			availableGreetings.push(...afternoonGreetings, ...afternoonGreetings);
@@ -207,6 +228,7 @@ export function getDailyGreeting(
 			break;
 	}
 	
+	// Add day-based greetings
 	switch (dayOfWeek) {
 		case 'monday':
 			availableGreetings.push(...mondayGreetings);
@@ -219,6 +241,7 @@ export function getDailyGreeting(
 			break;
 	}
 	
+	// Add user-type specific greetings
 	if (userType === 'admin') {
 		availableGreetings.push(...adminGreetings);
 	} else {
