@@ -4,7 +4,7 @@ import type { PageServerLoad } from './$types';
 import type { User, UserFilter, UserStats, Organization } from '$lib/types/admin';
 import { AdminLevel } from '$lib/types/admin';
 import { db, users, adminRoles, organizations, departments } from '$lib/server/db';
-import { eq, and, or, like, desc, count, sql, gte } from 'drizzle-orm';
+import { eq, and, desc, count, sql, gte } from 'drizzle-orm';
 
 /**
  * Get users from database with filters and pagination
@@ -44,22 +44,24 @@ async function getUsersFromDb(
 		.$dynamic();
 
 	const conditions = [];
+	
+	// Filter out soft deleted users
+	conditions.push(sql`${users.deletedAt} IS NULL`);
 
 	// Organization filtering for OrganizationAdmin
 	if (adminLevel === AdminLevel.OrganizationAdmin && organizationId) {
 		conditions.push(eq(departments.organizationId, organizationId));
 	}
 
-	// Apply filters
+	// Apply filters - use optimized full-text search for Thai text
 	if (filters.search) {
-		const searchTerm = `%${filters.search}%`;
+		// For full-text search, we'll use a direct SQL query that utilizes the new search function
 		conditions.push(
-			or(
-				like(users.firstName, searchTerm),
-				like(users.lastName, searchTerm),
-				like(users.email, searchTerm),
-				like(users.studentId, searchTerm)
-			)
+			sql`(
+				to_tsvector('thai', ${users.firstName} || ' ' || ${users.lastName}) @@ plainto_tsquery('thai', ${filters.search})
+				OR ${users.studentId} ILIKE ${`%${filters.search}%`}
+				OR ${users.email} ILIKE ${`%${filters.search}%`}
+			)`
 		);
 	}
 
@@ -129,33 +131,37 @@ async function getUserStatsFromDb(
 	}
 
 	const [totalUsers, activeUsers, recentRegistrations] = await Promise.all([
-		// Total users
+		// Total users (excluding soft deleted)
 		(() => {
 			let q = db.select({ count: count() }).from(users).$dynamic();
+			const totalConditions = [sql`${users.deletedAt} IS NULL`, ...baseConditions];
 			if (baseConditions.length > 0) {
 				q = q.leftJoin(departments, eq(users.departmentId, departments.id));
-				return q.where(and(...baseConditions));
 			}
-			return q;
+			return q.where(and(...totalConditions));
 		})(),
 
-		// Active users (users with status 'active')
+		// Active users (users with status 'active' and not soft deleted)
 		(() => {
 			let q = db.select({ count: count() }).from(users).$dynamic();
-			const activeConditions = [eq(users.status, 'active'), ...baseConditions];
+			const activeConditions = [eq(users.status, 'active'), sql`${users.deletedAt} IS NULL`, ...baseConditions];
 			if (baseConditions.length > 0) {
 				q = q.leftJoin(departments, eq(users.departmentId, departments.id));
 			}
 			return q.where(and(...activeConditions));
 		})(),
 
-		// Recent registrations (last 30 days)
+		// Recent registrations (last 30 days, excluding soft deleted)
 		(() => {
 			const thirtyDaysAgo = new Date();
 			thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
 			let q = db.select({ count: count() }).from(users).$dynamic();
-			const recentConditions = [gte(users.createdAt, thirtyDaysAgo), ...baseConditions];
+			const recentConditions = [
+				gte(users.createdAt, thirtyDaysAgo), 
+				sql`${users.deletedAt} IS NULL`, 
+				...baseConditions
+			];
 
 			if (baseConditions.length > 0) {
 				q = q.leftJoin(departments, eq(users.departmentId, departments.id));

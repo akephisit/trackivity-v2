@@ -1,6 +1,6 @@
 import { json } from '@sveltejs/kit';
 import { db, users, departments, organizations } from '$lib/server/db';
-import { eq, like, and, sql } from 'drizzle-orm';
+import { eq, and, sql } from 'drizzle-orm';
 import jwt from 'jsonwebtoken';
 import argon2 from 'argon2';
 import { env } from '$env/dynamic/private';
@@ -42,16 +42,24 @@ export const GET = async ({ url, cookies }: { url: any; cookies: any }) => {
 		const page = parseInt(url.searchParams.get('page') || '1');
 		const perPage = parseInt(url.searchParams.get('per_page') || '20');
 		const search = url.searchParams.get('search');
-		const facultyId = url.searchParams.get('faculty_id');
 		const departmentId = url.searchParams.get('department_id');
 
 		const offset = (page - 1) * perPage;
 
 		// Build query conditions
 		const conditions = [];
+		
+		// Filter out soft deleted users
+		conditions.push(sql`${users.deletedAt} IS NULL`);
+		
 		if (search) {
+			// Use optimized full-text search for Thai text
 			conditions.push(
-				sql`(${users.firstName} ILIKE ${`%${search}%`} OR ${users.lastName} ILIKE ${`%${search}%`} OR ${users.email} ILIKE ${`%${search}%`} OR ${users.studentId} ILIKE ${`%${search}%`})`
+				sql`(
+					to_tsvector('thai', ${users.firstName} || ' ' || ${users.lastName}) @@ plainto_tsquery('thai', ${search})
+					OR ${users.studentId} ILIKE ${`%${search}%`}
+					OR ${users.email} ILIKE ${`%${search}%`}
+				)`
 			);
 		}
 		if (departmentId) {

@@ -3,7 +3,7 @@ import { error, fail } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 import { AdminLevel } from '$lib/types/admin';
 import { db, activities, organizations } from '$lib/server/db';
-import { eq, or, desc } from 'drizzle-orm';
+import { eq, or, desc, and, sql } from 'drizzle-orm';
 
 export const load: PageServerLoad = async (event) => {
 	// ตรวจสอบสิทธิ์ - เฉพาะ FacultyAdmin หรือ SuperAdmin
@@ -48,16 +48,22 @@ export const load: PageServerLoad = async (event) => {
 			.from(activities)
 			.leftJoin(organizations, eq(activities.organizerId, organizations.id));
 
-		// Apply faculty filtering for FacultyAdmin
-		const filteredQuery =
-			adminLevel === AdminLevel.OrganizationAdmin && organizationId
-				? baseQuery.where(
-						or(
-							eq(activities.organizationId, organizationId),
-							eq(activities.organizerId, organizationId)
-						)
-					)
-				: baseQuery;
+		// Apply faculty filtering for FacultyAdmin and exclude soft deleted activities
+		const baseConditions = [sql`${activities.deletedAt} IS NULL`];
+		
+		if (adminLevel === AdminLevel.OrganizationAdmin && organizationId) {
+			const orgCondition = or(
+				eq(activities.organizationId, organizationId),
+				eq(activities.organizerId, organizationId)
+			);
+			if (orgCondition) {
+				baseConditions.push(orgCondition);
+			}
+		}
+		
+		const filteredQuery = baseConditions.length > 0 
+			? baseQuery.where(and(...baseConditions))
+			: baseQuery;
 
 		const rawActivities = await filteredQuery.orderBy(desc(activities.createdAt));
 
