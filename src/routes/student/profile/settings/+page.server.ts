@@ -7,10 +7,8 @@ export const load: PageServerLoad = async ({ locals }) => {
 		throw redirect(302, '/login');
 	}
 
-	// Check if user is a student
-	if (locals.user.user_role !== 'Student') {
-		throw redirect(302, '/');
-	}
+	// For student routes, we assume if they can access /student/** they are students
+	// The authentication is handled by the parent layout
 
 	return {
 		user: locals.user

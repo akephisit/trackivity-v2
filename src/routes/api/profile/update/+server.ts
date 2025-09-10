@@ -34,7 +34,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 			.update(users)
 			.set({
 				firstName: first_name,
-				lastName: last_name,
+				lastName: last_name, 
 				email,
 				updated_at: new Date()
 			})

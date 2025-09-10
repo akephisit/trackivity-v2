@@ -7,14 +7,15 @@ export const load: PageServerLoad = async ({ locals }) => {
 		throw redirect(302, '/admin/login');
 	}
 
-	// Check if user has admin role
-	if (!locals.admin_role) {
+	// Check if user is admin
+	if (!locals.user.is_admin) {
 		throw redirect(302, '/');
 	}
 
 	return {
 		user: locals.user,
-		admin_role: locals.admin_role,
-		organization: locals.organization
+		admin_role: {
+			admin_level: locals.user.admin_level
+		}
 	};
 };
