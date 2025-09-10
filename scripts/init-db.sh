@@ -43,7 +43,7 @@ echo "👤 Creating super admin user..."
 bun run scripts/create-super-admin.ts \
   "SA001" \
   "sadmin@gmail.com" \
-  "Phlslt2571@ke" \
+  "S12345678" \
   "Super" \
   "Admin"
     
