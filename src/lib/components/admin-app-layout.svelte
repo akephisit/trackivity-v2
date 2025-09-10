@@ -150,6 +150,8 @@
 	showLogo={true}
 	{onToggleMobileMenu}
 	{onCloseMobileMenu}
+	showAccountSettings={true}
+	accountSettingsHref="/admin/profile/settings"
 >
 	{@render children()}
 </AppLayout>

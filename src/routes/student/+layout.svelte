@@ -101,6 +101,8 @@
 	onToggleMobileMenu={toggleMobileMenu}
 	onCloseMobileMenu={closeMobileMenu}
 	{bottomNavItems}
+	showAccountSettings={true}
+	accountSettingsHref="/student/profile/settings"
 >
 	{@render children?.()}
 </AppLayout>

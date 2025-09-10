@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { Button } from '$lib/components/ui/button';
 	import { cn } from '$lib/utils';
-	import { IconLogout, IconSun, IconMoon, IconMenu, IconX, IconShield } from '@tabler/icons-svelte';
+	import { IconLogout, IconSun, IconMoon, IconMenu, IconX, IconShield, IconSettings } from '@tabler/icons-svelte';
 	import { mode, setMode } from 'mode-watcher';
 	import { toast } from 'svelte-sonner';
 	import { goto } from '$app/navigation';
@@ -40,6 +40,8 @@
 		onToggleMobileMenu: () => void;
 		onCloseMobileMenu: () => void;
 		bottomNavItems?: NavigationItem[];
+		showAccountSettings?: boolean;
+		accountSettingsHref?: string;
 	}
 
 	let {
@@ -54,7 +56,9 @@
 		children,
 		onToggleMobileMenu,
 		onCloseMobileMenu,
-		bottomNavItems = []
+		bottomNavItems = [],
+		showAccountSettings = false,
+		accountSettingsHref = '/profile/settings'
 	}: Props = $props();
 
 	function toggleTheme() {
@@ -222,6 +226,14 @@
 									</p>
 								</div>
 							</div>
+							{#if showAccountSettings}
+								<Button variant="ghost" size="sm" class="w-full justify-start">
+									<a href={accountSettingsHref} class="flex items-center w-full">
+										<IconSettings class="mr-2 size-4" />
+										ตั้งค่าบัญชี
+									</a>
+								</Button>
+							{/if}
 							<Button variant="ghost" size="sm" onclick={toggleTheme} class="w-full justify-start">
 								{#if mode.current === 'light'}
 									<IconMoon class="mr-2 size-4" />
@@ -337,6 +349,14 @@
 								</p>
 							</div>
 						</div>
+						{#if showAccountSettings}
+							<Button variant="ghost" size="sm" class="w-full justify-start">
+								<a href={accountSettingsHref} class="flex items-center w-full">
+									<IconSettings class="mr-2 size-4" />
+									ตั้งค่าบัญชี
+								</a>
+							</Button>
+						{/if}
 						<Button variant="ghost" size="sm" onclick={toggleTheme} class="w-full justify-start">
 							{#if mode.current === 'light'}
 								<IconMoon class="mr-2 size-4" />
