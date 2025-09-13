@@ -1,7 +1,7 @@
 #!/usr/bin/env tsx
 
 import { drizzle } from 'drizzle-orm/neon-http';
-import { neon, neonConfig } from '@neondatabase/serverless';
+import { neon } from '@neondatabase/serverless';
 import argon2 from 'argon2';
 import crypto from 'crypto';
 import * as schema from '../src/lib/server/db/schema';
@@ -44,7 +44,6 @@ if (!DATABASE_URL) {
 }
 
 // Database connection (Neon HTTP)
-neonConfig.fetchConnectionCache = true;
 const sql = neon(DATABASE_URL);
 const db = drizzle(sql, { schema });
 

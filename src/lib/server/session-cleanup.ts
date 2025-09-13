@@ -64,8 +64,12 @@ export function isCleanupRunning(): boolean {
 	return cleanupInterval !== null;
 }
 
-// Auto-start cleanup in production
-if (typeof process !== 'undefined' && process.env.NODE_ENV === 'production') {
-	// Start cleanup on module load in production
-	startSessionCleanup(30); // Every 30 minutes
+// Auto-start cleanup in production (skip on Vercel serverless)
+if (
+  typeof process !== 'undefined' &&
+  process.env.NODE_ENV === 'production' &&
+  process.env.VERCEL !== '1'
+) {
+  // Start cleanup on module load in long-lived environments
+  startSessionCleanup(30); // Every 30 minutes
 }
