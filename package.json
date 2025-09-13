@@ -8,17 +8,17 @@
 		"node": ">=18.0.0"
 	},
 	"scripts": {
-		"dev": "bun run db:push && bunx vite dev",
+		"dev": "bun run db:push && vite dev",
 		"dev:node": "drizzle-kit push && vite dev",
-		"dev:db": "bun run db:push && bunx vite dev",
-		"dev:db:migrate": "bun run db:migrate && bunx vite dev",
+		"dev:db": "bun run db:push && vite dev",
+		"dev:db:migrate": "bun run db:migrate && vite dev",
 		"dev:watch": "bun --hot --watch src run dev",
-		"build": "bunx vite build",
+		"build": "vite build",
 		"build:bun": "bun build --target=bun --outdir=dist src/app.ts",
-		"start": "NODE_ENV=production PORT=${PORT:-8080} bun --config .bunfig.production.toml build/index.js",
+		"start": "NODE_ENV=production PORT=${PORT:-8080} node build/index.js",
 		"start:dev": "bun build/index.js",
 		"start:cloud": "NODE_ENV=production bun build/index.js",
-		"preview": "bunx vite preview",
+		"preview": "vite preview",
 		"prepare": "bunx svelte-kit sync || echo ''",
 		"check": "bunx svelte-kit sync && bunx svelte-check --tsconfig ./tsconfig.json",
 		"check:watch": "bunx svelte-kit sync && bunx svelte-check --tsconfig ./tsconfig.json --watch",
@@ -37,6 +37,7 @@
 		"clean": "rm -rf node_modules/.cache dist build .svelte-kit"
 	},
 	"devDependencies": {
+		"@sveltejs/adapter-vercel": "^5.5.2",
 		"@dnd-kit-svelte/core": "^0.0.8",
 		"@dnd-kit-svelte/modifiers": "^0.0.8",
 		"@dnd-kit-svelte/sortable": "^0.0.8",

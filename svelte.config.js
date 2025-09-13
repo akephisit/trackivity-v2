@@ -1,4 +1,4 @@
-import adapter from 'svelte-adapter-bun';
+import adapter from '@sveltejs/adapter-vercel';
 import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 
 // Allow adding extra trusted origins at build time, e.g. via
