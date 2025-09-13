@@ -1,15 +1,4 @@
 {
   "framework": "sveltekit",
-  "buildCommand": "npm run build",
-  "installCommand": "npm install",
-  "functions": {
-    "render.func": {
-      "runtime": "nodejs24.x",
-      "regions": ["sin1"]
-    },
-    "api/**": {
-      "runtime": "nodejs24.x",
-      "regions": ["sin1"]
-    }
-  }
+  "regions": ["sin1"]
 }
