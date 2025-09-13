@@ -88,6 +88,7 @@
 		"zod": "^3.25.76"
 	},
 	"dependencies": {
+		"@neondatabase/serverless": "^1.0.1",
 		"@types/argon2": "^0.15.4",
 		"@types/jsonwebtoken": "^9.0.10",
 		"@types/qrcode": "^1.5.5",

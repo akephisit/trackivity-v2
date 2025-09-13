@@ -1,7 +1,7 @@
 #!/usr/bin/env tsx
 
-import { drizzle } from 'drizzle-orm/postgres-js';
-import postgres from 'postgres';
+import { drizzle } from 'drizzle-orm/neon-http';
+import { neon, neonConfig } from '@neondatabase/serverless';
 import argon2 from 'argon2';
 import crypto from 'crypto';
 import * as schema from '../src/lib/server/db/schema';
@@ -43,11 +43,10 @@ if (!DATABASE_URL) {
 	throw new Error('DATABASE_URL is not set');
 }
 
-// Database connection
-const client = postgres(DATABASE_URL, {
-	max: 1
-});
-const db = drizzle(client, { schema });
+// Database connection (Neon HTTP)
+neonConfig.fetchConnectionCache = true;
+const sql = neon(DATABASE_URL);
+const db = drizzle(sql, { schema });
 
 interface SuperAdminData {
 	studentId: string;
@@ -134,9 +133,9 @@ async function createSuperAdmin(adminData: SuperAdminData) {
 	} catch (error) {
 		console.error('❌ Error creating super admin:', error);
 		throw error;
-	} finally {
-		await client.end();
-	}
+  } finally {
+    // Neon HTTP driver does not require explicit close
+  }
 }
 
 // Main execution

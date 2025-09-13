@@ -1,19 +1,15 @@
-import { drizzle } from 'drizzle-orm/postgres-js';
-import postgres from 'postgres';
+import { drizzle } from 'drizzle-orm/neon-http';
+import { neon, neonConfig } from '@neondatabase/serverless';
 import * as schema from './schema';
 import { env } from '$env/dynamic/private';
 // Create connection
 const connectionString = env.DATABASE_URL!;
-const client = postgres(connectionString, {
-	max: 20,
-	idle_timeout: 20,
-	connect_timeout: 10,
-	max_lifetime: 60 * 60, // 1 hour
-	debug: false
-});
+// Cache fetch connections across Vercel invocations
+neonConfig.fetchConnectionCache = true;
 
-// Create drizzle instance
-export const db = drizzle(client, { schema });
+// Create Neon HTTP client and drizzle instance
+const sql = neon(connectionString);
+export const db = drizzle(sql, { schema });
 
 // Export schema
 export * from './schema';
