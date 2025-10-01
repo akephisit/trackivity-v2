@@ -21,6 +21,7 @@
 		IconUserPlus
 	} from '@tabler/icons-svelte/icons';
 	import { getRoleText, getRoleBadgeVariant } from '$lib/utils';
+	import { goto } from '$app/navigation';
 
 	let { data } = $props();
 

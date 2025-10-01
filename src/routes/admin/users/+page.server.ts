@@ -26,6 +26,7 @@ async function getUsersFromDb(
 			student_id: users.studentId,
 			department_id: users.departmentId,
 			status: users.status,
+			phone: users.phone,
 			last_login_at: users.lastLoginAt,
 			login_count: users.loginCount,
 			created_at: users.created_at,
@@ -260,25 +261,37 @@ export const load: PageServerLoad = async (event) => {
 			limit: limit
 		} as any;
 
+		const toIsoString = (value: any | null | undefined): string | undefined => {
+			if (!value) return undefined;
+			if (value instanceof Date) return value.toISOString();
+			try {
+				return new Date(value).toISOString();
+			} catch {
+				return String(value);
+			}
+		};
+
 		users = rawUsers.map((u: any) => {
 			// Use database status directly
-			const status = u.status || 'inactive';
+			const status = (u.status || 'inactive') as User['status'];
 
 			const department = u.department_name
 				? { id: u.department_id, name: u.department_name }
 				: undefined;
 
 			// Handle organization data
-			let organization: { id: string; name: string } | undefined = undefined;
+			let organization: Partial<Organization> | undefined;
 			if (u.is_admin && u.admin_organization_id) {
 				const orgFromMap = orgMap.get(u.admin_organization_id);
-				organization = orgFromMap || { id: u.admin_organization_id, name: 'Unknown Organization' };
+				organization = orgFromMap
+					? { id: orgFromMap.id, name: orgFromMap.name }
+					: { id: u.admin_organization_id, name: 'Unknown Organization' };
 			} else if (u.organization_name && u.organization_id) {
 				organization = { id: u.organization_id, name: u.organization_name };
 			}
 
 			// Determine user role based on admin_level  
-			const role = u.is_admin && u.admin_level ? u.admin_level : 'student';
+			const role = (u.is_admin && u.admin_level ? u.admin_level : 'student') as User['role'];
 
 			return {
 				id: u.id,
@@ -289,12 +302,14 @@ export const load: PageServerLoad = async (event) => {
 				student_id: u.student_id,
 				department_id: u.department_id,
 				organization_id: u.organization_id,
+				email_verified_at: undefined,
 				status,
 				role,
-				last_login_at: u.last_login_at,
+				phone: u.phone || undefined,
+				last_login_at: toIsoString(u.last_login_at),
 				login_count: u.login_count || 0,
-				created_at: u.created_at,
-				updated_at: u.updated_at,
+				created_at: toIsoString(u.created_at) ?? new Date().toISOString(),
+				updated_at: toIsoString(u.updated_at) ?? new Date().toISOString(),
 				department,
 				organization
 			};

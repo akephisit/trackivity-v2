@@ -128,9 +128,9 @@ export const userTableColumns: ColumnDef<User>[] = [
 
 	// Last login column with relative time
 	{
-		accessorKey: 'last_login',
+		accessorKey: 'last_login_at',
 		header: 'เข้าสู่ระบบล่าสุด',
-		cell: ({ row }) => renderSnippet(LastLoginCell, { lastLogin: row.original.last_login }),
+		cell: ({ row }) => renderSnippet(LastLoginCell, { lastLogin: row.original.last_login_at }),
 		size: 150,
 		sortingFn: 'datetime',
 		meta: {
@@ -157,7 +157,7 @@ export const userTableColumns: ColumnDef<User>[] = [
 		header: 'ยืนยันอีเมล',
 		cell: ({ row }) =>
 			renderSnippet(EmailVerifiedCell, {
-				emailVerifiedAt: row.original.email_verified_at
+				emailVerifiedAt: row.original.email_verified_at ?? undefined
 			}),
 		size: 100,
 		filterFn: (row, id, value) => {

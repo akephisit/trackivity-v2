@@ -10,6 +10,10 @@ export interface Activity {
 	location: string;
 	start_time: string; // Full ISO datetime from backend
 	end_time: string; // Full ISO datetime from backend
+	start_date?: string | null;
+	end_date?: string | null;
+	start_time_only?: string | null;
+	end_time_only?: string | null;
 	max_participants?: number;
 	participant_count: number;
 	view_count?: number;

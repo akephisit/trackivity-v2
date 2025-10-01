@@ -32,14 +32,17 @@ export function generateSecureSessionId(): string {
  */
 export async function cleanupExpiredSessions(): Promise<number> {
 	try {
-		const result = await db.delete(sessions).where(
-			or(
-				lt(sessions.expiresAt, new Date()), // Expired sessions
-				eq(sessions.isActive, false) // Inactive sessions
+		const result = await db
+			.delete(sessions)
+			.where(
+				or(
+					lt(sessions.expiresAt, new Date()), // Expired sessions
+					eq(sessions.isActive, false) // Inactive sessions
+				)
 			)
-		);
+			.returning({ id: sessions.id });
 
-		const deletedCount = result.length || 0;
+		const deletedCount = result.length;
 		if (deletedCount > 0) {
 			console.log(`[Session Cleanup] Removed ${deletedCount} expired/inactive sessions`);
 		}
@@ -73,15 +76,18 @@ export async function cleanupUserSessions(userId: string, keepLatest: number = 5
 		const sessionIds = sessionsToDelete.map((s) => s.id);
 
 		if (sessionIds.length > 0) {
-			const result = await db.delete(sessions).where(
-				and(
-					eq(sessions.userId, userId),
-					// Only delete the specific old sessions
-					or(...sessionIds.map((id) => eq(sessions.id, id)))
+			const result = await db
+				.delete(sessions)
+				.where(
+					and(
+						eq(sessions.userId, userId),
+						// Only delete the specific old sessions
+						or(...sessionIds.map((id) => eq(sessions.id, id)))
+					)
 				)
-			);
+				.returning({ id: sessions.id });
 
-			const deletedCount = result.length || 0;
+			const deletedCount = result.length;
 			console.log(`[Session Cleanup] Removed ${deletedCount} old sessions for user ${userId}`);
 			return deletedCount;
 		}

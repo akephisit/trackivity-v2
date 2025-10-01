@@ -18,6 +18,7 @@ export interface User {
 	department_id?: string;
 	organization_id?: string;
 	status: 'active' | 'inactive' | 'suspended';
+	email_verified_at?: string | null;
 	role:
 		| 'student'
 		| 'faculty'
@@ -32,8 +33,8 @@ export interface User {
 	login_count?: number;
 	created_at: string;
 	updated_at: string;
-	department?: Department;
-	organization?: Organization;
+	department?: Partial<Department>;
+	organization?: Partial<Organization>;
 }
 
 export interface Organization {

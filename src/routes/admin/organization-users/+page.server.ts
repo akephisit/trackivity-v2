@@ -25,6 +25,8 @@ async function getUsersFromDb(
 			student_id: users.studentId,
 			department_id: users.departmentId,
 			status: users.status,
+			phone: users.phone,
+			login_count: users.loginCount,
 			created_at: users.created_at,
 			updated_at: users.updated_at,
 			department_name: departments.name,
@@ -73,17 +75,13 @@ async function getUsersFromDb(
 	if (filters.status && filters.status !== 'all') {
 		let dbStatus: 'active' | 'inactive' | 'suspended';
 		switch (filters.status) {
-			case 'online':
-				dbStatus = 'active';
-				break;
-			case 'offline':
-				dbStatus = 'inactive';
-				break;
-			case 'disabled':
-				dbStatus = 'suspended';
+			case 'active':
+			case 'inactive':
+			case 'suspended':
+				dbStatus = filters.status;
 				break;
 			default:
-				dbStatus = filters.status as 'active' | 'inactive' | 'suspended';
+				throw error(400, 'Invalid status filter');
 		}
 		conditions.push(eq(users.status, dbStatus));
 	}
@@ -288,22 +286,19 @@ export const load: PageServerLoad = async (event) => {
 
 		// Process users data
 		const { users: rawUsers, totalCount } = usersData;
-		const users: User[] = rawUsers.map((u: any) => {
-			// Map database status to User status
-			let status: User['status'];
-			switch (u.status) {
-				case 'active':
-					status = 'online';
-					break;
-				case 'inactive':
-					status = 'offline';
-					break;
-				case 'suspended':
-					status = 'disabled';
-					break;
-				default:
-					status = 'offline';
+		const toIsoString = (value: any | null | undefined): string | undefined => {
+			if (!value) return undefined;
+			if (value instanceof Date) return value.toISOString();
+			try {
+				return new Date(value).toISOString();
+			} catch {
+				return String(value);
 			}
+		};
+
+		const users: User[] = rawUsers.map((u: any) => {
+			// Use database status directly with fallback
+			const status = (u.status || 'inactive') as User['status'];
 
 			const department = u.department_name
 				? {
@@ -313,12 +308,14 @@ export const load: PageServerLoad = async (event) => {
 				: undefined;
 
 			// Handle organization data
-			let organization = null as any;
+			let organization: Partial<Organization> | undefined;
 			if (u.is_admin && u.admin_organization_id) {
 				const orgFromList = (organizationsData as Organization[]).find(
 					(f) => f.id === u.admin_organization_id
 				);
-				organization = orgFromList || { id: u.admin_organization_id, name: 'Unknown Organization' };
+				organization = orgFromList
+					? { id: orgFromList.id, name: orgFromList.name }
+					: { id: u.admin_organization_id, name: 'Unknown Organization' };
 			} else if (u.organization_name && u.organization_id) {
 				organization = { id: u.organization_id, name: u.organization_name };
 			}
@@ -345,20 +342,21 @@ export const load: PageServerLoad = async (event) => {
 			return {
 				id: u.id,
 				email: u.email,
+				prefix: u.prefix,
 				first_name: u.first_name,
 				last_name: u.last_name,
 				student_id: u.student_id,
-				employee_id: undefined,
 				department_id: u.department_id,
 				organization_id: u.organization_id,
 				status,
 				role,
-				phone: undefined,
+				phone: u.phone || undefined,
 				avatar: undefined,
-				last_login: u.last_accessed ? new Date(u.last_accessed).toISOString() : undefined,
+				last_login_at: toIsoString(u.last_accessed),
 				email_verified_at: undefined,
-				created_at: u.created_at ? new Date(u.created_at).toISOString() : new Date().toISOString(),
-				updated_at: u.updated_at ? new Date(u.updated_at).toISOString() : new Date().toISOString(),
+				login_count: u.login_count || 0,
+				created_at: toIsoString(u.created_at) ?? new Date().toISOString(),
+				updated_at: toIsoString(u.updated_at) ?? new Date().toISOString(),
 				department,
 				organization
 			} as User;
