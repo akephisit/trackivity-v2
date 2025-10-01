@@ -403,13 +403,13 @@
 			badgeClass = 'bg-red-100 text-red-800 hover:bg-red-100';
 			dotClass = 'bg-red-500';
 		} else if (isActive) {
-			statusText = 'ใช้งานอยู่';
+			statusText = 'เปิดใช้งาน';
 			badgeClass = 'bg-green-100 text-green-800 hover:bg-green-100';
 			dotClass = 'bg-green-500';
 		} else {
-			statusText = 'ไม่ออนไลน์';
-			badgeClass = 'bg-yellow-100 text-yellow-800 hover:bg-yellow-100';
-			dotClass = 'bg-yellow-500';
+			statusText = 'เปิดใช้งาน';
+			badgeClass = 'bg-green-50 text-green-700 hover:bg-green-50';
+			dotClass = 'bg-green-400';
 		}
 
 		return {
