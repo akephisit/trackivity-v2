@@ -1,18 +1,14 @@
-# Optimized Dockerfile for Cloud Run deployment with Bun
+# Optimized Dockerfile for Cloud Run deployment with Node.js
 
-FROM oven/bun:1.2-alpine AS base
+FROM node:20-alpine AS base
 WORKDIR /app
 
-# Install security updates
+# Install security updates and init helper
 RUN apk --no-cache add dumb-init
 
-# Create non-root group for security (bun user already exists)
-RUN addgroup -g 1001 -S nodejs || true
-
 FROM base AS deps
-COPY package.json bun.lock* ./
-COPY .bunfig.toml .bunfig.production.toml ./
-RUN bun install --frozen-lockfile
+COPY package.json package-lock.json ./
+RUN npm ci
 
 FROM base AS build
 COPY --from=deps /app/node_modules ./node_modules
@@ -21,14 +17,13 @@ ENV NODE_ENV="production"
 # Propagate CSRF trusted origins for SvelteKit build-time config
 ARG CSRF_TRUSTED_ORIGINS
 ENV CSRF_TRUSTED_ORIGINS=${CSRF_TRUSTED_ORIGINS}
-RUN bun run prepare && bun run build
+RUN npm run prepare && npm run build
 
 FROM base AS runtime
 # Copy production config and package files
-COPY package.json bun.lock* ./
-COPY .bunfig.production.toml ./
+COPY package.json package-lock.json ./
 
-# Use dependencies from the deps stage (avoids runtime network + bunx installs)
+# Use dependencies from the deps stage (avoids runtime network installs)
 COPY --from=deps /app/node_modules ./node_modules
 
 # Copy built application and necessary files
@@ -38,15 +33,15 @@ COPY scripts/ ./scripts/
 COPY drizzle.config.ts ./
 COPY src/lib/server/db/ ./src/lib/server/db/
 
-# Change ownership to non-root user
-RUN chown -R bun:nodejs /app
+# Change ownership to non-root user provided by the base image
+RUN chown -R node:node /app
 
 # Health check for Cloud Run
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD bun --version || exit 1
+  CMD node --version || exit 1
 
 # Switch to non-root user
-USER bun
+USER node
 
 # Cloud Run configuration
 ENV NODE_ENV=production
@@ -56,4 +51,4 @@ EXPOSE 8080
 
 # Use dumb-init to handle signals properly
 ENTRYPOINT ["dumb-init", "--"]
-CMD ["sh", "-c", "./scripts/init-db.sh && bun run start:cloud"]
+CMD ["sh", "-c", "./scripts/init-db.sh && npm run start:cloud"]

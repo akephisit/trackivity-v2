@@ -4,20 +4,18 @@
 	"version": "0.0.1",
 	"type": "module",
 	"engines": {
-		"bun": ">=1.2.0",
 		"node": ">=18.0.0"
 	},
 	"scripts": {
-		"dev": "bun run db:push && vite dev",
+		"dev": "npm run db:push && vite dev",
 		"dev:node": "drizzle-kit push && vite dev",
-		"dev:db": "bun run db:push && vite dev",
-		"dev:db:migrate": "bun run db:migrate && vite dev",
-		"dev:watch": "bun --hot --watch src run dev",
+		"dev:db": "npm run db:push && vite dev",
+		"dev:db:migrate": "npm run db:migrate && vite dev",
+		"dev:watch": "npm run dev",
 		"build": "vite build",
-		"build:bun": "bun build --target=bun --outdir=dist src/app.ts",
 		"start": "NODE_ENV=production PORT=${PORT:-8080} node build/index.js",
-		"start:dev": "bun build/index.js",
-		"start:cloud": "NODE_ENV=production bun build/index.js",
+		"start:dev": "node build/index.js",
+		"start:cloud": "NODE_ENV=production node build/index.js",
 		"preview": "vite preview",
 		"prepare": "svelte-kit sync || echo ''",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
@@ -33,7 +31,6 @@
 		"db:studio": "drizzle-kit studio",
 		"create-super-admin": "tsx scripts/create-super-admin.ts",
 		"loadtest": "tsx scripts/loadtest.ts",
-		"install:bun": "bun install",
 		"clean": "rm -rf node_modules/.cache dist build .svelte-kit"
 	},
 	"devDependencies": {

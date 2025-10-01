@@ -67,7 +67,7 @@ gcloud run deploy trackivity-v2 \
   --cpu 1 \
   --concurrency 100 \
   --max-instances 10 \
-  --set-env-vars NODE_ENV=production,BUN_ENV=production \
+  --set-env-vars NODE_ENV=production \
   --set-env-vars DATABASE_URL='postgresql://user:pass@host:5432/db?sslmode=require' \
   --set-env-vars JWT_SECRET='your-long-random-secret' \
   --add-cloudsql-instances YOUR_PROJECT_ID:asia-southeast1:trackivity-db
@@ -81,18 +81,17 @@ gcloud run services update trackivity-v2 \
   --set-env-vars \
   DATABASE_URL="postgresql://trackivity-user:YOUR_PASSWORD@/trackivity?host=/cloudsql/YOUR_PROJECT_ID:asia-southeast1:trackivity-db",\
   JWT_SECRET="your-super-secure-jwt-secret-at-least-32-chars",\
-  NODE_ENV="production",\
-  BUN_ENV="production"
+  NODE_ENV="production"
 ```
 
 ## 📊 Performance Optimizations
 
 ### Cloud Run Configuration:
 
-- **Memory**: 1Gi (Bun uses ~30% less than Node.js)
-- **CPU**: 1 CPU (sufficient for Bun's performance)
-- **Concurrency**: 100 (Bun handles concurrent requests well)
-- **Max Instances**: 10 (adjust based on traffic)
+- **Memory**: 1Gi works well for the Node.js runtime
+- **CPU**: 1 CPU is typically sufficient for moderate workloads
+- **Concurrency**: 100 as a baseline; tune with load testing
+- **Max Instances**: 10 to start; adjust based on traffic
 
 ### Database Connection:
 
@@ -106,34 +105,20 @@ Cloud Run will use the built-in health check:
 
 ```dockerfile
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD bun --version || exit 1
+  CMD node --version || exit 1
 ```
 
 ## 🚀 Expected Performance
 
-### Cold Start Times:
+- Node.js 20 on Cloud Run typically cold starts in ~1-2s on Alpine-based images.
+- Expect baseline memory usage around 180-250MB; monitor with Cloud Run metrics.
+- Use load testing (see `scripts/loadtest.ts`) to validate concurrency and tuning.
 
-- **Bun**: ~400-800ms (60-70% faster than Node.js)
-- **Node.js**: ~1.2-2.0s
+## 💰 Cost Considerations
 
-### Memory Usage:
-
-- **Bun**: ~120-180MB baseline (30-40% less)
-- **Node.js**: ~180-250MB baseline
-
-### Request Response:
-
-- **API Routes**: 30-35% faster than Node.js
-- **QR Generation**: 30-40% faster
-
-## 💰 Cost Estimates
-
-With Bun optimizations:
-
-- **CPU Usage**: 30-40% reduction
-- **Memory Usage**: 30-40% reduction
-- **Cold Starts**: 60-70% reduction
-- **Overall Savings**: 25-35% on Cloud Run costs
+- Monitor CPU/Memory utilization in Cloud Run to right-size instances.
+- Keep concurrency balanced against cold starts; reduce max instances if traffic is predictable.
+- Leverage Cloud Monitoring alerts to track resource usage trends over time.
 
 ## 🔧 Troubleshooting
 
@@ -174,4 +159,4 @@ gcloud builds triggers create github \
   --build-config=cloudbuild.yaml
 ```
 
-This setup provides a production-ready, highly performant deployment with Bun on Google Cloud Run!
+This setup provides a production-ready, highly performant deployment with Node.js on Google Cloud Run!

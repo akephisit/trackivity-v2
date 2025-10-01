@@ -21,7 +21,7 @@ COUNT=0
 # Prefer local CLI to avoid network/install at runtime
 DRIZZLE_CLI="./node_modules/.bin/drizzle-kit"
 if [ ! -x "$DRIZZLE_CLI" ]; then
-  DRIZZLE_CLI="bunx drizzle-kit"
+  DRIZZLE_CLI="npx drizzle-kit"
 fi
 
 until $DRIZZLE_CLI push --force; do
@@ -39,14 +39,14 @@ echo "✅ Database schema created/updated successfully!"
 
 # Create super admin if env vars are provided
 echo "👤 Creating super admin user..."
-  
-bun run scripts/create-super-admin.ts \
+
+npx tsx scripts/create-super-admin.ts \
   "SA001" \
   "sadmin@gmail.com" \
   "S12345678" \
   "Super" \
   "Admin"
-    
+
 echo "✅ Super admin created successfully!"
 
 

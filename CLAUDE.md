@@ -4,37 +4,36 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Development Commands
 
-**Runtime:** This project uses Bun as the primary runtime (requires Bun >= 1.2.0).
+**Runtime:** This project uses Node.js as the primary runtime (requires Node >= 18).
 
 ```bash
 # Development
-bun run dev              # Start dev server with database push
-bun run dev:db          # Start dev server with fresh database push
-bun run dev:db:migrate  # Start dev server with database migration
-bun run dev:watch       # Hot reload development with file watching
+npm run dev              # Start dev server with database push
+npm run dev:db          # Start dev server with fresh database push
+npm run dev:db:migrate  # Start dev server with database migration
+npm run dev:watch       # Hot reload development with file watching
 
 # Database Management
-bun run db:start        # Start Docker Compose for PostgreSQL
-bun run db:push         # Push schema changes to database
-bun run db:generate     # Generate Drizzle migrations
-bun run db:migrate      # Run pending migrations
-bun run db:studio       # Open Drizzle Studio GUI
+npm run db:start        # Start Docker Compose for PostgreSQL
+npm run db:push         # Push schema changes to database
+npm run db:generate     # Generate Drizzle migrations
+npm run db:migrate      # Run pending migrations
+npm run db:studio       # Open Drizzle Studio GUI
 
 # Build & Deploy
-bun run build           # Build for production with Vite
-bun run build:bun       # Build with Bun bundler
-bun run start           # Start production server
-bun run preview         # Preview production build
+npm run build           # Build for production with Vite
+npm run start           # Start production server
+npm run preview         # Preview production build
 
 # Code Quality
-bun run lint            # Run Prettier + ESLint checks
-bun run lint:fix        # Auto-fix linting issues
-bun run format          # Format code with Prettier
-bun run check           # Run Svelte type checking
+npm run lint            # Run Prettier + ESLint checks
+npm run lint:fix        # Auto-fix linting issues
+npm run format          # Format code with Prettier
+npm run check           # Run Svelte type checking
 
 # Utilities
-bun run create-super-admin  # Create initial super admin user
-bun run clean              # Clean build artifacts and cache
+npm run create-super-admin  # Create initial super admin user
+npm run clean              # Clean build artifacts and cache
 ```
 
 ## Architecture Overview
@@ -44,7 +43,7 @@ bun run clean              # Clean build artifacts and cache
 ### Tech Stack
 
 - **Frontend:** SvelteKit 2 with Svelte 5 (runes syntax)
-- **Runtime:** Bun (primary), Node.js (fallback)
+- **Runtime:** Node.js 18+
 - **Database:** PostgreSQL with Drizzle ORM
 - **UI:** shadcn/ui-svelte components + Tailwind CSS
 - **Icons:** Tabler Icons for Svelte
@@ -148,9 +147,9 @@ The system supports two organization types:
 
 **Database Operations:**
 
-- Always run `bun run db:push` after schema changes during development
-- Use `bun run db:studio` for database inspection
-- Migrations are generated with `bun run db:generate`
+- Always run `npm run db:push` after schema changes during development
+- Use `npm run db:studio` for database inspection
+- Migrations are generated with `npm run db:generate`
 
 **Permission Checking:**
 

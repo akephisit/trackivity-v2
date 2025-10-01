@@ -73,7 +73,7 @@ await logActivityView(activityId, userId, ipAddress, sessionId);
 
 ### 1. Database Schema
 ```bash
-bun run db:migrate
+npm run db:migrate
 ```
 
 ### 2. Performance Functions (Optional but Recommended)

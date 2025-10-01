@@ -67,7 +67,7 @@ const activities = await searchActivitiesOptimized('วิ่ง', orgId, 2024);
 
 1. ต้องรันการ migrate ฐานข้อมูล:
    ```bash
-   bun run db:migrate
+   npm run db:migrate
    ```
 
 2. รันการตั้งค่า partitioning (optional แต่แนะนำ):

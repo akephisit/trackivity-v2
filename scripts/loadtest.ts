@@ -1,8 +1,8 @@
 /*
-  Simple HTTP load tester using Bun/Node fetch.
+  Simple HTTP load tester using Node's fetch API.
   Usage examples:
-    bun run scripts/loadtest.ts --url http://localhost:8080 --path / --vus 100 --duration 60
-    bun run scripts/loadtest.ts --url http://localhost:8080 --path /api/organizations --vus 50 --duration 30
+    npm run loadtest -- --url http://localhost:8080 --path / --vus 100 --duration 60
+    npm run loadtest -- --url http://localhost:8080 --path /api/organizations --vus 50 --duration 30
 
   Notes:
   - For realistic results, run against a production build and a real DB.

@@ -47,8 +47,6 @@ steps:
       - '--set-env-vars'
       - 'NODE_ENV=production'
       - '--set-env-vars'
-      - 'BUN_ENV=production'
-      - '--set-env-vars'
       - 'DATABASE_URL=${_DATABASE_URL}'
       - '--set-env-vars'
       - 'JWT_SECRET=${_JWT_SECRET}'

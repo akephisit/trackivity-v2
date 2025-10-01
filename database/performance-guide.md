@@ -53,13 +53,13 @@
 
 ```bash
 # Generate migration
-bun run db:generate
+npm run db:generate
 
 # Apply migration
-bun run db:migrate
+npm run db:migrate
 
 # Push changes to database
-bun run db:push
+npm run db:push
 ```
 
 ### 2. Set Up Partitioning
