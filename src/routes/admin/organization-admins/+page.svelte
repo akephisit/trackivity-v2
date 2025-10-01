@@ -383,19 +383,19 @@
 		let badgeClass: string;
 		let dotClass: string;
 
-		if (!isEnabled) {
-			statusText = 'ปิดใช้งาน';
-			badgeClass = 'bg-red-100 text-red-800 hover:bg-red-100';
-			dotClass = 'bg-red-500';
-		} else if (isActive) {
-			statusText = 'ใช้งานอยู่';
-			badgeClass = 'bg-green-100 text-green-800 hover:bg-green-100';
-			dotClass = 'bg-green-500';
-		} else {
-			statusText = 'ไม่ออนไลน์';
-			badgeClass = 'bg-yellow-100 text-yellow-800 hover:bg-yellow-100';
-			dotClass = 'bg-yellow-500';
-		}
+	if (!isEnabled) {
+		statusText = 'ปิดใช้งาน';
+		badgeClass = 'bg-red-100 text-red-800 hover:bg-red-100';
+		dotClass = 'bg-red-500';
+	} else if (isActive) {
+		statusText = 'ใช้งานอยู่';
+		badgeClass = 'bg-green-100 text-green-800 hover:bg-green-100';
+		dotClass = 'bg-green-500';
+	} else {
+		statusText = 'ไม่ออนไลน์';
+		badgeClass = 'bg-slate-100 text-slate-700 hover:bg-slate-100';
+		dotClass = 'bg-gray-400';
+	}
 
 		return {
 			isEnabled,
