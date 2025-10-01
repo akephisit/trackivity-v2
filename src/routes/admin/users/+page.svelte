@@ -74,9 +74,9 @@
 	}
 
 	function getStatusText(status: string): string {
-		if (status === 'active') return 'ใช้งานอยู่';
+		if (status === 'active') return 'เปิดใช้งาน';
 		if (status === 'suspended') return 'ถูกระงับ';
-		return 'ไม่ใช้งาน';
+		return 'ปิดใช้งาน';
 	}
 
 	function formatDate(dateString: string): string {
@@ -328,9 +328,16 @@
 										{/if}
 									</Table.Cell>
 									<Table.Cell>
-										<Badge variant={getStatusBadgeVariant(user.status)}>
-											{getStatusText(user.status)}
-										</Badge>
+									<Badge variant={getStatusBadgeVariant(user.status)}>
+										<span
+											class="mr-2 inline-block h-2 w-2 rounded-full"
+											class:bg-green-500={user.status === 'active'}
+											class:bg-red-500={user.status === 'suspended'}
+											class:bg-gray-400={user.status !== 'active' && user.status !== 'suspended'}
+											aria-hidden="true"
+										></span>
+										{getStatusText(user.status)}
+									</Badge>
 									</Table.Cell>
 									<Table.Cell>
 										<span class="text-sm">{formatDate(user.created_at)}</span>
