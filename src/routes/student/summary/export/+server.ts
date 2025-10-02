@@ -173,12 +173,12 @@ const docDefinition: TDocumentDefinitions = {
         },
         pageMargins: [50, 80, 50, 60],
         pageSize: 'A4',
-		header: {
-			margin: [50, 20, 50, 0],
-			columns: [
-				{
-					stack: [
-						{ text: 'รายงานสรุปกิจกรรมของนักศึกษา', fontSize: 20, bold: true },
+	header: {
+		margin: [50, 40, 50, 0],
+		columns: [
+			{
+				stack: [
+					{ text: 'รายงานสรุปกิจกรรมของนักศึกษา', fontSize: 20, bold: true },
 						{ text: 'Student Activity Participation Report', fontSize: 12 }
 					]
 				},
