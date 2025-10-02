@@ -64,10 +64,26 @@
 		window.print();
 	}
 
-	function handleExport() {
-		// Future enhancement: Generate PDF
-		// For now, open print dialog which can save as PDF
-		window.print();
+	async function handleExport() {
+		try {
+			const response = await fetch('/student/summary/export');
+			if (!response.ok) {
+				throw new Error('ดาวน์โหลดไฟล์ไม่สำเร็จ');
+			}
+			const blob = await response.blob();
+			const url = URL.createObjectURL(blob);
+			const link = document.createElement('a');
+			const timestamp = new Date().toISOString().slice(0, 10);
+			link.href = url;
+			link.download = `student-activity-summary-${timestamp}.pdf`;
+			document.body.appendChild(link);
+			link.click();
+			link.remove();
+			URL.revokeObjectURL(url);
+		} catch (error) {
+			console.error('Export PDF failed:', error);
+			alert('ไม่สามารถส่งออกไฟล์ PDF ได้ กรุณาลองใหม่อีกครั้ง');
+		}
 	}
 
 	// Get sorted activity types for consistent display
