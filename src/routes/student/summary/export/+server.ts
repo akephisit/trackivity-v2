@@ -3,17 +3,21 @@ import { requireAuth } from '$lib/server/auth-utils';
 import { getStudentSummary } from '$lib/server/student-summary';
 import PdfPrinter from 'pdfmake';
 import type { Content, TDocumentDefinitions } from 'pdfmake/interfaces';
-import path from 'path';
 import { format } from 'date-fns';
 
-const fontDir = path.resolve(process.cwd(), 'static/fonts/THSarabunNew');
+const fontDir = {
+	regular: new URL('../../../../lib/fonts/Sarabun/Sarabun-Regular.ttf', import.meta.url).pathname,
+	bold: new URL('../../../../lib/fonts/Sarabun/Sarabun-Bold.ttf', import.meta.url).pathname,
+	italics: new URL('../../../../lib/fonts/Sarabun/Sarabun-Italic.ttf', import.meta.url).pathname,
+	boldItalics: new URL('../../../../lib/fonts/Sarabun/Sarabun-BoldItalic.ttf', import.meta.url).pathname
+};
 
 const fonts = {
 	Sarabun: {
-		normal: path.join(fontDir, 'Sarabun-Regular.ttf'),
-		bold: path.join(fontDir, 'Sarabun-Bold.ttf'),
-		italics: path.join(fontDir, 'Sarabun-Italic.ttf'),
-		bolditalics: path.join(fontDir, 'Sarabun-BoldItalic.ttf')
+		normal: fontDir.regular,
+		bold: fontDir.bold,
+		italics: fontDir.italics,
+		bolditalics: fontDir.boldItalics
 	}
 } as const;
 
