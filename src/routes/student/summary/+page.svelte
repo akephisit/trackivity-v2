@@ -17,6 +17,7 @@
 		IconFileText,
 		IconPrinter,
 		IconDownload,
+		IconLoader,
 		IconSchool,
 		IconBuilding,
 		IconAward,
@@ -30,6 +31,7 @@
 		IconProgress,
 		IconInfoCircle
 	} from '@tabler/icons-svelte';
+	import { toast } from 'svelte-sonner';
 
 	let { data } = $props<{
 		data: {
@@ -64,7 +66,11 @@
 		window.print();
 	}
 
+	let isExporting = $state(false);
+
 	async function handleExport() {
+		if (isExporting) return;
+		isExporting = true;
 		try {
 			const response = await fetch('/student/summary/export');
 			if (!response.ok) {
@@ -80,9 +86,12 @@
 			link.click();
 			link.remove();
 			URL.revokeObjectURL(url);
+			toast.success('ส่งออก PDF สำเร็จ');
 		} catch (error) {
 			console.error('Export PDF failed:', error);
-			alert('ไม่สามารถส่งออกไฟล์ PDF ได้ กรุณาลองใหม่อีกครั้ง');
+			toast.error('ไม่สามารถส่งออกไฟล์ PDF ได้ กรุณาลองใหม่อีกครั้ง');
+		} finally {
+			isExporting = false;
 		}
 	}
 
@@ -109,9 +118,19 @@
 
 		<!-- Action Buttons -->
 		<div class="no-print flex gap-2">
-			<Button variant="outline" onclick={handleExport} class="gap-2">
-				<IconDownload class="size-4" />
-				ส่งออก
+			<Button
+				variant="outline"
+				onclick={handleExport}
+				disabled={isExporting}
+				class="gap-2"
+			>
+				{#if isExporting}
+					<IconLoader class="size-4 animate-spin" />
+					<span>กำลังส่งออก...</span>
+				{:else}
+					<IconDownload class="size-4" />
+					<span>ส่งออก</span>
+				{/if}
 			</Button>
 		</div>
 	</div>
