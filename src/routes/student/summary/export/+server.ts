@@ -3,23 +3,15 @@ import { requireAuth } from '$lib/server/auth-utils';
 import { getStudentSummary } from '$lib/server/student-summary';
 import PdfPrinter from 'pdfmake';
 import type { Content, TDocumentDefinitions } from 'pdfmake/interfaces';
+import { sarabunFontBuffers } from '$lib/fonts/sarabun';
 import { format } from 'date-fns';
 
-const fontDir = {
-	regular: new URL('../../../../lib/fonts/Sarabun/Sarabun-Regular.ttf', import.meta.url).pathname,
-	bold: new URL('../../../../lib/fonts/Sarabun/Sarabun-Bold.ttf', import.meta.url).pathname,
-	italics: new URL('../../../../lib/fonts/Sarabun/Sarabun-Italic.ttf', import.meta.url).pathname,
-	boldItalics: new URL('../../../../lib/fonts/Sarabun/Sarabun-BoldItalic.ttf', import.meta.url).pathname
-};
+import SarabunRegularDataUrl from '$lib/fonts/Sarabun/Sarabun-Regular.ttf?inline';
+import SarabunBoldDataUrl from '$lib/fonts/Sarabun/Sarabun-Bold.ttf?inline';
+import SarabunItalicDataUrl from '$lib/fonts/Sarabun/Sarabun-Italic.ttf?inline';
+import SarabunBoldItalicDataUrl from '$lib/fonts/Sarabun/Sarabun-BoldItalic.ttf?inline';
 
-const fonts = {
-	Sarabun: {
-		normal: fontDir.regular,
-		bold: fontDir.bold,
-		italics: fontDir.italics,
-		bolditalics: fontDir.boldItalics
-	}
-} as const;
+const fonts = sarabunFontBuffers;
 
 const printer = new PdfPrinter(fonts);
 
