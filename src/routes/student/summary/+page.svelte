@@ -109,10 +109,6 @@
 
 		<!-- Action Buttons -->
 		<div class="no-print flex gap-2">
-			<Button variant="outline" onclick={handlePrint} class="gap-2">
-				<IconPrinter class="size-4" />
-				พิมพ์
-			</Button>
 			<Button variant="outline" onclick={handleExport} class="gap-2">
 				<IconDownload class="size-4" />
 				ส่งออก
