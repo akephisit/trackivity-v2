@@ -8,11 +8,13 @@ const decodeDataUrlToBuffer = (dataUrl: string): Buffer => {
 	return Buffer.from(base64, 'base64');
 };
 
-export const sarabunFontBuffers = {
-	Sarabun: {
-		normal: decodeDataUrlToBuffer(SarabunRegularDataUrl),
-		bold: decodeDataUrlToBuffer(SarabunBoldDataUrl),
-		italics: decodeDataUrlToBuffer(SarabunItalicDataUrl),
-		bolditalics: decodeDataUrlToBuffer(SarabunBoldItalicDataUrl)
-	}
+const Sarabun = {
+	normal: decodeDataUrlToBuffer(SarabunRegularDataUrl),
+	bold: decodeDataUrlToBuffer(SarabunBoldDataUrl),
+	italics: decodeDataUrlToBuffer(SarabunItalicDataUrl),
+	bolditalics: decodeDataUrlToBuffer(SarabunBoldItalicDataUrl)
+};
+
+export default {
+	Sarabun
 };

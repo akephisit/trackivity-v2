@@ -3,34 +3,12 @@ import { requireAuth } from '$lib/server/auth-utils';
 import { getStudentSummary } from '$lib/server/student-summary';
 import PdfPrinter from 'pdfmake';
 import type { Content, TDocumentDefinitions } from 'pdfmake/interfaces';
-import { sarabunFontBuffers } from '$lib/fonts/sarabun';
+import sarabunFonts from '$lib/fonts/sarabun';
 import { format } from 'date-fns';
 
-import SarabunRegularDataUrl from '$lib/fonts/Sarabun/Sarabun-Regular.ttf?inline';
-import SarabunBoldDataUrl from '$lib/fonts/Sarabun/Sarabun-Bold.ttf?inline';
-import SarabunItalicDataUrl from '$lib/fonts/Sarabun/Sarabun-Italic.ttf?inline';
-import SarabunBoldItalicDataUrl from '$lib/fonts/Sarabun/Sarabun-BoldItalic.ttf?inline';
-
-const fonts = sarabunFontBuffers;
+const fonts = sarabunFonts;
 
 const printer = new PdfPrinter(fonts);
-
-const PARTICIPATION_STATUS_LABELS: Record<string, string> = {
-	registered: 'ลงทะเบียน',
-	checked_in: 'เช็กอิน',
-	checked_out: 'เช็กเอาต์',
-	completed: 'เสร็จสมบูรณ์',
-	cancelled: 'ยกเลิก',
-	pending: 'รอดำเนินการ'
-};
-
-const ACTIVITY_TYPE_LABELS: Record<string, string> = {
-	Academic: 'วิชาการ',
-	Sports: 'กีฬา',
-	Cultural: 'วัฒนธรรม',
-	Social: 'สังคม',
-	Other: 'อื่นๆ'
-};
 
 const formatThaiDate = (value: Date | string | null): string => {
 	if (!value) return '-';
@@ -39,15 +17,6 @@ const formatThaiDate = (value: Date | string | null): string => {
 		day: 'numeric',
 		month: 'long',
 		year: 'numeric'
-	});
-};
-
-const formatThaiTime = (value: Date | string | null): string => {
-	if (!value) return '-';
-	const date = value instanceof Date ? value : new Date(value);
-	return date.toLocaleTimeString('th-TH', {
-		hour: '2-digit',
-		minute: '2-digit'
 	});
 };
 
@@ -69,97 +38,74 @@ export const GET: RequestHandler = async (event) => {
 		.filter((item) => item.activity.activity_level === 'university')
 		.reduce((acc, item) => acc + (item.activity.hours ?? 0), 0);
 
-	const activityTypeSummary = participationHistory.reduce<Record<string, { count: number; hours: number }>>(
-		(acc, item) => {
-			const key = item.activity.activity_type ?? 'Other';
-			if (!acc[key]) {
-				acc[key] = { count: 0, hours: 0 };
-			}
-			acc[key].count += 1;
-			acc[key].hours += item.activity.hours ?? 0;
-			return acc;
-		},
-		{}
-	);
+const facultyActivities = participationHistory.filter(
+	(item) => item.activity.activity_level === 'faculty'
+);
 
-const tableBody: any[] = [
-        [
-            { text: 'ลำดับ', style: 'tableHeader' },
-            { text: 'ชื่อกิจกรรม', style: 'tableHeader' },
-            { text: 'วันที่เข้าร่วม', style: 'tableHeader' },
-            { text: 'ชั่วโมง', style: 'tableHeader', alignment: 'right' },
-            { text: 'สถานะ', style: 'tableHeader' }
-        ],
-		...participationHistory.map((item, index) => [
-			{ text: String(index + 1), alignment: 'center' },
-			{
-				stack: [
-					{ text: item.activity.title ?? '-', bold: true },
-					{
-						text: `${ACTIVITY_TYPE_LABELS[item.activity.activity_type] ?? 'กิจกรรมอื่นๆ'} • ${item.activity.organizer_name ?? 'ไม่ระบุ'}`,
-						color: '#4b5563',
-						fontSize: 11
-					}
-				]
-			},
-			{
-				stack: [
-					{ text: formatThaiDate(item.participated_at), bold: true },
-					{ text: `เวลา ${formatThaiTime(item.participated_at)} น.`, color: '#4b5563', fontSize: 10 }
-				],
-				alignment: 'left'
-			},
-			{ text: (item.activity.hours ?? 0).toFixed(2), alignment: 'right' },
-			{ text: PARTICIPATION_STATUS_LABELS[item.status ?? ''] ?? '-' }
-		])
-];
+const universityActivities = participationHistory.filter(
+	(item) => item.activity.activity_level === 'university'
+);
 
-if (participationHistory.length === 0) {
-        tableBody.push([
-            { text: '-', alignment: 'center' },
-            { text: 'ยังไม่มีข้อมูลการเข้าร่วมกิจกรรม', colSpan: 4, alignment: 'center' },
-            { text: '' },
-            { text: '' },
-            { text: '' }
-        ]);
-}
+const sumHours = (items: typeof facultyActivities) =>
+	items.reduce((total, item) => total + (item.activity.hours ?? 0), 0);
+
+const buildSimpleTableBody = (items: typeof facultyActivities) => {
+	const headerRow = [
+		{ text: 'ลำดับ', style: 'tableHeader' },
+		{ text: 'ชื่อกิจกรรม', style: 'tableHeader' },
+		{ text: 'ชั่วโมง', style: 'tableHeader', alignment: 'right' }
+	];
+
+	const rows = items.map((item, index) => [
+		{ text: String(index + 1), alignment: 'center' },
+		{ text: item.activity.title ?? '-', margin: [0, 2, 0, 2] },
+		{ text: (item.activity.hours ?? 0).toFixed(2), alignment: 'right' }
+	]);
+
+	const totalRow = [
+		{ text: 'รวม', colSpan: 2, alignment: 'right', bold: true },
+		{},
+		{ text: sumHours(items).toFixed(2), alignment: 'right', bold: true }
+	];
+
+	return [headerRow, ...rows, totalRow];
+};
+
+const facultyTableBody = buildSimpleTableBody(facultyActivities);
+const universityTableBody = buildSimpleTableBody(universityActivities);
 
 const now = new Date();
-
-const activityTypeRows = Object.entries(activityTypeSummary)
-        .sort(([, a], [, b]) => b.hours - a.hours)
-        .map(([type, data]) => `• ${ACTIVITY_TYPE_LABELS[type] ?? type}: ${data.count} กิจกรรม (${data.hours.toFixed(2)} ชม.)`);
 
 const content: Content[] = [];
 
 content.push({
         columns: [
-            {
-                width: '60%',
-		stack: [
-			{ text: 'ข้อมูลนักศึกษา', style: 'sectionTitle' },
-			{ text: `ชื่อ-นามสกุล: ${userInfo.first_name} ${userInfo.last_name}` },
-			{ text: `รหัสนักศึกษา: ${userInfo.student_id}` },
-			{ text: `อีเมล: ${userInfo.email}` },
-			{ text: `คณะ/หน่วยงาน: ${userInfo.organization_name ?? '-'}` },
-			{ text: `ภาควิชา: ${userInfo.department_name ?? '-'}` }
-		]
-            },
-            {
-                width: '40%',
-                stack: [
-                    { text: 'สรุปชั่วโมงกิจกรรม', style: 'sectionTitle' },
-                    { text: `รวมทั้งหมด: ${totalHours.toFixed(2)} ชั่วโมง` },
-                    { text: `ระดับคณะ: ${facultyHours.toFixed(2)} ชั่วโมง` },
-                    { text: `ระดับมหาวิทยาลัย: ${universityHours.toFixed(2)} ชั่วโมง` }
-                ]
-            }
+                {
+                        width: '60%',
+                        stack: [
+                                { text: 'ข้อมูลนักศึกษา', style: 'sectionTitle' },
+                                { text: `ชื่อ-นามสกุล: ${userInfo.first_name} ${userInfo.last_name}` },
+                                { text: `รหัสนักศึกษา: ${userInfo.student_id}` },
+                                { text: `อีเมล: ${userInfo.email}` },
+                                { text: `คณะ/หน่วยงาน: ${userInfo.organization_name ?? '-'}` },
+                                { text: `ภาควิชา: ${userInfo.department_name ?? '-'}` }
+                        ]
+                },
+                {
+                        width: '40%',
+                        stack: [
+                                { text: 'สรุปชั่วโมงกิจกรรม', style: 'sectionTitle' },
+                                { text: `รวมทั้งหมด: ${totalHours.toFixed(2)} ชั่วโมง` },
+                                { text: `ระดับคณะ: ${facultyHours.toFixed(2)} ชั่วโมง` },
+                                { text: `ระดับมหาวิทยาลัย: ${universityHours.toFixed(2)} ชั่วโมง` }
+                        ]
+                }
         ]
 });
 
 if (activityRequirements) {
         content.push({
-                margin: [0, 20, 0, 0],
+                margin: [0, 16, 0, 0],
                 stack: [
                         { text: 'ข้อกำหนดชั่วโมงกิจกรรม', style: 'sectionTitle' },
                         {
@@ -172,46 +118,53 @@ if (activityRequirements) {
         });
 }
 
-if (activityTypeRows.length) {
+content.push({
+        margin: [0, 20, 0, 8],
+        text: `รวมทั้งหมด ${participationHistory.length} กิจกรรม คิดเป็น ${totalHours.toFixed(2)} ชั่วโมง`,
+        bold: true
+});
+
+content.push({ text: 'ตารางกิจกรรมระดับคณะ', style: 'sectionTitle', margin: [0, 12, 0, 6] });
+
+if (facultyActivities.length) {
         content.push({
-                margin: [0, 20, 0, 10],
-                stack: [
-                        { text: 'ประเภทกิจกรรมที่เข้าร่วม', style: 'sectionTitle' },
-                        { ul: activityTypeRows }
-                ]
+                table: {
+                        widths: ['auto', '*', 'auto'],
+                        body: facultyTableBody
+                },
+                layout: {
+                        fillColor: (rowIndex: number) => (rowIndex === 0 ? '#e0e7ff' : null)
+                }
+        });
+} else {
+        content.push({
+                text: 'ยังไม่มีกิจกรรมระดับคณะ',
+                margin: [0, 0, 0, 10],
+                italics: true,
+                color: '#6b7280'
         });
 }
 
-content.push({
-        margin: [0, 20, 0, 10],
-        text: 'รายละเอียดกิจกรรมที่เข้าร่วม',
-        style: 'sectionTitle'
-});
+content.push({ text: 'ตารางกิจกรรมระดับมหาวิทยาลัย', style: 'sectionTitle', margin: [0, 16, 0, 6] });
 
-content.push({
-        table: {
-                widths: ['auto', '*', 'auto', 'auto', 'auto'],
-                body: tableBody
-        },
-        layout: {
-                fillColor: (rowIndex: number) => (rowIndex === 0 ? '#e0e7ff' : null)
-        }
-});
-
-content.push({
-	margin: [0, 24, 0, 0],
-	stack: [
-		{
-			text: `สรุปรวมทั้งหมด ${participationHistory.length} กิจกรรม คิดเป็น ${totalHours.toFixed(2)} ชั่วโมง`,
-			bold: true
-		},
-		{
-			text: `จัดทำรายงานเมื่อ ${formatThaiDate(now)} เวลา ${formatThaiTime(now)} น.`,
-			style: 'summaryNote',
-			alignment: 'right'
-		}
-	]
-});
+if (universityActivities.length) {
+        content.push({
+                table: {
+                        widths: ['auto', '*', 'auto'],
+                        body: universityTableBody
+                },
+                layout: {
+                        fillColor: (rowIndex: number) => (rowIndex === 0 ? '#e0e7ff' : null)
+                }
+        });
+} else {
+        content.push({
+                text: 'ยังไม่มีกิจกรรมระดับมหาวิทยาลัย',
+                margin: [0, 0, 0, 10],
+                italics: true,
+                color: '#6b7280'
+        });
+}
 
 const docDefinition: TDocumentDefinitions = {
         info: {
@@ -253,13 +206,8 @@ const docDefinition: TDocumentDefinitions = {
 			bold: true,
 			fontSize: 11,
 			color: '#1f2937'
-		},
-		summaryNote: {
-			italics: true,
-			fontSize: 11,
-                        color: '#4b5563'
-                }
-        }
+		}
+	}
 };
 
 const pdfDoc = printer.createPdfKitDocument(docDefinition);
