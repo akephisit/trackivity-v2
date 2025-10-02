@@ -5,7 +5,6 @@ import PdfPrinter from 'pdfmake';
 import type { Content, TDocumentDefinitions } from 'pdfmake/interfaces';
 import path from 'path';
 import { format } from 'date-fns';
-import { th } from 'date-fns/locale';
 
 const fontDir = path.resolve(process.cwd(), 'static/fonts/THSarabunNew');
 
@@ -37,22 +36,23 @@ const ACTIVITY_TYPE_LABELS: Record<string, string> = {
 	Other: 'อื่นๆ'
 };
 
-const formatDateTime = (value: string | null): string => {
+const formatThaiDate = (value: Date | string | null): string => {
 	if (!value) return '-';
-	try {
-		return format(new Date(value), "d MMMM yyyy 'เวลา' HH:mm น.", { locale: th });
-	} catch {
-		return value;
-	}
+	const date = value instanceof Date ? value : new Date(value);
+	return date.toLocaleDateString('th-TH', {
+		day: 'numeric',
+		month: 'long',
+		year: 'numeric'
+	});
 };
 
-const formatDate = (value: string | null): string => {
+const formatThaiTime = (value: Date | string | null): string => {
 	if (!value) return '-';
-	try {
-		return format(new Date(value), 'd MMMM yyyy', { locale: th });
-	} catch {
-		return value;
-	}
+	const date = value instanceof Date ? value : new Date(value);
+	return date.toLocaleTimeString('th-TH', {
+		hour: '2-digit',
+		minute: '2-digit'
+	});
 };
 
 export const GET: RequestHandler = async (event) => {
@@ -94,22 +94,28 @@ const tableBody: any[] = [
             { text: 'ชั่วโมง', style: 'tableHeader', alignment: 'right' },
             { text: 'สถานะ', style: 'tableHeader' }
         ],
-        ...participationHistory.map((item, index) => [
-            { text: String(index + 1), alignment: 'center' },
-            {
-                stack: [
-                    { text: item.activity.title ?? '-', bold: true },
-                    {
+		...participationHistory.map((item, index) => [
+			{ text: String(index + 1), alignment: 'center' },
+			{
+				stack: [
+					{ text: item.activity.title ?? '-', bold: true },
+					{
 						text: `${ACTIVITY_TYPE_LABELS[item.activity.activity_type] ?? 'กิจกรรมอื่นๆ'} • ${item.activity.organizer_name ?? 'ไม่ระบุ'}`,
 						color: '#4b5563',
 						fontSize: 11
 					}
 				]
 			},
-			{ text: formatDateTime(item.participated_at), alignment: 'left' },
+			{
+				stack: [
+					{ text: formatThaiDate(item.participated_at), bold: true },
+					{ text: `เวลา ${formatThaiTime(item.participated_at)} น.`, color: '#4b5563', fontSize: 10 }
+				],
+				alignment: 'left'
+			},
 			{ text: (item.activity.hours ?? 0).toFixed(2), alignment: 'right' },
-            { text: PARTICIPATION_STATUS_LABELS[item.status ?? ''] ?? '-' }
-        ])
+			{ text: PARTICIPATION_STATUS_LABELS[item.status ?? ''] ?? '-' }
+		])
 ];
 
 if (participationHistory.length === 0) {
@@ -134,12 +140,14 @@ content.push({
         columns: [
             {
                 width: '60%',
-                stack: [
-                    { text: 'ข้อมูลนักศึกษา', style: 'sectionTitle' },
-                    { text: `ชื่อ-นามสกุล: ${userInfo.first_name} ${userInfo.last_name}` },
-                    { text: `รหัสนักศึกษา: ${userInfo.student_id}` },
-                    { text: `อีเมล: ${userInfo.email}` }
-                ]
+		stack: [
+			{ text: 'ข้อมูลนักศึกษา', style: 'sectionTitle' },
+			{ text: `ชื่อ-นามสกุล: ${userInfo.first_name} ${userInfo.last_name}` },
+			{ text: `รหัสนักศึกษา: ${userInfo.student_id}` },
+			{ text: `อีเมล: ${userInfo.email}` },
+			{ text: `คณะ/หน่วยงาน: ${userInfo.organization_name ?? '-'}` },
+			{ text: `ภาควิชา: ${userInfo.department_name ?? '-'}` }
+		]
             },
             {
                 width: '40%',
@@ -195,20 +203,18 @@ content.push({
 });
 
 content.push({
-        margin: [0, 30, 0, 0],
-        columns: [
-                {
-                        text: `สรุปรวมทั้งหมด ${participationHistory.length} กิจกรรม`,
-                        alignment: 'left'
-                },
-                {
-                        stack: [
-                                { text: 'ลงชื่อ...............................................', alignment: 'right' },
-                                { text: '(...............................................)', alignment: 'right' },
-                                { text: 'วันที่: ' + formatDate(new Date().toISOString()), alignment: 'right' }
-                        ]
-                }
-        ]
+	margin: [0, 24, 0, 0],
+	stack: [
+		{
+			text: `สรุปรวมทั้งหมด ${participationHistory.length} กิจกรรม คิดเป็น ${totalHours.toFixed(2)} ชั่วโมง`,
+			bold: true
+		},
+		{
+			text: `จัดทำรายงานเมื่อ ${formatThaiDate(now)} เวลา ${formatThaiTime(now)} น.`,
+			style: 'summaryNote',
+			alignment: 'right'
+		}
+	]
 });
 
 const docDefinition: TDocumentDefinitions = {
@@ -217,6 +223,7 @@ const docDefinition: TDocumentDefinitions = {
                 author: 'Trackivity System'
         },
         pageMargins: [50, 80, 50, 60],
+        pageSize: 'A4',
 		header: {
 			margin: [50, 20, 50, 0],
 			columns: [
@@ -226,10 +233,7 @@ const docDefinition: TDocumentDefinitions = {
 						{ text: 'Student Activity Participation Report', fontSize: 12 }
 					]
 				},
-				{
-					text: `วันที่ออกเอกสาร: ${format(now, 'd MMMM yyyy', { locale: th })}`,
-					alignment: 'right'
-				}
+				{ text: '', alignment: 'right' }
 			]
 		},
 		footer: (currentPage: number, pageCount: number) => ({
@@ -237,25 +241,30 @@ const docDefinition: TDocumentDefinitions = {
 			alignment: 'right',
 			margin: [0, 10, 40, 0]
 		}),
-        defaultStyle: {
-                font: 'Sarabun',
-                fontSize: 14,
-                lineHeight: 1.3
-        },
-        content,
-        styles: {
-                sectionTitle: {
-                        fontSize: 16,
-                        bold: true,
-				margin: [0, 0, 0, 6]
-			},
-			tableHeader: {
-				bold: true,
-				fontSize: 14,
-				color: '#1f2937'
-			}
-		}
-	};
+	defaultStyle: {
+		font: 'Sarabun',
+		fontSize: 11,
+		lineHeight: 1.35
+	},
+	content,
+	styles: {
+		sectionTitle: {
+			fontSize: 14,
+			bold: true,
+			margin: [0, 0, 0, 6]
+		},
+		tableHeader: {
+			bold: true,
+			fontSize: 11,
+			color: '#1f2937'
+		},
+		summaryNote: {
+			italics: true,
+			fontSize: 11,
+                        color: '#4b5563'
+                }
+        }
+};
 
 const pdfDoc = printer.createPdfKitDocument(docDefinition);
 const chunks: Buffer[] = [];

@@ -49,6 +49,8 @@ export type StudentSummary = {
 		first_name: string;
 		last_name: string;
 		email: string;
+		department_name?: string | null;
+		organization_name?: string | null;
 	} | null;
 	activityRequirements: ActivityRequirements | null;
 };
@@ -132,38 +134,37 @@ export async function getStudentSummary(user: SessionUser): Promise<StudentSumma
 		let activityRequirements: ActivityRequirements | null = null;
 
 		const userRecord = await db
-			.select({ departmentId: users.departmentId })
+			.select({
+				departmentId: users.departmentId,
+				departmentName: departments.name,
+				organizationId: organizations.id,
+				organizationName: organizations.name
+			})
 			.from(users)
+			.leftJoin(departments, eq(users.departmentId, departments.id))
+			.leftJoin(organizations, eq(departments.organizationId, organizations.id))
 			.where(eq(users.id, user.user_id))
 			.limit(1);
 
-		const departmentId = userRecord[0]?.departmentId;
+		const departmentName = userRecord[0]?.departmentName ?? null;
+		const organizationId = userRecord[0]?.organizationId ?? null;
+		const organizationName = userRecord[0]?.organizationName ?? null;
 
-		if (departmentId) {
-			const departmentRecord = await db
-				.select({ organizationId: departments.organizationId })
-				.from(departments)
-				.where(eq(departments.id, departmentId))
+		if (organizationId) {
+			const requirements = await db
+				.select({
+					requiredFacultyHours: organizationActivityRequirements.requiredFacultyHours,
+					requiredUniversityHours: organizationActivityRequirements.requiredUniversityHours
+				})
+				.from(organizationActivityRequirements)
+				.where(eq(organizationActivityRequirements.organizationId, organizationId))
 				.limit(1);
 
-			const organizationId = departmentRecord[0]?.organizationId;
-
-			if (organizationId) {
-				const requirements = await db
-					.select({
-						requiredFacultyHours: organizationActivityRequirements.requiredFacultyHours,
-						requiredUniversityHours: organizationActivityRequirements.requiredUniversityHours
-					})
-					.from(organizationActivityRequirements)
-					.where(eq(organizationActivityRequirements.organizationId, organizationId))
-					.limit(1);
-
-				if (requirements[0]) {
-					activityRequirements = {
-						requiredFacultyHours: Number(requirements[0].requiredFacultyHours ?? 0),
-						requiredUniversityHours: Number(requirements[0].requiredUniversityHours ?? 0)
-					};
-				}
+			if (requirements[0]) {
+				activityRequirements = {
+					requiredFacultyHours: Number(requirements[0].requiredFacultyHours ?? 0),
+					requiredUniversityHours: Number(requirements[0].requiredUniversityHours ?? 0)
+				};
 			}
 		}
 
@@ -173,7 +174,9 @@ export async function getStudentSummary(user: SessionUser): Promise<StudentSumma
 				student_id: user.student_id,
 				first_name: user.first_name,
 				last_name: user.last_name,
-				email: user.email
+				email: user.email,
+				department_name: departmentName,
+				organization_name: organizationName
 			},
 			activityRequirements
 		};
