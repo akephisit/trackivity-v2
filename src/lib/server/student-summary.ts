@@ -69,7 +69,7 @@ const toISO = (value: any | null | undefined): string | null => {
 	return String(value);
 };
 
-export async function getStudentSummary(user: SessionUser): Promise<StudentSummary> {
+async function buildStudentSummary(userId: string): Promise<StudentSummary> {
 	try {
 		const rowsAll = await db
 			.select({
@@ -99,7 +99,7 @@ export async function getStudentSummary(user: SessionUser): Promise<StudentSumma
 			.from(participations)
 			.leftJoin(activities, eq(participations.activityId, activities.id))
 			.leftJoin(organizations, eq(activities.organizerId, organizations.id))
-			.where(eq(participations.userId, user.user_id));
+			.where(eq(participations.userId, userId));
 
 		const participationHistory: ParticipationRecord[] = rowsAll.map((r) => {
 			const fallbackDate = r.checked_out_at || r.checked_in_at || r.registered_at || new Date();
@@ -135,6 +135,11 @@ export async function getStudentSummary(user: SessionUser): Promise<StudentSumma
 
 		const userRecord = await db
 			.select({
+				id: users.id,
+				studentId: users.studentId,
+				firstName: users.firstName,
+				lastName: users.lastName,
+				email: users.email,
 				departmentId: users.departmentId,
 				departmentName: departments.name,
 				organizationId: organizations.id,
@@ -143,7 +148,7 @@ export async function getStudentSummary(user: SessionUser): Promise<StudentSumma
 			.from(users)
 			.leftJoin(departments, eq(users.departmentId, departments.id))
 			.leftJoin(organizations, eq(departments.organizationId, organizations.id))
-			.where(eq(users.id, user.user_id))
+			.where(eq(users.id, userId))
 			.limit(1);
 
 		const departmentName = userRecord[0]?.departmentName ?? null;
@@ -170,27 +175,43 @@ export async function getStudentSummary(user: SessionUser): Promise<StudentSumma
 
 		return {
 			participationHistory,
-			userInfo: {
-				student_id: user.student_id,
-				first_name: user.first_name,
-				last_name: user.last_name,
-				email: user.email,
-				department_name: departmentName,
-				organization_name: organizationName
-			},
+			userInfo: userRecord[0]
+				? {
+					student_id: userRecord[0].studentId,
+					first_name: userRecord[0].firstName,
+					last_name: userRecord[0].lastName,
+					email: userRecord[0].email,
+					department_name: departmentName,
+					organization_name: organizationName
+				}
+				: null,
 			activityRequirements
 		};
 	} catch (error) {
-		console.error('[Student Summary] getStudentSummary error:', error);
+        console.error('[Student Summary] buildStudentSummary error:', error);
 		return {
 			participationHistory: [],
-			userInfo: {
-				student_id: user.student_id,
-				first_name: user.first_name,
-				last_name: user.last_name,
-				email: user.email
-			},
+			userInfo: null,
 			activityRequirements: null
 		};
 	}
+}
+
+export async function getStudentSummary(user: SessionUser): Promise<StudentSummary> {
+    const summary = await buildStudentSummary(user.user_id);
+	if (summary.userInfo) {
+		summary.userInfo = {
+			student_id: summary.userInfo.student_id || user.student_id,
+			first_name: summary.userInfo.first_name || user.first_name,
+			last_name: summary.userInfo.last_name || user.last_name,
+			email: summary.userInfo.email || user.email,
+			department_name: summary.userInfo.department_name,
+			organization_name: summary.userInfo.organization_name
+		};
+	}
+	return summary;
+}
+
+export async function getStudentSummaryByUserId(userId: string): Promise<StudentSummary> {
+	return buildStudentSummary(userId);
 }

@@ -15,6 +15,5 @@ const Sarabun = {
 	bolditalics: decodeDataUrlToBuffer(SarabunBoldItalicDataUrl)
 };
 
-export default {
-	Sarabun
-};
+export default Sarabun;
+export { Sarabun };

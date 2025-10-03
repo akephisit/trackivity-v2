@@ -3,10 +3,51 @@ import { requireAuth } from '$lib/server/auth-utils';
 import { getStudentSummary } from '$lib/server/student-summary';
 import PdfPrinter from 'pdfmake';
 import type { Content, TDocumentDefinitions } from 'pdfmake/interfaces';
-import sarabunFonts from '$lib/fonts/sarabun';
+import fs from 'fs';
+import path from 'path';
+import SarabunFonts from '$lib/fonts/sarabun';
+import QRCode from 'qrcode';
 import { format } from 'date-fns';
 
-const fonts = sarabunFonts;
+function ensureFontFiles() {
+	const fontDir = path.join(process.env.FONT_TMP_DIR || '/tmp', 'sarabun-fonts');
+	if (!fs.existsSync(fontDir)) {
+		fs.mkdirSync(fontDir, { recursive: true });
+	}
+
+	const fontPaths = {
+		normal: path.join(fontDir, 'Sarabun-Regular.ttf'),
+		bold: path.join(fontDir, 'Sarabun-Bold.ttf'),
+		italics: path.join(fontDir, 'Sarabun-Italic.ttf'),
+		bolditalics: path.join(fontDir, 'Sarabun-BoldItalic.ttf')
+	};
+
+	if (!fs.existsSync(fontPaths.normal)) {
+		fs.writeFileSync(fontPaths.normal, SarabunFonts.normal);
+	}
+	if (!fs.existsSync(fontPaths.bold)) {
+		fs.writeFileSync(fontPaths.bold, SarabunFonts.bold);
+	}
+	if (!fs.existsSync(fontPaths.italics)) {
+		fs.writeFileSync(fontPaths.italics, SarabunFonts.italics);
+	}
+	if (!fs.existsSync(fontPaths.bolditalics)) {
+		fs.writeFileSync(fontPaths.bolditalics, SarabunFonts.bolditalics);
+	}
+
+	return fontPaths;
+}
+
+const fontPaths = ensureFontFiles();
+
+const fonts = {
+	Sarabun: {
+		normal: fontPaths.normal,
+		bold: fontPaths.bold,
+		italics: fontPaths.italics,
+		bolditalics: fontPaths.bolditalics
+	}
+} as const;
 
 const printer = new PdfPrinter(fonts);
 
@@ -29,6 +70,9 @@ export const GET: RequestHandler = async (event) => {
 	}
 
 	const { participationHistory, userInfo, activityRequirements } = summary;
+
+	const verificationUrl = `${event.url.origin}/student/summary/public/${user.user_id}`;
+	const qrDataUrl = await QRCode.toDataURL(verificationUrl, { margin: 1 });
 
 	const totalHours = participationHistory.reduce((acc, item) => acc + (item.activity.hours ?? 0), 0);
 	const facultyHours = participationHistory
@@ -79,8 +123,8 @@ const now = new Date();
 const content: Content[] = [];
 
 content.push({
-        columns: [
-                {
+	columns: [
+		{
                         width: '60%',
                         stack: [
                                 { text: 'ข้อมูลนักศึกษา', style: 'sectionTitle' },
@@ -91,16 +135,23 @@ content.push({
                                 { text: `ภาควิชา: ${userInfo.department_name ?? '-'}` }
                         ]
                 },
-                {
-                        width: '40%',
-                        stack: [
-                                { text: 'สรุปชั่วโมงกิจกรรม', style: 'sectionTitle' },
-                                { text: `รวมทั้งหมด: ${totalHours.toFixed(2)} ชั่วโมง` },
-                                { text: `ระดับคณะ: ${facultyHours.toFixed(2)} ชั่วโมง` },
-                                { text: `ระดับมหาวิทยาลัย: ${universityHours.toFixed(2)} ชั่วโมง` }
-                        ]
-                }
-        ]
+		{
+			width: '40%',
+			stack: [
+				{ text: 'ข้อมูลการตรวจสอบ', style: 'sectionTitle' },
+				{ text: `รวมทั้งหมด: ${totalHours.toFixed(2)} ชั่วโมง` },
+				{ text: `ระดับคณะ: ${facultyHours.toFixed(2)} ชั่วโมง` },
+				{ text: `ระดับมหาวิทยาลัย: ${universityHours.toFixed(2)} ชั่วโมง` },
+				{ text: 'สแกนเพื่อตรวจสอบรายงาน', margin: [0, 12, 0, 4], bold: true },
+				{
+					image: qrDataUrl,
+					fit: [90, 90],
+					alignment: 'left'
+				},
+				{ text: verificationUrl, fontSize: 10, color: '#4b5563', margin: [0, 6, 0, 0] }
+			]
+		}
+	]
 });
 
 if (activityRequirements) {
@@ -179,12 +230,18 @@ const docDefinition: TDocumentDefinitions = {
 			{
 				stack: [
 					{ text: 'รายงานสรุปกิจกรรมของนักศึกษา', fontSize: 20, bold: true },
-						{ text: 'Student Activity Participation Report', fontSize: 12 }
-					]
-				},
-				{ text: '', alignment: 'right' }
-			]
-		},
+					{ text: 'Student Activity Participation Report', fontSize: 12 }
+				]
+			},
+			{
+				stack: [
+					{ image: qrDataUrl, fit: [90, 90], alignment: 'right', margin: [0, 0, 0, 4] },
+					{ text: 'ตรวจสอบรายงาน', alignment: 'right', fontSize: 10, bold: true },
+					{ text: verificationUrl, alignment: 'right', fontSize: 9, color: '#4b5563' }
+				]
+			}
+		]
+	},
 		footer: (currentPage: number, pageCount: number) => ({
 			text: `หน้าที่ ${currentPage} / ${pageCount}`,
 			alignment: 'right',
