@@ -8,8 +8,7 @@ on:
       - '.github/workflows/deploy-frontend.yml'
   workflow_dispatch:
 
-env:
-  NODE_ENV: production
+
 
 jobs:
   deploy:
