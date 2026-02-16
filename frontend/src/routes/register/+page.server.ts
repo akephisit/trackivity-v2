@@ -20,8 +20,27 @@ export const load: PageServerLoad = async (event) => {
 		}
 	}
 
-	// TODO: Fetch organizations from backend API
+	// Fetch organizations from Backend API
 	let organizationsList: Organization[] = [];
+	try {
+		const BACKEND_URL = env.BACKEND_URL || 'http://localhost:3000';
+		const response = await fetch(`${BACKEND_URL}/organizations`);
+		if (response.ok) {
+			const data = await response.json();
+			// Data structure: { all: [], grouped: { faculty: [], office: [] } }
+			// For student registration, we usually want faculties
+			if (data.grouped && data.grouped.faculty) {
+				organizationsList = data.grouped.faculty;
+			} else if (data.all) {
+				// Fallback to filtering if backend didn't group correctly
+				organizationsList = data.all.filter((o: any) => o.organization_type === 'faculty');
+			}
+		} else {
+			console.error('Failed to fetch organizations:', response.status);
+		}
+	} catch (e) {
+		console.error('Error fetching organizations:', e);
+	}
 
 	const form = await superValidate(zod(registerSchema));
 
@@ -55,14 +74,13 @@ export const actions: Actions = {
 					prefix: form.data.prefix,
 					first_name: form.data.first_name,
 					last_name: form.data.last_name,
-					phone: null, // Form doesn't ask for phone yet?
-					// department_id: form.data.department_id // Ignore for now as list is empty
+					phone: null,
+					department_id: form.data.department_id // Now valid if picked from real list (backend ignores currently but good to send)
 				})
 			});
 
 			if (!response.ok) {
 				const errorText = await response.text();
-				console.error(`Registration failed: ${response.status} - ${errorText}`);
 
 				// การสมัครล้มเหลว
 				let errorMessage = 'เกิดข้อผิดพลาดในการสมัครสมาชิก';

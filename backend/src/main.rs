@@ -10,6 +10,7 @@ use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 mod auth;
 mod models;
 mod activities;
+mod organizations; // New module
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -50,6 +51,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/activities/dashboard", get(activities::get_dashboard_activities))
         .route("/activities", post(activities::create_activity))
         .route("/activities/:id/join", post(activities::join_activity))
+        .route("/organizations", get(organizations::get_all_organizations)) // New route
         .layer(TraceLayer::new_for_http())
         .with_state(pool);
 

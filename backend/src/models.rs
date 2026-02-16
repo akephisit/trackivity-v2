@@ -4,7 +4,7 @@ use uuid::Uuid;
 use chrono::{DateTime, Utc};
 
 // Enums matching Database Types
-#[derive(Debug, Serialize, Deserialize, sqlx::Type, Clone)]
+#[derive(Debug, Serialize, Deserialize, sqlx::Type, Clone, PartialEq)]
 #[sqlx(type_name = "user_status", rename_all = "snake_case")]
 pub enum UserStatus {
     Active,
@@ -12,7 +12,7 @@ pub enum UserStatus {
     Suspended,
 }
 
-#[derive(Debug, Serialize, Deserialize, sqlx::Type, Clone)]
+#[derive(Debug, Serialize, Deserialize, sqlx::Type, Clone, PartialEq)]
 #[sqlx(type_name = "admin_level", rename_all = "snake_case")]
 pub enum AdminLevel {
     SuperAdmin,
@@ -38,6 +38,25 @@ pub enum ActivityStatus {
 	Ongoing,
 	Completed,
 	Cancelled,
+}
+
+#[derive(Debug, Serialize, Deserialize, sqlx::Type, Clone, PartialEq)]
+#[sqlx(type_name = "organization_type", rename_all = "snake_case")]
+pub enum OrganizationType {
+    Faculty,
+    Office,
+}
+
+#[derive(Debug, FromRow, Serialize, Deserialize, Clone)] // Added Clone
+pub struct Organization {
+    pub id: Uuid,
+    pub name: String,
+    pub code: String,
+    pub description: Option<String>,
+    pub organization_type: OrganizationType,
+    pub status: bool,
+    pub created_at: Option<DateTime<Utc>>,
+    pub updated_at: Option<DateTime<Utc>>,
 }
 
 
@@ -228,4 +247,16 @@ pub struct Claims {
     pub is_admin: bool,
     pub admin_level: Option<AdminLevel>,
     pub organization_id: Option<Uuid>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct OrganizationsResponse {
+    pub all: Vec<Organization>,
+    pub grouped: GroupedOrganizations,
+}
+
+#[derive(Debug, Serialize)]
+pub struct GroupedOrganizations {
+    pub faculty: Vec<Organization>,
+    pub office: Vec<Organization>,
 }

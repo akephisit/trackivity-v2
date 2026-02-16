@@ -6,7 +6,7 @@ import { z } from 'zod';
 import type { PageServerLoad, Actions } from './$types';
 import { env } from '$env/dynamic/private';
 
-// Validation schema for activity creation (Simplified for Rust Backend compatibility)
+// Validation schema
 const activityCreateSchema = z.object({
 	title: z.string().min(1, 'กรุณากรอกชื่อกิจกรรม').max(255),
 	description: z.string().optional().or(z.literal('')),
@@ -19,25 +19,37 @@ const activityCreateSchema = z.object({
 	max_participants: z.string().optional(),
 	hours: z.string().min(1, 'กรุณากรอกจำนวนชั่วโมง').regex(/^\d+$/),
 	organizer_id: z.string().min(1, 'กรุณาเลือกหน่วยงาน'),
-	// These fields are not yet supported by simple create API, maybe later
-	// eligible_organizations: z.string(),
-	// academic_year: z.string(),
-	// activity_level: z.enum(['faculty', 'university'])
 });
 
 export const load: PageServerLoad = async (event) => {
-	// ตรวจสอบสิทธิ์ - เฉพาะ OrganizationAdmin หรือ SuperAdmin
+	// ตรวจสอบสิทธิ์
 	const user = requireOrganizationAdmin(event);
 
 	const form = await superValidate(zod(activityCreateSchema));
 
-	// Mock Organizations for now
-	const organizations = {
-		all: [
-			{ id: user.organization_id || '00000000-0000-0000-0000-000000000000', name: 'My Faculty', organization_type: 'faculty' }
-		],
-		grouped: { faculty: [], office: [] }
-	};
+	// Fetch real organizations
+	let organizations: any = { all: [], grouped: { faculty: [], office: [] } };
+	try {
+		const BACKEND_URL = env.BACKEND_URL || 'http://localhost:3000';
+		const response = await fetch(`${BACKEND_URL}/organizations`);
+		if (response.ok) {
+			organizations = await response.json();
+
+			// Backend returns snake_case enums ('faculty', 'office') in Rust, 
+			// but Frontend might expect exact string match. Let's make sure our usage matches.
+			// If backend serialization uses rename_all="snake_case", it should match 'faculty'/'office'.
+
+			// Note: If Organizations list is empty, we should handle it gracefully in UI
+		} else {
+			console.error('Failed to fetch organizations:', response.status);
+			// Fallback to user's organization if available
+			if (user.organization_id) {
+				organizations.all = [{ id: user.organization_id, name: 'Current Organization', organization_type: 'faculty' }];
+			}
+		}
+	} catch (e) {
+		console.error('Error fetching organizations:', e);
+	}
 
 	return {
 		form,
@@ -60,13 +72,11 @@ export const actions: Actions = {
 			const BACKEND_URL = env.BACKEND_URL || 'http://localhost:3000';
 			const sessionToken = event.cookies.get('session_token');
 
-			// Construct payload for Rust Backend
 			const activityData = {
 				title: form.data.title,
 				description: form.data.description,
 				start_date: form.data.start_date,
 				end_date: form.data.end_date,
-				// Time must be HH:MM:SS format for NaiveTime in Rust (sometimes)
 				start_time_only: form.data.start_time + ":00",
 				end_time_only: form.data.end_time + ":00",
 				activity_type: form.data.activity_type,
@@ -74,7 +84,6 @@ export const actions: Actions = {
 				max_participants: form.data.max_participants ? parseInt(form.data.max_participants) : null,
 				hours: form.data.hours ? parseInt(form.data.hours) : 1,
 				organizer_id: form.data.organizer_id,
-				// academic_year: 2024 is handled by backend default for now
 			};
 
 			const response = await fetch(`${BACKEND_URL}/activities`, {
