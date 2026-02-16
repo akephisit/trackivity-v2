@@ -11,7 +11,7 @@ services:
       JWT_SECRET: ${JWT_SECRET}
       RUST_LOG: info
     ports:
-      - "8080:3000"
+      - "80:3000"
     # No dependency on local DB
 
 # Removed volumes section as we don't need persistent storage for DB anymore
