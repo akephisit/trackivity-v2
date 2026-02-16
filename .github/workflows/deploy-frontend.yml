@@ -1,0 +1,83 @@
+name: Deploy Frontend
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/deploy-frontend.yml'
+  workflow_dispatch:
+
+env:
+  SUBDOMAIN: "trackivity"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+      
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci
+      
+      - name: Create Wrangler configuration
+        working-directory: frontend
+        run: |
+          cat > wrangler.json <<EOF
+          {
+            "name": "trackivity-frontend",
+            "account_id": "${{ secrets.CLOUDFLARE_ACCOUNT_ID }}",
+            "main": ".svelte-kit/cloudflare/_worker.js",
+            "compatibility_date": "2024-04-05",
+            "compatibility_flags": ["nodejs_compat"],
+            "assets": {
+              "binding": "ASSETS",
+              "directory": ".svelte-kit/cloudflare"
+            },
+            "routes": [
+              {
+                "pattern": "${{ env.SUBDOMAIN }}.ake.education/*",
+                "zone_name": "ake.education"
+              }
+            ],
+            "vars": {
+              "PUBLIC_BACKEND_URL": "${{ secrets.PUBLIC_BACKEND_URL }}"
+            }
+          }
+          EOF
+      
+      - name: Build frontend
+        working-directory: frontend
+        env:
+          PUBLIC_BACKEND_URL: ${{ secrets.PUBLIC_BACKEND_URL }}
+        run: npm run build
+      
+      - name: Deploy to Cloudflare Workers
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          workingDirectory: frontend
+          command: deploy
+      
+      - name: Report deployment status
+        if: always()
+        run: |
+          if [ ${{ job.status }} == 'success' ]; then
+            echo "✅ Successfully deployed Frontend"
+            echo "URL: https://${{ env.SUBDOMAIN }}.ake.education"
+          else
+            echo "❌ Deployment failed"
+            exit 1
+          fi
