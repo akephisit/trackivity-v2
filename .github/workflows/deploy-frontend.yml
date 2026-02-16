@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
 
 env:
-  SUBDOMAIN: "trackivity"
+  NODE_ENV: production
 
 jobs:
   deploy:
@@ -46,12 +46,6 @@ jobs:
               "binding": "ASSETS",
               "directory": ".svelte-kit/cloudflare"
             },
-            "routes": [
-              {
-                "pattern": "${{ env.SUBDOMAIN }}.ake.education/*",
-                "zone_name": "ake.education"
-              }
-            ],
             "vars": {
               "PUBLIC_BACKEND_URL": "${{ secrets.PUBLIC_BACKEND_URL }}"
             }
@@ -75,8 +69,8 @@ jobs:
         if: always()
         run: |
           if [ ${{ job.status }} == 'success' ]; then
-            echo "✅ Successfully deployed Frontend"
-            echo "URL: https://${{ env.SUBDOMAIN }}.ake.education"
+            echo "✅ Successfully deployed Frontend to Cloudflare Workers"
+            echo "URL will be displayed in the Wrangler output above (usually *.workers.dev)"
           else
             echo "❌ Deployment failed"
             exit 1
