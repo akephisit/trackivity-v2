@@ -46,6 +46,12 @@ jobs:
               "binding": "ASSETS",
               "directory": ".svelte-kit/cloudflare"
             },
+            "routes": [
+              {
+                "pattern": "tru-trackivity.schoolorbit.app/*",
+                "zone_name": "schoolorbit.app"
+              }
+            ],
             "vars": {
               "PUBLIC_BACKEND_URL": "${{ secrets.PUBLIC_BACKEND_URL }}"
             }
@@ -70,7 +76,7 @@ jobs:
         run: |
           if [ ${{ job.status }} == 'success' ]; then
             echo "✅ Successfully deployed Frontend to Cloudflare Workers"
-            echo "URL will be displayed in the Wrangler output above (usually *.workers.dev)"
+            echo "URL: https://tru-trackivity.schoolorbit.app"
           else
             echo "❌ Deployment failed"
             exit 1
