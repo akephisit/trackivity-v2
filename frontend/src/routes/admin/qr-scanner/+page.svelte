@@ -117,7 +117,7 @@
 
 		if (data.selectedActivityId && (data.activities?.length || 0) > 0) {
 			selectedActivityId = data.selectedActivityId;
-			const activity = data.activities?.find((a) => a.id === selectedActivityId);
+			const activity = data.activities?.find((a: any) => a.id === selectedActivityId);
 			if (activity) {
 				selectedActivityOption = { value: activity.id, label: activity.title };
 			}
@@ -153,7 +153,7 @@
 		// Removed toast - QRScanner component handles all notifications
 	}
 
-	function handleScanResult(result: any, _qrData: string) {
+	function handleScanResult(result: { success: boolean; message?: string }, _qrData: string) {
 		if (result.success) {
 			// Increment manual participant count on successful check-in
 			manualParticipantCount++;
@@ -259,7 +259,7 @@
 						bind:value={selectedActivityOption as any}
 						onValueChange={(value) => {
 							if (value && value !== selectedActivityId) {
-								const activity = data.activities?.find((a) => a.id === value);
+								const activity = data.activities?.find((a: any) => a.id === value);
 								if (activity) {
 									selectedActivityOption = { value: activity.id, label: activity.title };
 								}

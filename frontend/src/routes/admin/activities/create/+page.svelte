@@ -81,18 +81,7 @@
 				.min(1, 'กรุณากรอกจำนวนชั่วโมง')
 				.regex(/^\d+$/, 'ชั่วโมงต้องเป็นจำนวนเต็ม')
 				.refine((v) => parseInt(v) > 0, 'ชั่วโมงต้องมากกว่า 0'),
-			organizer_id: z.string().min(1, 'กรุณาเลือกหน่วยงานที่จัดกิจกรรม'),
-			eligible_organizations: z
-				.string()
-				.min(1, 'กรุณาเลือกคณะที่สามารถเข้าร่วมได้')
-				.refine((value) => {
-					const items = value.split(',').filter((f) => f.trim() !== '');
-					return items.length > 0;
-				}, 'กรุณาเลือกอย่างน้อย 1 คณะ'),
-			academic_year: z.string().min(1, 'กรุณาเลือกปีการศึกษา'),
-			activity_level: z.enum(['faculty', 'university'], {
-				errorMap: () => ({ message: 'กรุณาเลือกระดับกิจกรรม' })
-			})
+			organizer_id: z.string().min(1, 'กรุณาเลือกหน่วยงานที่จัดกิจกรรม')
 		})
 		.refine(
 			(data) => {
@@ -169,24 +158,8 @@
 	// Combine all options for form processing
 	const allOrganizationOptions = [...facultyOptions, ...officeOptions];
 
-	// Academic year options - generate +/- 2 years from current Buddhist year
-	function generateAcademicYearOptions() {
-		const currentYear = new Date().getFullYear();
-		const currentBuddhistYear = currentYear + 543; // Convert to Buddhist year
-		const options = [];
-
-		for (let i = -2; i <= 2; i++) {
-			const year = (currentBuddhistYear + i).toString();
-			options.push({ value: year, label: year });
-		}
-
-		return options;
-	}
-
-	const academicYearOptions = generateAcademicYearOptions();
-
 	// Import utility functions and options
-	import { activityLevelOptions } from '$lib/utils/activity';
+
 	import { formatThaiDate } from '$lib/utils/thai-date';
 
 	// Note: We now use Thai formatting utilities instead of the standard DateFormatter
@@ -210,22 +183,6 @@
 	let selectedActivityType = $state<{ value: ActivityType; label: string } | undefined>(
 		activityTypeOptions.find((opt) => opt.value === $formData.activity_type)
 	);
-	// For multiple select, we use array of strings (organization IDs) as that's what bits-ui expects
-	let selectedOrganizationIds = $state<string[]>([]);
-	// Derive organization objects for display purposes (กรองเฉพาะคณะที่เลือก)
-	let selectedOrganizations = $derived(
-		selectedOrganizationIds
-			.map((id) => {
-				const org = facultyOptions.find((o: any) => o.value === id); // ใช้เฉพาะ facultyOptions
-				return org ? { value: id, label: org.label, type: org.type } : null;
-			})
-			.filter(Boolean) as { value: string; label: string; type: 'faculty' }[]
-	);
-	let selectedAcademicYear = $state<{ value: string; label: string } | undefined>(undefined);
-	let selectedActivityLevel = $state<{ value: string; label: string } | undefined>({
-		value: 'faculty',
-		label: 'คณะ'
-	});
 
 	// Date picker values
 	let startDateValue = $state<DateValue | undefined>(undefined);
@@ -449,88 +406,6 @@
 							</div>
 
 							<!-- Academic Year -->
-							<div>
-								<Form.Field {form} name="academic_year">
-									<Form.Control>
-										{#snippet children({ props })}
-											<Label for={props.id} class="text-base font-medium">ปีการศึกษา *</Label>
-											<input
-												type="hidden"
-												name="academic_year"
-												bind:value={$formData.academic_year}
-											/>
-											<Select.Root
-												type="single"
-												bind:value={selectedAcademicYear as any}
-												disabled={$submitting}
-												onValueChange={(value) => {
-													if (value) {
-														selectedAcademicYear = { value, label: value };
-														$formData.academic_year = value;
-													}
-												}}
-											>
-												<Select.Trigger>
-													{selectedAcademicYear?.label ?? 'เลือกปีการศึกษา'}
-												</Select.Trigger>
-												<Select.Content>
-													{#each academicYearOptions as option}
-														<Select.Item value={option.value}>
-															{option.label}
-														</Select.Item>
-													{/each}
-												</Select.Content>
-											</Select.Root>
-										{/snippet}
-									</Form.Control>
-									<Form.FieldErrors />
-								</Form.Field>
-							</div>
-
-							<!-- Activity Level -->
-							<div>
-								<Form.Field {form} name="activity_level">
-									<Form.Control>
-										{#snippet children({ props })}
-											<Label for={props.id} class="text-base font-medium">ระดับกิจกรรม *</Label>
-											<input
-												type="hidden"
-												name="activity_level"
-												bind:value={$formData.activity_level}
-											/>
-											<Select.Root
-												type="single"
-												bind:value={selectedActivityLevel as any}
-												disabled={$submitting}
-												onValueChange={(value) => {
-													if (value && (value === 'faculty' || value === 'university')) {
-														const option = activityLevelOptions.find((opt) => opt.value === value);
-														if (option) {
-															selectedActivityLevel = { value: option.value, label: option.label };
-															$formData.activity_level = value;
-														}
-													}
-												}}
-											>
-												<Select.Trigger>
-													{selectedActivityLevel?.label ?? 'เลือกระดับกิจกรรม'}
-												</Select.Trigger>
-												<Select.Content>
-													{#each activityLevelOptions as option}
-														<Select.Item value={option.value}>
-															<div class="flex flex-col">
-																<span class="font-medium">{option.label}</span>
-																<span class="text-sm text-gray-500">{option.description}</span>
-															</div>
-														</Select.Item>
-													{/each}
-												</Select.Content>
-											</Select.Root>
-										{/snippet}
-									</Form.Control>
-									<Form.FieldErrors />
-								</Form.Field>
-							</div>
 
 							<!-- Organizer (select from organizations) -->
 							<div>
@@ -626,108 +501,6 @@
 							</div>
 
 							<!-- Eligible Faculties -->
-							<div>
-								<Form.Field {form} name="eligible_organizations">
-									<Form.Control>
-										{#snippet children({ props })}
-											<Label for={props.id} class="text-base font-medium"
-												>คณะที่สามารถเข้าร่วมได้ *</Label
-											>
-											<input
-												type="hidden"
-												name="eligible_organizations"
-												bind:value={$formData.eligible_organizations}
-											/>
-											<Select.Root
-												type="multiple"
-												bind:value={selectedOrganizationIds}
-												disabled={$submitting}
-												onValueChange={(values) => {
-													if (values && Array.isArray(values)) {
-														// กรองเฉพาะ faculty IDs ที่ถูกต้อง
-														const facultyIds = facultyOptions.map((f: any) => f.value);
-														const validValues = values.filter((id) => facultyIds.includes(id));
-														selectedOrganizationIds = validValues;
-														$formData.eligible_organizations = validValues.join(',');
-														console.log(
-															'Updated eligible_organizations:',
-															$formData.eligible_organizations
-														);
-													}
-												}}
-											>
-												<Select.Trigger>
-													{#if selectedOrganizations.length === 0}
-														เลือกคณะที่สามารถเข้าร่วมได้
-													{:else if selectedOrganizations.length === 1}
-														{selectedOrganizations[0].label}
-													{:else}
-														เลือกแล้ว {selectedOrganizations.length} คณะ
-													{/if}
-												</Select.Trigger>
-												<Select.Content>
-													<!-- แสดงเฉพาะคณะเท่านั้น -->
-													{#if facultyOptions.length > 0}
-														{#each facultyOptions as option}
-															<Select.Item value={option.value}>
-																<div class="flex items-center gap-2">
-																	<div class="flex h-4 w-4 items-center justify-center">
-																		{#if selectedOrganizationIds.includes(option.value)}
-																			<div class="h-3 w-3 rounded-sm bg-blue-600"></div>
-																		{:else}
-																			<div
-																				class="h-3 w-3 rounded-sm border border-gray-300 bg-white"
-																			></div>
-																		{/if}
-																	</div>
-																	<div class="mr-1 h-2 w-2 rounded-full bg-blue-500"></div>
-																	{option.label}
-																</div>
-															</Select.Item>
-														{/each}
-													{/if}
-												</Select.Content>
-											</Select.Root>
-											{#if selectedOrganizations.length > 0}
-												<div class="mt-2 flex flex-wrap gap-1">
-													{#each selectedOrganizations as org}
-														<span
-															class={`inline-flex items-center gap-1 rounded-md px-2 py-1 text-sm ${
-																org.type === 'faculty'
-																	? 'bg-blue-100 text-blue-800'
-																	: 'bg-green-100 text-green-800'
-															}`}
-														>
-															<div
-																class={`h-2 w-2 rounded-full ${
-																	org.type === 'faculty' ? 'bg-blue-500' : 'bg-green-500'
-																}`}
-															></div>
-															{org.label}
-															<button
-																type="button"
-																onclick={() => {
-																	selectedOrganizationIds = selectedOrganizationIds.filter(
-																		(id: string) => id !== org.value
-																	);
-																	$formData.eligible_organizations =
-																		selectedOrganizationIds.join(',');
-																}}
-																class={`hover:opacity-75 ${
-																	org.type === 'faculty' ? 'text-blue-600' : 'text-green-600'
-																}`}
-															>
-																×
-															</button>
-														</span>
-													{/each}
-												</div>
-											{/if}
-										{/snippet}
-									</Form.Control>
-									<Form.FieldErrors />
-								</Form.Field>
-							</div>
 						</div>
 
 						<!-- Description -->
