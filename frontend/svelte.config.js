@@ -12,9 +12,6 @@ const config = {
 		adapter: adapter(),
 		alias: {
 			'@/*': './path/to/lib/*'
-		},
-		csrf: {
-			checkOrigin: false // Could be strict depending on requirements
 		}
 	}
 };
