@@ -25,8 +25,10 @@
 	} from '@tabler/icons-svelte';
 	import { getActivityLevelDisplayName, getActivityTypeDisplayName } from '$lib/utils/activity';
 
-	let { data } = $props<{ data: { history: any[] } }>();
-	let participationHistory: any[] = $state(data?.history || []);
+	import { activitiesApi, ApiError } from '$lib/api';
+	import { onMount } from 'svelte';
+
+	let participationHistory: any[] = $state([]);
 	let filteredHistory: any[] = $state([]);
 	let loading = $state(true);
 	let error: string | null = $state(null);
@@ -48,10 +50,22 @@
 		universityActivities: 0
 	});
 
-	// Initialize from server data
-	loading = false;
-	filteredHistory = participationHistory;
-	calculateStats(participationHistory);
+	onMount(async () => {
+		try {
+			const data = await activitiesApi.myParticipations();
+			participationHistory = data;
+			filteredHistory = data;
+			calculateStats(data);
+		} catch (e) {
+			if (e instanceof ApiError) {
+				error = `ไม่สามารถโหลดประวัติได้: ${e.message}`;
+			} else {
+				error = 'เกิดข้อผิดพลาดในการโหลดข้อมูล';
+			}
+		} finally {
+			loading = false;
+		}
+	});
 
 	function calculateStats(data: any[]) {
 		const now = new Date();

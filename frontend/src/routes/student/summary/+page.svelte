@@ -33,26 +33,48 @@
 	} from '@tabler/icons-svelte';
 	import { toast } from 'svelte-sonner';
 
-	let { data } = $props<{
-		data: {
-			participationHistory: any[];
-			userInfo: {
-				student_id: string;
-				first_name: string;
-				last_name: string;
-				email: string;
-			} | null;
-			activityRequirements: ActivityRequirements | null;
-		};
-	}>();
+	import { activitiesApi, auth as authApi, ApiError } from '$lib/api';
+	import { onMount } from 'svelte';
+	import { Skeleton } from '$lib/components/ui/skeleton';
+
+	// CSR state
+	let participationHistoryData: any[] = $state([]);
+	let userInfoData: { student_id: string; first_name: string; last_name: string; email: string } | null = $state(null);
+	let activityRequirementsData: ActivityRequirements | null = $state(null);
+	let loading = $state(true);
+	let error: string | null = $state(null);
 
 	// Calculate summary statistics with progress information
 	let stats: ActivitySummaryStats = $derived(
 		calculateActivitySummaryWithProgress(
-			data.participationHistory || [],
-			data.activityRequirements || undefined
+			participationHistoryData,
+			activityRequirementsData || undefined
 		)
 	);
+
+	onMount(async () => {
+		try {
+			const [user, participations] = await Promise.all([
+				authApi.me(),
+				activitiesApi.myParticipations(),
+			]);
+			userInfoData = {
+				student_id: user.student_id,
+				first_name: user.first_name,
+				last_name: user.last_name,
+				email: user.email,
+			};
+			participationHistoryData = participations;
+		} catch (e) {
+			if (e instanceof ApiError) {
+				error = `ไม่สามารถโหลดข้อมูลได้: ${e.message}`;
+			} else {
+				error = 'เกิดข้อผิดพลาดในการโหลดข้อมูล';
+			}
+		} finally {
+			loading = false;
+		}
+	});
 
 	// Generate report date
 	const reportDate = new Date().toLocaleDateString('th-TH', {
@@ -101,6 +123,7 @@
 			.sort(([, a], [, b]) => b.hours - a.hours) // Sort by hours desc
 			.map(([type, data]) => ({ type, ...data }));
 	}
+
 </script>
 
 <svelte:head>
@@ -148,15 +171,15 @@
 		</CardHeader>
 		<CardContent class="space-y-4">
 			<!-- Student Information -->
-			{#if data.userInfo}
+			{#if userInfoData}
 				<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
 					<div class="flex items-center gap-3">
 						<IconUser class="size-4 text-muted-foreground" />
 						<div>
 							<p class="text-sm font-medium">ชื่อ-นามสกุล</p>
 							<p class="text-sm text-muted-foreground">
-								{data.userInfo.first_name}
-								{data.userInfo.last_name}
+								{userInfoData?.first_name}
+								{userInfoData?.last_name}
 							</p>
 						</div>
 					</div>
@@ -164,7 +187,7 @@
 						<IconActivity class="size-4 text-muted-foreground" />
 						<div>
 							<p class="text-sm font-medium">รหัสนักศึกษา</p>
-							<p class="text-sm text-muted-foreground">{data.userInfo.student_id}</p>
+							<p class="text-sm text-muted-foreground">{userInfoData?.student_id}</p>
 						</div>
 					</div>
 					<!-- Removed academic year display per request -->
@@ -223,7 +246,7 @@
 	</Card>
 
 	<!-- Progress Section -->
-	{#if data.activityRequirements && stats.progress}
+	{#if activityRequirementsData && stats.progress}
 		<Card class="border-2 border-primary/20">
 			<CardHeader>
 				<div class="flex items-center gap-3">
@@ -373,15 +396,14 @@
 							<p class="text-sm font-medium">เกณฑ์การผ่านกิจกรรม</p>
 							<div class="mt-2 text-xs text-blue-600 dark:text-blue-400">
 								<p>
-									• กิจกรรมระดับคณะ: อย่างน้อย {data.activityRequirements.requiredFacultyHours} ชั่วโมง
+									• กิจกรรมระดับคณะ: อย่างน้อย {activityRequirementsData?.requiredFacultyHours} ชั่วโมง
 								</p>
 								<p>
-									• กิจกรรมระดับมหาวิทยาลัย: อย่างน้อย {data.activityRequirements
-										.requiredUniversityHours} ชั่วโมง
+									• กิจกรรมระดับมหาวิทยาลัย: อย่างน้อย {activityRequirementsData?.requiredUniversityHours} ชั่วโมง
 								</p>
 								<p class="mt-1 font-medium">
-									รวม: {data.activityRequirements.requiredFacultyHours +
-										data.activityRequirements.requiredUniversityHours} ชั่วโมง
+									รวม: {(activityRequirementsData?.requiredFacultyHours ?? 0) +
+										(activityRequirementsData?.requiredUniversityHours ?? 0)} ชั่วโมง
 								</p>
 							</div>
 						</div>

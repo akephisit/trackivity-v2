@@ -1,4 +1,7 @@
 <script lang="ts">
+	import { authStore } from '$lib/stores/auth.svelte';
+	import { activities as activitiesApi, type Activity } from '$lib/api';
+	import { onMount } from 'svelte';
 	import {
 		Card,
 		CardContent,
@@ -14,7 +17,6 @@
 		IconActivity,
 		IconTrendingUp,
 		IconCalendarEvent,
-		IconSchool,
 		IconUsersGroup,
 		IconChartBar,
 		IconArrowRight,
@@ -23,110 +25,62 @@
 	import MetaTags from '$lib/components/seo/MetaTags.svelte';
 	import { getDailyGreeting } from '$lib/utils/greeting';
 
-	let { data } = $props();
+	let recentActivities = $state<Activity[]>([]);
+	let loading = $state(true);
 
-	const isLoading = $derived(!data?.user || !data?.admin_role);
-	const isOrgAdmin = $derived(data.admin_role?.admin_level === 'OrganizationAdmin');
+	const user = $derived(authStore.user);
+	const adminRole = $derived(authStore.user?.admin_role ?? null);
+	const isOrgAdmin = $derived(adminRole?.admin_level === 'organization_admin');
 
-	// Get dynamic greeting
 	const greeting = $derived(
-		data.user
-			? getDailyGreeting(data.user.first_name, 'admin')
+		user
+			? getDailyGreeting(user.first_name, 'admin')
 			: { greeting: 'สวัสดี!', subtitle: 'พร้อมจัดการระบบ' }
 	);
 
-	// สถิติหลัก
-	function getMainStats() {
-		const stats = data.stats;
+	// Placeholder stats — will be replaced when backend stats endpoint exists
+	const stats = {
+		total_users: 0,
+		total_activities: 0,
+		active_sessions: 0,
+		new_users_this_month: 0,
+		organization_users: 0,
+		departments_count: 0
+	};
 
+	function getMainStats() {
 		if (isOrgAdmin) {
 			return [
-				{
-					title: 'ผู้ใช้ในหน่วยงาน',
-					value: stats?.organization_users || 0,
-					icon: IconUsers,
-					trend: '+12%',
-					trendUp: true
-				},
-				{
-					title: 'กิจกรรมที่จัด',
-					value: stats?.total_activities || 0,
-					icon: IconCalendarEvent,
-					trend: '+8%',
-					trendUp: true
-				},
-				{
-					title: 'ภาควิชา',
-					value: stats?.departments_count || 0,
-					icon: IconBuilding,
-					trend: 'เท่าเดิม',
-					trendUp: null
-				},
-				{
-					title: 'ผู้ใช้ใหม่เดือนนี้',
-					value: stats?.new_users_this_month || 0,
-					icon: IconUsersGroup,
-					trend: '+25%',
-					trendUp: true
-				}
-			];
-		} else {
-			return [
-				{
-					title: 'ผู้ใช้ทั้งหมด',
-					value: stats?.total_users || 0,
-					icon: IconUsers,
-					trend: '+15%',
-					trendUp: true
-				},
-				{
-					title: 'กิจกรรมทั้งหมด',
-					value: stats?.total_activities || 0,
-					icon: IconCalendarEvent,
-					trend: '+12%',
-					trendUp: true
-				},
-				{
-					title: 'หน่วยงาน',
-					value: stats?.total_users || 0,
-					icon: IconBuilding,
-					trend: '+3%',
-					trendUp: true
-				},
-				{
-					title: 'เซสชันใช้งาน',
-					value: stats?.active_sessions || 0,
-					icon: IconActivity,
-					trend: '+8%',
-					trendUp: true
-				}
+				{ title: 'ผู้ใช้ในหน่วยงาน', value: stats.organization_users, icon: IconUsers },
+				{ title: 'กิจกรรมที่จัด', value: stats.total_activities, icon: IconCalendarEvent },
+				{ title: 'ภาควิชา', value: stats.departments_count, icon: IconBuilding },
+				{ title: 'ผู้ใช้ใหม่เดือนนี้', value: stats.new_users_this_month, icon: IconUsersGroup }
 			];
 		}
+		return [
+			{ title: 'ผู้ใช้ทั้งหมด', value: stats.total_users, icon: IconUsers },
+			{ title: 'กิจกรรมทั้งหมด', value: stats.total_activities, icon: IconCalendarEvent },
+			{ title: 'หน่วยงาน', value: 0, icon: IconBuilding },
+			{ title: 'เซสชันใช้งาน', value: stats.active_sessions, icon: IconActivity }
+		];
 	}
 
 	const mainStats = $derived(getMainStats());
 
-	function getAdminLevelText(level: any): string {
+	function getAdminLevelText(level: string | undefined): string {
 		switch (level) {
-			case 'SuperAdmin':
-				return 'ซุปเปอร์แอดมิน';
-			case 'OrganizationAdmin':
-				return 'แอดมินหน่วยงาน';
-			case 'RegularAdmin':
-				return 'แอดมินทั่วไป';
-			default:
-				return 'ไม่ระบุ';
+			case 'super_admin': return 'ซุปเปอร์แอดมิน';
+			case 'organization_admin': return 'แอดมินหน่วยงาน';
+			case 'regular_admin': return 'แอดมินทั่วไป';
+			default: return 'ไม่ระบุ';
 		}
 	}
 
-	function getAdminLevelBadgeVariant(level: any): 'default' | 'secondary' | 'destructive' {
+	function getAdminLevelBadgeVariant(level: string | undefined): 'default' | 'secondary' | 'destructive' {
 		switch (level) {
-			case 'SuperAdmin':
-				return 'destructive';
-			case 'OrganizationAdmin':
-				return 'default';
-			default:
-				return 'secondary';
+			case 'super_admin': return 'destructive';
+			case 'organization_admin': return 'default';
+			default: return 'secondary';
 		}
 	}
 
@@ -138,262 +92,133 @@
 			minute: '2-digit'
 		});
 	}
+
+	onMount(async () => {
+		try {
+			const dashboard = await activitiesApi.dashboard();
+			recentActivities = dashboard.recent;
+		} catch {
+			// ignore
+		} finally {
+			loading = false;
+		}
+	});
 </script>
 
 <MetaTags title="แดชบอร์ดแอดมิน" description="ภาพรวมสถิติและการจัดการระบบ" />
 
-{#if isLoading}
-	<div class="flex h-64 items-center justify-center">
-		<div class="space-y-4 text-center">
-			<div
-				class="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent"
-			></div>
-			<p class="text-sm text-muted-foreground">กำลังโหลดข้อมูล...</p>
-		</div>
-	</div>
-{:else}
-	<div class="space-y-4 lg:space-y-6">
-		<!-- Welcome Section -->
-		<div
-			class="rounded-lg bg-gradient-to-r from-primary/10 via-primary/5 to-transparent p-4 lg:p-6"
-		>
-			<div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-				<div class="min-w-0 flex-1">
-					<h2 class="admin-page-title mb-1 truncate">
-						<IconActivity class="size-6 text-primary" />
-						{greeting.greeting}
-					</h2>
-					<p class="text-sm text-muted-foreground lg:text-base">
-						{greeting.subtitle}
-						{#if isOrgAdmin && (data.admin_role as any)?.organization}
-							<span class="block sm:inline">- {(data.admin_role as any).organization.name}</span>
-						{/if}
-					</p>
-				</div>
-				<div class="flex-shrink-0">
-					<Badge variant={getAdminLevelBadgeVariant(data.admin_role?.admin_level)} class="text-xs">
-						{getAdminLevelText(data.admin_role?.admin_level)}
-					</Badge>
-				</div>
+<div class="space-y-4 lg:space-y-6">
+	<!-- Welcome Section -->
+	<div class="rounded-lg bg-gradient-to-r from-primary/10 via-primary/5 to-transparent p-4 lg:p-6">
+		<div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+			<div class="min-w-0 flex-1">
+				<h2 class="admin-page-title mb-1 truncate flex items-center gap-2">
+					<IconActivity class="size-6 text-primary" />
+					{greeting.greeting}
+				</h2>
+				<p class="text-sm text-muted-foreground lg:text-base">
+					{greeting.subtitle}
+				</p>
+			</div>
+			<div class="flex-shrink-0">
+				<Badge variant={getAdminLevelBadgeVariant(adminRole?.admin_level)} class="text-xs">
+					{getAdminLevelText(adminRole?.admin_level)}
+				</Badge>
 			</div>
 		</div>
+	</div>
 
-		<!-- Main Stats -->
-		<div class="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
-			{#each mainStats as stat}
-				<Card class="transition-shadow hover:shadow-sm">
-					<CardContent class="p-4 lg:p-6">
-						<div class="flex items-center justify-between">
-							<div class="min-w-0 flex-1">
-								<p class="mb-1 truncate text-xs font-medium text-muted-foreground lg:text-sm">
-									{stat.title}
-								</p>
-								<p class="text-lg font-bold text-foreground lg:text-2xl">
-									{(stat.value || 0).toLocaleString()}
-								</p>
-								{#if stat.trend}
-									<p
-										class="mt-1 flex items-center text-xs {stat.trendUp === true
-											? 'text-green-600'
-											: stat.trendUp === false
-												? 'text-red-600'
-												: 'text-muted-foreground'} hidden lg:flex"
-									>
-										<IconTrendingUp class="mr-1 h-3 w-3" />
-										{stat.trend}
-									</p>
-								{/if}
-							</div>
-							<div
-								class="ml-2 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-primary/10 lg:h-12 lg:w-12"
-							>
-								<stat.icon class="h-5 w-5 text-primary lg:h-6 lg:w-6" />
-							</div>
+	<!-- Main Stats -->
+	<div class="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
+		{#each mainStats as stat}
+			<Card class="transition-shadow hover:shadow-sm">
+				<CardContent class="p-4 lg:p-6">
+					<div class="flex items-center justify-between">
+						<div class="min-w-0 flex-1">
+							<p class="mb-1 truncate text-xs font-medium text-muted-foreground lg:text-sm">
+								{stat.title}
+							</p>
+							<p class="text-lg font-bold text-foreground lg:text-2xl">
+								{(stat.value || 0).toLocaleString()}
+							</p>
 						</div>
-					</CardContent>
-				</Card>
-			{/each}
-		</div>
-
-		<!-- Quick Actions -->
-		<div class="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-6">
-			<!-- Organization Info (for Org Admin) -->
-			{#if isOrgAdmin && (data.admin_role as any)?.organization}
-				<Card>
-					<CardHeader>
-						<CardTitle class="flex items-center gap-2">
-							<IconSchool class="h-5 w-5" />
-							ข้อมูลหน่วยงาน
-						</CardTitle>
-						<CardDescription>จัดการข้อมูลและสถิติของหน่วยงาน</CardDescription>
-					</CardHeader>
-					<CardContent class="space-y-4">
-						<div class="grid grid-cols-3 gap-4 text-center">
-							<div>
-								<p class="text-lg font-semibold">
-									{(data.admin_role as any).organization.name}
-								</p>
-								<p class="text-xs text-muted-foreground">ชื่อหน่วยงาน</p>
-							</div>
-							<div>
-								<p class="text-lg font-semibold text-primary">
-									{data.stats?.departments_count || 0}
-								</p>
-								<p class="text-xs text-muted-foreground">ภาควิชา</p>
-							</div>
-							<div>
-								<p class="text-lg font-semibold text-primary">
-									{data.stats?.organization_users || 0}
-								</p>
-								<p class="text-xs text-muted-foreground">ผู้ใช้ทั้งหมด</p>
-							</div>
+						<div class="ml-2 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-primary/10 lg:h-12 lg:w-12">
+							<stat.icon class="h-5 w-5 text-primary lg:h-6 lg:w-6" />
 						</div>
-						<div class="flex gap-2 pt-2">
-							<Button size="sm" class="flex-1">
-								<IconPlus class="mr-2 h-4 w-4" />
-								สร้างกิจกรรม
-							</Button>
-							<Button variant="outline" size="sm" class="flex-1">
-								<IconChartBar class="mr-2 h-4 w-4" />
-								รายงาน
-							</Button>
-						</div>
-					</CardContent>
-				</Card>
-			{/if}
-
-			<!-- Recent Activities -->
-			<Card>
-				<CardHeader>
-					<CardTitle class="flex items-center justify-between">
-						<span class="flex items-center gap-2">
-							<IconActivity class="h-5 w-5" />
-							กิจกรรมล่าสุด
-						</span>
-						<Button variant="ghost" size="sm">
-							ดูทั้งหมด
-							<IconArrowRight class="ml-1 h-4 w-4" />
-						</Button>
-					</CardTitle>
-				</CardHeader>
-				<CardContent>
-					{#if data.recentActivities && data.recentActivities.length > 0}
-						<div class="space-y-3">
-							{#each data.recentActivities.slice(0, 4) as activity}
-								<div
-									class="flex items-start gap-3 rounded-lg p-2 transition-colors hover:bg-muted/50"
-								>
-									<div
-										class="mt-1 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-primary/10"
-									>
-										<IconActivity class="h-4 w-4 text-primary" />
-									</div>
-									<div class="min-w-0 flex-1">
-										<p class="text-sm font-medium text-foreground">
-											{activity.title || activity.description || 'กิจกรรมในระบบ'}
-										</p>
-										{#if activity.user_name}
-											<p class="text-xs text-muted-foreground">
-												โดย {activity.user_name}
-												{#if activity.department_name}
-													- {activity.department_name}
-												{/if}
-											</p>
-										{/if}
-										<p class="text-xs text-muted-foreground">
-											{formatDateTime(activity.created_at)}
-										</p>
-									</div>
-								</div>
-							{/each}
-						</div>
-					{:else}
-						<div class="py-8 text-center">
-							<IconActivity class="mx-auto mb-2 h-8 w-8 text-muted-foreground" />
-							<p class="text-sm text-muted-foreground">ยังไม่มีกิจกรรมล่าสุด</p>
-						</div>
-					{/if}
+					</div>
 				</CardContent>
 			</Card>
-
-			<!-- Department Analytics (for Org Admin) -->
-			{#if isOrgAdmin && data.stats?.department_breakdown && data.stats.department_breakdown.length > 0}
-				<Card>
-					<CardHeader>
-						<CardTitle class="flex items-center gap-2">
-							<IconChartBar class="h-5 w-5" />
-							การกระจายผู้ใช้
-						</CardTitle>
-						<CardDescription>จำนวนผู้ใช้ในแต่ละภาควิชา</CardDescription>
-					</CardHeader>
-					<CardContent>
-						<div class="space-y-3">
-							{#each (data.stats.department_breakdown || []).slice(0, 4) as dept}
-								<div class="flex items-center justify-between">
-									<div class="flex-1">
-										<p class="truncate text-sm font-medium">
-											{dept.name || 'ไม่ระบุ'}
-										</p>
-									</div>
-									<div class="flex items-center gap-2">
-										<div class="h-2 w-20 rounded-full bg-muted">
-											<div
-												class="h-2 rounded-full bg-primary transition-all"
-												style="width: {Math.min(
-													(dept.user_count /
-														Math.max(
-															...(data.stats.department_breakdown || []).map(
-																(d: any) => d.user_count || 1
-															)
-														)) *
-														100,
-													100
-												)}%"
-											></div>
-										</div>
-										<span class="w-8 text-right text-sm font-semibold">
-											{dept.user_count || 0}
-										</span>
-									</div>
-								</div>
-							{/each}
-						</div>
-					</CardContent>
-				</Card>
-			{/if}
-
-			<!-- System Status (for Super Admin) -->
-			{#if !isOrgAdmin}
-				<Card>
-					<CardHeader>
-						<CardTitle class="flex items-center gap-2">
-							<IconTrendingUp class="h-5 w-5" />
-							สถานะระบบ
-						</CardTitle>
-						<CardDescription>ภาพรวมการทำงานของระบบ</CardDescription>
-					</CardHeader>
-					<CardContent>
-						<div class="space-y-4">
-							<div class="flex items-center justify-between">
-								<span class="text-sm">Uptime</span>
-								<span class="text-sm font-semibold text-green-600">99.9%</span>
-							</div>
-							<div class="flex items-center justify-between">
-								<span class="text-sm">กิจกรรมต่อชั่วโมง</span>
-								<span class="text-sm font-semibold">
-									{((data.stats?.recent_activities?.length || 0) / 24).toFixed(1)}
-								</span>
-							</div>
-							<div class="flex items-center justify-between">
-								<span class="text-sm">ผู้ใช้ใหม่วันนี้</span>
-								<span class="text-sm font-semibold text-primary">
-									{data.stats?.user_registrations_today || 0}
-								</span>
-							</div>
-						</div>
-					</CardContent>
-				</Card>
-			{/if}
-		</div>
+		{/each}
 	</div>
-{/if}
+
+	<!-- Quick Actions -->
+	<div class="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-6">
+		<!-- Recent Activities -->
+		<Card>
+			<CardHeader>
+				<CardTitle class="flex items-center justify-between">
+					<span class="flex items-center gap-2">
+						<IconActivity class="h-5 w-5" />
+						กิจกรรมล่าสุด
+					</span>
+					<Button variant="ghost" size="sm" href="/admin/activities">
+						ดูทั้งหมด
+						<IconArrowRight class="ml-1 h-4 w-4" />
+					</Button>
+				</CardTitle>
+			</CardHeader>
+			<CardContent>
+				{#if loading}
+					<div class="py-8 text-center">
+						<div class="mx-auto h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent"></div>
+					</div>
+				{:else if recentActivities.length > 0}
+					<div class="space-y-3">
+						{#each recentActivities.slice(0, 4) as activity}
+							<div class="flex items-start gap-3 rounded-lg p-2 transition-colors hover:bg-muted/50">
+								<div class="mt-1 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-primary/10">
+									<IconActivity class="h-4 w-4 text-primary" />
+								</div>
+								<div class="min-w-0 flex-1">
+									<p class="text-sm font-medium text-foreground">{activity.title}</p>
+									<p class="text-xs text-muted-foreground">{activity.organizer_name}</p>
+									<p class="text-xs text-muted-foreground">{formatDateTime(activity.created_at)}</p>
+								</div>
+							</div>
+						{/each}
+					</div>
+				{:else}
+					<div class="py-8 text-center">
+						<IconActivity class="mx-auto mb-2 h-8 w-8 text-muted-foreground" />
+						<p class="text-sm text-muted-foreground">ยังไม่มีกิจกรรมล่าสุด</p>
+					</div>
+				{/if}
+			</CardContent>
+		</Card>
+
+		<!-- System Status -->
+		{#if !isOrgAdmin}
+			<Card>
+				<CardHeader>
+					<CardTitle class="flex items-center gap-2">
+						<IconTrendingUp class="h-5 w-5" />
+						สถานะระบบ
+					</CardTitle>
+					<CardDescription>ภาพรวมการทำงานของระบบ</CardDescription>
+				</CardHeader>
+				<CardContent>
+					<div class="space-y-4">
+						<div class="flex items-center justify-between">
+							<span class="text-sm">Uptime</span>
+							<span class="text-sm font-semibold text-green-600">99.9%</span>
+						</div>
+						<div class="flex items-center justify-between">
+							<span class="text-sm">กิจกรรมล่าสุด</span>
+							<span class="text-sm font-semibold">{recentActivities.length}</span>
+						</div>
+					</div>
+				</CardContent>
+			</Card>
+		{/if}
+	</div>
+</div>

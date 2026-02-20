@@ -1,23 +1,26 @@
 use axum::{
-    routing::{get, post},
+    routing::{get, post, put},
     Router,
 };
 use sqlx::postgres::PgPoolOptions;
 use std::net::SocketAddr;
-use tower_http::trace::TraceLayer;
+use tower_http::{cors::CorsLayer, trace::TraceLayer};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
+use axum::http::{HeaderValue, Method, header};
 
-mod auth;
 mod models;
-mod activities;
-mod organizations; // New module
+mod modules;
+
+use modules::auth;
+use modules::activities;
+use modules::organizations;
+use modules::users;
+use modules::departments;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    // Load .env file
     dotenvy::dotenv().ok();
 
-    // Initialize tracing
     tracing_subscriber::registry()
         .with(tracing_subscriber::EnvFilter::new(
             std::env::var("RUST_LOG").unwrap_or_else(|_| "debug".into()),
@@ -25,17 +28,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .with(tracing_subscriber::fmt::layer())
         .init();
 
-    // Connect to database
     let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
     let pool = PgPoolOptions::new()
-        .max_connections(5)
+        .max_connections(10)
         .connect(&database_url)
         .await
         .expect("Failed to connect to database");
 
     tracing::info!("✅ Connected to database successfully!");
 
-    // Run migrations
     tracing::info!("🔄 Running migrations...");
     sqlx::migrate!("./migrations")
         .run(&pool)
@@ -43,21 +44,54 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .expect("Failed to run migrations");
     tracing::info!("✅ Migrations executed successfully!");
 
-    // Build our application routes
+    let allowed_origin = std::env::var("FRONTEND_URL")
+        .unwrap_or_else(|_| "http://localhost:5173".to_string());
+
+    let cors = CorsLayer::new()
+        .allow_origin(allowed_origin.parse::<HeaderValue>().expect("Invalid FRONTEND_URL"))
+        .allow_methods([Method::GET, Method::POST, Method::PUT, Method::DELETE, Method::PATCH, Method::OPTIONS])
+        .allow_headers([
+            header::CONTENT_TYPE,
+            header::AUTHORIZATION,
+            header::COOKIE,
+        ])
+        .allow_credentials(true);
+
     let app = Router::new()
         .route("/", get(|| async { "Trackivity Backend is running! 🚀" }))
+        // ─── Auth ─────────────────────────────────────────
         .route("/auth/login", post(auth::login_handler))
         .route("/auth/register", post(auth::register_handler))
+        .route("/auth/logout", post(auth::logout_handler))
+        .route("/auth/me", get(auth::me_handler))
+        // ─── Activities ───────────────────────────────────
         .route("/activities/dashboard", get(activities::get_dashboard_activities))
-        .route("/activities", post(activities::create_activity))
+        .route("/activities", get(activities::list_activities).post(activities::create_activity))
+        .route("/activities/:id", get(activities::get_activity).put(activities::update_activity).delete(activities::delete_activity))
         .route("/activities/:id/join", post(activities::join_activity))
-        .route("/organizations", get(organizations::get_all_organizations)) // New route
+        .route("/activities/my/participations", get(activities::get_my_participations))
+        // ─── Organizations ────────────────────────────────
+        .route("/organizations", get(organizations::get_all_organizations))
+        .route("/organizations/admin", get(organizations::list_all_organizations_admin).post(organizations::create_organization))
+        .route("/organizations/:id", put(organizations::update_organization).delete(organizations::delete_organization))
+        .route("/organizations/:id/toggle-status", post(organizations::toggle_organization_status))
+        .route("/organizations/:id/departments", get(organizations::get_departments))
+        // ─── Departments ──────────────────────────────────
+        .route("/departments", get(departments::list_departments).post(departments::create_department))
+        .route("/departments/:id", put(departments::update_department).delete(departments::delete_department))
+        .route("/departments/:id/toggle-status", post(departments::toggle_department_status))
+        // ─── Users ────────────────────────────────────────
+        .route("/users", get(users::list_users))
+        .route("/users/:id", get(users::get_user))
+        .route("/users/me/profile", put(users::update_profile))
+        .route("/users/me/password", post(users::change_password))
+        // ─── Middleware ───────────────────────────────────
+        .layer(cors)
         .layer(TraceLayer::new_for_http())
         .with_state(pool);
 
-    // Run it with hyper on localhost:3000
     let addr = SocketAddr::from(([0, 0, 0, 0], 3000));
-    tracing::debug!("Listening on {}", addr);
+    tracing::info!("🚀 Listening on {}", addr);
     let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
     axum::serve(listener, app).await.unwrap();
 

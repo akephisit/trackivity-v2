@@ -1,7 +1,7 @@
 <script lang="ts">
-	import { currentUser } from '$lib/stores/auth';
+	import { authStore } from '$lib/stores/auth.svelte';
 	import { useQRCode } from '$lib/qr/client';
-	import type { Activity, ActivityParticipation } from '$lib/types';
+	import type { Activity } from '$lib/api';
 	import { getActivityTypeDisplayName } from '$lib/utils/activity';
 
 	import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
@@ -25,7 +25,7 @@
 	// Component state
 	const {
 		recentActivities = [] as Activity[],
-		participationHistory = [] as ActivityParticipation[],
+		participationHistory = [] as any[],
 		stats = {
 			totalParticipations: 0,
 			thisMonthParticipations: 0,
@@ -33,7 +33,7 @@
 		}
 	} = $props<{
 		recentActivities: Activity[];
-		participationHistory: ActivityParticipation[];
+		participationHistory: any[];
 		stats: {
 			totalParticipations: number;
 			thisMonthParticipations: number;
@@ -84,16 +84,16 @@
 			<CardHeader>
 				<CardTitle class="flex items-center gap-2">
 					<IconUsers class="size-5" />
-					ยินดีต้อนรับ, {$currentUser?.first_name}!
+					ยินดีต้อนรับ, {authStore.user?.first_name}!
 				</CardTitle>
 			</CardHeader>
 			<CardContent>
 				<div class="space-y-2">
 					<p class="text-sm text-muted-foreground">
-						รหัสนักศึกษา: <span class="font-medium">{$currentUser?.student_id}</span>
+						รหัสนักศึกษา: <span class="font-medium">{authStore.user?.student_id}</span>
 					</p>
 					<p class="text-sm text-muted-foreground">
-						อีเมล: <span class="font-medium">{$currentUser?.email}</span>
+						อีเมล: <span class="font-medium">{authStore.user?.email}</span>
 					</p>
 					<div class="flex gap-2 pt-2">
 						<Button size="sm" href="/student/qr">

@@ -1,7 +1,8 @@
 <script lang="ts">
-	import { superForm } from 'sveltekit-superforms';
-	import { zodClient } from 'sveltekit-superforms/adapters';
-	import { loginSchema } from '$lib/schemas/auth';
+	import { auth, ApiError } from '$lib/api';
+	import { authStore } from '$lib/stores/auth.svelte';
+	import { goto } from '$app/navigation';
+	import { page } from '$app/stores';
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
@@ -12,7 +13,6 @@
 		CardHeader,
 		CardTitle
 	} from '$lib/components/ui/card';
-	import * as Form from '$lib/components/ui/form';
 	import { Checkbox } from '$lib/components/ui/checkbox';
 	import {
 		IconLoader,
@@ -22,29 +22,49 @@
 		IconSchool
 	} from '@tabler/icons-svelte/icons';
 	import { toast } from 'svelte-sonner';
-
-	let { data } = $props();
-
-	const form = superForm(data.form, {
-		validators: zodClient(loginSchema),
-		onResult: ({ result }) => {
-			if (result.type === 'failure') {
-				const message = (result as any)?.data?.message || 'เข้าสู่ระบบไม่สำเร็จ';
-				toast.error(message);
-			} else if (result.type === 'redirect') {
-				toast.success('เข้าสู่ระบบสำเร็จ');
-			}
-		}
-	});
-
-	const { form: formData, enhance, submitting } = form;
-
-	let showPassword = $state(false);
-
-	function togglePasswordVisibility() {
-		showPassword = !showPassword;
-	}
 	import MetaTags from '$lib/components/seo/MetaTags.svelte';
+
+	let studentId = $state('');
+	let password = $state('');
+	let rememberMe = $state(false);
+	let showPassword = $state(false);
+	let submitting = $state(false);
+
+	async function handleSubmit(e: Event) {
+		e.preventDefault();
+		if (submitting) return;
+		submitting = true;
+
+		try {
+			const result = await auth.login({
+				student_id: studentId.includes('@') ? undefined : studentId,
+				email: studentId.includes('@') ? studentId : undefined,
+				password,
+				remember_me: rememberMe
+			});
+
+			authStore.setUser(result.user);
+			toast.success('เข้าสู่ระบบสำเร็จ');
+
+			const redirectTo = $page.url.searchParams.get('redirectTo');
+			const destination = redirectTo || (result.user.admin_role ? '/admin' : '/student');
+			await goto(destination);
+		} catch (err) {
+			if (err instanceof ApiError) {
+				if (err.status === 401) {
+					toast.error('รหัสนักศึกษาหรือรหัสผ่านไม่ถูกต้อง');
+				} else if (err.status === 403) {
+					toast.error('บัญชีนี้ถูกระงับการใช้งาน กรุณาติดต่อผู้ดูแล');
+				} else {
+					toast.error(err.message || 'เกิดข้อผิดพลาด กรุณาลองใหม่');
+				}
+			} else {
+				toast.error('เกิดข้อผิดพลาดในการเชื่อมต่อ กรุณาลองใหม่');
+			}
+		} finally {
+			submitting = false;
+		}
+	}
 </script>
 
 <MetaTags title="เข้าสู่ระบบ" description="เข้าสู่ระบบสำหรับนักศึกษา" />
@@ -72,74 +92,55 @@
 				<CardDescription class="text-center">สำหรับนักเรียนและผู้เข้าร่วมกิจกรรม</CardDescription>
 			</CardHeader>
 			<CardContent class="space-y-4">
-				<form method="POST" use:enhance class="space-y-4">
-					<Form.Field {form} name="student_id">
-						<Form.Control>
-							{#snippet children({ props })}
-								<Label for={props.id}>รหัสนักศึกษา</Label>
-								<Input
-									{...props}
-									type="text"
-									bind:value={$formData.student_id}
-									placeholder="64123456789"
-									disabled={$submitting}
-									class="w-full"
-									maxlength={12}
-								/>
-							{/snippet}
-						</Form.Control>
-						<Form.FieldErrors />
-					</Form.Field>
+				<form onsubmit={handleSubmit} class="space-y-4">
+					<div class="space-y-2">
+						<Label for="student_id">รหัสนักศึกษา</Label>
+						<Input
+							id="student_id"
+							type="text"
+							bind:value={studentId}
+							placeholder="64123456789"
+							disabled={submitting}
+							class="w-full"
+							maxlength={12}
+							required
+						/>
+					</div>
 
-					<Form.Field {form} name="password">
-						<Form.Control>
-							{#snippet children({ props })}
-								<Label for={props.id}>รหัสผ่าน</Label>
-								<div class="relative">
-									<Input
-										{...props}
-										type={showPassword ? 'text' : 'password'}
-										bind:value={$formData.password}
-										placeholder="รหัสผ่านของคุณ"
-										disabled={$submitting}
-										class="w-full pr-10"
-									/>
-									<button
-										type="button"
-										onclick={togglePasswordVisibility}
-										class="absolute inset-y-0 right-0 flex items-center pr-3"
-										tabindex="-1"
-									>
-										{#if showPassword}
-											<IconEyeOff class="h-4 w-4 text-gray-400" />
-										{:else}
-											<IconEye class="h-4 w-4 text-gray-400" />
-										{/if}
-									</button>
-								</div>
-							{/snippet}
-						</Form.Control>
-						<Form.FieldErrors />
-					</Form.Field>
+					<div class="space-y-2">
+						<Label for="password">รหัสผ่าน</Label>
+						<div class="relative">
+							<Input
+								id="password"
+								type={showPassword ? 'text' : 'password'}
+								bind:value={password}
+								placeholder="รหัสผ่านของคุณ"
+								disabled={submitting}
+								class="w-full pr-10"
+								required
+							/>
+							<button
+								type="button"
+								onclick={() => (showPassword = !showPassword)}
+								class="absolute inset-y-0 right-0 flex items-center pr-3"
+								tabindex="-1"
+							>
+								{#if showPassword}
+									<IconEyeOff class="h-4 w-4 text-gray-400" />
+								{:else}
+									<IconEye class="h-4 w-4 text-gray-400" />
+								{/if}
+							</button>
+						</div>
+					</div>
 
-					<Form.Field {form} name="remember_me">
-						<Form.Control>
-							{#snippet children({ props })}
-								<div class="flex items-center space-x-2">
-									<Checkbox
-										{...props}
-										bind:checked={$formData.remember_me}
-										disabled={$submitting}
-									/>
-									<Label for={props.id} class="text-sm">จดจำการเข้าสู่ระบบ (30 วัน)</Label>
-								</div>
-							{/snippet}
-						</Form.Control>
-						<Form.FieldErrors />
-					</Form.Field>
+					<div class="flex items-center space-x-2">
+						<Checkbox id="remember_me" bind:checked={rememberMe} disabled={submitting} />
+						<Label for="remember_me" class="text-sm">จดจำการเข้าสู่ระบบ (30 วัน)</Label>
+					</div>
 
-					<Button type="submit" class="w-full" disabled={$submitting}>
-						{#if $submitting}
+					<Button type="submit" class="w-full" disabled={submitting}>
+						{#if submitting}
 							<IconLoader class="mr-2 h-4 w-4 animate-spin" />
 							กำลังเข้าสู่ระบบ...
 						{:else}

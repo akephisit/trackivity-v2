@@ -1,7 +1,6 @@
 <script lang="ts">
-	import { superForm } from 'sveltekit-superforms';
-	import { zodClient } from 'sveltekit-superforms/adapters';
-	import { registerSchema } from '$lib/schemas/auth';
+	import { auth as authApi, organizationsApi, ApiError } from '$lib/api';
+	import type { Organization, Department } from '$lib/api';
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
@@ -13,7 +12,6 @@
 		CardTitle
 	} from '$lib/components/ui/card';
 	import { Alert, AlertDescription } from '$lib/components/ui/alert';
-	import * as Form from '$lib/components/ui/form';
 	import * as Select from '$lib/components/ui/select';
 	import {
 		IconLoader,
@@ -23,75 +21,77 @@
 		IconMail,
 		IconLock,
 		IconAlertTriangle,
-		IconWifi,
-		IconWifiOff
 	} from '@tabler/icons-svelte/icons';
 	import { toast } from 'svelte-sonner';
-	import type { Department } from '$lib/types/admin';
-	import { BasicPrefixOptions } from '$lib/schemas/auth';
 	import MetaTags from '$lib/components/seo/MetaTags.svelte';
+	import { goto } from '$app/navigation';
+	import { onMount } from 'svelte';
 
-	let { data } = $props();
-
-	const form = superForm(data.form, {
-		validators: zodClient(registerSchema),
-		onResult: ({ result }) => {
-			if (result.type === 'failure') {
-				toast.error('การสมัครสมาชิกไม่สำเร็จ');
-			} else if (result.type === 'redirect') {
-				toast.success('สมัครสมาชิกสำเร็จ กรุณาเข้าสู่ระบบ');
-			}
-		}
+	// ─── Form State ──────────────────────────────────────────────────────────
+	let formData = $state({
+		student_id: '',
+		email: '',
+		password: '',
+		confirmPassword: '',
+		prefix: '',
+		first_name: '',
+		last_name: '',
+		phone: '',
+		organization_id: '',
+		department_id: '',
 	});
 
-	const { form: formData, enhance, errors, submitting } = form;
+	let errors = $state<Record<string, string>>({});
+	let submitting = $state(false);
+	let globalError = $state('');
 
+	// ─── UI State ────────────────────────────────────────────────────────────
 	let showPassword = $state(false);
 	let showConfirmPassword = $state(false);
-
-	// Organization and Department selection state variables
 	let selectedFaculty = $state('');
 	let selectedDepartment = $state('');
 	let departments = $state<Department[]>([]);
 	let loadingDepartments = $state(false);
+	let organizations = $state<Organization[]>([]);
+	let loadingOrgs = $state(true);
 
-	function togglePasswordVisibility() {
-		showPassword = !showPassword;
-	}
+	const prefixOptions = [
+		{ value: 'นาย', label: 'นาย' },
+		{ value: 'นางสาว', label: 'นางสาว' },
+		{ value: 'นาง', label: 'นาง' },
+	];
 
-	function toggleConfirmPasswordVisibility() {
-		showConfirmPassword = !showConfirmPassword;
-	}
-
-	// Organization options for registration
+	// Organization options
 	let facultyOptions = $derived(
-		(data.organizations || []).map((org: any) => ({
-			value: org.id,
-			label: org.name
-		}))
+		organizations.map((org) => ({ value: org.id, label: org.name }))
 	);
 
-	// Department options based on selected faculty
 	let departmentOptions = $derived(
-		departments.map((dept) => ({
-			value: dept.id,
-			label: dept.name
-		}))
+		departments.map((dept) => ({ value: dept.id, label: dept.name }))
 	);
+
+	onMount(async () => {
+		try {
+			const result = await organizationsApi.list();
+			organizations = result.all;
+		} catch (e) {
+			console.error('Failed to load organizations:', e);
+		} finally {
+			loadingOrgs = false;
+		}
+	});
 
 	// Handle faculty selection
 	$effect(() => {
 		if (selectedFaculty && selectedFaculty.trim() !== '') {
-			$formData.organization_id = selectedFaculty;
-			// Reset department when faculty changes
+			formData.organization_id = selectedFaculty;
 			selectedDepartment = '';
-			$formData.department_id = '';
-			// Load departments for selected faculty
+			formData.department_id = '';
 			loadDepartments(selectedFaculty);
 		} else {
-			$formData.organization_id = '';
+			formData.organization_id = '';
 			selectedDepartment = '';
-			$formData.department_id = '';
+			formData.department_id = '';
 			departments = [];
 		}
 	});
@@ -99,34 +99,82 @@
 	// Handle department selection
 	$effect(() => {
 		if (selectedDepartment && selectedDepartment.trim() !== '') {
-			$formData.department_id = selectedDepartment;
+			formData.department_id = selectedDepartment;
 		} else {
-			$formData.department_id = '';
+			formData.department_id = '';
 		}
 	});
 
-	// Load departments based on organization selection
 	async function loadDepartments(facultyId: string) {
-		if (!facultyId) {
-			departments = [];
-			return;
-		}
-
+		if (!facultyId) { departments = []; return; }
 		loadingDepartments = true;
 		try {
-			const response = await fetch(`/api/organizations/${facultyId}/departments/public`);
-			if (response.ok) {
-				const result = await response.json();
-				departments = result.data || [];
-			} else {
-				console.warn('Failed to load departments:', response.status);
-				departments = [];
-			}
-		} catch (error) {
-			console.error('Error loading departments:', error);
+			departments = await organizationsApi.departments(facultyId);
+		} catch (e) {
+			console.warn('Failed to load departments:', e);
 			departments = [];
 		} finally {
 			loadingDepartments = false;
+		}
+	}
+
+	function validate(): boolean {
+		const newErrors: Record<string, string> = {};
+
+		if (!formData.prefix) newErrors.prefix = 'กรุณาเลือกคำนำหน้า';
+		if (!formData.first_name.trim()) newErrors.first_name = 'กรุณากรอกชื่อจริง';
+		if (!formData.last_name.trim()) newErrors.last_name = 'กรุณากรอกนามสกุล';
+		if (!formData.student_id.trim()) newErrors.student_id = 'กรุณากรอกรหัสนักศึกษา';
+		if (!formData.email.trim()) newErrors.email = 'กรุณากรอกอีเมล';
+		else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) newErrors.email = 'อีเมลไม่ถูกต้อง';
+		if (!formData.password) newErrors.password = 'กรุณากรอกรหัสผ่าน';
+		else if (formData.password.length < 6) newErrors.password = 'รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร';
+		else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(formData.password)) {
+			newErrors.password = 'ต้องมีตัวพิมพ์เล็ก พิมพ์ใหญ่ และตัวเลข';
+		}
+		if (formData.password !== formData.confirmPassword) {
+			newErrors.confirmPassword = 'รหัสผ่านไม่ตรงกัน';
+		}
+		if (!formData.organization_id) newErrors.organization_id = 'กรุณาเลือกหน่วยงาน';
+
+		errors = newErrors;
+		return Object.keys(newErrors).length === 0;
+	}
+
+	async function handleSubmit(e: Event) {
+		e.preventDefault();
+		globalError = '';
+
+		if (!validate()) return;
+
+		submitting = true;
+		try {
+			await authApi.register({
+				student_id: formData.student_id,
+				email: formData.email,
+				password: formData.password,
+				prefix: formData.prefix,
+				first_name: formData.first_name,
+				last_name: formData.last_name,
+				phone: formData.phone || undefined,
+				organization_id: formData.organization_id || undefined,
+				department_id: formData.department_id || undefined,
+			});
+			toast.success('สมัครสมาชิกสำเร็จ กรุณาเข้าสู่ระบบ');
+			goto('/login');
+		} catch (e) {
+			if (e instanceof ApiError) {
+				if (e.status === 409) {
+					globalError = 'รหัสนักศึกษาหรืออีเมลนี้มีอยู่ในระบบแล้ว';
+				} else {
+					globalError = e.message || 'เกิดข้อผิดพลาดในการสมัครสมาชิก';
+				}
+			} else {
+				globalError = 'เกิดข้อผิดพลาดในการเชื่อมต่อ';
+			}
+			toast.error(globalError);
+		} finally {
+			submitting = false;
 		}
 	}
 </script>
@@ -167,278 +215,216 @@
 
 				<Card class="w-full shadow-lg">
 					<CardContent class="space-y-4 p-6 lg:p-8">
-						<form method="POST" use:enhance class="space-y-4">
-							{#if $errors._errors}
+						<form onsubmit={handleSubmit} class="space-y-4">
+							{#if globalError}
 								<Alert variant="destructive">
 									<IconAlertTriangle class="h-4 w-4" />
 									<AlertDescription>
 										<div class="space-y-2">
 											<p class="font-medium">เกิดข้อผิดพลาดในการสมัครสมาชิก</p>
-											<p class="text-sm">{$errors._errors[0]}</p>
+											<p class="text-sm">{globalError}</p>
 										</div>
 									</AlertDescription>
 								</Alert>
 							{/if}
 
 							<!-- คำนำหน้า -->
-							<Form.Field {form} name="prefix">
-								<Form.Control>
-									{#snippet children({ props })}
-										<Label for={props.id} class="flex items-center gap-2">
-											<IconUser class="h-4 w-4" />
-											คำนำหน้า
-										</Label>
-										<Select.Root type="single" bind:value={$formData.prefix} disabled={$submitting}>
-											<Select.Trigger class="w-full">
-												{BasicPrefixOptions.find((opt) => opt.value === $formData.prefix)?.label ??
-													'เลือกคำนำหน้า'}
-											</Select.Trigger>
-											<Select.Content>
-												{#each BasicPrefixOptions as option}
-													<Select.Item value={option.value}>
-														{option.label}
-													</Select.Item>
-												{/each}
-											</Select.Content>
-										</Select.Root>
-										<input type="hidden" {...props} bind:value={$formData.prefix} />
-									{/snippet}
-								</Form.Control>
-								<Form.FieldErrors />
-							</Form.Field>
-
-							<!-- ชื่อจริงและนามสกุล - 2 คอลัมน์ -->
-							<div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
-								<Form.Field {form} name="first_name">
-									<Form.Control>
-										{#snippet children({ props })}
-											<Label for={props.id} class="flex items-center gap-2">
-												<IconUser class="h-4 w-4" />
-												ชื่อจริง
-											</Label>
-											<Input
-												{...props}
-												type="text"
-												bind:value={$formData.first_name}
-												placeholder="ชื่อจริงของคุณ"
-												disabled={$submitting}
-												class="w-full"
-											/>
-										{/snippet}
-									</Form.Control>
-									<Form.FieldErrors />
-								</Form.Field>
-
-								<Form.Field {form} name="last_name">
-									<Form.Control>
-										{#snippet children({ props })}
-											<Label for={props.id} class="flex items-center gap-2">
-												<IconUser class="h-4 w-4" />
-												นามสกุล
-											</Label>
-											<Input
-												{...props}
-												type="text"
-												bind:value={$formData.last_name}
-												placeholder="นามสกุลของคุณ"
-												disabled={$submitting}
-												class="w-full"
-											/>
-										{/snippet}
-									</Form.Control>
-									<Form.FieldErrors />
-								</Form.Field>
+							<div class="space-y-1">
+								<Label for="prefix" class="flex items-center gap-2">
+									<IconUser class="h-4 w-4" />
+									คำนำหน้า
+								</Label>
+								<Select.Root type="single" bind:value={formData.prefix} disabled={submitting}>
+									<Select.Trigger id="prefix" class="w-full">
+										{prefixOptions.find((o) => o.value === formData.prefix)?.label ?? 'เลือกคำนำหน้า'}
+									</Select.Trigger>
+									<Select.Content>
+										{#each prefixOptions as option}
+											<Select.Item value={option.value}>{option.label}</Select.Item>
+										{/each}
+									</Select.Content>
+								</Select.Root>
+								{#if errors.prefix}<p class="text-sm text-destructive">{errors.prefix}</p>{/if}
 							</div>
 
-							<!-- รหัสนักศึกษาและอีเมล - 2 คอลัมน์ -->
+							<!-- ชื่อจริงและนามสกุล -->
 							<div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
-								<!-- รหัสนักศึกษา -->
-								<Form.Field {form} name="student_id">
-									<Form.Control>
-										{#snippet children({ props })}
-											<Label for={props.id} class="flex items-center gap-2">
-												<IconUser class="h-4 w-4" />
-												รหัสนักศึกษา
-											</Label>
-											<Input
-												{...props}
-												type="text"
-												bind:value={$formData.student_id}
-												placeholder="64123456789"
-												disabled={$submitting}
-												class="w-full"
-												maxlength={12}
-											/>
-										{/snippet}
-									</Form.Control>
-									<Form.FieldErrors />
-								</Form.Field>
-
-								<!-- อีเมล -->
-								<Form.Field {form} name="email">
-									<Form.Control>
-										{#snippet children({ props })}
-											<Label for={props.id} class="flex items-center gap-2">
-												<IconMail class="h-4 w-4" />
-												อีเมล
-											</Label>
-											<Input
-												{...props}
-												type="email"
-												bind:value={$formData.email}
-												placeholder="your@email.com"
-												disabled={$submitting}
-												class="w-full"
-											/>
-										{/snippet}
-									</Form.Control>
-									<Form.FieldErrors />
-								</Form.Field>
+								<div class="space-y-1">
+									<Label for="first_name" class="flex items-center gap-2">
+										<IconUser class="h-4 w-4" />
+										ชื่อจริง
+									</Label>
+									<Input
+										id="first_name"
+										type="text"
+										bind:value={formData.first_name}
+										placeholder="ชื่อจริงของคุณ"
+										disabled={submitting}
+									/>
+									{#if errors.first_name}<p class="text-sm text-destructive">{errors.first_name}</p>{/if}
+								</div>
+								<div class="space-y-1">
+									<Label for="last_name" class="flex items-center gap-2">
+										<IconUser class="h-4 w-4" />
+										นามสกุล
+									</Label>
+									<Input
+										id="last_name"
+										type="text"
+										bind:value={formData.last_name}
+										placeholder="นามสกุลของคุณ"
+										disabled={submitting}
+									/>
+									{#if errors.last_name}<p class="text-sm text-destructive">{errors.last_name}</p>{/if}
+								</div>
 							</div>
 
-							<!-- รหัสผ่านและยืนยันรหัสผ่าน - 2 คอลัมน์ -->
+							<!-- รหัสนักศึกษาและอีเมล -->
 							<div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
-								<Form.Field {form} name="password">
-									<Form.Control>
-										{#snippet children({ props })}
-											<Label for={props.id} class="flex items-center gap-2">
-												<IconLock class="h-4 w-4" />
-												รหัสผ่าน
-											</Label>
-											<div class="relative">
-												<Input
-													{...props}
-													type={showPassword ? 'text' : 'password'}
-													bind:value={$formData.password}
-													placeholder="รหัสผ่านของคุณ"
-													disabled={$submitting}
-													class="w-full pr-10"
-												/>
-												<button
-													type="button"
-													onclick={togglePasswordVisibility}
-													class="absolute inset-y-0 right-0 flex items-center pr-3"
-													tabindex="-1"
-												>
-													{#if showPassword}
-														<IconEyeOff class="h-4 w-4 text-gray-400" />
-													{:else}
-														<IconEye class="h-4 w-4 text-gray-400" />
-													{/if}
-												</button>
-											</div>
-										{/snippet}
-									</Form.Control>
-									<Form.FieldErrors />
-								</Form.Field>
-
-								<Form.Field {form} name="confirmPassword">
-									<Form.Control>
-										{#snippet children({ props })}
-											<Label for={props.id} class="flex items-center gap-2">
-												<IconLock class="h-4 w-4" />
-												ยืนยันรหัสผ่าน
-											</Label>
-											<div class="relative">
-												<Input
-													{...props}
-													type={showConfirmPassword ? 'text' : 'password'}
-													bind:value={$formData.confirmPassword}
-													placeholder="ยืนยันรหัสผ่านของคุณ"
-													disabled={$submitting}
-													class="w-full pr-10"
-												/>
-												<button
-													type="button"
-													onclick={toggleConfirmPasswordVisibility}
-													class="absolute inset-y-0 right-0 flex items-center pr-3"
-													tabindex="-1"
-												>
-													{#if showConfirmPassword}
-														<IconEyeOff class="h-4 w-4 text-gray-400" />
-													{:else}
-														<IconEye class="h-4 w-4 text-gray-400" />
-													{/if}
-												</button>
-											</div>
-										{/snippet}
-									</Form.Control>
-									<Form.FieldErrors />
-								</Form.Field>
+								<div class="space-y-1">
+									<Label for="student_id" class="flex items-center gap-2">
+										<IconUser class="h-4 w-4" />
+										รหัสนักศึกษา
+									</Label>
+									<Input
+										id="student_id"
+										type="text"
+										bind:value={formData.student_id}
+										placeholder="64123456789"
+										disabled={submitting}
+										maxlength={12}
+									/>
+									{#if errors.student_id}<p class="text-sm text-destructive">{errors.student_id}</p>{/if}
+								</div>
+								<div class="space-y-1">
+									<Label for="email" class="flex items-center gap-2">
+										<IconMail class="h-4 w-4" />
+										อีเมล
+									</Label>
+									<Input
+										id="email"
+										type="email"
+										bind:value={formData.email}
+										placeholder="your@email.com"
+										disabled={submitting}
+									/>
+									{#if errors.email}<p class="text-sm text-destructive">{errors.email}</p>{/if}
+								</div>
 							</div>
 
-							<!-- หน่วยงานและสาขาวิชา - 2 คอลัมน์ -->
+							<!-- รหัสผ่าน -->
 							<div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
-								<!-- หน่วยงาน -->
-								<Form.Field {form} name="organization_id">
-									<Form.Control>
-										{#snippet children({ props })}
-											<Label for={props.id} class="flex items-center gap-2">
-												<IconUser class="h-4 w-4" />
-												หน่วยงาน
-											</Label>
-											<Select.Root
-												type="single"
-												bind:value={selectedFaculty}
-												disabled={$submitting}
-											>
-												<Select.Trigger class="w-full">
-													{facultyOptions.find((opt) => opt.value.toString() === selectedFaculty)
-														?.label ?? 'เลือกหน่วยงาน'}
-												</Select.Trigger>
-												<Select.Content>
-													{#each facultyOptions as option}
-														<Select.Item value={option.value.toString()} label={option.label}>
-															{option.label}
-														</Select.Item>
-													{/each}
-												</Select.Content>
-											</Select.Root>
-											<input type="hidden" {...props} bind:value={$formData.organization_id} />
-										{/snippet}
-									</Form.Control>
-									<Form.FieldErrors />
-								</Form.Field>
+								<div class="space-y-1">
+									<Label for="password" class="flex items-center gap-2">
+										<IconLock class="h-4 w-4" />
+										รหัสผ่าน
+									</Label>
+									<div class="relative">
+										<Input
+											id="password"
+											type={showPassword ? 'text' : 'password'}
+											bind:value={formData.password}
+											placeholder="รหัสผ่านของคุณ"
+											disabled={submitting}
+											class="pr-10"
+										/>
+										<button
+											type="button"
+											onclick={() => showPassword = !showPassword}
+											class="absolute inset-y-0 right-0 flex items-center pr-3"
+											tabindex="-1"
+										>
+											{#if showPassword}
+												<IconEyeOff class="h-4 w-4 text-gray-400" />
+											{:else}
+												<IconEye class="h-4 w-4 text-gray-400" />
+											{/if}
+										</button>
+									</div>
+									{#if errors.password}<p class="text-sm text-destructive">{errors.password}</p>{/if}
+								</div>
+								<div class="space-y-1">
+									<Label for="confirm_password" class="flex items-center gap-2">
+										<IconLock class="h-4 w-4" />
+										ยืนยันรหัสผ่าน
+									</Label>
+									<div class="relative">
+										<Input
+											id="confirm_password"
+											type={showConfirmPassword ? 'text' : 'password'}
+											bind:value={formData.confirmPassword}
+											placeholder="ยืนยันรหัสผ่านของคุณ"
+											disabled={submitting}
+											class="pr-10"
+										/>
+										<button
+											type="button"
+											onclick={() => showConfirmPassword = !showConfirmPassword}
+											class="absolute inset-y-0 right-0 flex items-center pr-3"
+											tabindex="-1"
+										>
+											{#if showConfirmPassword}
+												<IconEyeOff class="h-4 w-4 text-gray-400" />
+											{:else}
+												<IconEye class="h-4 w-4 text-gray-400" />
+											{/if}
+										</button>
+									</div>
+									{#if errors.confirmPassword}<p class="text-sm text-destructive">{errors.confirmPassword}</p>{/if}
+								</div>
+							</div>
 
-								<!-- สาขาวิชา -->
-								<Form.Field {form} name="department_id">
-									<Form.Control>
-										{#snippet children({ props })}
-											<Label for={props.id} class="flex items-center gap-2">
-												<IconUser class="h-4 w-4" />
-												สาขาวิชา
-											</Label>
-											<Select.Root
-												type="single"
-												bind:value={selectedDepartment}
-												disabled={$submitting || loadingDepartments || !selectedFaculty}
-											>
-												<Select.Trigger class="w-full">
-													{#if loadingDepartments}
-														กำลังโหลด...
-													{:else if !selectedFaculty}
-														เลือกหน่วยงานก่อน
-													{:else if departmentOptions.length === 0}
-														ไม่มีสาขาวิชา
-													{:else}
-														{departmentOptions.find(
-															(opt) => opt.value.toString() === selectedDepartment
-														)?.label ?? 'เลือกสาขาวิชา'}
-													{/if}
-												</Select.Trigger>
-												<Select.Content>
-													{#each departmentOptions as option}
-														<Select.Item value={option.value.toString()} label={option.label}>
-															{option.label}
-														</Select.Item>
-													{/each}
-												</Select.Content>
-											</Select.Root>
-											<input type="hidden" {...props} bind:value={$formData.department_id} />
-										{/snippet}
-									</Form.Control>
-									<Form.FieldErrors />
-								</Form.Field>
+							<!-- หน่วยงานและสาขาวิชา -->
+							<div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
+								<div class="space-y-1">
+									<Label for="faculty" class="flex items-center gap-2">
+										<IconUser class="h-4 w-4" />
+										หน่วยงาน
+									</Label>
+									<Select.Root type="single" bind:value={selectedFaculty} disabled={submitting || loadingOrgs}>
+										<Select.Trigger id="faculty" class="w-full">
+											{#if loadingOrgs}
+												กำลังโหลด...
+											{:else}
+												{facultyOptions.find((o) => o.value === selectedFaculty)?.label ?? 'เลือกหน่วยงาน'}
+											{/if}
+										</Select.Trigger>
+										<Select.Content>
+											{#each facultyOptions as option}
+												<Select.Item value={option.value}>{option.label}</Select.Item>
+											{/each}
+										</Select.Content>
+									</Select.Root>
+									{#if errors.organization_id}<p class="text-sm text-destructive">{errors.organization_id}</p>{/if}
+								</div>
+								<div class="space-y-1">
+									<Label for="department" class="flex items-center gap-2">
+										<IconUser class="h-4 w-4" />
+										สาขาวิชา
+									</Label>
+									<Select.Root
+										type="single"
+										bind:value={selectedDepartment}
+										disabled={submitting || loadingDepartments || !selectedFaculty}
+									>
+										<Select.Trigger id="department" class="w-full">
+											{#if loadingDepartments}
+												กำลังโหลด...
+											{:else if !selectedFaculty}
+												เลือกหน่วยงานก่อน
+											{:else if departmentOptions.length === 0}
+												ไม่มีสาขาวิชา
+											{:else}
+												{departmentOptions.find((o) => o.value === selectedDepartment)?.label ?? 'เลือกสาขาวิชา'}
+											{/if}
+										</Select.Trigger>
+										<Select.Content>
+											{#each departmentOptions as option}
+												<Select.Item value={option.value}>{option.label}</Select.Item>
+											{/each}
+										</Select.Content>
+									</Select.Root>
+								</div>
 							</div>
 
 							<div
@@ -446,24 +432,19 @@
 							>
 								<p class="mb-1 font-medium">หมายเหตุ:</p>
 								<div class="grid grid-cols-1 gap-2 lg:grid-cols-2">
-									<div>
-										<ul class="list-inside list-disc space-y-1">
-											<li>รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร</li>
-											<li>ต้องมีตัวพิมพ์เล็ก พิมพ์ใหญ่ และตัวเลข</li>
-										</ul>
-									</div>
-									<div>
-										<ul class="list-inside list-disc space-y-1">
-											<li>เลือกหน่วยงานก่อนเพื่อดูรายการสาขาวิชา</li>
-											<li>หน่วยงานและสาขาวิชาเป็นข้อมูลที่จำเป็น</li>
-											<li>สามารถแก้ไขข้อมูลได้ภายหลัง</li>
-										</ul>
-									</div>
+									<ul class="list-inside list-disc space-y-1">
+										<li>รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร</li>
+										<li>ต้องมีตัวพิมพ์เล็ก พิมพ์ใหญ่ และตัวเลข</li>
+									</ul>
+									<ul class="list-inside list-disc space-y-1">
+										<li>เลือกหน่วยงานก่อนเพื่อดูรายการสาขาวิชา</li>
+										<li>หน่วยงานเป็นข้อมูลที่จำเป็น</li>
+									</ul>
 								</div>
 							</div>
 
-							<Button type="submit" class="w-full" disabled={$submitting}>
-								{#if $submitting}
+							<Button type="submit" class="w-full" disabled={submitting}>
+								{#if submitting}
 									<IconLoader class="mr-2 h-4 w-4 animate-spin" />
 									กำลังสมัครสมาชิก...
 								{:else}
@@ -484,7 +465,7 @@
 				</Card>
 
 				<div class="mt-6 text-center text-xs text-gray-500 dark:text-gray-400">
-					<p>© 2025 Admin Management System. All rights reserved.</p>
+					<p>© 2025 Trackivity. All rights reserved.</p>
 				</div>
 			</div>
 		</div>
@@ -499,28 +480,21 @@
 		background-color: rgb(17 24 39);
 	}
 
-	/* Ensure proper scrolling on mobile */
 	@media (max-width: 768px) {
 		:global(html, body) {
 			overflow-x: hidden;
 			overflow-y: auto;
 			height: 100%;
 		}
-
-		/* Optimize form scrolling on mobile */
 		.register-container {
 			max-height: 100vh;
 			overflow-y: auto;
 			-webkit-overflow-scrolling: touch;
 		}
-
-		/* Better spacing for mobile */
 		.mobile-spacing {
 			padding-top: 2rem;
 			padding-bottom: 2rem;
 		}
-
-		/* Prevent zoom on form inputs */
 		:global(input, select, textarea) {
 			font-size: 16px;
 		}
