@@ -1,6 +1,4 @@
 <script lang="ts">
-	import { superForm } from 'sveltekit-superforms';
-	import { zodClient } from 'sveltekit-superforms/adapters';
 	import { z } from 'zod';
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
@@ -13,7 +11,6 @@
 		CardTitle
 	} from '$lib/components/ui/card';
 	import { Alert, AlertDescription } from '$lib/components/ui/alert';
-	import * as Form from '$lib/components/ui/form';
 	import * as Dialog from '$lib/components/ui/dialog';
 	import * as AlertDialog from '$lib/components/ui/alert-dialog';
 	import * as Table from '$lib/components/ui/table';
@@ -39,56 +36,82 @@
 		IconBuilding
 	} from '@tabler/icons-svelte/icons';
 	import { toast } from 'svelte-sonner';
-	import { invalidateAll, invalidate } from '$app/navigation';
 	import type { ExtendedAdminRole } from '$lib/types/admin';
 	import { AdminLevel, ADMIN_PERMISSIONS } from '$lib/types/admin';
 	import { PrefixOptions } from '$lib/schemas/auth';
+	import { onMount } from 'svelte';
+	import { authStore } from '$lib/stores/auth.svelte';
 
-	let { data } = $props();
+	// CSR state
+	let orgAdminsList = $state<any[]>([]);
+	let organizationsList = $state<any[]>([]);
+	let pageLoading = $state(true);
 	let refreshing = $state(false);
+
+	const currentUser = $derived(authStore.user);
+	const isSuperAdmin = $derived(currentUser?.admin_role?.admin_level === 'super_admin');
+	const userOrganizationId = $derived(currentUser?.organization_id ?? '');
+
+	onMount(async () => {
+		try {
+			const [adminsRes, orgsRes] = await Promise.all([
+				fetch('/api/organization-admins').then(r => r.ok ? r.json() : []),
+				fetch('/api/organizations/admin').then(r => r.ok ? r.json() : [])
+			]);
+			orgAdminsList = Array.isArray(adminsRes) ? adminsRes : adminsRes.admins ?? [];
+			organizationsList = Array.isArray(orgsRes) ? orgsRes : [];
+		} catch {
+			// silent
+		} finally {
+			pageLoading = false;
+		}
+	});
+
+	// Legacy proxy so template still compiles
+	const data = $derived({
+		organizationAdmins: orgAdminsList,
+		organizations: organizationsList,
+		isSuperAdmin,
+		userOrganizationId,
+		currentOrganization: organizationsList.find((o: any) => o.id === userOrganizationId),
+		stats: {
+			total_admins: orgAdminsList.length,
+			active_admins: orgAdminsList.filter((a: any) => a.is_active !== false).length,
+			inactive_admins: orgAdminsList.filter((a: any) => a.is_active === false).length,
+			total_organizations: organizationsList.length,
+			recent_logins: 0
+		},
+		form: null
+	});
 
 	// Admin creation schema
 	const adminCreateSchema = z.object({
-		name: z.string().min(1, 'กรุณากรอกชื่อ'),
-		email: z.string().email('รูปแบบอีเมลไม่ถูกต้อง'),
-		password: z.string().min(6, 'รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร').optional(),
-		organization_id: z.string().min(1, 'กรุณาเลือกหน่วยงาน'),
+		name: z.string().min(1),
+		email: z.string().email(),
+		password: z.string().min(6).optional(),
+		organization_id: z.string().min(1),
 		admin_level: z.nativeEnum(AdminLevel).default(AdminLevel.OrganizationAdmin),
 		permissions: z.array(z.string()).default([])
 	});
 
-	// Forms
-	const createForm = superForm(data.form, {
-		validators: zodClient(adminCreateSchema),
-		onResult: async ({ result }) => {
-			if (result.type === 'success') {
+	// Simple form state (replaces superForm)
+	const initialCreateForm = () => ({ prefix: '', first_name: '', last_name: '', name: '', email: '', password: '', organization_id: '', admin_level: AdminLevel.OrganizationAdmin, permissions: [] as string[] });
+	let createFormData = $state(initialCreateForm());
+	let createErrors = $state<Record<string, string>>({});
+	let createSubmitting = $state(false);
+
+	async function createEnhanceHandler(e: SubmitEvent) {
+		e.preventDefault();
+		createSubmitting = true;
+		try {
+			const res = await fetch('?/create', { method: 'POST', body: JSON.stringify(createFormData), headers: { 'Content-Type': 'application/json' } });
+			if (res.ok) {
 				toast.success('สร้างแอดมินหน่วยงานสำเร็จ');
 				createDialogOpen = false;
-
-				setTimeout(async () => {
-					try {
-						refreshing = true;
-						await invalidate('app:page-data');
-						await invalidateAll();
-						refreshing = false;
-					} catch (error) {
-						console.error('Failed to refresh data:', error);
-						refreshing = false;
-						window.location.reload();
-					}
-				}, 500);
-			} else if (result.type === 'failure') {
-				toast.error('เกิดข้อผิดพลาดในการสร้างแอดมินหน่วยงาน');
-			}
-		}
-	});
-
-	const {
-		form: createFormData,
-		enhance: createEnhance,
-		errors: createErrors,
-		submitting: createSubmitting
-	} = createForm;
+				window.location.reload();
+			} else { toast.error('เกิดข้อผิดพลาดในการสร้างแอดมินหน่วยงาน'); }
+		} catch { toast.error('เกิดข้อผิดพลาด'); } finally { createSubmitting = false; }
+	}
 
 	// Dialog states
 	let createDialogOpen = $state(false);
@@ -184,16 +207,7 @@
 	let stats = $derived(data.stats);
 
 	function openCreateDialog() {
-		$createFormData = {
-			prefix: '',
-			first_name: '',
-			last_name: '',
-			email: '',
-			password: '',
-			organization_id: data.isSuperAdmin ? '' : data.userOrganizationId || '',
-			admin_level: AdminLevel.OrganizationAdmin,
-			permissions: selectedPermissions
-		};
+		createFormData = initialCreateForm();
 		selectedPermissions = [
 			ADMIN_PERMISSIONS.VIEW_DASHBOARD,
 			ADMIN_PERMISSIONS.MANAGE_FACULTY_USERS
@@ -255,15 +269,7 @@
 			if (result.type === 'success') {
 				toast.success('แก้ไขข้อมูลแอดมินหน่วยงานสำเร็จ');
 				editDialogOpen = false;
-				setTimeout(async () => {
-					try {
-						await invalidate('app:page-data');
-						await invalidateAll();
-					} catch (error) {
-						console.error('Failed to refresh data after update:', error);
-						window.location.reload();
-					}
-				}, 500);
+				setTimeout(() => window.location.reload(), 500);
 			} else {
 				toast.error('เกิดข้อผิดพลาดในการแก้ไขข้อมูล');
 			}
@@ -291,15 +297,7 @@
 				toast.success('ลบแอดมินหน่วยงานสำเร็จ');
 				deleteDialogOpen = false;
 				adminToDelete = null;
-				setTimeout(async () => {
-					try {
-						await invalidate('app:page-data');
-						await invalidateAll();
-					} catch (error) {
-						console.error('Failed to refresh data after delete:', error);
-						window.location.reload();
-					}
-				}, 500);
+				setTimeout(() => window.location.reload(), 500);
 			} else {
 				toast.error('เกิดข้อผิดพลาดในการลบแอดมิน');
 			}
@@ -329,15 +327,7 @@
 
 			if (result.type === 'success') {
 				toast.success(`${actionText}แอดมินหน่วยงานสำเร็จ`);
-				setTimeout(async () => {
-					try {
-						await invalidate('app:page-data');
-						await invalidateAll();
-					} catch (error) {
-						console.error('Failed to refresh data after toggle status:', error);
-						window.location.reload();
-					}
-				}, 300);
+				setTimeout(() => window.location.reload(), 300);
 			} else {
 				toast.error(result.error || `เกิดข้อผิดพลาดในการ${actionText}แอดมิน`);
 			}
@@ -427,18 +417,7 @@
 				toast.success('สร้างแอดมินทั่วไปสำเร็จ');
 				createGeneralAdminDialogOpen = false;
 
-				setTimeout(async () => {
-					try {
-						refreshing = true;
-						await invalidate('app:page-data');
-						await invalidateAll();
-						refreshing = false;
-					} catch (error) {
-						console.error('Failed to refresh data:', error);
-						refreshing = false;
-						window.location.reload();
-					}
-				}, 500);
+				setTimeout(() => window.location.reload(), 500);
 			} else {
 				toast.error('เกิดข้อผิดพลาดในการสร้างแอดมินทั่วไป');
 			}
@@ -916,114 +895,53 @@
 				</Dialog.Description>
 			</Dialog.Header>
 
-			<form method="POST" action="?/create" use:createEnhance class="space-y-4">
-				{#if $createErrors._errors}
-					<Alert variant="destructive">
-						<AlertDescription>
-							{$createErrors._errors[0]}
-						</AlertDescription>
-					</Alert>
-				{/if}
+			<form class="space-y-4" onsubmit={(e) => { e.preventDefault(); createEnhanceHandler(e); }}>
 
-				<Form.Field form={createForm} name="prefix">
-					<Form.Control>
-						{#snippet children({ props })}
-							<Label for={props.id}>คำนำหน้า</Label>
-							<Select.Root
-								type="single"
-								bind:value={$createFormData.prefix}
-								disabled={$createSubmitting}
-							>
-								<Select.Trigger>
-									{PrefixOptions.find((opt) => opt.value === $createFormData.prefix)?.label ??
-										'เลือกคำนำหน้า'}
-								</Select.Trigger>
-								<Select.Content>
-									{#each PrefixOptions as option}
-										<Select.Item value={option.value}>
-											{option.label}
-										</Select.Item>
-									{/each}
-								</Select.Content>
-							</Select.Root>
-							<input type="hidden" {...props} bind:value={$createFormData.prefix} />
-						{/snippet}
-					</Form.Control>
-					<Form.FieldErrors />
-				</Form.Field>
-
-				<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-					<Form.Field form={createForm} name="first_name">
-						<Form.Control>
-							{#snippet children({ props })}
-								<Label for={props.id}>ชื่อจริง</Label>
-								<Input
-									{...props}
-									bind:value={$createFormData.first_name}
-									placeholder="เช่น สมชาย"
-									disabled={$createSubmitting}
-								/>
-							{/snippet}
-						</Form.Control>
-						<Form.FieldErrors />
-					</Form.Field>
-
-					<Form.Field form={createForm} name="last_name">
-						<Form.Control>
-							{#snippet children({ props })}
-								<Label for={props.id}>นามสกุล</Label>
-								<Input
-									{...props}
-									bind:value={$createFormData.last_name}
-									placeholder="เช่น ใจดี"
-									disabled={$createSubmitting}
-								/>
-							{/snippet}
-						</Form.Control>
-						<Form.FieldErrors />
-					</Form.Field>
+				<div class="space-y-2">
+					<Label>คำนำหน้า</Label>
+					<Select.Root type="single" bind:value={createFormData.prefix} disabled={createSubmitting}>
+						<Select.Trigger>
+							{PrefixOptions.find((opt) => opt.value === createFormData.prefix)?.label ?? 'เลือกคำนำหน้า'}
+						</Select.Trigger>
+						<Select.Content>
+							{#each PrefixOptions as option}
+								<Select.Item value={option.value}>{option.label}</Select.Item>
+							{/each}
+						</Select.Content>
+					</Select.Root>
 				</div>
 
 				<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-					<Form.Field form={createForm} name="email">
-						<Form.Control>
-							{#snippet children({ props })}
-								<Label for={props.id}>อีเมล</Label>
-								<Input
-									{...props}
-									type="email"
-									bind:value={$createFormData.email}
-									placeholder="เช่น admin@university.ac.th"
-									disabled={$createSubmitting}
-								/>
-							{/snippet}
-						</Form.Control>
-						<Form.FieldErrors />
-					</Form.Field>
+					<div class="space-y-2">
+						<Label>ชื่อจริง</Label>
+						<Input bind:value={createFormData.first_name} placeholder="เช่น สมชาย" disabled={createSubmitting} />
+					</div>
+					<div class="space-y-2">
+						<Label>นามสกุล</Label>
+						<Input bind:value={createFormData.last_name} placeholder="เช่น ใจดี" disabled={createSubmitting} />
+					</div>
 				</div>
 
-				<Form.Field form={createForm} name="organization_id">
-					<Form.Control>
-						{#snippet children({ props })}
-							<Label for={props.id}>หน่วยงาน</Label>
-							<Select.Root type="single" bind:value={($createFormData as any).organization_id}>
-								<Select.Trigger>
-									{($createFormData as any).organization_id
-										? (data.organizations as any[]).find(
-												(f: any) => f.id === ($createFormData as any).organization_id
-											)?.name
-										: 'เลือกหน่วยงานที่จะดูแล'}
-								</Select.Trigger>
-								<Select.Content>
-									{#each data.organizations as faculty}
-										<Select.Item value={faculty.id}>{faculty.name}</Select.Item>
-									{/each}
-								</Select.Content>
-							</Select.Root>
-						{/snippet}
-					</Form.Control>
-					<Form.FieldErrors />
-				</Form.Field>
+				<div class="space-y-2">
+					<Label>อีเมล</Label>
+					<Input type="email" bind:value={createFormData.email} placeholder="เช่น admin@university.ac.th" disabled={createSubmitting} />
+				</div>
+
+				<div class="space-y-2">
+					<Label>หน่วยงาน</Label>
+					<Select.Root type="single" bind:value={createFormData.organization_id}>
+						<Select.Trigger>
+							{createFormData.organization_id
+								? (data.organizations as any[]).find((f: any) => f.id === createFormData.organization_id)?.name
+								: 'เลือกหน่วยงานที่จะดูแล'}
+						</Select.Trigger>
+						<Select.Content>
+							{#each data.organizations as faculty}
+								<Select.Item value={faculty.id}>{faculty.name}</Select.Item>
+							{/each}
+						</Select.Content>
+					</Select.Root>
+				</div>
 
 				<div class="space-y-3">
 					<Label class="text-base font-medium">สิทธิ์การเข้าถึง</Label>
@@ -1036,33 +954,18 @@
 									bind:group={selectedPermissions}
 									value={permission.value}
 									class="focus:ring-opacity-50 rounded border-gray-300 text-blue-600 focus:border-blue-300 focus:ring focus:ring-blue-200"
-									disabled={$createSubmitting}
+									disabled={createSubmitting}
 								/>
-								<Label
-									for="permission-{permission.value}"
-									class="cursor-pointer text-sm font-normal"
-								>
-									{permission.label}
-								</Label>
+								<Label for="permission-{permission.value}" class="cursor-pointer text-sm font-normal">{permission.label}</Label>
 							</div>
 						{/each}
 					</div>
-					<p class="text-xs text-gray-500">
-						แอดมินหน่วยงานจะได้รับสิทธิ์พื้นฐานในการดูแดชบอร์ดและจัดการผู้ใช้ในหน่วยงาน
-					</p>
 				</div>
 
 				<Dialog.Footer>
-					<Button
-						type="button"
-						variant="outline"
-						onclick={() => (createDialogOpen = false)}
-						disabled={$createSubmitting}
-					>
-						ยกเลิก
-					</Button>
-					<Button type="submit" disabled={$createSubmitting}>
-						{#if $createSubmitting}
+					<Button type="button" variant="outline" onclick={() => (createDialogOpen = false)} disabled={createSubmitting}>ยกเลิก</Button>
+					<Button type="submit" disabled={createSubmitting}>
+						{#if createSubmitting}
 							<IconLoader class="mr-2 h-4 w-4 animate-spin" />
 							กำลังสร้าง...
 						{:else}

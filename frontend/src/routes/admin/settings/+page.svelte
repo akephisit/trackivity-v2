@@ -22,12 +22,16 @@
 		IconInfoCircle
 	} from '@tabler/icons-svelte';
 	import { toast } from 'svelte-sonner';
+	import { authStore } from '$lib/stores/auth.svelte';
 
-	let { data, form } = $props();
+	let { form } = $props();
+
+	// CSR state — org info from authStore
+	const user = $derived(authStore.user);
 
 	let isSubmitting = $state(false);
-	let requiredFacultyHours = $state(data.currentRequirements.requiredFacultyHours);
-	let requiredUniversityHours = $state(data.currentRequirements.requiredUniversityHours);
+	let requiredFacultyHours = $state(6);
+	let requiredUniversityHours = $state(12);
 
 	function handleSubmit() {
 		isSubmitting = true;
@@ -69,16 +73,16 @@
 			<div class="grid gap-4 sm:grid-cols-2">
 				<div>
 					<Label class="text-sm font-medium">ชื่อองค์กร</Label>
-					<p class="mt-1 text-sm text-muted-foreground">{data.organization.name}</p>
+					<p class="mt-1 text-sm text-muted-foreground">{user?.organization_name ?? '-'}</p>
 				</div>
 				<div>
 					<Label class="text-sm font-medium">รหัสองค์กร</Label>
-					<p class="mt-1 text-sm text-muted-foreground">{data.organization.code}</p>
+					<p class="mt-1 text-sm text-muted-foreground">-</p>
 				</div>
 				<div>
 					<Label class="text-sm font-medium">ประเภทองค์กร</Label>
 					<p class="mt-1 text-sm text-muted-foreground">
-						{data.organization.organizationType === 'faculty' ? 'คณะ' : 'หน่วยงาน'}
+						หน่วยงาน
 					</p>
 				</div>
 			</div>
@@ -117,7 +121,7 @@
 						<div>
 							<p class="text-sm font-medium">กิจกรรมระดับคณะ</p>
 							<p class="text-lg font-bold text-green-600">
-								{data.currentRequirements.requiredFacultyHours} ชั่วโมง
+								{requiredFacultyHours} ชั่วโมง
 							</p>
 						</div>
 					</div>
@@ -128,7 +132,7 @@
 						<div>
 							<p class="text-sm font-medium">กิจกรรมระดับมหาวิทยาลัย</p>
 							<p class="text-lg font-bold text-blue-600">
-								{data.currentRequirements.requiredUniversityHours} ชั่วโมง
+								{requiredUniversityHours} ชั่วโมง
 							</p>
 						</div>
 					</div>
@@ -201,8 +205,8 @@
 							type="button"
 							variant="outline"
 							onclick={() => {
-								requiredFacultyHours = data.currentRequirements.requiredFacultyHours;
-								requiredUniversityHours = data.currentRequirements.requiredUniversityHours;
+								requiredFacultyHours = 6;
+								requiredUniversityHours = 12;
 							}}
 						>
 							รีเซ็ต

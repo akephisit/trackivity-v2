@@ -1,49 +1,40 @@
 <script lang="ts">
 	import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
 	import { Separator } from '$lib/components/ui/separator';
+	import { Skeleton } from '$lib/components/ui/skeleton';
 	import { IconTrendingUp, IconHourglass, IconCircleCheck, IconActivity, IconUser } from '@tabler/icons-svelte';
+	import { activitiesApi, usersApi, ApiError } from '$lib/api';
+	import type { Participation } from '$lib/api';
+	import { onMount } from 'svelte';
+	import { page } from '$app/stores';
 
-	type ParticipationItem = {
-		activity?: {
-			title: string | null;
-			hours: number | null;
-			activity_level: string | null;
-		} | null;
-	};
+	const userId = $derived($page.params.userId);
 
-	type SummaryData = {
-		participationHistory: Array<{
-			activity: ParticipationItem['activity'];
-		}>;
-		userInfo: {
-			student_id: string;
-			first_name: string;
-			last_name: string;
-			email: string;
-			department_name?: string | null;
-			organization_name?: string | null;
-		} | null;
-		activityRequirements: {
-			requiredFacultyHours: number | null;
-			requiredUniversityHours: number | null;
-		} | null;
-	};
+	let loading = $state(true);
+	let error = $state<string | null>(null);
+	let participations = $state<Participation[]>([]);
+	let userInfo = $state<{ student_id: string; first_name: string; last_name: string; email: string; department_name?: string | null; organization_name?: string | null } | null>(null);
 
-	let { data } = $props<{ summary: SummaryData }>();
+	onMount(async () => {
+		try {
+			const data = await activitiesApi.myParticipations();
+			participations = data;
+		} catch (e) {
+			error = e instanceof ApiError ? e.message : 'ไม่สามารถโหลดข้อมูลได้';
+		} finally {
+			loading = false;
+		}
+	});
 
 	const facultyActivities = $derived(
-		(data.summary.participationHistory ?? []).filter(
-			(item: ParticipationItem) => item.activity?.activity_level === 'faculty'
-		)
+		participations.filter((p) => p.activity?.activity_level === 'faculty')
 	);
 	const universityActivities = $derived(
-		(data.summary.participationHistory ?? []).filter(
-			(item: ParticipationItem) => item.activity?.activity_level === 'university'
-		)
+		participations.filter((p) => p.activity?.activity_level === 'university')
 	);
-	const sumHours = (items: Array<{ activity?: { hours: number | null } | null }>) =>
-		items.reduce((total, item) => total + Number(item.activity?.hours ?? 0), 0);
-	const totalHours = sumHours(data.summary.participationHistory ?? []);
+	const sumHours = (items: Participation[]) =>
+		items.reduce((total, p) => total + Number(p.activity?.hours ?? 0), 0);
+	const totalHours = $derived(sumHours(participations));
 </script>
 
 <svelte:head>
@@ -56,65 +47,34 @@
 			<CardTitle>รายงานสรุปผลการเข้าร่วมกิจกรรม</CardTitle>
 		</CardHeader>
 		<CardContent class="space-y-4">
-			{#if data.summary.userInfo}
-				<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-					<div class="flex items-center gap-2">
-						<IconUser class="size-4 text-muted-foreground" />
-						<div>
-							<p class="text-xs text-muted-foreground">ชื่อ-นามสกุล</p>
-							<p class="text-sm font-medium">
-								{data.summary.userInfo.first_name} {data.summary.userInfo.last_name}
-							</p>
-						</div>
+			{#if loading}
+				<Skeleton class="h-24 w-full" />
+			{:else if error}
+				<p class="text-destructive">{error}</p>
+			{:else}
+				<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+					<div class="rounded-lg bg-muted/40 p-4 text-center">
+						<IconActivity class="mx-auto mb-2 size-5 text-primary" />
+						<p class="text-2xl font-bold">{participations.length}</p>
+						<p class="text-xs text-muted-foreground">จำนวนกิจกรรมทั้งหมด</p>
 					</div>
-					<div class="flex items-center gap-2">
-						<IconActivity class="size-4 text-muted-foreground" />
-						<div>
-							<p class="text-xs text-muted-foreground">รหัสนักศึกษา</p>
-							<p class="text-sm font-medium">{data.summary.userInfo.student_id}</p>
-						</div>
+					<div class="rounded-lg bg-muted/40 p-4 text-center">
+						<IconHourglass class="mx-auto mb-2 size-5 text-primary" />
+						<p class="text-2xl font-bold">{totalHours.toFixed(2)}</p>
+						<p class="text-xs text-muted-foreground">ชั่วโมงรวม</p>
 					</div>
-					<div class="flex items-center gap-2">
-						<IconActivity class="size-4 text-muted-foreground" />
-						<div>
-							<p class="text-xs text-muted-foreground">คณะ / หน่วยงาน</p>
-							<p class="text-sm font-medium">{data.summary.userInfo.organization_name ?? '-'}</p>
-						</div>
+					<div class="rounded-lg bg-muted/40 p-4 text-center">
+						<IconCircleCheck class="mx-auto mb-2 size-5 text-primary" />
+						<p class="text-2xl font-bold">{facultyActivities.length}</p>
+						<p class="text-xs text-muted-foreground">กิจกรรมระดับคณะ</p>
 					</div>
-					<div class="flex items-center gap-2">
-						<IconActivity class="size-4 text-muted-foreground" />
-						<div>
-							<p class="text-xs text-muted-foreground">ภาควิชา</p>
-							<p class="text-sm font-medium">{data.summary.userInfo.department_name ?? '-'}</p>
-						</div>
+					<div class="rounded-lg bg-muted/40 p-4 text-center">
+						<IconTrendingUp class="mx-auto mb-2 size-5 text-primary" />
+						<p class="text-2xl font-bold">{universityActivities.length}</p>
+						<p class="text-xs text-muted-foreground">กิจกรรมระดับมหาวิทยาลัย</p>
 					</div>
 				</div>
 			{/if}
-
-			<Separator />
-
-			<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-				<div class="rounded-lg bg-muted/40 p-4 text-center">
-					<IconActivity class="mx-auto mb-2 size-5 text-primary" />
-					<p class="text-2xl font-bold">{data.summary.participationHistory.length}</p>
-					<p class="text-xs text-muted-foreground">จำนวนกิจกรรมทั้งหมด</p>
-				</div>
-				<div class="rounded-lg bg-muted/40 p-4 text-center">
-					<IconHourglass class="mx-auto mb-2 size-5 text-primary" />
-					<p class="text-2xl font-bold">{totalHours.toFixed(2)}</p>
-					<p class="text-xs text-muted-foreground">ชั่วโมงรวม</p>
-				</div>
-				<div class="rounded-lg bg-muted/40 p-4 text-center">
-					<IconCircleCheck class="mx-auto mb-2 size-5 text-primary" />
-					<p class="text-2xl font-bold">{facultyActivities.length}</p>
-					<p class="text-xs text-muted-foreground">กิจกรรมระดับคณะ</p>
-				</div>
-				<div class="rounded-lg bg-muted/40 p-4 text-center">
-					<IconTrendingUp class="mx-auto mb-2 size-5 text-primary" />
-					<p class="text-2xl font-bold">{universityActivities.length}</p>
-					<p class="text-xs text-muted-foreground">กิจกรรมระดับมหาวิทยาลัย</p>
-				</div>
-			</div>
 		</CardContent>
 	</Card>
 

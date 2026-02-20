@@ -108,7 +108,7 @@
 	const minuteOptions = generateMinuteOptions();
 
 	// Initial selected values from server - use array of strings (faculty IDs)
-	let selectedEligibleValues = $state<string[]>(data.eligible_organizations_selected || []);
+	let selectedEligibleValues = $state<string[]>((data as any).eligible_organizations_selected || []);
 	// Derive faculty objects for display purposes
 	let selectedEligible = $derived(
 		selectedEligibleValues.map((id: string) => {

@@ -81,6 +81,10 @@ export interface UserResponse {
     first_name: string;
     last_name: string;
     admin_role: AdminRole | null;
+    organization_id?: string | null;
+    organization_name?: string | null;
+    department_id?: string | null;
+    department_name?: string | null;
     session_id: string;
     expires_at: string;
 }
@@ -176,6 +180,8 @@ export interface Participation {
         end_date: string;
         hours: number;
         organizer_name: string;
+        activity_level: string | null;
+        status: string | null;
     };
 }
 

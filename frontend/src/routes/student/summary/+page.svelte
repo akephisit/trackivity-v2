@@ -396,14 +396,14 @@
 							<p class="text-sm font-medium">เกณฑ์การผ่านกิจกรรม</p>
 							<div class="mt-2 text-xs text-blue-600 dark:text-blue-400">
 								<p>
-									• กิจกรรมระดับคณะ: อย่างน้อย {activityRequirementsData?.requiredFacultyHours} ชั่วโมง
+									• กิจกรรมระดับคณะ: อย่างน้อย {(activityRequirementsData as ActivityRequirements | null)?.requiredFacultyHours ?? '-'} ชั่วโมง
 								</p>
 								<p>
-									• กิจกรรมระดับมหาวิทยาลัย: อย่างน้อย {activityRequirementsData?.requiredUniversityHours} ชั่วโมง
+									• กิจกรรมระดับมหาวิทยาลัย: อย่างน้อย {(activityRequirementsData as ActivityRequirements | null)?.requiredUniversityHours ?? '-'} ชั่วโมง
 								</p>
 								<p class="mt-1 font-medium">
-									รวม: {(activityRequirementsData?.requiredFacultyHours ?? 0) +
-										(activityRequirementsData?.requiredUniversityHours ?? 0)} ชั่วโมง
+									รวม: {((activityRequirementsData as ActivityRequirements | null)?.requiredFacultyHours ?? 0) +
+										((activityRequirementsData as ActivityRequirements | null)?.requiredUniversityHours ?? 0)} ชั่วโมง
 								</p>
 							</div>
 						</div>

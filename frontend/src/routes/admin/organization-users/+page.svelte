@@ -15,7 +15,6 @@
 		getPaginationRowModel,
 		getSortedRowModel,
 		type ColumnFiltersState,
-		type PaginationState,
 		type SortingState,
 		type VisibilityState,
 		type RowSelectionState
@@ -26,144 +25,70 @@
 		IconUsers,
 		IconUserCheck,
 		IconUserX,
-		IconPlus,
-		IconDownload,
 		IconRefresh,
-		IconSettings,
 		IconTrash
 	} from '@tabler/icons-svelte/icons';
-
-	// Import our components
-	import UserFilters from '$lib/components/user-management/UserFilters.svelte';
+	import { usersApi } from '$lib/api';
+	import type { UserListItem } from '$lib/api';
+	import { onMount } from 'svelte';
 	import { getUserTableColumns, columnVisibilityPresets } from '$lib/components/user-table-columns';
 
-	// Get data from server load function
-	let { data } = $props();
-
-	// Extract data from server load with safe defaults
-	const {
-		stats,
-		organizations = [],
-		departments = [],
-		filters = {},
-		adminLevel
-	} = $derived(data || {});
-
-	// Normalize users and pagination shapes
-	const usersRaw = $derived<any>(data?.users ?? []);
-	const usersList = $derived<any[]>(Array.isArray(usersRaw) ? usersRaw : (usersRaw?.users ?? []));
-	const paginationRaw = $derived<any>(
-		data?.pagination ??
-			(Array.isArray(usersRaw)
-				? { page: 1, limit: 20, total: usersList.length, pages: 1 }
-				: (usersRaw?.pagination ?? { page: 1, limit: 20, total: 0, pages: 1 }))
-	);
-	const paginationNorm = $derived({
-		page: paginationRaw?.page ?? 1,
-		limit: paginationRaw?.limit ?? 20,
-		total: paginationRaw?.total ?? paginationRaw?.total_count ?? 0,
-		pages: paginationRaw?.pages ?? paginationRaw?.total_pages ?? 1
-	});
-
-	const meta = $derived({ title: 'จัดการผู้ใช้', description: 'จัดการผู้ใช้ในระบบ' });
-
-	// Component state
-	let loading = false;
+	// ─── CSR State ────────────────────────────────────────────────────────────
+	let usersList = $state<UserListItem[]>([]);
+	let loading = $state(true);
 
 	// Table state
 	let sorting = $state<SortingState>([]);
 	let columnFilters = $state<ColumnFiltersState>([]);
 	let columnVisibility = $state<VisibilityState>(columnVisibilityPresets.detailed);
 	let rowSelection = $state<RowSelectionState>({});
-	const tablePagination = $derived<PaginationState>({
-		pageIndex: (paginationNorm.page || 1) - 1,
-		pageSize: paginationNorm.limit || 20
-	});
 
-	// Get appropriate columns for admin level
-	const columns = $derived(
-		getUserTableColumns(adminLevel || 'RegularAdmin', adminLevel === 'OrganizationAdmin')
-	);
+	const columns = $derived(getUserTableColumns('RegularAdmin', false) as any[]);
 
-	// Create table instance
 	const table = $derived(
 		createSvelteTable({
-			get data() {
-				return usersList;
-			},
+			get data() { return usersList; },
 			columns,
 			state: {
-				get sorting() {
-					return sorting;
-				},
-				get columnFilters() {
-					return columnFilters;
-				},
-				get columnVisibility() {
-					return columnVisibility;
-				},
-				get rowSelection() {
-					return rowSelection;
-				},
-				get pagination() {
-					return tablePagination;
-				}
+				get sorting() { return sorting; },
+				get columnFilters() { return columnFilters; },
+				get columnVisibility() { return columnVisibility; },
+				get rowSelection() { return rowSelection; },
 			},
 			enableRowSelection: true,
 			getCoreRowModel: getCoreRowModel(),
 			getFilteredRowModel: getFilteredRowModel(),
 			getSortedRowModel: getSortedRowModel(),
 			getPaginationRowModel: getPaginationRowModel(),
-			onSortingChange: (updater) => {
-				if (typeof updater === 'function') {
-					sorting = updater(sorting);
-				} else {
-					sorting = updater;
-				}
-			},
-			onColumnFiltersChange: (updater) => {
-				if (typeof updater === 'function') {
-					columnFilters = updater(columnFilters);
-				} else {
-					columnFilters = updater;
-				}
-			},
-			onColumnVisibilityChange: (updater) => {
-				if (typeof updater === 'function') {
-					columnVisibility = updater(columnVisibility);
-				} else {
-					columnVisibility = updater;
-				}
-			},
-			onRowSelectionChange: (updater) => {
-				if (typeof updater === 'function') {
-					rowSelection = updater(rowSelection);
-				} else {
-					rowSelection = updater;
-				}
-			}
+			onSortingChange: (u) => { sorting = typeof u === 'function' ? u(sorting) : u; },
+			onColumnFiltersChange: (u) => { columnFilters = typeof u === 'function' ? u(columnFilters) : u; },
+			onColumnVisibilityChange: (u) => { columnVisibility = typeof u === 'function' ? u(columnVisibility) : u; },
+			onRowSelectionChange: (u) => { rowSelection = typeof u === 'function' ? u(rowSelection) : u; },
 		})
 	);
 
-	// Track selected users
-	const selectedUsers = $derived(Object.keys(rowSelection).filter((key) => rowSelection[key]));
+	const selectedUsers = $derived(Object.keys(rowSelection).filter((k) => rowSelection[k]));
 
-	// Permission checks
-	const canManageUsers = $derived(
-		adminLevel === 'SuperAdmin' || adminLevel === 'OrganizationAdmin'
-	);
-	const canViewAllFaculties = $derived(adminLevel === 'SuperAdmin');
+	const stats = $derived({
+		total: usersList.length,
+		active: usersList.filter((u: UserListItem) => u.status === 'active').length,
+	});
 
-	// Statistics calculations
-	const totalUsers = $derived(stats?.total_users || 0);
-	const activeUsers = $derived(stats?.active_users || 0);
-	const students = $derived(stats?.students || 0);
-	const faculty = $derived(stats?.faculty || 0);
+	onMount(async () => {
+		try {
+			const result = await usersApi.list();
+			usersList = result.users ?? [];
+		} catch {
+			// silently handle
+		} finally {
+			loading = false;
+		}
+	});
 </script>
 
 <svelte:head>
-	<title>{meta.title} - Trackivity</title>
-	<meta name="description" content={meta.description} />
+	<title>จัดการผู้ใช้หน่วยงาน - Trackivity</title>
+	<meta name="description" content="จัดการผู้ใช้ในระบบ" />
 </svelte:head>
 
 <div class="space-y-6">
@@ -172,42 +97,25 @@
 		<div>
 			<h1 class="admin-page-title">
 				<IconUsers class="size-6 text-primary" />
-				{adminLevel === 'SuperAdmin' ? 'ระบบจัดการผู้ใช้ทั้งหมด' : 'จัดการผู้ใช้หน่วยงาน'}
+				จัดการผู้ใช้หน่วยงาน
 			</h1>
-			<p class="text-muted-foreground">
-				{adminLevel === 'SuperAdmin'
-					? 'จัดการผู้ใช้ทั้งระบบพร้อมการกรองตามหน่วยงาน'
-					: 'จัดการข้อมูลผู้ใช้ในหน่วยงานของคุณ'}
-			</p>
+			<p class="text-muted-foreground">จัดการข้อมูลผู้ใช้ในระบบ</p>
 		</div>
-
-		<div class="flex gap-2">
-			{#if canManageUsers}
-				<Button>
-					<IconPlus class="mr-2 h-4 w-4" />
-					เพิ่มผู้ใช้
-				</Button>
-			{/if}
-
-			<Button variant="outline">
-				<IconRefresh class="mr-2 h-4 w-4" />
-				รีเฟรช
-			</Button>
-		</div>
+		<Button variant="outline" onclick={() => location.reload()} disabled={loading}>
+			<IconRefresh class="mr-2 h-4 w-4 {loading ? 'animate-spin' : ''}" />
+			รีเฟรช
+		</Button>
 	</div>
 
 	<!-- Statistics Cards -->
-	<div class="grid grid-cols-2 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+	<div class="grid grid-cols-2 gap-4">
 		<Card>
 			<CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
 				<CardTitle class="text-sm font-medium">ผู้ใช้ทั้งหมด</CardTitle>
 				<IconUsers class="h-4 w-4 text-muted-foreground" />
 			</CardHeader>
 			<CardContent>
-				<div class="text-2xl font-bold">{totalUsers.toLocaleString()}</div>
-				<p class="text-xs text-muted-foreground">
-					{paginationNorm.total} รายการในตาราง
-				</p>
+				<div class="text-2xl font-bold">{stats.total.toLocaleString()}</div>
 			</CardContent>
 		</Card>
 
@@ -217,60 +125,13 @@
 				<IconUserCheck class="h-4 w-4 text-green-600" />
 			</CardHeader>
 			<CardContent>
-				<div class="text-2xl font-bold">{activeUsers.toLocaleString()}</div>
+				<div class="text-2xl font-bold">{stats.active.toLocaleString()}</div>
 				<p class="text-xs text-muted-foreground">
-					{totalUsers > 0 ? ((activeUsers / totalUsers) * 100).toFixed(1) : 0}% ของผู้ใช้ทั้งหมด
-				</p>
-			</CardContent>
-		</Card>
-
-		<Card>
-			<CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
-				<CardTitle class="text-sm font-medium">นักศึกษา</CardTitle>
-				<IconUsers class="h-4 w-4 text-blue-600" />
-			</CardHeader>
-			<CardContent>
-				<div class="text-2xl font-bold">{students.toLocaleString()}</div>
-				<p class="text-xs text-muted-foreground">
-					{totalUsers > 0 ? ((students / totalUsers) * 100).toFixed(1) : 0}% ของผู้ใช้ทั้งหมด
-				</p>
-			</CardContent>
-		</Card>
-
-		<Card>
-			<CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
-				<CardTitle class="text-sm font-medium">อาจารย์</CardTitle>
-				<IconUsers class="h-4 w-4 text-purple-600" />
-			</CardHeader>
-			<CardContent>
-				<div class="text-2xl font-bold">{faculty.toLocaleString()}</div>
-				<p class="text-xs text-muted-foreground">
-					{totalUsers > 0 ? ((faculty / totalUsers) * 100).toFixed(1) : 0}% ของผู้ใช้ทั้งหมด
+					{stats.total > 0 ? ((stats.active / stats.total) * 100).toFixed(1) : 0}% ของผู้ใช้ทั้งหมด
 				</p>
 			</CardContent>
 		</Card>
 	</div>
-
-	<!-- Advanced Filters -->
-	<UserFilters
-		filters={filters || {}}
-		faculties={Array.isArray(organizations) ? organizations : []}
-		departments={Array.isArray(departments) ? departments : []}
-		showFacultyFilter={canViewAllFaculties}
-		{loading}
-		on:filtersChanged={(e) => {
-			// Handle filter changes
-			console.log('Filters changed:', e.detail);
-		}}
-		on:export={(e) => {
-			// Handle export
-			console.log('Export requested with filters:', e.detail);
-		}}
-		on:clearFilters={() => {
-			// Handle clear filters
-			console.log('Clear filters');
-		}}
-	/>
 
 	<!-- Bulk Actions Bar -->
 	{#if selectedUsers.length > 0}
@@ -278,31 +139,13 @@
 			<CardContent class="p-4">
 				<div class="flex items-center justify-between">
 					<div class="flex items-center gap-2">
-						<Badge variant="secondary">
-							{selectedUsers.length} รายการที่เลือก
-						</Badge>
-						<span class="text-sm text-muted-foreground">
-							จาก {usersList.length} รายการ
-						</span>
+						<Badge variant="secondary">{selectedUsers.length} รายการที่เลือก</Badge>
+						<span class="text-sm text-muted-foreground">จาก {usersList.length} รายการ</span>
 					</div>
-
 					<div class="flex gap-2">
-						<Button variant="outline" size="sm">
-							<IconUserCheck class="mr-2 h-4 w-4" />
-							เปิดใช้งาน
-						</Button>
-						<Button variant="outline" size="sm">
-							<IconUserX class="mr-2 h-4 w-4" />
-							ปิดใช้งาน
-						</Button>
-						<Button variant="outline" size="sm">
-							<IconDownload class="mr-2 h-4 w-4" />
-							ส่งออก
-						</Button>
-						<Button variant="destructive" size="sm">
-							<IconTrash class="mr-2 h-4 w-4" />
-							ลบ
-						</Button>
+						<Button variant="outline" size="sm"><IconUserCheck class="mr-2 h-4 w-4" />เปิดใช้งาน</Button>
+						<Button variant="outline" size="sm"><IconUserX class="mr-2 h-4 w-4" />ปิดใช้งาน</Button>
+						<Button variant="destructive" size="sm"><IconTrash class="mr-2 h-4 w-4" />ลบ</Button>
 					</div>
 				</div>
 			</CardContent>
@@ -312,23 +155,9 @@
 	<!-- Users Table -->
 	<Card>
 		<CardHeader>
-			<div class="flex items-center justify-between">
-				<div>
-					<CardTitle>รายการผู้ใช้</CardTitle>
-					<CardDescription>
-						แสดงผลจำนวน {usersList.length} จาก {paginationNorm.total} รายการ
-					</CardDescription>
-				</div>
-
-				<div class="flex gap-2">
-					<Button variant="outline" size="sm">
-						<IconSettings class="mr-2 h-4 w-4" />
-						จัดการคอลัมน์
-					</Button>
-				</div>
-			</div>
+			<CardTitle>รายการผู้ใช้</CardTitle>
+			<CardDescription>แสดงผลจำนวน {usersList.length} รายการ</CardDescription>
 		</CardHeader>
-
 		<CardContent class="p-0">
 			<div class="overflow-hidden">
 				<Table.Root>
@@ -352,9 +181,14 @@
 							</Table.Row>
 						{/each}
 					</Table.Header>
-
 					<Table.Body>
-						{#if table.getRowModel().rows?.length}
+						{#if loading}
+							<Table.Row>
+								<Table.Cell colspan={columns.length} class="h-24 text-center text-muted-foreground">
+									กำลังโหลด...
+								</Table.Cell>
+							</Table.Row>
+						{:else if table.getRowModel().rows?.length}
 							{#each table.getRowModel().rows as row (row.id)}
 								<Table.Row data-state={row.getIsSelected() && 'selected'}>
 									{#each row.getVisibleCells() as cell (cell.id)}
@@ -372,9 +206,7 @@
 								<Table.Cell colspan={columns.length} class="h-24 text-center">
 									<div class="flex flex-col items-center gap-2">
 										<IconUsers class="h-8 w-8 text-muted-foreground" />
-										<span class="text-muted-foreground">
-											ไม่พบผู้ใช้ที่ตรงกับเงื่อนไขการค้นหา
-										</span>
+										<span class="text-muted-foreground">ไม่พบผู้ใช้</span>
 									</div>
 								</Table.Cell>
 							</Table.Row>
@@ -384,40 +216,4 @@
 			</div>
 		</CardContent>
 	</Card>
-
-	<!-- Table Pagination -->
-	{#if paginationNorm.pages && paginationNorm.pages > 1}
-		<Card>
-			<CardContent class="p-4">
-				<div class="flex items-center justify-between">
-					<div class="text-sm text-muted-foreground">
-						แสดงผล {((paginationNorm.page || 1) - 1) * (paginationNorm.limit || 20) + 1} -
-						{Math.min(
-							(paginationNorm.page || 1) * (paginationNorm.limit || 20),
-							paginationNorm.total
-						)}
-						จาก {paginationNorm.total} รายการ
-					</div>
-
-					<div class="flex items-center gap-2">
-						<Button variant="outline" size="sm" disabled={(paginationNorm.page || 1) <= 1}>
-							หน้าก่อนหน้า
-						</Button>
-
-						<span class="text-sm">
-							หน้า {paginationNorm.page || 1} จาก {paginationNorm.pages || 1}
-						</span>
-
-						<Button
-							variant="outline"
-							size="sm"
-							disabled={(paginationNorm.page || 1) >= (paginationNorm.pages || 1)}
-						>
-							หน้าถัดไป
-						</Button>
-					</div>
-				</div>
-			</CardContent>
-		</Card>
-	{/if}
 </div>

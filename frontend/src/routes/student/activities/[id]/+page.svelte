@@ -29,7 +29,7 @@
 	let registered = $state(false);
 
 	onMount(async () => {
-		const id = page.params.id;
+		const id = page.params.id!;
 		try {
 			activity = await activitiesApi.get(id);
 		} catch (e: any) {

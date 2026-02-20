@@ -1,7 +1,5 @@
 <script lang="ts">
-	import { superForm } from 'sveltekit-superforms';
-	import { zodClient } from 'sveltekit-superforms/adapters';
-	import { adminCreateSchema, PrefixOptions } from '$lib/schemas/auth';
+	import { PrefixOptions } from '$lib/schemas/auth';
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
@@ -13,14 +11,12 @@
 		CardTitle
 	} from '$lib/components/ui/card';
 	import { Alert, AlertDescription } from '$lib/components/ui/alert';
-	import * as Form from '$lib/components/ui/form';
 	import * as Select from '$lib/components/ui/select';
 	import * as Dialog from '$lib/components/ui/dialog';
 	import * as AlertDialog from '$lib/components/ui/alert-dialog';
 	import * as Table from '$lib/components/ui/table';
 	import * as Collapsible from '$lib/components/ui/collapsible';
 	import { Badge } from '$lib/components/ui/badge';
-	// import { Separator } from '$lib/components/ui/separator';
 	import {
 		IconLoader,
 		IconPlus,
@@ -37,10 +33,31 @@
 	} from '@tabler/icons-svelte/icons';
 	import { toast } from 'svelte-sonner';
 	import { AdminLevel, type AdminRole } from '$lib/types/admin';
-	import { invalidateAll, invalidate } from '$app/navigation';
+	import { onMount } from 'svelte';
 
-	let { data } = $props();
+	// CSR state
+	let adminsList = $state<any[]>([]);
+	let facultiesList = $state<any[]>([]);
+	let loadingData = $state(true);
 	let refreshing = $state(false);
+
+	onMount(async () => {
+		try {
+			const [adminsRes, orgsRes] = await Promise.all([
+				fetch('/api/admins').then(r => r.ok ? r.json() : { admins: [] }),
+				fetch('/api/organizations/admin').then(r => r.ok ? r.json() : [])
+			]);
+			adminsList = adminsRes.admins ?? adminsRes ?? [];
+			facultiesList = Array.isArray(orgsRes) ? orgsRes : [];
+		} catch {
+			// silent
+		} finally {
+			loadingData = false;
+		}
+	});
+
+	// Legacy proxy so template still works
+	const data = $derived({ admins: adminsList, faculties: facultiesList, form: null });
 
 	// Search and filter states
 	let searchQuery = $state('');
@@ -73,33 +90,37 @@
 		return filtered;
 	});
 
-	const form = superForm(data.form, {
-		validators: zodClient(adminCreateSchema),
-		onResult: async ({ result }) => {
-			if (result.type === 'success') {
+	// Simple form state (replaces superForm)
+	let formData = $state({ prefix: '', first_name: '', last_name: '', email: '', password: '', admin_level: AdminLevel.RegularAdmin, organization_id: undefined as string | undefined });
+	let formErrors = $state<Record<string, string>>({});
+	let submitting = $state(false);
+
+	function clearFormData() {
+		formData = { prefix: '', first_name: '', last_name: '', email: '', password: '', admin_level: AdminLevel.RegularAdmin, organization_id: undefined };
+		formErrors = {};
+	}
+
+	async function handleCreateSubmit() {
+		submitting = true;
+		try {
+			const res = await fetch('?/create', {
+				method: 'POST',
+				body: JSON.stringify(formData),
+				headers: { 'Content-Type': 'application/json' }
+			});
+			if (res.ok) {
 				toast.success('สร้างแอดมินสำเร็จ');
 				dialogOpen = false;
-
-				// รอสักครู่แล้วค่อย invalidate เพื่อให้เซิร์ฟเวอร์ commit ข้อมูล
-				setTimeout(async () => {
-					try {
-						refreshing = true;
-						await invalidate('app:page-data');
-						await invalidateAll();
-						refreshing = false;
-					} catch (error) {
-						console.error('Failed to refresh data:', error);
-						refreshing = false;
-						window.location.reload();
-					}
-				}, 500);
-			} else if (result.type === 'failure') {
+				window.location.reload();
+			} else {
 				toast.error('เกิดข้อผิดพลาดในการสร้างแอดมิน');
 			}
+		} catch {
+			toast.error('เกิดข้อผิดพลาดในการเชื่อมต่อ');
+		} finally {
+			submitting = false;
 		}
-	});
-
-	const { form: formData, enhance, errors, submitting } = form;
+	}
 
 	let dialogOpen = $state(false);
 	let editDialogOpen = $state(false);
@@ -133,39 +154,29 @@
 		}))
 	);
 
-	// Update form data when select values change - using separate effects to prevent loops
+	// Update form data when select values change
 	$effect(() => {
 		if (selectedAdminLevel !== undefined) {
-			// Always update admin_level immediately when selectedAdminLevel changes
-			$formData.admin_level = selectedAdminLevel;
-			console.log('Updated formData.admin_level to:', selectedAdminLevel);
-
-			// Clear faculty selection when changing to SuperAdmin or RegularAdmin
+			formData.admin_level = selectedAdminLevel;
 			if (
 				selectedAdminLevel === AdminLevel.SuperAdmin ||
 				selectedAdminLevel === AdminLevel.RegularAdmin
 			) {
 				selectedFaculty = undefined;
-				$formData.organization_id = undefined;
-				console.log('Cleared organization_id because admin_level is:', selectedAdminLevel);
+				formData.organization_id = undefined;
 			}
 		}
 	});
 
-	// Separate effect for faculty changes
 	$effect(() => {
 		if (selectedAdminLevel === AdminLevel.OrganizationAdmin && selectedFaculty !== undefined) {
-			// Update organization_id when we have both OrganizationAdmin level and selected organization
-			$formData.organization_id = selectedFaculty;
-			console.log('Updated formData.organization_id to:', selectedFaculty, 'for OrganizationAdmin');
+			formData.organization_id = selectedFaculty;
 		}
 	});
 
-	// Effect for prefix changes
 	$effect(() => {
 		if (selectedPrefix !== undefined) {
-			$formData.prefix = selectedPrefix;
-			console.log('Updated formData.prefix to:', selectedPrefix);
+			formData.prefix = selectedPrefix;
 		}
 	});
 
@@ -231,15 +242,7 @@
 				toast.success('ลบแอดมินสำเร็จ');
 				deleteDialogOpen = false;
 				adminToDelete = null;
-				setTimeout(async () => {
-					try {
-						await invalidate('app:page-data');
-						await invalidateAll();
-					} catch (error) {
-						console.error('Failed to refresh data after delete:', error);
-						window.location.reload();
-					}
-				}, 500);
+				setTimeout(() => window.location.reload(), 500);
 			} else {
 				toast.error('เกิดข้อผิดพลาดในการลบแอดมิน');
 			}
@@ -253,17 +256,7 @@
 		selectedAdminLevel = undefined;
 		selectedFaculty = undefined;
 		selectedPrefix = undefined;
-		$formData = {
-			prefix: '',
-			first_name: '',
-			last_name: '',
-			email: '',
-			password: '',
-			admin_level: AdminLevel.RegularAdmin, // This will be overridden when user selects
-			organization_id: undefined,
-			permissions: []
-		};
-		console.log('Form reset with default admin_level:', AdminLevel.RegularAdmin);
+		formData = { prefix: '', first_name: '', last_name: '', email: '', password: '', admin_level: AdminLevel.RegularAdmin, organization_id: undefined };
 	}
 
 	function openDialog() {
@@ -308,15 +301,7 @@
 			if (result.type === 'success') {
 				toast.success('แก้ไขแอดมินสำเร็จ');
 				editDialogOpen = false;
-				setTimeout(async () => {
-					try {
-						await invalidate('app:page-data');
-						await invalidateAll();
-					} catch (error) {
-						console.error('Failed to refresh data after update:', error);
-						window.location.reload();
-					}
-				}, 500);
+				setTimeout(() => window.location.reload(), 500);
 			} else {
 				toast.error('เกิดข้อผิดพลาดในการแก้ไขแอดมิน');
 			}
@@ -352,15 +337,7 @@
 			if (result.type === 'success') {
 				toast.success(`${actionText}บัญชีแอดมินสำเร็จ`);
 				// รีเฟรชข้อมูลทันทีเพื่อให้ UI อัพเดต
-				setTimeout(async () => {
-					try {
-						await invalidate('app:page-data');
-						await invalidateAll();
-					} catch (error) {
-						console.error('Failed to refresh data after toggle status:', error);
-						window.location.reload();
-					}
-				}, 300);
+				setTimeout(() => window.location.reload(), 300);
 			} else {
 				toast.error(result.error || `เกิดข้อผิดพลาดในการ${actionText}บัญชีแอดมิน`);
 			}
@@ -1072,230 +1049,101 @@
 			<Dialog.Description>กรอกข้อมูลเพื่อสร้างผู้ดูแลระบบใหม่</Dialog.Description>
 		</Dialog.Header>
 
-		<form method="POST" action="?/create" use:enhance class="space-y-3 px-1 sm:space-y-4 sm:px-0">
-			{#if $errors._errors}
-				<Alert variant="destructive">
-					<AlertDescription>
-						{$errors._errors[0]}
-					</AlertDescription>
-				</Alert>
-			{/if}
+		<form class="space-y-3 px-1 sm:space-y-4 sm:px-0" onsubmit={(e) => { e.preventDefault(); handleCreateSubmit(); }}>
 
-			<Form.Field {form} name="prefix">
-				<Form.Control>
-					{#snippet children({ props })}
-						<Label for={props.id}>คำนำหน้า</Label>
-						<Select.Root
-							type="single"
-							bind:value={selectedPrefix}
-							disabled={$submitting}
-							onValueChange={(value) => {
-								console.log('Prefix changed to:', value);
-								selectedPrefix = value as string;
-							}}
-						>
-							<Select.Trigger>
-								{PrefixOptions.find((opt) => opt.value === selectedPrefix)?.label ??
-									'เลือกคำนำหน้า'}
-							</Select.Trigger>
-							<Select.Content>
-								{#each PrefixOptions as option}
-									<Select.Item value={option.value}>
-										{option.label}
-									</Select.Item>
-								{/each}
-							</Select.Content>
-						</Select.Root>
-					{/snippet}
-				</Form.Control>
-				<Form.FieldErrors />
-			</Form.Field>
-
-			<div class="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
-				<Form.Field {form} name="first_name">
-					<Form.Control>
-						{#snippet children({ props })}
-							<Label for={props.id}>ชื่อจริง</Label>
-							<Input
-								{...props}
-								bind:value={$formData.first_name}
-								placeholder="กรอกชื่อจริง"
-								disabled={$submitting}
-							/>
-						{/snippet}
-					</Form.Control>
-					<Form.FieldErrors />
-				</Form.Field>
-
-				<Form.Field {form} name="last_name">
-					<Form.Control>
-						{#snippet children({ props })}
-							<Label for={props.id}>นามสกุล</Label>
-							<Input
-								{...props}
-								bind:value={$formData.last_name}
-								placeholder="กรอกนามสกุล"
-								disabled={$submitting}
-							/>
-						{/snippet}
-					</Form.Control>
-					<Form.FieldErrors />
-				</Form.Field>
+			<div class="space-y-2">
+				<Label>คำนำหน้า</Label>
+				<Select.Root type="single" bind:value={selectedPrefix} disabled={submitting}>
+					<Select.Trigger>
+						{PrefixOptions.find((opt) => opt.value === selectedPrefix)?.label ?? 'เลือกคำนำหน้า'}
+					</Select.Trigger>
+					<Select.Content>
+						{#each PrefixOptions as option}
+							<Select.Item value={option.value}>{option.label}</Select.Item>
+						{/each}
+					</Select.Content>
+				</Select.Root>
 			</div>
 
-			<Form.Field {form} name="email">
-				<Form.Control>
-					{#snippet children({ props })}
-						<Label for={props.id}>อีเมล</Label>
-						<Input
-							{...props}
-							type="email"
-							bind:value={$formData.email}
-							placeholder="admin@example.com"
-							disabled={$submitting}
-						/>
-					{/snippet}
-				</Form.Control>
-				<Form.FieldErrors />
-			</Form.Field>
+			<div class="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
+				<div class="space-y-2">
+					<Label>ชื่อจริง</Label>
+					<Input bind:value={formData.first_name} placeholder="กรอกชื่อจริง" disabled={submitting} />
+				</div>
+				<div class="space-y-2">
+					<Label>นามสกุล</Label>
+					<Input bind:value={formData.last_name} placeholder="กรอกนามสกุล" disabled={submitting} />
+				</div>
+			</div>
 
-			<Form.Field {form} name="password">
-				<Form.Control>
-					{#snippet children({ props })}
-						<Label for={props.id}>รหัสผ่าน</Label>
-						<Input
-							{...props}
-							type="password"
-							bind:value={$formData.password}
-							placeholder="กรุณาใส่รหัสผ่าน"
-							disabled={$submitting}
-						/>
-						<div class="mt-1 text-xs text-gray-600 dark:text-gray-400">
-							รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร ประกอบด้วยตัวพิมพ์เล็ก พิมพ์ใหญ่ และตัวเลข
-						</div>
-					{/snippet}
-				</Form.Control>
-				<Form.FieldErrors />
-			</Form.Field>
+			<div class="space-y-2">
+				<Label>อีเมล</Label>
+				<Input type="email" bind:value={formData.email} placeholder="admin@example.com" disabled={submitting} />
+			</div>
 
-			<Form.Field {form} name="admin_level">
-				<Form.Control>
-					{#snippet children({ props })}
-						<Label for={props.id}>ระดับแอดมิน</Label>
-						<Select.Root
-							type="single"
-							bind:value={selectedAdminLevel}
-							disabled={$submitting}
-							onValueChange={(value) => {
-								const newLevel = value as AdminLevel;
-								console.log('Admin level changed to:', newLevel);
-								selectedAdminLevel = newLevel;
-							}}
-						>
-							<Select.Trigger>
-								{adminLevelOptions.find((opt) => opt.value === selectedAdminLevel)?.label ??
-									'เลือกระดับแอดมิน'}
-							</Select.Trigger>
-							<Select.Content>
-								{#each adminLevelOptions as option}
-									<Select.Item value={option.value}>
-										{option.label}
-									</Select.Item>
-								{/each}
-							</Select.Content>
-						</Select.Root>
-					{/snippet}
-				</Form.Control>
-				<Form.FieldErrors />
-			</Form.Field>
+			<div class="space-y-2">
+				<Label>รหัสผ่าน</Label>
+				<Input type="password" bind:value={formData.password} placeholder="กรุณาใส่รหัสผ่าน" disabled={submitting} />
+				<div class="mt-1 text-xs text-gray-600 dark:text-gray-400">
+					รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร ประกอบด้วยตัวพิมพ์เล็ก พิมพ์ใหญ่ และตัวเลข
+				</div>
+			</div>
+
+			<div class="space-y-2">
+				<Label>ระดับแอดมิน</Label>
+				<Select.Root type="single" bind:value={selectedAdminLevel} disabled={submitting}>
+					<Select.Trigger>
+						{adminLevelOptions.find((opt) => opt.value === selectedAdminLevel)?.label ?? 'เลือกระดับแอดมิน'}
+					</Select.Trigger>
+					<Select.Content>
+						{#each adminLevelOptions as option}
+							<Select.Item value={option.value}>{option.label}</Select.Item>
+						{/each}
+					</Select.Content>
+				</Select.Root>
+			</div>
 
 			{#if selectedAdminLevel === AdminLevel.OrganizationAdmin}
-				<Form.Field {form} name="organization_id">
-					<Form.Control>
-						{#snippet children({ props })}
-							<Label for={props.id}>หน่วยงาน <span class="text-red-500">*</span></Label>
-							<Select.Root
-								type="single"
-								bind:value={selectedFaculty}
-								disabled={$submitting}
-								required
-								onValueChange={(value) => {
-									const newFaculty = value as string;
-									console.log('Faculty changed to:', newFaculty);
-									selectedFaculty = newFaculty;
-								}}
-							>
-								<Select.Trigger class={!selectedFaculty ? 'border-red-300' : ''}>
-									{facultyOptions.find((opt) => opt.value === selectedFaculty)?.label ??
-										'เลือกหน่วยงานที่รับผิดชอบ'}
-								</Select.Trigger>
-								<Select.Content>
-									{#each facultyOptions as option}
-										<Select.Item value={option.value}>
-											{option.label}
-										</Select.Item>
-									{/each}
-								</Select.Content>
-							</Select.Root>
-							{#if selectedAdminLevel === AdminLevel.OrganizationAdmin && !selectedFaculty}
-								<p class="mt-1 text-sm text-red-600">กรุณาเลือกหน่วยงานสำหรับแอดมินระดับหน่วยงาน</p>
-							{/if}
-						{/snippet}
-					</Form.Control>
-					<Form.FieldErrors />
-				</Form.Field>
+				<div class="space-y-2">
+					<Label>หน่วยงาน <span class="text-red-500">*</span></Label>
+					<Select.Root type="single" bind:value={selectedFaculty} disabled={submitting}>
+						<Select.Trigger class={!selectedFaculty ? 'border-red-300' : ''}>
+							{facultyOptions.find((opt) => opt.value === selectedFaculty)?.label ?? 'เลือกหน่วยงานที่รับผิดชอบ'}
+						</Select.Trigger>
+						<Select.Content>
+							{#each facultyOptions as option}
+								<Select.Item value={option.value}>{option.label}</Select.Item>
+							{/each}
+						</Select.Content>
+					</Select.Root>
+					{#if !selectedFaculty}
+						<p class="mt-1 text-sm text-red-600">กรุณาเลือกหน่วยงานสำหรับแอดมินระดับหน่วยงาน</p>
+					{/if}
+				</div>
 			{:else if selectedAdminLevel === AdminLevel.SuperAdmin}
 				<div class="rounded-md bg-blue-50 p-3 dark:bg-blue-950/20">
 					<div class="flex items-center">
 						<IconShield class="mr-2 h-5 w-5 text-blue-500" />
-						<p class="text-sm text-blue-700 dark:text-blue-300">
-							ซุปเปอร์แอดมินมีสิทธิ์เข้าถึงทุกหน่วยงาน ไม่จำเป็นต้องระบุหน่วยงานเฉพาะ
-						</p>
+						<p class="text-sm text-blue-700 dark:text-blue-300">ซุปเปอร์แอดมินมีสิทธิ์เข้าถึงทุกหน่วยงาน ไม่จำเป็นต้องระบุหน่วยงานเฉพาะ</p>
 					</div>
 				</div>
 			{:else if selectedAdminLevel === AdminLevel.RegularAdmin}
 				<div class="rounded-md bg-gray-50 p-3 dark:bg-gray-800/50">
 					<div class="flex items-center">
 						<IconUsers class="mr-2 h-5 w-5 text-gray-500" />
-						<p class="text-sm text-gray-600 dark:text-gray-300">
-							แอดมินทั่วไปจะได้รับสิทธิ์พื้นฐานในการจัดการระบบ
-						</p>
+						<p class="text-sm text-gray-600 dark:text-gray-300">แอดมินทั่วไปจะได้รับสิทธิ์พื้นฐานในการจัดการระบบ</p>
 					</div>
 				</div>
 			{/if}
-
-			<!-- Hidden inputs to ensure form data is sent correctly -->
-			<input type="hidden" name="admin_level" bind:value={$formData.admin_level} />
-			<input type="hidden" name="prefix" bind:value={$formData.prefix} />
-			<input type="hidden" name="first_name" bind:value={$formData.first_name} />
-			<input type="hidden" name="last_name" bind:value={$formData.last_name} />
-			{#if $formData.organization_id}
-				<input type="hidden" name="organization_id" bind:value={$formData.organization_id} />
-			{/if}
-
 
 			<Dialog.Footer class="flex flex-col gap-2 sm:flex-row sm:gap-4">
 				<Button type="button" variant="outline" onclick={() => (dialogOpen = false)} class="order-2 sm:order-1">ยกเลิก</Button>
 				<Button
 					type="submit"
-					disabled={$submitting ||
-						(selectedAdminLevel === AdminLevel.OrganizationAdmin && !selectedFaculty)}
-					onclick={() => {
-						console.log('=== FORM SUBMISSION DEBUG ===');
-						console.log('selectedAdminLevel:', selectedAdminLevel);
-						console.log('selectedFaculty:', selectedFaculty);
-						console.log('selectedPrefix:', selectedPrefix);
-						console.log('$formData:', $formData);
-						console.log('admin_level in formData:', $formData.admin_level);
-						console.log('organization_id in formData:', $formData.organization_id);
-						console.log('prefix in formData:', $formData.prefix);
-						console.log('first_name in formData:', $formData.first_name);
-						console.log('last_name in formData:', $formData.last_name);
-						console.log('===============================');
-					}}
+					disabled={submitting || (selectedAdminLevel === AdminLevel.OrganizationAdmin && !selectedFaculty)}
 					class="order-1 sm:order-2"
 				>
-					{#if $submitting}
+					{#if submitting}
 						<IconLoader class="mr-2 h-4 w-4 animate-spin" />
 						กำลังสร้าง...
 					{:else}

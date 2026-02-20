@@ -11,16 +11,19 @@
 	import { Button } from '$lib/components/ui/button';
 	import { toast } from 'svelte-sonner';
 	import { IconUser, IconLock, IconMail, IconSchool } from '@tabler/icons-svelte';
+	import { usersApi, auth as authApi, ApiError } from '$lib/api';
+	import { authStore } from '$lib/stores/auth.svelte';
 
-	let { data } = $props();
+	let user = $state(authStore.user);
+
 	let isChangingPassword = $state(false);
 	let isUpdatingProfile = $state(false);
 
 	// Form states
 	let profileForm = $state({
-		first_name: data.user?.first_name || '',
-		last_name: data.user?.last_name || '',
-		email: data.user?.email || ''
+		first_name: user?.first_name || '',
+		last_name: user?.last_name || '',
+		email: user?.email || ''
 	});
 
 	let passwordForm = $state({
@@ -32,23 +35,14 @@
 	async function handleProfileUpdate() {
 		isUpdatingProfile = true;
 		try {
-			const response = await fetch('/api/profile/update', {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json'
-				},
-				body: JSON.stringify(profileForm)
+			await usersApi.updateProfile({
+				first_name: profileForm.first_name,
+				last_name: profileForm.last_name,
 			});
-
-			const result = await response.json();
-
-			if (response.ok) {
-				toast.success('อัปเดตข้อมูลส่วนตัวสำเร็จ');
-			} else {
-				toast.error(result.message || 'เกิดข้อผิดพลาดในการอัปเดตข้อมูล');
-			}
-		} catch (error) {
-			toast.error('เกิดข้อผิดพลาดในการเชื่อมต่อ');
+			toast.success('อัปเดตข้อมูลส่วนตัวสำเร็จ');
+		} catch (e) {
+			const msg = e instanceof ApiError ? e.message : 'เกิดข้อผิดพลาดในการเชื่อมต่อ';
+			toast.error(msg);
 		} finally {
 			isUpdatingProfile = false;
 		}
@@ -59,36 +53,18 @@
 			toast.error('รหัสผ่านใหม่และยืนยันรหัสผ่านไม่ตรงกัน');
 			return;
 		}
-
 		if (passwordForm.new_password.length < 6) {
 			toast.error('รหัสผ่านใหม่ต้องมีอย่างน้อย 6 ตัวอักษร');
 			return;
 		}
-
 		isChangingPassword = true;
 		try {
-			const response = await fetch('/api/profile/change-password', {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json'
-				},
-				body: JSON.stringify(passwordForm)
-			});
-
-			const result = await response.json();
-
-			if (response.ok) {
-				toast.success('เปลี่ยนรหัสผ่านสำเร็จ');
-				passwordForm = {
-					current_password: '',
-					new_password: '',
-					confirm_password: ''
-				};
-			} else {
-				toast.error(result.message || 'เกิดข้อผิดพลาดในการเปลี่ยนรหัสผ่าน');
-			}
-		} catch (error) {
-			toast.error('เกิดข้อผิดพลาดในการเชื่อมต่อ');
+			await usersApi.changePassword(passwordForm.current_password, passwordForm.new_password);
+			toast.success('เปลี่ยนรหัสผ่านสำเร็จ');
+			passwordForm = { current_password: '', new_password: '', confirm_password: '' };
+		} catch (e) {
+			const msg = e instanceof ApiError ? e.message : 'เกิดข้อผิดพลาดในการเชื่อมต่อ';
+			toast.error(msg);
 		} finally {
 			isChangingPassword = false;
 		}
@@ -223,10 +199,10 @@
 						นักศึกษา
 					</p>
 				</div>
-				{#if data.user?.student_id}
+				{#if user?.student_id}
 					<div>
 						<Label class="text-sm font-medium text-muted-foreground">รหัสนักศึกษา</Label>
-						<p class="text-sm font-medium">{data.user.student_id}</p>
+						<p class="text-sm font-medium">{user.student_id}</p>
 					</div>
 				{/if}
 			</div>
