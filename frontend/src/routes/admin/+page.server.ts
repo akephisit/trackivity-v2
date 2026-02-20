@@ -171,7 +171,7 @@ export const load: PageServerLoad = async (event) => {
 				.limit(10);
 		}
 
-		recentActivities = dbActivities.map((activity) => ({
+		recentActivities = dbActivities.map((activity: any) => ({
 			...activity,
 			title: activity.title || 'กิจกรรมใหม่',
 			description: activity.description || activity.title || 'มีกิจกรรมใหม่ในระบบ'

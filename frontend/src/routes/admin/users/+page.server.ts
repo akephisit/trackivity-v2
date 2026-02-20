@@ -45,7 +45,7 @@ async function getUsersFromDb(
 		.$dynamic();
 
 	const conditions = [];
-	
+
 	// Filter out soft deleted users
 	conditions.push(sql`${users.deletedAt} IS NULL`);
 
@@ -145,8 +145,8 @@ async function getUserStatsFromDb(
 
 			let q = db.select({ count: count() }).from(users).$dynamic();
 			const recentConditions = [
-				gte(users.created_at, thirtyDaysAgo), 
-				sql`${users.deletedAt} IS NULL`, 
+				gte(users.created_at, thirtyDaysAgo),
+				sql`${users.deletedAt} IS NULL`,
 				...baseConditions
 			];
 
@@ -190,7 +190,7 @@ async function getOrganizationsFromDb(): Promise<Organization[]> {
 		.where(eq(organizations.status, true))
 		.orderBy(organizations.name);
 
-	return result.map((o) => ({
+	return result.map((o: any) => ({
 		...o,
 		description: o.description || undefined, // Convert null to undefined
 		created_at: o.created_at?.toISOString() || new Date().toISOString(),

@@ -22,8 +22,8 @@ export const GET = async () => {
 
 		// Group organizations by type for better categorization
 		const groupedOrganizations = {
-			faculty: allOrganizations.filter((org) => org.organizationType === 'faculty'),
-			office: allOrganizations.filter((org) => org.organizationType === 'office')
+			faculty: allOrganizations.filter((org: any) => org.organizationType === 'faculty'),
+			office: allOrganizations.filter((org: any) => org.organizationType === 'office')
 		};
 
 		return json({

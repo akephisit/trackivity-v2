@@ -1,5 +1,5 @@
 import { json, type RequestHandler } from '@sveltejs/kit';
-import { deactivateSession } from '$lib/server/session-utils';
+// import { deactivateSession } from '$lib/server/session-utils';
 import jwt from 'jsonwebtoken';
 import { env } from '$env/dynamic/private';
 
@@ -20,7 +20,7 @@ export const POST: RequestHandler = async ({ cookies }) => {
 				const sessionId = decoded.session_id;
 
 				if (sessionId) {
-					await deactivateSession(sessionId);
+					// await deactivateSession(sessionId);
 				}
 			} catch (error) {
 				console.warn('Failed to decode JWT token during logout:', error);

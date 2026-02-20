@@ -101,7 +101,7 @@ async function buildStudentSummary(userId: string): Promise<StudentSummary> {
 			.leftJoin(organizations, eq(activities.organizerId, organizations.id))
 			.where(eq(participations.userId, userId));
 
-		const participationHistory: ParticipationRecord[] = rowsAll.map((r) => {
+		const participationHistory: ParticipationRecord[] = rowsAll.map((r: any) => {
 			const fallbackDate = r.checked_out_at || r.checked_in_at || r.registered_at || new Date();
 			return {
 				id: r.id,
@@ -188,7 +188,7 @@ async function buildStudentSummary(userId: string): Promise<StudentSummary> {
 			activityRequirements
 		};
 	} catch (error) {
-        console.error('[Student Summary] buildStudentSummary error:', error);
+		console.error('[Student Summary] buildStudentSummary error:', error);
 		return {
 			participationHistory: [],
 			userInfo: null,
@@ -198,7 +198,7 @@ async function buildStudentSummary(userId: string): Promise<StudentSummary> {
 }
 
 export async function getStudentSummary(user: SessionUser): Promise<StudentSummary> {
-    const summary = await buildStudentSummary(user.user_id);
+	const summary = await buildStudentSummary(user.user_id);
 	if (summary.userInfo) {
 		summary.userInfo = {
 			student_id: summary.userInfo.student_id || user.student_id,

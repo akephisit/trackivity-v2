@@ -24,7 +24,7 @@
 	import MetaTags from '$lib/components/seo/MetaTags.svelte';
 	import { getActivityTypeDisplayName } from '$lib/utils/activity';
 
-	let { data }: { data: PageData } = $props();
+	let { data }: { data: any } = $props();
 
 	function toggleTheme() {
 		setMode(mode.current === 'light' ? 'dark' : 'light');

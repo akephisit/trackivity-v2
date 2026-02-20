@@ -41,7 +41,7 @@ export const load: PageServerLoad = async (event) => {
 			.where(eq(participations.userId, user.user_id));
 
 		// Show records with different participation statuses, not just completed ones
-		const history = rowsAll.map((r) => {
+		const history = rowsAll.map((r: any) => {
 			// Calculate participation duration if both times are available
 			let participationDurationMinutes: number | null = null;
 			if (r.checked_in_at && r.checked_out_at) {

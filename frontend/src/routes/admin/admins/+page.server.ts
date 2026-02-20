@@ -31,7 +31,7 @@ export const load: PageServerLoad = async (event) => {
 			.where(eq(organizations.status, true))
 			.orderBy(organizations.name);
 
-		facultiesList = facRows.map((f) => ({
+		facultiesList = facRows.map((f: any) => ({
 			...f,
 			description: f.description || undefined,
 			created_at: f.created_at?.toISOString() || new Date().toISOString(),
@@ -79,7 +79,7 @@ export const load: PageServerLoad = async (event) => {
 			}
 		};
 
-		admins = rows.map((r) => ({
+		admins = rows.map((r: any) => ({
 			id: r.id,
 			user_id: r.user_id,
 			admin_level: mapAdminLevel(r.admin_level as unknown as string),

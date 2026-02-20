@@ -60,7 +60,7 @@ export const POST: RequestHandler = async ({
 		const organizationId = session.adminRole.organizationId;
 		const userId = session.user.id;
 
-		await db.transaction(async (tx) => {
+		await db.transaction(async (tx: any) => {
 			// Check if requirement already exists
 			const existing = await tx
 				.select()

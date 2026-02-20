@@ -33,13 +33,13 @@ export const load: PageServerLoad = async (event) => {
 	const whereClause =
 		user.admin_role?.admin_level === 'OrganizationAdmin' && facultyId
 			? and(
-					eq(activities.status, 'ongoing'),
-					or(
-						eq(activities.organizationId, facultyId),
-						eq(activities.organizerId, facultyId),
-						sql`${activities.eligibleOrganizations} @> ${JSON.stringify([facultyId])}`
-					)
+				eq(activities.status, 'ongoing'),
+				or(
+					eq(activities.organizationId, facultyId),
+					eq(activities.organizerId, facultyId),
+					sql`${activities.eligibleOrganizations} @> ${JSON.stringify([facultyId])}`
 				)
+			)
 			: eq(activities.status, 'ongoing');
 
 	const orgOrganizer = alias(organizations, 'org_organizer');
@@ -67,7 +67,7 @@ export const load: PageServerLoad = async (event) => {
 
 	// Get participant counts for all activities
 	const participantCounts = await Promise.all(
-		rows.map(async (activity) => {
+		rows.map(async (activity: any) => {
 			const countResult = await db
 				.select({ count: sql<number>`cast(count(*) as int)` })
 				.from(participations)
@@ -82,7 +82,7 @@ export const load: PageServerLoad = async (event) => {
 	);
 
 	// Add participant counts to activity data
-	const activitiesWithCounts = rows.map((activity) => {
+	const activitiesWithCounts = rows.map((activity: any) => {
 		const countData = participantCounts.find((pc) => pc.activity_id === activity.id);
 		return {
 			...activity,

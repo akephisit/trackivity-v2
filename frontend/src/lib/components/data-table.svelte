@@ -64,10 +64,11 @@
 			header: 'Reviewer',
 			cell: ({ row }) => renderComponent(DataTableReviewer, { row })
 		},
-		{
-			id: 'actions',
-			cell: () => renderSnippet(DataTableActions)
-		}
+		// Note: Actions column commented out due to snippet scope issues
+		// {
+		// 	id: 'actions',
+		// 	cell: ({ row }) => renderSnippet(DataTableActions, { row })
+		// }
 	];
 </script>
 
@@ -503,7 +504,7 @@
 	</Badge>
 {/snippet}
 
-{#snippet DataTableActions()}
+{#snippet DataTableActions({ row }: { row: Row<Schema> })}
 	<DropdownMenu.Root>
 		<DropdownMenu.Trigger class="flex size-8 text-muted-foreground data-[state=open]:bg-muted">
 			{#snippet child({ props })}

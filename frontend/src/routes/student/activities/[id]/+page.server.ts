@@ -112,7 +112,7 @@ export const load: PageServerLoad = async (event) => {
 			.leftJoin(departments, eq(dbUsers.departmentId, departments.id))
 			.where(eq(participations.activityId, row.id));
 
-		const participationsList = partRows.map((p) => ({
+		const participationsList = partRows.map((p: any) => ({
 			id: p.id,
 			user_id: p.user_id,
 			user_name: [p.user_first_name, p.user_last_name].filter(Boolean).join(' '),
@@ -126,7 +126,7 @@ export const load: PageServerLoad = async (event) => {
 		}));
 
 		activity.participant_count = participationsList.length;
-		const mine = participationsList.find((p) => p.user_id === user.user_id);
+		const mine = participationsList.find((p: any) => p.user_id === user.user_id);
 		activity.is_registered = !!mine;
 		if (mine) {
 			(activity as any).user_participation_status = mine.status;

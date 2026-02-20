@@ -35,7 +35,7 @@ export const load: PageServerLoad = async (event) => {
 
 		// Transform data to include participant_count count
 		recentActivities = await Promise.all(
-			result.map(async (activity) => {
+			result.map(async (activity: any) => {
 				const [participantCount] = await db
 					.select({ count: count() })
 					.from(participations)

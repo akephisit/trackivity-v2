@@ -192,7 +192,7 @@ async function getOrganizationsFromDb(): Promise<Organization[]> {
 		.where(eq(organizations.status, true))
 		.orderBy(organizations.name);
 
-	return result.map((f) => ({
+	return result.map((f: any) => ({
 		...f,
 		description: f.description || undefined, // Convert null to undefined
 		created_at: f.created_at?.toISOString() || new Date().toISOString(),
@@ -219,7 +219,7 @@ async function getDepartmentsFromDb(organizationId: string): Promise<Department[
 		.where(and(eq(departments.organizationId, organizationId), eq(departments.status, true)))
 		.orderBy(departments.name);
 
-	return result.map((d) => ({
+	return result.map((d: any) => ({
 		...d,
 		description: d.description || undefined, // Convert null to undefined
 		created_at: d.created_at?.toISOString() || new Date().toISOString(),
@@ -302,9 +302,9 @@ export const load: PageServerLoad = async (event) => {
 
 			const department = u.department_name
 				? {
-						id: u.department_id,
-						name: u.department_name
-					}
+					id: u.department_id,
+					name: u.department_name
+				}
 				: undefined;
 
 			// Handle organization data

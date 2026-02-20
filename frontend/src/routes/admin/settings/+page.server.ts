@@ -102,7 +102,7 @@ export const actions: Actions = {
 			const validatedData = activityRequirementsSchema.parse(data);
 			const userId = user.user_id;
 
-			await db.transaction(async (tx) => {
+			await db.transaction(async (tx: any) => {
 				// Check if requirement already exists
 				const existing = await tx
 					.select()

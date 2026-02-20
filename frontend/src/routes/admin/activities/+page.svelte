@@ -38,17 +38,17 @@
 	// Stats calculation
 	let stats = $derived({
 		total: data.activities.length,
-		academic: data.activities.filter((a) => a.activity_type === 'Academic').length,
-		sports: data.activities.filter((a) => a.activity_type === 'Sports').length,
-		cultural: data.activities.filter((a) => a.activity_type === 'Cultural').length,
-		ongoing: data.activities.filter((a) => getActivityStatus(a).label === 'กำลังดำเนินการ').length,
-		totalParticipants: data.activities.reduce((sum, a) => sum + (a.participant_count || 0), 0),
-		totalViews: data.activities.reduce((sum, a) => sum + (a.view_count || 0), 0)
+		academic: data.activities.filter((a: any) => a.activity_type === 'Academic').length,
+		sports: data.activities.filter((a: any) => a.activity_type === 'Sports').length,
+		cultural: data.activities.filter((a: any) => a.activity_type === 'Cultural').length,
+		ongoing: data.activities.filter((a: any) => getActivityStatus(a).label === 'กำลังดำเนินการ').length,
+		totalParticipants: data.activities.reduce((sum: any, a: any) => sum + (a.participant_count || 0), 0),
+		totalViews: data.activities.reduce((sum: any, a: any) => sum + (a.view_count || 0), 0)
 	});
 
 	// Filtered activities
 	let filteredActivities = $derived(
-		data.activities.filter((activity) => {
+		data.activities.filter((activity: any) => {
 			const matchesSearch =
 				searchTerm === '' ||
 				activity.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||

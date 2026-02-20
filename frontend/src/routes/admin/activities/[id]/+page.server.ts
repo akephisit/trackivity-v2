@@ -77,9 +77,9 @@ export const load: PageServerLoad = async (event) => {
 		// Compute stats
 		const participationStats = {
 			total: participationRows.length,
-			registered: participationRows.filter((p) => p.status === 'registered').length,
-			checked_in: participationRows.filter((p) => p.status === 'checked_in').length,
-			completed: participationRows.filter((p) => p.status === 'completed').length
+			registered: participationRows.filter((p: any) => p.status === 'registered').length,
+			checked_in: participationRows.filter((p: any) => p.status === 'checked_in').length,
+			completed: participationRows.filter((p: any) => p.status === 'completed').length
 		};
 
 		// Map to Activity type expected by page
@@ -121,7 +121,7 @@ export const load: PageServerLoad = async (event) => {
 			registration_open: (a as any).registration_open ?? false
 		};
 
-		const participationsList = participationRows.map((p) => ({
+		const participationsList = participationRows.map((p: any) => ({
 			id: p.id,
 			user_id: p.user_id,
 			user_name: `${p.first_name ?? ''} ${p.last_name ?? ''}`.trim() || p.email,

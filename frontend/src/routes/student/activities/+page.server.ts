@@ -62,26 +62,26 @@ export const load: PageServerLoad = async (event) => {
 			.limit(100);
 
 		// Get user's participation status for each activity
-		const activityIds = rows.map((r) => r.id);
+		const activityIds = rows.map((r: any) => r.id);
 		const userParticipations =
 			activityIds.length > 0
 				? await db
-						.select({
-							activityId: participations.activityId,
-							status: participations.status,
-							registeredAt: participations.registeredAt
-						})
-						.from(participations)
-						.where(
-							and(
-								eq(participations.userId, user.user_id),
-								inArray(participations.activityId, activityIds)
-							)
+					.select({
+						activityId: participations.activityId,
+						status: participations.status,
+						registeredAt: participations.registeredAt
+					})
+					.from(participations)
+					.where(
+						and(
+							eq(participations.userId, user.user_id),
+							inArray(participations.activityId, activityIds)
 						)
+					)
 				: [];
 
 		// Create participation map for quick lookup
-		const participationMap = new Map(userParticipations.map((p) => [p.activityId, p]));
+		const participationMap = new Map(userParticipations.map((p: any) => [p.activityId, p]));
 
 		const toISODateTime = (dateVal: unknown, timeVal?: unknown): string => {
 			try {
@@ -100,7 +100,7 @@ export const load: PageServerLoad = async (event) => {
 			}
 		};
 
-		const list = rows.map((r) => {
+		const list = rows.map((r: any) => {
 			const participation = participationMap.get(r.id);
 			const eligibleOrgs = Array.isArray(r.eligible_organizations) ? r.eligible_organizations : [];
 
@@ -128,7 +128,7 @@ export const load: PageServerLoad = async (event) => {
 				organization_name: r.organization_name || undefined,
 				created_by_name: [r.creator_first_name, r.creator_last_name].filter(Boolean).join(' '),
 				is_registered: !!participation,
-				user_participation_status: participation?.status,
+				user_participation_status: (participation as any)?.status,
 				is_eligible: isEligible,
 				eligible_organizations: eligibleOrgs
 			};

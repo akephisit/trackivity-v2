@@ -73,7 +73,7 @@ export const load: PageServerLoad = async (event) => {
 			return p ? map[p] || '' : '';
 		};
 
-		const organizationAdmins: ExtendedAdminRole[] = rows.map((r) => ({
+		const organizationAdmins: ExtendedAdminRole[] = rows.map((r: any) => ({
 			id: r.role_id,
 			user_id: r.user_id,
 			admin_level: AdminLevel.OrganizationAdmin,
@@ -96,13 +96,13 @@ export const load: PageServerLoad = async (event) => {
 			},
 			organization: (r as any).organization_id
 				? ({
-						id: (r as any).organization_id,
-						name: (r as any).organization_name || 'ไม่ระบุ',
-						code: (r as any).organization_code || '',
-						status: (r as any).organization_status ?? true,
-						created_at: new Date().toISOString(),
-						updated_at: new Date().toISOString()
-					} as Organization)
+					id: (r as any).organization_id,
+					name: (r as any).organization_name || 'ไม่ระบุ',
+					code: (r as any).organization_code || '',
+					status: (r as any).organization_status ?? true,
+					created_at: new Date().toISOString(),
+					updated_at: new Date().toISOString()
+				} as Organization)
 				: undefined,
 			// Extended fields for UI
 			is_active: false,
@@ -131,7 +131,7 @@ export const load: PageServerLoad = async (event) => {
 				})
 				.from(organizations)
 				.orderBy(organizations.name);
-			organizationsList = org.map((f) => ({
+			organizationsList = org.map((f: any) => ({
 				id: f.id,
 				name: f.name,
 				code: f.code,
@@ -139,7 +139,7 @@ export const load: PageServerLoad = async (event) => {
 				created_at: f.created_at?.toISOString() || new Date().toISOString(),
 				updated_at: f.updated_at?.toISOString() || new Date().toISOString()
 			}));
-		} catch {}
+		} catch { }
 
 		// Stats
 		const stats: OrganizationAdminDashboardStats = {
@@ -192,15 +192,15 @@ export const load: PageServerLoad = async (event) => {
 			currentOrganization:
 				adminLevel === AdminLevel.OrganizationAdmin
 					? organizationsList.find(
-							(f) => f.id === ((user.admin_role as any)?.organization_id || '')
-						) || null
+						(f) => f.id === ((user.admin_role as any)?.organization_id || '')
+					) || null
 					: null,
 			organizations:
 				adminLevel === AdminLevel.SuperAdmin
 					? organizationsList
 					: organizationsList.filter(
-							(f) => f.id === ((user.admin_role as any)?.organization_id || '')
-						),
+						(f) => f.id === ((user.admin_role as any)?.organization_id || '')
+					),
 			stats,
 			organizationAdmins,
 			form

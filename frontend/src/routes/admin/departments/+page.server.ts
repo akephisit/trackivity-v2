@@ -81,7 +81,7 @@ export const load: PageServerLoad = async (event) => {
 
 			const totalAdmins = adminCountResult[0]?.count || 0;
 
-			departmentsData = rows.map((d) => ({
+			departmentsData = rows.map((d: any) => ({
 				...d,
 				description: d.description || undefined,
 				created_at: d.created_at?.toISOString() || new Date().toISOString(),
@@ -124,7 +124,7 @@ export const load: PageServerLoad = async (event) => {
 			const adminCountResult = await db.select({ count: count() }).from(adminRoles);
 			const totalAdmins = adminCountResult[0]?.count || 0;
 
-			departmentsData = rows.map((d) => ({
+			departmentsData = rows.map((d: any) => ({
 				...d,
 				description: d.description || undefined,
 				created_at: d.created_at?.toISOString() || new Date().toISOString(),
@@ -186,7 +186,7 @@ export const load: PageServerLoad = async (event) => {
 				.where(and(eq(organizations.status, true), eq(organizations.organizationType, 'faculty')))
 				.orderBy(organizations.name);
 
-			facultiesList = facRows.map((f) => ({
+			facultiesList = facRows.map((f: any) => ({
 				...f,
 				description: f.description || undefined,
 				created_at: f.created_at?.toISOString() || new Date().toISOString(),

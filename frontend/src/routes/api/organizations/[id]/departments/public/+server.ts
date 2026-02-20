@@ -76,7 +76,7 @@ export const GET: RequestHandler = async ({ params }) => {
 			.where(and(eq(departments.organizationId, organizationId), eq(departments.status, true)))
 			.orderBy(departments.name);
 
-		const data = rows.map((d) => ({
+		const data = rows.map((d: any) => ({
 			id: d.id,
 			name: d.name,
 			code: d.code,
