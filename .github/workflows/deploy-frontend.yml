@@ -45,7 +45,12 @@ jobs:
               "binding": "ASSETS",
               "directory": ".svelte-kit/cloudflare"
             },
-            "custom_domains": ["tru.utrackivity.com"],
+            "routes": [
+              {
+                "pattern": "tru.utrackivity.com",
+                "custom_domain": true
+              }
+            ],
             "vars": {
               "PUBLIC_BACKEND_URL": "${{ secrets.PUBLIC_BACKEND_URL }}"
             }
