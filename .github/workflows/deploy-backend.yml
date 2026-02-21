@@ -68,7 +68,7 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             echo "${{ secrets.GITHUB_TOKEN }}" | podman login ghcr.io -u ${{ github.actor }} --password-stdin
-            cd /opt/stack/trackivity
+            cd trackivity
             
             # Pull latest image
             podman pull ghcr.io/akephisit/trackivity-backend:latest
