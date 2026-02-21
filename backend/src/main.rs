@@ -16,6 +16,7 @@ use modules::activities;
 use modules::organizations;
 use modules::users;
 use modules::departments;
+use modules::admins;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -90,6 +91,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/users/:id", get(users::get_user))
         .route("/users/me/profile", put(users::update_profile))
         .route("/users/me/password", post(users::change_password))
+        // ─── Admins ───────────────────────────────────────
+        .route("/admins", get(admins::handlers::list_admins).post(admins::handlers::create_admin))
+        .route("/admins/:id", put(admins::handlers::update_admin).delete(admins::handlers::delete_admin))
+        .route("/admins/:id/toggle-status", post(admins::handlers::toggle_admin_status))
+        // ─── Organization Admins ──────────────────────────
+        .route("/organization-admins", get(admins::handlers::list_organization_admins))
         // ─── Middleware ───────────────────────────────────
         .layer(cors)
         .layer(TraceLayer::new_for_http())

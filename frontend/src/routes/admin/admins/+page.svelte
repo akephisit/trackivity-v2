@@ -104,18 +104,13 @@
 	async function handleCreateSubmit() {
 		submitting = true;
 		try {
-			const res = await fetch('?/create', {
+			await request('/admins', {
 				method: 'POST',
 				body: JSON.stringify(formData),
-				headers: { 'Content-Type': 'application/json' }
 			});
-			if (res.ok) {
-				toast.success('สร้างแอดมินสำเร็จ');
-				dialogOpen = false;
-				window.location.reload();
-			} else {
-				toast.error('เกิดข้อผิดพลาดในการสร้างแอดมิน');
-			}
+			toast.success('สร้างแอดมินสำเร็จ');
+			dialogOpen = false;
+			window.location.reload();
 		} catch {
 			toast.error('เกิดข้อผิดพลาดในการเชื่อมต่อ');
 		} finally {
@@ -228,25 +223,14 @@
 		if (!adminToDelete) return;
 
 		try {
-			const formData = new FormData();
-			formData.append('adminId', adminToDelete.userId); // ใช้ userId เพื่อส่งไปยัง /api/users endpoint
-			formData.append('userId', adminToDelete.userId); // ส่ง userId เพิ่มเติมเพื่อความชัดเจน
-
-			const response = await fetch('?/delete', {
-				method: 'POST',
-				body: formData
+			await request(`/admins/${adminToDelete.id}`, {
+				method: 'DELETE',
 			});
 
-			const result = await response.json();
-
-			if (result.type === 'success') {
-				toast.success('ลบแอดมินสำเร็จ');
-				deleteDialogOpen = false;
-				adminToDelete = null;
-				setTimeout(() => window.location.reload(), 500);
-			} else {
-				toast.error('เกิดข้อผิดพลาดในการลบแอดมิน');
-			}
+			toast.success('ลบแอดมินสำเร็จ');
+			deleteDialogOpen = false;
+			adminToDelete = null;
+			setTimeout(() => window.location.reload(), 500);
 		} catch (error) {
 			console.error('Delete error:', error);
 			toast.error('เกิดข้อผิดพลาดในการเชื่อมต่อ');
@@ -287,25 +271,14 @@
 		}
 	) {
 		try {
-			const formData = new FormData();
-			formData.append('adminId', adminId); // เก็บ admin role id
-			formData.append('userId', userId); // ส่ง user id เพื่อใช้กับ /api/users endpoint
-			formData.append('updateData', JSON.stringify(updateData));
-
-			const response = await fetch('?/update', {
-				method: 'POST',
-				body: formData
+			await request(`/admins/${adminId}`, {
+				method: 'PUT',
+				body: JSON.stringify(updateData)
 			});
 
-			const result = await response.json();
-
-			if (result.type === 'success') {
-				toast.success('แก้ไขแอดมินสำเร็จ');
-				editDialogOpen = false;
-				setTimeout(() => window.location.reload(), 500);
-			} else {
-				toast.error('เกิดข้อผิดพลาดในการแก้ไขแอดมิน');
-			}
+			toast.success('แก้ไขแอดมินสำเร็จ');
+			editDialogOpen = false;
+			setTimeout(() => window.location.reload(), 500);
 		} catch (error) {
 			console.error('Update error:', error);
 			toast.error('เกิดข้อผิดพลาดในการเชื่อมต่อ');
@@ -324,24 +297,14 @@
 		toggleLoading = { ...toggleLoading, [adminId]: true };
 
 		try {
-			const formData = new FormData();
-			formData.append('adminId', adminId); // admin role id for the new endpoint
-			formData.append('isActive', newStatus.toString()); // This gets converted to is_enabled in server
-
-			const response = await fetch('?/toggleStatus', {
+			await request(`/admins/${adminId}/toggle-status`, {
 				method: 'POST',
-				body: formData
+				body: JSON.stringify({ is_active: newStatus })
 			});
 
-			const result = await response.json();
-
-			if (result.type === 'success') {
-				toast.success(`${actionText}บัญชีแอดมินสำเร็จ`);
-				// รีเฟรชข้อมูลทันทีเพื่อให้ UI อัพเดต
-				setTimeout(() => window.location.reload(), 300);
-			} else {
-				toast.error(result.error || `เกิดข้อผิดพลาดในการ${actionText}บัญชีแอดมิน`);
-			}
+			toast.success(`${actionText}บัญชีแอดมินสำเร็จ`);
+			// รีเฟรชข้อมูลทันทีเพื่อให้ UI อัพเดต
+			setTimeout(() => window.location.reload(), 300);
 		} catch (error) {
 			console.error('Toggle status error:', error);
 			toast.error('เกิดข้อผิดพลาดในการเชื่อมต่อ');

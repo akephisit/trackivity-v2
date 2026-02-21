@@ -105,12 +105,10 @@
 		e.preventDefault();
 		createSubmitting = true;
 		try {
-			const res = await fetch('?/create', { method: 'POST', body: JSON.stringify(createFormData), headers: { 'Content-Type': 'application/json' } });
-			if (res.ok) {
-				toast.success('สร้างแอดมินหน่วยงานสำเร็จ');
-				createDialogOpen = false;
-				window.location.reload();
-			} else { toast.error('เกิดข้อผิดพลาดในการสร้างแอดมินหน่วยงาน'); }
+			await request('/admins', { method: 'POST', body: JSON.stringify(createFormData) });
+            toast.success('สร้างแอดมินหน่วยงานสำเร็จ');
+            createDialogOpen = false;
+            window.location.reload();
 		} catch { toast.error('เกิดข้อผิดพลาด'); } finally { createSubmitting = false; }
 	}
 
@@ -255,25 +253,14 @@
 		if (!editingAdmin) return;
 
 		try {
-			const formData = new FormData();
-			formData.append('adminId', editingAdmin.id);
-			formData.append('userId', editingAdmin.user_id);
-			formData.append('updateData', JSON.stringify(editFormData));
-
-			const response = await fetch('?/update', {
-				method: 'POST',
-				body: formData
+			await request(`/admins/${editingAdmin.id}`, {
+				method: 'PUT',
+				body: JSON.stringify(editFormData)
 			});
 
-			const result = await response.json();
-
-			if (result.type === 'success') {
-				toast.success('แก้ไขข้อมูลแอดมินหน่วยงานสำเร็จ');
-				editDialogOpen = false;
-				setTimeout(() => window.location.reload(), 500);
-			} else {
-				toast.error('เกิดข้อผิดพลาดในการแก้ไขข้อมูล');
-			}
+			toast.success('แก้ไขข้อมูลแอดมินหน่วยงานสำเร็จ');
+			editDialogOpen = false;
+			setTimeout(() => window.location.reload(), 500);
 		} catch (error) {
 			console.error('Update error:', error);
 			toast.error('เกิดข้อผิดพลาดในการเชื่อมต่อ');
@@ -284,24 +271,14 @@
 		if (!adminToDelete) return;
 
 		try {
-			const formData = new FormData();
-			formData.append('adminId', adminToDelete.id);
-
-			const response = await fetch('?/delete', {
-				method: 'POST',
-				body: formData
+			await request(`/admins/${adminToDelete.id}`, {
+				method: 'DELETE',
 			});
 
-			const result = await response.json();
-
-			if (result.type === 'success') {
-				toast.success('ลบแอดมินหน่วยงานสำเร็จ');
-				deleteDialogOpen = false;
-				adminToDelete = null;
-				setTimeout(() => window.location.reload(), 500);
-			} else {
-				toast.error('เกิดข้อผิดพลาดในการลบแอดมิน');
-			}
+			toast.success('ลบแอดมินหน่วยงานสำเร็จ');
+			deleteDialogOpen = false;
+			adminToDelete = null;
+			setTimeout(() => window.location.reload(), 500);
 		} catch (error) {
 			console.error('Delete error:', error);
 			toast.error('เกิดข้อผิดพลาดในการเชื่อมต่อ');
@@ -315,23 +292,13 @@
 		toggleLoading = { ...toggleLoading, [adminId]: true };
 
 		try {
-			const formData = new FormData();
-			formData.append('adminId', adminId);
-			formData.append('isActive', newStatus.toString());
-
-			const response = await fetch('?/toggleStatus', {
+			await request(`/admins/${adminId}/toggle-status`, {
 				method: 'POST',
-				body: formData
+				body: JSON.stringify({ is_active: newStatus })
 			});
 
-			const result = await response.json();
-
-			if (result.type === 'success') {
-				toast.success(`${actionText}แอดมินหน่วยงานสำเร็จ`);
-				setTimeout(() => window.location.reload(), 300);
-			} else {
-				toast.error(result.error || `เกิดข้อผิดพลาดในการ${actionText}แอดมิน`);
-			}
+			toast.success(`${actionText}แอดมินหน่วยงานสำเร็จ`);
+			setTimeout(() => window.location.reload(), 300);
 		} catch (error) {
 			console.error('Toggle status error:', error);
 			toast.error('เกิดข้อผิดพลาดในการเชื่อมต่อ');
@@ -399,29 +366,14 @@
 
 	async function handleCreateGeneralAdmin() {
 		try {
-			const formData = new FormData();
-			formData.append('name', generalAdminFormData.name);
-			formData.append('email', generalAdminFormData.email);
-			formData.append('password', generalAdminFormData.password);
-			formData.append('admin_level', generalAdminFormData.admin_level);
-			formData.append('organization_id', (generalAdminFormData as any).organization_id);
-			formData.append('permissions', JSON.stringify(generalAdminFormData.permissions));
-
-			const response = await fetch('?/create', {
+			await request('/admins', {
 				method: 'POST',
-				body: formData
+				body: JSON.stringify(generalAdminFormData)
 			});
 
-			const result = await response.json();
-
-			if (result.type === 'success') {
-				toast.success('สร้างแอดมินทั่วไปสำเร็จ');
-				createGeneralAdminDialogOpen = false;
-
-				setTimeout(() => window.location.reload(), 500);
-			} else {
-				toast.error('เกิดข้อผิดพลาดในการสร้างแอดมินทั่วไป');
-			}
+			toast.success('สร้างแอดมินทั่วไปสำเร็จ');
+			createGeneralAdminDialogOpen = false;
+			setTimeout(() => window.location.reload(), 500);
 		} catch (error) {
 			console.error('Create general admin error:', error);
 			toast.error('เกิดข้อผิดพลาดในการเชื่อมต่อ');
