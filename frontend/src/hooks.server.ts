@@ -205,19 +205,11 @@ export const handle: Handle = async ({ event, resolve }) => {
 	// Resolve the request with security headers
 	const response = await resolve(event);
 
-	// Add security headers
+	// Add basic security headers (relaxed for CSR to specific APIs)
 	response.headers.set('X-Frame-Options', 'DENY');
 	response.headers.set('X-Content-Type-Options', 'nosniff');
 	response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
-	response.headers.set(
-		'Content-Security-Policy',
-		`default-src 'self'; ` +
-		`script-src 'self' 'unsafe-inline' https://static.cloudflareinsights.com https://challenges.cloudflare.com; ` +
-		`style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; ` +
-		`font-src 'self' https://fonts.gstatic.com data:; ` +
-		`img-src 'self' data: https:; ` +
-		`connect-src 'self' ws: wss: ${publicEnv.PUBLIC_BACKEND_URL || 'http://localhost:3000'} https://cloudflareinsights.com;`
-	);
+	// CSP removed/relaxed currently to support direct CSR from varying subdomains
 
 	return response;
 };
