@@ -8,10 +8,10 @@ use uuid::Uuid;
 const ACTIVITY_SELECT: &str = r#"
     SELECT
         a.id, a.title, a.description, a.location,
-        a.activity_type AS "activity_type: ActivityType",
+        a.activity_type::text AS activity_type,
         a.start_date, a.end_date, a.start_time_only, a.end_time_only,
         a.hours, a.max_participants, a.registration_open,
-        a.status AS "status: ActivityStatus",
+        a.status::text AS status,
         a.created_at, a.updated_at,
         o.name AS organizer_name,
         u.first_name AS creator_name
