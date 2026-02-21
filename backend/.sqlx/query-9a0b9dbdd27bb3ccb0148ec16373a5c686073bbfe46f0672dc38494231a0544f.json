@@ -1,0 +1,23 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        INSERT INTO users (id, student_id, email, password_hash, prefix, first_name, last_name, phone, qr_secret, status, department_id)\n        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'active'::user_status, $10)\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Varchar",
+        "Varchar",
+        "Varchar",
+        "Varchar",
+        "Varchar",
+        "Varchar",
+        "Varchar",
+        "Varchar",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "9a0b9dbdd27bb3ccb0148ec16373a5c686073bbfe46f0672dc38494231a0544f"
+}
