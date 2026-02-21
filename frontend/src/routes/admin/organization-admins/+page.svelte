@@ -39,6 +39,7 @@
 	import type { ExtendedAdminRole } from '$lib/types/admin';
 	import { AdminLevel, ADMIN_PERMISSIONS } from '$lib/types/admin';
 	import { PrefixOptions } from '$lib/schemas/auth';
+	import { request } from '$lib/api';
 	import { onMount } from 'svelte';
 	import { authStore } from '$lib/stores/auth.svelte';
 
@@ -55,10 +56,10 @@
 	onMount(async () => {
 		try {
 			const [adminsRes, orgsRes] = await Promise.all([
-				fetch('/api/organization-admins').then(r => r.ok ? r.json() : []),
-				fetch('/api/organizations/admin').then(r => r.ok ? r.json() : [])
+				request('/organization-admins').catch(() => []),
+				request('/organizations/admin').catch(() => [])
 			]);
-			orgAdminsList = Array.isArray(adminsRes) ? adminsRes : adminsRes.admins ?? [];
+			orgAdminsList = Array.isArray(adminsRes) ? adminsRes : (adminsRes as any).admins ?? [];
 			organizationsList = Array.isArray(orgsRes) ? orgsRes : [];
 		} catch {
 			// silent

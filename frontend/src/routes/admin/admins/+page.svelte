@@ -33,6 +33,7 @@
 	} from '@tabler/icons-svelte/icons';
 	import { toast } from 'svelte-sonner';
 	import { AdminLevel, type AdminRole } from '$lib/types/admin';
+	import { request } from '$lib/api';
 	import { onMount } from 'svelte';
 
 	// CSR state
@@ -44,10 +45,10 @@
 	onMount(async () => {
 		try {
 			const [adminsRes, orgsRes] = await Promise.all([
-				fetch('/api/admins').then(r => r.ok ? r.json() : { admins: [] }),
-				fetch('/api/organizations/admin').then(r => r.ok ? r.json() : [])
+				request('/admins').catch(() => ({ admins: [] })),
+				request('/organizations/admin').catch(() => [])
 			]);
-			adminsList = adminsRes.admins ?? adminsRes ?? [];
+			adminsList = (adminsRes as any).admins ?? adminsRes ?? [];
 			facultiesList = Array.isArray(orgsRes) ? orgsRes : [];
 		} catch {
 			// silent
