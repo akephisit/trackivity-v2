@@ -3,7 +3,8 @@
  * All requests include credentials (cookies) automatically
  */
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+import { env } from '$env/dynamic/public';
+const API_BASE = env.PUBLIC_BACKEND_URL || 'http://localhost:3000';
 
 export class ApiError extends Error {
     constructor(

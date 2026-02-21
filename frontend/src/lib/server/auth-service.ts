@@ -1,4 +1,5 @@
 import { env } from '$env/dynamic/private';
+import { env as publicEnv } from '$env/dynamic/public';
 import type { SessionUser, Permission } from '$lib/types';
 
 export interface AuthInput {
@@ -14,7 +15,7 @@ export interface AuthResult {
 	expiresAt: Date;
 }
 
-const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:3000';
+const BACKEND_URL = publicEnv.PUBLIC_BACKEND_URL || 'http://localhost:3000';
 
 export async function authenticateAndIssueToken(input: AuthInput): Promise<AuthResult> {
 	try {
