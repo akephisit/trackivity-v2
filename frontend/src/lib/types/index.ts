@@ -30,7 +30,7 @@ export interface AdminRole {
 	updated_at: Timestamp;
 }
 
-export type AdminLevel = 'SuperAdmin' | 'OrganizationAdmin' | 'RegularAdmin';
+export type AdminLevel = 'super_admin' | 'organization_admin' | 'regular_admin';
 
 export type Permission =
 	// System-wide permissions

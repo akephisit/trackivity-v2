@@ -43,7 +43,7 @@
 	let columnVisibility = $state<VisibilityState>(columnVisibilityPresets.detailed);
 	let rowSelection = $state<RowSelectionState>({});
 
-	const columns = $derived(getUserTableColumns('RegularAdmin', false) as any[]);
+	const columns = $derived(getUserTableColumns('regular_admin', false) as any[]);
 
 	const table = $derived(
 		createSvelteTable({

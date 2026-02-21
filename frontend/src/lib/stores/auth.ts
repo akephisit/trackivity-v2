@@ -320,13 +320,13 @@ export const isAdmin = derived(currentUser, ($user) => !!$user?.admin_role);
 export const isFacultyAdmin = derived(
 	currentUser,
 	($user) =>
-		$user?.admin_role?.admin_level === 'OrganizationAdmin' ||
-		$user?.admin_role?.admin_level === 'SuperAdmin'
+		$user?.admin_role?.admin_level === 'organization_admin' ||
+		$user?.admin_role?.admin_level === 'super_admin'
 );
 
 export const isSuperAdmin = derived(
 	currentUser,
-	($user) => $user?.admin_role?.admin_level === 'SuperAdmin'
+	($user) => $user?.admin_role?.admin_level === 'super_admin'
 );
 
 export const facultyId = derived(
@@ -411,7 +411,7 @@ export function requireAdminLevel(level: AdminLevel): SessionUser {
 		throw new Error('Admin access required');
 	}
 
-	const levels: AdminLevel[] = ['RegularAdmin', 'OrganizationAdmin', 'SuperAdmin'];
+	const levels: AdminLevel[] = ['regular_admin', 'organization_admin', 'super_admin'];
 	const userLevel = user.admin_role.admin_level;
 	const requiredLevel = level;
 

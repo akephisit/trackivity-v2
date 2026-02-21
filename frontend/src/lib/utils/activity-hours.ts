@@ -3,7 +3,6 @@
  * Updated to calculate total accumulated hours across all academic years
  */
 
-import type { Activity } from '$lib/server/db/schema';
 
 export interface ParticipationWithActivity {
 	id: string;

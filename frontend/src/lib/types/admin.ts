@@ -1,7 +1,7 @@
 export enum AdminLevel {
-	SuperAdmin = 'SuperAdmin',
-	OrganizationAdmin = 'OrganizationAdmin',
-	RegularAdmin = 'RegularAdmin'
+	SuperAdmin = 'super_admin',
+	OrganizationAdmin = 'organization_admin',
+	RegularAdmin = 'regular_admin'
 }
 
 // For API compatibility
@@ -20,13 +20,13 @@ export interface User {
 	status: 'active' | 'inactive' | 'suspended';
 	email_verified_at?: string | null;
 	role:
-		| 'student'
-		| 'faculty'
-		| 'staff'
-		| 'admin'
-		| 'super_admin'
-		| 'organization_admin'
-		| 'regular_admin';
+	| 'student'
+	| 'faculty'
+	| 'staff'
+	| 'admin'
+	| 'super_admin'
+	| 'organization_admin'
+	| 'regular_admin';
 	phone?: string;
 	avatar?: string;
 	last_login_at?: string;
@@ -134,14 +134,14 @@ export interface UserFilter {
 	department_id?: string;
 	status?: 'active' | 'inactive' | 'suspended' | 'all';
 	role?:
-		| 'student'
-		| 'faculty'
-		| 'staff'
-		| 'admin'
-		| 'super_admin'
-		| 'organization_admin'
-		| 'regular_admin'
-		| 'all';
+	| 'student'
+	| 'faculty'
+	| 'staff'
+	| 'admin'
+	| 'super_admin'
+	| 'organization_admin'
+	| 'regular_admin'
+	| 'all';
 	created_after?: string;
 	created_before?: string;
 }
@@ -262,12 +262,12 @@ export interface OrganizationAdminActivity {
 	id: string;
 	admin_id: string;
 	action:
-		| 'login'
-		| 'logout'
-		| 'permission_change'
-		| 'status_change'
-		| 'profile_update'
-		| 'password_change';
+	| 'login'
+	| 'logout'
+	| 'permission_change'
+	| 'status_change'
+	| 'profile_update'
+	| 'password_change';
 	description: string;
 	ip_address?: string;
 	user_agent?: string;
@@ -288,12 +288,12 @@ export interface OrganizationAdminUpdateRequest {
 export interface BulkAdminOperation {
 	admin_ids: string[];
 	operation:
-		| 'activate'
-		| 'deactivate'
-		| 'suspend'
-		| 'delete'
-		| 'change_organization'
-		| 'update_permissions';
+	| 'activate'
+	| 'deactivate'
+	| 'suspend'
+	| 'delete'
+	| 'change_organization'
+	| 'update_permissions';
 	params?: {
 		status?: 'active' | 'inactive' | 'suspended';
 		organization_id?: string;

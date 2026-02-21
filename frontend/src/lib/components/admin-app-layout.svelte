@@ -14,7 +14,7 @@
 		IconSettings
 	} from '@tabler/icons-svelte';
 
-	type AdminLevel = 'SuperAdmin' | 'OrganizationAdmin';
+	type AdminLevel = 'super_admin' | 'organization_admin';
 
 	interface Props {
 		user: any;
@@ -57,7 +57,7 @@
 		];
 
 		// เพิ่มรายการเมนูตามระดับแอดมิน
-		if (adminLevel === 'SuperAdmin') {
+		if (adminLevel === 'super_admin') {
 			baseItems.push(
 				{
 					title: 'จัดการผู้ใช้',
@@ -75,7 +75,7 @@
 					icon: IconUserCheck
 				}
 			);
-		} else if (adminLevel === 'OrganizationAdmin') {
+		} else if (adminLevel === 'organization_admin') {
 			// Show departments menu only for faculty-type organizations
 			if (organization?.organizationType === 'faculty') {
 				baseItems.push({
@@ -111,7 +111,7 @@
 	}
 
 	function getQuickActions(adminLevel?: AdminLevel) {
-		if (adminLevel === 'OrganizationAdmin') {
+		if (adminLevel === 'organization_admin') {
 			return [
 				{
 					title: 'สร้างกิจกรรมใหม่',
@@ -125,9 +125,9 @@
 
 	function getRoleDisplayName(adminLevel?: AdminLevel): string {
 		switch (adminLevel) {
-			case 'SuperAdmin':
+			case 'super_admin':
 				return 'Super Admin';
-			case 'OrganizationAdmin':
+			case 'organization_admin':
 				return 'Organization Admin';
 			default:
 				return 'Admin';

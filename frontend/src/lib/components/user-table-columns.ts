@@ -186,17 +186,17 @@ export const userTableColumns: ColumnDef<User>[] = [
 
 // Export function to get columns based on admin level
 export function getUserTableColumns(
-	adminLevel: 'SuperAdmin' | 'OrganizationAdmin' | 'RegularAdmin',
+	adminLevel: 'super_admin' | 'organization_admin' | 'regular_admin',
 	facultyScoped = false
 ): ColumnDef<User>[] {
 	return userTableColumns.filter((column) => {
 		// Hide organization column for OrganizationAdmin (they only see their organization)
-		if (column.id === 'faculty' && (adminLevel === 'OrganizationAdmin' || facultyScoped)) {
+		if (column.id === 'faculty' && (adminLevel === 'organization_admin' || facultyScoped)) {
 			return false;
 		}
 
 		// Some columns might be restricted based on permissions
-		if (column.id === 'actions' && adminLevel === 'RegularAdmin') {
+		if (column.id === 'actions' && adminLevel === 'regular_admin') {
 			return false; // Regular admins might have limited actions
 		}
 
