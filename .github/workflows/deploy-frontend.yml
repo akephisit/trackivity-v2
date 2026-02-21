@@ -47,8 +47,8 @@ jobs:
             },
             "routes": [
               {
-                "pattern": "tru.utrackivity.com",
-                "custom_domain": true
+                "pattern": "tru.utrackivity.com/*",
+                "zone_name": "utrackivity.com"
               }
             ],
             "vars": {
