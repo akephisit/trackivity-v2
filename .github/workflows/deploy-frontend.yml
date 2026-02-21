@@ -47,7 +47,7 @@ jobs:
             },
             "routes": [
               {
-                "pattern": "tru-trackivity.utrackivity.com/*",
+                "pattern": "tru.utrackivity.com/*",
                 "zone_name": "utrackivity.com"
               }
             ],
@@ -75,7 +75,7 @@ jobs:
         run: |
           if [ ${{ job.status }} == 'success' ]; then
             echo "✅ Successfully deployed Frontend to Cloudflare Workers"
-            echo "URL: https://tru-trackivity.utrackivity.com"
+            echo "URL: https://tru.utrackivity.com"
           else
             echo "❌ Deployment failed"
             exit 1
