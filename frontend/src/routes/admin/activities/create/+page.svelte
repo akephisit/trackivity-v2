@@ -77,15 +77,13 @@
 		if (!validate() || submitting) return;
 		submitting = true;
 		try {
-			// Build combined datetime strings
-			const startDatetime = form.start_time ? `${form.start_date}T${form.start_time}:00` : form.start_date;
-			const endDatetime = form.end_time ? `${form.end_date}T${form.end_time}:00` : form.end_date;
-
 			await activitiesApi.create({
 				title: form.title,
 				description: form.description || null,
-				start_date: startDatetime,
-				end_date: endDatetime,
+				start_date: form.start_date,
+				end_date: form.end_date,
+				start_time_only: form.start_time ? `${form.start_time}:00` : null,
+				end_time_only: form.end_time ? `${form.end_time}:00` : null,
 				activity_type: form.activity_type,
 				location: form.location,
 				max_participants: form.max_participants ? Number(form.max_participants) : null,
