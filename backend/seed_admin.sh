@@ -3,7 +3,7 @@ export DATABASE_URL=$(grep DATABASE_URL .env | cut -d '=' -f2-)
 DUMMY_EMAIL="sadmin@gmail.com"
 
 # password123 hashed by argon2 (using existing test hash or dummy)
-DUMMY_HASH="\$argon2id\$v=19\$m=19456,t=2,p=1\$5Oq65k4x+z1bC3y5Q7J8Qw\$r6S+9X/Z7v0W6O9T2m0d2J7F8L8N8Q/C3T0Q7Q5G5H0"
+DUMMY_HASH="\$argon2id\$v=19\$m=65536,t=3,p=4\$vXKGGiaJZOlF6oDQl6Sy7A\$WMbs9CzorsE28ClWY1we1bBIIHYPMI8e/rhrAwwDe1E"
 NEW_USER_ID=$(uuidgen)
 
 echo "Adding admin user to database..."
