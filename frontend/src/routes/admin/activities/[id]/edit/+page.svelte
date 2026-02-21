@@ -58,7 +58,7 @@
 	let selectedOrganizerId = $state(
 		(form as any)?.formData?.organizer_id || activity.organizer_id || ''
 	);
-	const isSuperAdmin = data?.user?.admin_role?.admin_level === 'super_admin';
+	const isSuperAdmin = $derived(data?.user?.admin_role?.admin_level === 'super_admin');
 
 	// Import activity level options from utils
 	import { activityLevelOptions } from '$lib/utils/activity';
