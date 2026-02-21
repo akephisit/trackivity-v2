@@ -1,5 +1,5 @@
 #!/bin/bash
-export DATABASE_URL="postgresql://neondb_owner:npg_Z6pJY2MGhcyR@ep-dawn-bonus-a1t0mwvt-pooler.ap-southeast-1.aws.neon.tech/trackivity?sslmode=require&channel_binding=require"
+export DATABASE_URL=$(grep DATABASE_URL .env | cut -d '=' -f2-)
 DUMMY_EMAIL="sadmin@gmail.com"
 
 # password123 hashed by argon2 (using existing test hash or dummy)
