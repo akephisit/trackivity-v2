@@ -1,5 +1,5 @@
 import { redirect } from '@sveltejs/kit';
-import jwt from 'jsonwebtoken';
+import { jwtVerify } from 'jose';
 import type { RequestEvent } from '@sveltejs/kit';
 import type { SessionUser, AdminLevel, Permission } from '$lib/types';
 import { env } from '$env/dynamic/private';
@@ -23,9 +23,11 @@ export interface JWTPayload {
 /**
  * Validate JWT token on server-side
  */
-export function validateJWTToken(token: string): JWTPayload | null {
+export async function validateJWTToken(token: string): Promise<JWTPayload | null> {
 	try {
-		const decoded = jwt.verify(token, env.JWT_SECRET!) as JWTPayload;
+		const secret = new TextEncoder().encode(env.JWT_SECRET!);
+		const { payload } = await jwtVerify(token, secret);
+		const decoded = payload as unknown as JWTPayload;
 
 		// Check if token is expired
 		if (decoded.exp && Date.now() >= decoded.exp * 1000) {
@@ -96,13 +98,13 @@ export function getAuthenticatedUser(event: RequestEvent): SessionUser | null {
 		expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
 		admin_role: user.is_admin
 			? {
-					id: `admin_${user.id}`,
-					admin_level: (user.admin_level as AdminLevel) || 'RegularAdmin',
-					organization_id: (user as any).organization_id,
-					permissions,
-					created_at: new Date().toISOString(),
-					updated_at: new Date().toISOString()
-				}
+				id: `admin_${user.id}`,
+				admin_level: (user.admin_level as AdminLevel) || 'RegularAdmin',
+				organization_id: (user as any).organization_id,
+				permissions,
+				created_at: new Date().toISOString(),
+				updated_at: new Date().toISOString()
+			}
 			: undefined
 	};
 }

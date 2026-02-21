@@ -1,5 +1,5 @@
 import { type Handle, type HandleServerError, redirect } from '@sveltejs/kit';
-import jwt from 'jsonwebtoken';
+import { jwtVerify, errors } from 'jose';
 import { env } from '$env/dynamic/private';
 import { updateSessionLastAccessed } from '$lib/server/session-utils';
 
@@ -95,9 +95,11 @@ function isAdminProtected(pathname: string): boolean {
 /**
  * Validate JWT token and return decoded payload
  */
-function validateJWTToken(token: string): JWTPayload | null {
+async function validateJWTToken(token: string): Promise<JWTPayload | null> {
 	try {
-		const decoded = jwt.verify(token, env.JWT_SECRET!) as JWTPayload;
+		const secret = new TextEncoder().encode(env.JWT_SECRET!);
+		const { payload } = await jwtVerify(token, secret);
+		const decoded = payload as unknown as JWTPayload;
 
 		// Check if token is expired
 		if (decoded.exp && Date.now() >= decoded.exp * 1000) {
@@ -107,8 +109,8 @@ function validateJWTToken(token: string): JWTPayload | null {
 
 		return decoded;
 	} catch (error) {
-		if (error instanceof jwt.JsonWebTokenError) {
-			console.debug('[Auth] Invalid JWT token:', error.message);
+		if (error instanceof errors.JWTInvalid || error instanceof errors.JWSInvalid) {
+			console.debug('[Auth] Invalid JWT token:', (error as Error).message);
 		} else {
 			console.error('[Auth] JWT validation error:', error);
 		}
@@ -147,7 +149,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 	let isAdmin = false;
 
 	if (sessionToken) {
-		const decoded = validateJWTToken(sessionToken);
+		const decoded = await validateJWTToken(sessionToken);
 		if (decoded) {
 			// Set authenticated user in locals
 			event.locals.user = {
@@ -209,11 +211,11 @@ export const handle: Handle = async ({ event, resolve }) => {
 	response.headers.set(
 		'Content-Security-Policy',
 		`default-src 'self'; ` +
-			`script-src 'self' 'unsafe-inline'; ` +
-			`style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; ` +
-			`font-src 'self' https://fonts.gstatic.com; ` +
-			`img-src 'self' data: https:; ` +
-			`connect-src 'self' ws: wss:;`
+		`script-src 'self' 'unsafe-inline'; ` +
+		`style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; ` +
+		`font-src 'self' https://fonts.gstatic.com; ` +
+		`img-src 'self' data: https:; ` +
+		`connect-src 'self' ws: wss:;`
 	);
 
 	return response;

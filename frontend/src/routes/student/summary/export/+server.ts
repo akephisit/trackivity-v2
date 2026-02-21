@@ -3,49 +3,16 @@ import { requireAuth } from '$lib/server/auth-utils';
 import { getStudentSummary } from '$lib/server/student-summary';
 import PdfPrinter from 'pdfmake';
 import type { Content, TDocumentDefinitions } from 'pdfmake/interfaces';
-import fs from 'fs';
-import path from 'path';
 import SarabunFonts from '$lib/fonts/sarabun';
 import QRCode from 'qrcode';
 import { format } from 'date-fns';
 
-function ensureFontFiles() {
-	const fontDir = path.join(process.env.FONT_TMP_DIR || '/tmp', 'sarabun-fonts');
-	if (!fs.existsSync(fontDir)) {
-		fs.mkdirSync(fontDir, { recursive: true });
-	}
-
-	const fontPaths = {
-		normal: path.join(fontDir, 'Sarabun-Regular.ttf'),
-		bold: path.join(fontDir, 'Sarabun-Bold.ttf'),
-		italics: path.join(fontDir, 'Sarabun-Italic.ttf'),
-		bolditalics: path.join(fontDir, 'Sarabun-BoldItalic.ttf')
-	};
-
-	if (!fs.existsSync(fontPaths.normal)) {
-		fs.writeFileSync(fontPaths.normal, SarabunFonts.normal);
-	}
-	if (!fs.existsSync(fontPaths.bold)) {
-		fs.writeFileSync(fontPaths.bold, SarabunFonts.bold);
-	}
-	if (!fs.existsSync(fontPaths.italics)) {
-		fs.writeFileSync(fontPaths.italics, SarabunFonts.italics);
-	}
-	if (!fs.existsSync(fontPaths.bolditalics)) {
-		fs.writeFileSync(fontPaths.bolditalics, SarabunFonts.bolditalics);
-	}
-
-	return fontPaths;
-}
-
-const fontPaths = ensureFontFiles();
-
 const fonts = {
 	Sarabun: {
-		normal: fontPaths.normal,
-		bold: fontPaths.bold,
-		italics: fontPaths.italics,
-		bolditalics: fontPaths.bolditalics
+		normal: SarabunFonts.normal,
+		bold: SarabunFonts.bold,
+		italics: SarabunFonts.italics,
+		bolditalics: SarabunFonts.bolditalics
 	}
 } as const;
 
@@ -268,11 +235,20 @@ export const GET: RequestHandler = async (event) => {
 	};
 
 	const pdfDoc = printer.createPdfKitDocument(docDefinition);
-	const chunks: Buffer[] = [];
+	const chunks: Uint8Array[] = [];
 
-	const pdfBuffer: Buffer = await new Promise((resolve, reject) => {
-		pdfDoc.on('data', (chunk) => chunks.push(chunk));
-		pdfDoc.on('end', () => resolve(Buffer.concat(chunks)));
+	const pdfBuffer: Uint8Array = await new Promise((resolve, reject) => {
+		pdfDoc.on('data', (chunk) => chunks.push(new Uint8Array(chunk)));
+		pdfDoc.on('end', () => {
+			const totalLength = chunks.reduce((acc, c) => acc + c.length, 0);
+			const result = new Uint8Array(totalLength);
+			let offset = 0;
+			for (const chunk of chunks) {
+				result.set(chunk, offset);
+				offset += chunk.length;
+			}
+			resolve(result);
+		});
 		pdfDoc.on('error', reject);
 		pdfDoc.end();
 	});
