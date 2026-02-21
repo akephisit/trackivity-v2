@@ -23,9 +23,10 @@ import type {
 	DeviceInfo
 } from '$lib/types';
 
+import { env } from '$env/dynamic/public';
 // ===== CONFIGURATION =====
 // SvelteKit fullstack - API routes are same origin, no external URL needed
-const API_BASE_URL = '';
+const API_BASE_URL = env.PUBLIC_BACKEND_URL || 'http://localhost:3000';
 
 const DEFAULT_TIMEOUT = 30000; // 30 seconds
 
@@ -169,7 +170,8 @@ export class ApiClient {
 		endpoint: string,
 		options: RequestOptions = {}
 	): Promise<ApiResponse<T>> {
-		const url = `${this.baseUrl}${endpoint}`;
+		let urlStr = endpoint.startsWith('/api') ? endpoint.slice(4) : endpoint;
+		const url = `${this.baseUrl}${urlStr}`;
 		const timeout = options.timeout || this.timeout;
 		const retries = options.retries !== undefined ? options.retries : this.retryAttempts;
 		let lastError: Error | undefined;
@@ -371,9 +373,9 @@ export class ApiClient {
 				headers: { Accept: 'application/json' },
 				keepalive: true,
 				signal: controller.signal
-			}).catch(() => {});
+			}).catch(() => { });
 			clearTimeout(t);
-		} catch (_) {}
+		} catch (_) { }
 		// Always return success to the caller; server cleanup is idempotent
 		return { success: true } as ApiResponse<void>;
 	}

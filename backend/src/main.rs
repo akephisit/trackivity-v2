@@ -44,11 +44,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .expect("Failed to run migrations");
     tracing::info!("✅ Migrations executed successfully!");
 
-    let allowed_origin = std::env::var("FRONTEND_URL")
+    let frontend_urls = std::env::var("FRONTEND_URL")
         .unwrap_or_else(|_| "http://localhost:5173".to_string());
+    
+    let allowed_origins: Vec<HeaderValue> = frontend_urls
+        .split(',')
+        .map(|s| s.trim().parse::<HeaderValue>().expect("Invalid FRONTEND_URL"))
+        .collect();
 
     let cors = CorsLayer::new()
-        .allow_origin(allowed_origin.parse::<HeaderValue>().expect("Invalid FRONTEND_URL"))
+        .allow_origin(allowed_origins)
         .allow_methods([Method::GET, Method::POST, Method::PUT, Method::DELETE, Method::PATCH, Method::OPTIONS])
         .allow_headers([
             header::CONTENT_TYPE,

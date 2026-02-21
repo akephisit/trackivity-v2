@@ -9,6 +9,7 @@ services:
       # Database Connection String form Managed Service (e.g. Neon)
       DATABASE_URL: ${DATABASE_URL}
       JWT_SECRET: ${JWT_SECRET}
+      FRONTEND_URL: ${FRONTEND_URL}
       RUST_LOG: info
     ports:
       - "80:3000"
