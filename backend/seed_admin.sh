@@ -1,6 +1,6 @@
 #!/bin/bash
-export DATABASE_URL=$(grep DATABASE_URL .env | cut -d '=' -f2-)
-DUMMY_EMAIL="admin@utrackivity.com"
+export DATABASE_URL="postgresql://neondb_owner:npg_Z6pJY2MGhcyR@ep-dawn-bonus-a1t0mwvt-pooler.ap-southeast-1.aws.neon.tech/trackivity?sslmode=require&channel_binding=require"
+DUMMY_EMAIL="sadmin@gmail.com"
 
 # password123 hashed by argon2 (using existing test hash or dummy)
 DUMMY_HASH="\$argon2id\$v=19\$m=19456,t=2,p=1\$5Oq65k4x+z1bC3y5Q7J8Qw\$r6S+9X/Z7v0W6O9T2m0d2J7F8L8N8Q/C3T0Q7Q5G5H0"
