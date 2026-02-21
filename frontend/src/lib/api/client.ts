@@ -363,18 +363,8 @@ export class ApiClient {
 	}
 
 	async logout(): Promise<ApiResponse<void>> {
-		// Use a lightweight, resilient call to avoid UI blocking
 		try {
-			const controller = new AbortController();
-			const t = setTimeout(() => controller.abort(), 5000);
-			await fetch('/api/auth/logout', {
-				method: 'POST',
-				credentials: 'include',
-				headers: { Accept: 'application/json' },
-				keepalive: true,
-				signal: controller.signal
-			}).catch(() => { });
-			clearTimeout(t);
+			await this.post('/api/auth/logout');
 		} catch (_) { }
 		// Always return success to the caller; server cleanup is idempotent
 		return { success: true } as ApiResponse<void>;
