@@ -65,12 +65,16 @@
 		setMode(mode.current === 'light' ? 'dark' : 'light');
 	}
 
+	import { auth } from '$lib/api';
+	import { authStore } from '$lib/stores/auth.svelte';
+
 	async function handleLogout() {
 		try {
-			const response = await fetch('/api/auth/logout', { method: 'POST' });
-			if (response.ok) {
+			const result = await auth.logout();
+			if (result.success) {
+				authStore.clear();
 				toast.success('ออกจากระบบสำเร็จ');
-				goto('/');
+				goto('/', { invalidateAll: true });
 			} else {
 				toast.error('เกิดข้อผิดพลาดในการออกจากระบบ');
 			}
