@@ -47,8 +47,8 @@ jobs:
             },
             "routes": [
               {
-                "pattern": "tru-trackivity.schoolorbit.app/*",
-                "zone_name": "schoolorbit.app"
+                "pattern": "tru-trackivity.utrackivity.com/*",
+                "zone_name": "utrackivity.com"
               }
             ],
             "vars": {
@@ -75,7 +75,7 @@ jobs:
         run: |
           if [ ${{ job.status }} == 'success' ]; then
             echo "✅ Successfully deployed Frontend to Cloudflare Workers"
-            echo "URL: https://tru-trackivity.schoolorbit.app"
+            echo "URL: https://tru-trackivity.utrackivity.com"
           else
             echo "❌ Deployment failed"
             exit 1
