@@ -70,14 +70,10 @@
 
 	async function handleLogout() {
 		try {
-			const result = await auth.logout();
-			if (result.success) {
-				authStore.clear();
-				toast.success('ออกจากระบบสำเร็จ');
-				goto('/', { invalidateAll: true });
-			} else {
-				toast.error('เกิดข้อผิดพลาดในการออกจากระบบ');
-			}
+			await auth.logout();
+			authStore.clear();
+			toast.success('ออกจากระบบสำเร็จ');
+			goto('/', { invalidateAll: true });
 		} catch (error) {
 			console.error('Logout error:', error);
 			toast.error('เกิดข้อผิดพลาดในการออกจากระบบ');
