@@ -8,6 +8,7 @@ use chrono::{DateTime, Utc};
 
 #[derive(Debug, Serialize, Deserialize, sqlx::Type, Clone, PartialEq)]
 #[sqlx(type_name = "user_status", rename_all = "snake_case")]
+#[serde(rename_all = "snake_case")]
 pub enum UserStatus {
     Active,
     Inactive,
@@ -16,6 +17,7 @@ pub enum UserStatus {
 
 #[derive(Debug, Serialize, Deserialize, sqlx::Type, Clone, PartialEq)]
 #[sqlx(type_name = "admin_level", rename_all = "snake_case")]
+#[serde(rename_all = "snake_case")]
 pub enum AdminLevel {
     SuperAdmin,
     OrganizationAdmin,
@@ -24,6 +26,7 @@ pub enum AdminLevel {
 
 #[derive(Debug, Serialize, Deserialize, sqlx::Type, Clone)]
 #[sqlx(type_name = "activity_type", rename_all = "snake_case")]
+#[serde(rename_all = "snake_case")]
 pub enum ActivityType {
     Academic,
     Sports,
@@ -34,6 +37,7 @@ pub enum ActivityType {
 
 #[derive(Debug, Serialize, Deserialize, sqlx::Type, Clone)]
 #[sqlx(type_name = "activity_status", rename_all = "snake_case")]
+#[serde(rename_all = "snake_case")]
 pub enum ActivityStatus {
     Draft,
     Published,
@@ -44,6 +48,7 @@ pub enum ActivityStatus {
 
 #[derive(Debug, Serialize, Deserialize, sqlx::Type, Clone, PartialEq)]
 #[sqlx(type_name = "organization_type", rename_all = "snake_case")]
+#[serde(rename_all = "snake_case")]
 pub enum OrganizationType {
     Faculty,
     Office,
