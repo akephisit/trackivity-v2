@@ -1,6 +1,7 @@
 import { type Handle, type HandleServerError, redirect } from '@sveltejs/kit';
 import { jwtVerify, errors } from 'jose';
 import { env } from '$env/dynamic/private';
+import { env as publicEnv } from '$env/dynamic/public';
 import { updateSessionLastAccessed } from '$lib/server/session-utils';
 
 // Initialize session cleanup on server startup
@@ -211,11 +212,11 @@ export const handle: Handle = async ({ event, resolve }) => {
 	response.headers.set(
 		'Content-Security-Policy',
 		`default-src 'self'; ` +
-		`script-src 'self' 'unsafe-inline'; ` +
+		`script-src 'self' 'unsafe-inline' https://static.cloudflareinsights.com https://challenges.cloudflare.com; ` +
 		`style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; ` +
-		`font-src 'self' https://fonts.gstatic.com; ` +
+		`font-src 'self' https://fonts.gstatic.com data:; ` +
 		`img-src 'self' data: https:; ` +
-		`connect-src 'self' ws: wss:;`
+		`connect-src 'self' ws: wss: ${publicEnv.PUBLIC_BACKEND_URL || 'http://localhost:3000'} https://cloudflareinsights.com;`
 	);
 
 	return response;
