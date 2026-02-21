@@ -8,10 +8,10 @@ use serde_json::Value;
 pub struct AdminRoleView {
     pub id: Uuid,
     pub user_id: Uuid,
-    pub admin_level: String, // String mapped from DB enum 'super_admin', etc.
+    pub admin_level: Option<String>, // String mapped from DB enum 'super_admin', etc.
     pub organization_id: Option<Uuid>,
-    pub permissions: serde_json::Value, // JSONB array of permissions
-    pub is_enabled: bool,
+    pub permissions: Option<Vec<String>>, // TEXT[] array of permissions
+    pub is_enabled: Option<bool>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
     
