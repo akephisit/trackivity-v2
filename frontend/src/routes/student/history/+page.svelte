@@ -333,7 +333,7 @@
 	</div>
 
 	<!-- Statistics -->
-	<div class="grid grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-8">
+	<div class="grid grid-cols-2 gap-4 md:grid-cols-4">
 		<Card>
 			<CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
 				<CardTitle class="text-sm font-medium">ทั้งหมด</CardTitle>
