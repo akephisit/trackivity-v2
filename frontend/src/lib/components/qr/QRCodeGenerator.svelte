@@ -152,21 +152,15 @@
 		return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
 	}
 
-	function getExpiryProgress(): number {
-		if (!$qrCode) return 0;
-
-		const expiresAt = new Date($qrCode.expires_at).getTime();
-		// We know expiry is 3 minutes = 180 seconds total
-		const totalMs = 3 * 60 * 1000;
-		const startMs = expiresAt - totalMs;
-		const now = Date.now();
-
-		const elapsed = now - startMs;
-		return Math.min(100, Math.max(0, (elapsed / totalMs) * 100));
-	}
-
 	const currentStatusConfig = $derived(statusConfig[$status]);
-	const isExpiringSoon = $derived(timeUntilExpiry > 0 && timeUntilExpiry <= 60); // Less than 1 minute
+	const isExpiringSoon = $derived(timeUntilExpiry > 0 && timeUntilExpiry <= 60);
+	// Re-evaluates every second because timeUntilExpiry is $state updated by setInterval
+	const expiryProgress = $derived.by(() => {
+		if (!$qrCode || timeUntilExpiry <= 0) return 100;
+		const totalSeconds = 3 * 60; // 3 minutes
+		const elapsed = totalSeconds - timeUntilExpiry;
+		return Math.min(100, Math.max(0, (elapsed / totalSeconds) * 100));
+	});
 </script>
 
 <Card class="mx-auto w-full max-w-sm md:max-w-md">
@@ -243,10 +237,7 @@
 					</span>
 				</div>
 
-				<Progress
-					value={getExpiryProgress()}
-					class="h-2 {isExpiringSoon ? 'bg-destructive/20' : ''}"
-				/>
+				<Progress value={expiryProgress} class="h-2 {isExpiringSoon ? 'bg-destructive/20' : ''}" />
 
 				{#if isExpiringSoon}
 					<p class="text-center text-xs text-destructive">
