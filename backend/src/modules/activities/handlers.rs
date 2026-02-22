@@ -24,25 +24,69 @@ const ACTIVITY_SELECT: &str = r#"
 
 pub async fn get_dashboard_activities(
     State(pool): State<PgPool>,
+    headers: HeaderMap,
 ) -> Result<Json<DashboardResponse>, (StatusCode, String)> {
-    let recent = sqlx::query_as::<_, ActivityPublic>(&format!(
-        "{} WHERE a.status = 'published' AND a.created_at >= NOW() - INTERVAL '30 days' ORDER BY a.created_at DESC LIMIT 6",
-        ACTIVITY_SELECT
-    ))
-    .fetch_all(&pool)
-    .await
-    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, format!("Failed to fetch recent activities: {}", e)))?;
+    // Try to determine user's organization from their department
+    let user_org_id: Option<Uuid> = if let Ok(claims) = get_claims_from_headers(&headers) {
+        if let Some(dept_id) = claims.department_id {
+            // Look up which organization this department belongs to
+            sqlx::query_scalar::<_, Uuid>(
+                "SELECT organization_id FROM departments WHERE id = $1"
+            )
+            .bind(dept_id)
+            .fetch_optional(&pool)
+            .await
+            .unwrap_or(None)
+        } else {
+            None
+        }
+    } else {
+        None
+    };
 
-    let upcoming = sqlx::query_as::<_, ActivityPublic>(&format!(
-        "{} WHERE a.status = 'published' AND a.start_date >= CURRENT_DATE ORDER BY a.start_date ASC LIMIT 6",
-        ACTIVITY_SELECT
-    ))
-    .fetch_all(&pool)
-    .await
-    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, format!("Failed to fetch upcoming activities: {}", e)))?;
+    // Recent: published or ongoing activities, filtered by eligibility if user org is known
+    let recent = if let Some(org_id) = user_org_id {
+        sqlx::query_as::<_, ActivityPublic>(&format!(
+            "{} WHERE a.status IN ('published', 'ongoing') AND (a.eligible_organizations = '[]'::jsonb OR a.eligible_organizations @> $1::jsonb) ORDER BY a.start_date ASC LIMIT 10",
+            ACTIVITY_SELECT
+        ))
+        .bind(serde_json::json!([org_id.to_string()]))
+        .fetch_all(&pool)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, format!("Failed to fetch recent activities: {}", e)))?
+    } else {
+        sqlx::query_as::<_, ActivityPublic>(&format!(
+            "{} WHERE a.status IN ('published', 'ongoing') ORDER BY a.start_date ASC LIMIT 10",
+            ACTIVITY_SELECT
+        ))
+        .fetch_all(&pool)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, format!("Failed to fetch recent activities: {}", e)))?
+    };
+
+    // Upcoming: future start date, same eligibility filter
+    let upcoming = if let Some(org_id) = user_org_id {
+        sqlx::query_as::<_, ActivityPublic>(&format!(
+            "{} WHERE a.status = 'published' AND a.start_date >= CURRENT_DATE AND (a.eligible_organizations = '[]'::jsonb OR a.eligible_organizations @> $1::jsonb) ORDER BY a.start_date ASC LIMIT 6",
+            ACTIVITY_SELECT
+        ))
+        .bind(serde_json::json!([org_id.to_string()]))
+        .fetch_all(&pool)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, format!("Failed to fetch upcoming activities: {}", e)))?
+    } else {
+        sqlx::query_as::<_, ActivityPublic>(&format!(
+            "{} WHERE a.status = 'published' AND a.start_date >= CURRENT_DATE ORDER BY a.start_date ASC LIMIT 6",
+            ACTIVITY_SELECT
+        ))
+        .fetch_all(&pool)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, format!("Failed to fetch upcoming activities: {}", e)))?
+    };
 
     Ok(Json(DashboardResponse { recent, upcoming }))
 }
+
 
 pub async fn list_activities(
     State(pool): State<PgPool>,
