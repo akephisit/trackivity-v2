@@ -25,7 +25,7 @@
 	import { goto } from '$app/navigation';
 	import { toast } from 'svelte-sonner';
 	import { page } from '$app/state';
-	import { type DateValue, parseDate } from '@internationalized/date';
+	import { type DateValue, parseDate, getLocalTimeZone } from '@internationalized/date';
 	import { cn } from '$lib/utils';
 	import { buttonVariants } from '$lib/components/ui/button';
 	import { formatThaiDate, formatThaiMonth, toBuddhistEra } from '$lib/utils/thai-date';
@@ -129,6 +129,12 @@
 
 	function formatCalendarMonth(m: number) { return formatThaiMonth(m - 1, 'long'); }
 	function formatCalendarYear(y: number) { return toBuddhistEra(y).toString(); }
+
+	function formatDateLabel(d: DateValue | undefined): string {
+		if (!d) return 'เลือกวันที่';
+		const jsDate = d.toDate(getLocalTimeZone());
+		return new Intl.DateTimeFormat('th-TH', { dateStyle: 'full' }).format(jsDate);
+	}
 
 	function generateHourOptions() {
 		return Array.from({ length: 24 }, (_, i) => {
@@ -335,12 +341,11 @@
 								class={cn(buttonVariants({ variant: 'outline' }), 'w-full justify-start text-left font-normal')}
 							>
 								<IconCalendar class="mr-2 size-4" />
-								{startDateValue
-									? `${formatCalendarYear(startDateValue.year)}/${String(startDateValue.month).padStart(2,'0')}/${String(startDateValue.day).padStart(2,'0')}`
-									: 'เลือกวันที่'}
+								{formatDateLabel(startDateValue)}
 							</Popover.Trigger>
 							<Popover.Content class="w-auto p-0" align="start">
 								<Calendar
+									locale="th-TH"
 									type="single"
 									bind:value={startDateValue}
 									calendarLabel="วันที่เริ่มต้น"
@@ -357,12 +362,11 @@
 								class={cn(buttonVariants({ variant: 'outline' }), 'w-full justify-start text-left font-normal')}
 							>
 								<IconCalendar class="mr-2 size-4" />
-								{endDateValue
-									? `${formatCalendarYear(endDateValue.year)}/${String(endDateValue.month).padStart(2,'0')}/${String(endDateValue.day).padStart(2,'0')}`
-									: 'เลือกวันที่'}
+								{formatDateLabel(endDateValue)}
 							</Popover.Trigger>
 							<Popover.Content class="w-auto p-0" align="start">
 								<Calendar
+									locale="th-TH"
 									type="single"
 									bind:value={endDateValue}
 									calendarLabel="วันที่สิ้นสุด"
