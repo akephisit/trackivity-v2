@@ -92,24 +92,62 @@ pub async fn list_activities(
     State(pool): State<PgPool>,
     headers: HeaderMap,
 ) -> Result<Json<Vec<ActivityPublic>>, (StatusCode, String)> {
-    // Check if admin — admins see all, students see only published
-    let is_admin = get_claims_from_headers(&headers)
-        .map(|c| c.is_admin)
-        .unwrap_or(false);
+    let claims = get_claims_from_headers(&headers);
+    let is_admin = claims.as_ref().map(|c| c.is_admin).unwrap_or(false);
 
-    let query = if is_admin {
-        format!("{} ORDER BY a.created_at DESC", ACTIVITY_SELECT)
-    } else {
-        format!("{} WHERE a.status = 'published' ORDER BY a.created_at DESC", ACTIVITY_SELECT)
-    };
-
-    let activities = sqlx::query_as::<_, ActivityPublic>(&query)
+    if is_admin {
+        // Admins see everything
+        let activities = sqlx::query_as::<_, ActivityPublic>(&format!(
+            "{} ORDER BY a.created_at DESC",
+            ACTIVITY_SELECT
+        ))
         .fetch_all(&pool)
         .await
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, format!("Failed to fetch activities: {}", e)))?;
+        return Ok(Json(activities));
+    }
+
+    // For students: determine their organization via department
+    let user_org_id: Option<Uuid> = if let Ok(ref c) = claims {
+        if let Some(dept_id) = c.department_id {
+            sqlx::query_scalar::<_, Uuid>(
+                "SELECT organization_id FROM departments WHERE id = $1"
+            )
+            .bind(dept_id)
+            .fetch_optional(&pool)
+            .await
+            .unwrap_or(None)
+        } else {
+            None
+        }
+    } else {
+        None
+    };
+
+    let activities = if let Some(org_id) = user_org_id {
+        // Show published + ongoing, filtered by eligible_organizations
+        sqlx::query_as::<_, ActivityPublic>(&format!(
+            "{} WHERE a.status IN ('published', 'ongoing') AND (a.eligible_organizations = '[]'::jsonb OR a.eligible_organizations @> $1::jsonb) ORDER BY a.start_date ASC",
+            ACTIVITY_SELECT
+        ))
+        .bind(serde_json::json!([org_id.to_string()]))
+        .fetch_all(&pool)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, format!("Failed to fetch activities: {}", e)))?
+    } else {
+        // No org found — show all published + ongoing
+        sqlx::query_as::<_, ActivityPublic>(&format!(
+            "{} WHERE a.status IN ('published', 'ongoing') ORDER BY a.start_date ASC",
+            ACTIVITY_SELECT
+        ))
+        .fetch_all(&pool)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, format!("Failed to fetch activities: {}", e)))?
+    };
 
     Ok(Json(activities))
 }
+
 
 pub async fn get_activity(
     State(pool): State<PgPool>,
