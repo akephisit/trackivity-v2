@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { authStore } from '$lib/stores/auth.svelte';
-	import { useQRCode } from '$lib/qr/client';
-	import type { Activity } from '$lib/api';
+	import { activitiesApi, type Activity, type Participation } from '$lib/api';
 	import { getActivityTypeDisplayName } from '$lib/utils/activity';
+	import { onMount } from 'svelte';
 
 	import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
 	import { Button } from '$lib/components/ui/button';
@@ -22,35 +22,57 @@
 		IconAlertCircle
 	} from '@tabler/icons-svelte';
 
-	// Component state
-	const {
-		recentActivities = [] as Activity[],
-		participationHistory = [] as any[],
-		stats = {
-			totalParticipations: 0,
-			thisMonthParticipations: 0,
-			upcomingActivities: 0
-		}
-	} = $props<{
-		recentActivities: Activity[];
-		participationHistory: any[];
-		stats: {
-			totalParticipations: number;
-			thisMonthParticipations: number;
-			upcomingActivities: number;
-		};
-	}>();
-	let loading = {
-		activities: false,
-		history: false,
-		stats: false
-	};
-	let error: string | null = null;
+	// Loading states
+	let loadingActivities = $state(true);
+	let loadingParticipations = $state(true);
+	let error: string | null = $state(null);
 
-	// QR Code integration
-	const { qrCode, status: qrStatus } = useQRCode();
+	// Data
+	let recentActivities = $state<Activity[]>([]);
+	let upcomingActivities = $state<Activity[]>([]);
+	let participations = $state<Participation[]>([]);
 
-	// Data is passed from server; QR related UI stays client-side
+	// Derived stats from real data
+	const totalParticipations = $derived(participations.length);
+	const thisMonth = new Date().getMonth();
+	const thisYear = new Date().getFullYear();
+	const thisMonthParticipations = $derived(
+		participations.filter((p) => {
+			if (!p.registered_at) return false;
+			const d = new Date(p.registered_at);
+			return d.getMonth() === thisMonth && d.getFullYear() === thisYear;
+		}).length
+	);
+	const upcomingCount = $derived(upcomingActivities.length);
+
+	onMount(async () => {
+		// Fetch dashboard activities
+		activitiesApi
+			.dashboard()
+			.then((d) => {
+				recentActivities = d.recent;
+				upcomingActivities = d.upcoming;
+			})
+			.catch(() => {
+				error = 'ไม่สามารถโหลดกิจกรรมได้';
+			})
+			.finally(() => {
+				loadingActivities = false;
+			});
+
+		// Fetch participation history
+		activitiesApi
+			.myParticipations()
+			.then((data) => {
+				participations = data;
+			})
+			.catch(() => {
+				// non-critical, ignore
+			})
+			.finally(() => {
+				loadingParticipations = false;
+			});
+	});
 
 	function formatDate(dateString: string): string {
 		return new Date(dateString).toLocaleDateString('th-TH', {
@@ -74,91 +96,79 @@
 				return 'outline';
 		}
 	}
+
+	function getParticipationStatusLabel(status: string): string {
+		switch (status) {
+			case 'registered':
+				return 'ลงทะเบียนแล้ว';
+			case 'checked_in':
+				return 'เช็คอินแล้ว';
+			case 'completed':
+				return 'เสร็จสิ้น';
+			case 'cancelled':
+				return 'ยกเลิก';
+			default:
+				return status;
+		}
+	}
+
+	function getStatusVariant(status: string): 'default' | 'secondary' | 'outline' {
+		switch (status) {
+			case 'completed':
+				return 'default';
+			case 'checked_in':
+				return 'secondary';
+			default:
+				return 'outline';
+		}
+	}
 </script>
 
 <div class="space-y-6">
-	<!-- Welcome Section -->
-	<div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-		<!-- Welcome Card -->
-		<Card class="md:col-span-2 lg:col-span-2">
-			<CardHeader>
-				<CardTitle class="flex items-center gap-2">
-					<IconUsers class="size-5" />
-					ยินดีต้อนรับ, {authStore.user?.first_name}!
-				</CardTitle>
-			</CardHeader>
-			<CardContent>
-				<div class="space-y-2">
-					<p class="text-sm text-muted-foreground">
-						รหัสนักศึกษา: <span class="font-medium">{authStore.user?.student_id}</span>
-					</p>
-					<p class="text-sm text-muted-foreground">
-						อีเมล: <span class="font-medium">{authStore.user?.email}</span>
-					</p>
-					<div class="flex gap-2 pt-2">
-						<Button size="sm" href="/student/qr">
-							<IconQrcode class="mr-2 size-4" />
-							ดู QR Code
-						</Button>
-						<Button size="sm" variant="outline" href="/student/activities">
-							<IconCalendarEvent class="mr-2 size-4" />
-							กิจกรรมของฉัน
-						</Button>
-					</div>
-				</div>
-			</CardContent>
-		</Card>
-
-		<!-- QR Status Card -->
-		<Card>
-			<CardHeader>
-				<CardTitle class="flex items-center justify-between">
-					<span class="text-base">QR Code Status</span>
-					<Badge variant={$qrStatus === 'ready' ? 'default' : 'secondary'}>
-						{$qrStatus === 'ready'
-							? 'พร้อมใช้'
-							: $qrStatus === 'generating'
-								? 'กำลังสร้าง'
-								: 'ไม่พร้อม'}
-					</Badge>
-				</CardTitle>
-			</CardHeader>
-			<CardContent>
-				<div class="space-y-3">
-					{#if $qrCode && $qrStatus === 'ready'}
-						<div class="space-y-1 text-sm">
-							<p class="text-muted-foreground">สร้างเมื่อ:</p>
-							<p class="text-xs">{formatDate($qrCode.created_at)}</p>
-						</div>
-						<div class="space-y-1 text-sm">
-							<p class="text-muted-foreground">หมดอายุ:</p>
-							<p class="text-xs">{formatDate($qrCode.expires_at)}</p>
-						</div>
-					{:else}
-						<p class="text-sm text-muted-foreground">QR Code ยังไม่พร้อมใช้งาน</p>
-					{/if}
-
-					<Button size="sm" href="/student/qr" class="w-full">
+	<!-- Welcome Card -->
+	<Card>
+		<CardHeader>
+			<CardTitle class="flex items-center gap-2">
+				<IconUsers class="size-5" />
+				ยินดีต้อนรับ, {authStore.user?.first_name}!
+			</CardTitle>
+		</CardHeader>
+		<CardContent>
+			<div class="space-y-2">
+				<p class="text-sm text-muted-foreground">
+					รหัสนักศึกษา: <span class="font-medium">{authStore.user?.student_id}</span>
+				</p>
+				<p class="text-sm text-muted-foreground">
+					อีเมล: <span class="font-medium">{authStore.user?.email}</span>
+				</p>
+				<div class="flex gap-2 pt-2">
+					<Button size="sm" href="/student/qr">
 						<IconQrcode class="mr-2 size-4" />
-						ไปที่ QR Code
+						ดู QR Code
+					</Button>
+					<Button size="sm" variant="outline" href="/student/activities">
+						<IconCalendarEvent class="mr-2 size-4" />
+						กิจกรรมของฉัน
 					</Button>
 				</div>
-			</CardContent>
-		</Card>
-	</div>
+			</div>
+		</CardContent>
+	</Card>
 
 	<!-- Statistics Section -->
-	<div class="grid grid-cols-2 gap-6 md:grid-cols-3">
+	<div class="grid grid-cols-2 gap-4 md:grid-cols-3">
 		<Card>
 			<CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
 				<CardTitle class="text-sm font-medium">การเข้าร่วมทั้งหมด</CardTitle>
 				<IconTrendingUp class="size-4 text-muted-foreground" />
 			</CardHeader>
 			<CardContent>
-				<div class="text-2xl font-bold">
-					{loading.stats ? '--' : stats.totalParticipations}
-				</div>
-				<p class="text-xs text-muted-foreground">กิจกรรมที่เข้าร่วม</p>
+				{#if loadingParticipations}
+					<Skeleton class="h-8 w-12" />
+				{:else}
+					<div class="text-2xl font-bold">{totalParticipations}</div>
+				{/if}
+				<p class="mt-1 text-xs text-muted-foreground">กิจกรรมที่เข้าร่วม</p>
 			</CardContent>
 		</Card>
 
@@ -168,23 +178,27 @@
 				<IconCalendarEvent class="size-4 text-muted-foreground" />
 			</CardHeader>
 			<CardContent>
-				<div class="text-2xl font-bold">
-					{loading.stats ? '--' : stats.thisMonthParticipations}
-				</div>
-				<p class="text-xs text-muted-foreground">กิจกรรมในเดือนนี้</p>
+				{#if loadingParticipations}
+					<Skeleton class="h-8 w-12" />
+				{:else}
+					<div class="text-2xl font-bold">{thisMonthParticipations}</div>
+				{/if}
+				<p class="mt-1 text-xs text-muted-foreground">กิจกรรมในเดือนนี้</p>
 			</CardContent>
 		</Card>
 
-		<Card>
+		<Card class="col-span-2 md:col-span-1">
 			<CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
 				<CardTitle class="text-sm font-medium">กิจกรรมที่กำลังจะมา</CardTitle>
 				<IconClock class="size-4 text-muted-foreground" />
 			</CardHeader>
 			<CardContent>
-				<div class="text-2xl font-bold">
-					{loading.stats ? '--' : stats.upcomingActivities}
-				</div>
-				<p class="text-xs text-muted-foreground">กิจกรรมใน 7 วันข้างหน้า</p>
+				{#if loadingActivities}
+					<Skeleton class="h-8 w-12" />
+				{:else}
+					<div class="text-2xl font-bold">{upcomingCount}</div>
+				{/if}
+				<p class="mt-1 text-xs text-muted-foreground">กิจกรรมที่เปิดรับสมัคร</p>
 			</CardContent>
 		</Card>
 	</div>
@@ -211,7 +225,7 @@
 						<IconAlertCircle class="size-4" />
 						<AlertDescription>{error}</AlertDescription>
 					</Alert>
-				{:else if loading.activities}
+				{:else if loadingActivities}
 					<div class="space-y-3">
 						{#each Array(3) as _}
 							<div class="space-y-2">
@@ -259,10 +273,16 @@
 										<IconClock class="size-3" />
 										{formatDate(activity.start_date)}
 									</span>
+									{#if activity.location}
+										<span class="flex items-center gap-1">
+											<IconMapPin class="size-3" />
+											{activity.location}
+										</span>
+									{/if}
 									{#if activity.max_participants}
 										<span class="flex items-center gap-1">
 											<IconUsers class="size-3" />
-											{activity.participant_count || 0}/{activity.max_participants}
+											{activity.max_participants} คน
 										</span>
 									{/if}
 								</div>
@@ -288,7 +308,7 @@
 				</CardTitle>
 			</CardHeader>
 			<CardContent>
-				{#if loading.history}
+				{#if loadingParticipations}
 					<div class="space-y-3">
 						{#each Array(3) as _}
 							<div class="space-y-2">
@@ -297,7 +317,7 @@
 							</div>
 						{/each}
 					</div>
-				{:else if participationHistory.length === 0}
+				{:else if participations.length === 0}
 					<div class="py-8 text-center text-muted-foreground">
 						<div
 							class="mx-auto mb-3 flex size-12 items-center justify-center rounded-full bg-muted"
@@ -315,20 +335,27 @@
 					</div>
 				{:else}
 					<div class="space-y-3">
-						{#each participationHistory as participation}
+						{#each participations.slice(0, 5) as participation}
 							<div class="space-y-2 rounded-lg border p-3">
-								<h4 class="text-sm font-medium">
-									{participation.activity?.name || participation.activity?.title}
-								</h4>
+								<div class="flex items-start justify-between gap-2">
+									<h4 class="text-sm font-medium">
+										{participation.activity?.title}
+									</h4>
+									<Badge variant={getStatusVariant(participation.status)} class="shrink-0">
+										{getParticipationStatusLabel(participation.status)}
+									</Badge>
+								</div>
 								<div class="flex items-center gap-4 text-xs text-muted-foreground">
-									<span class="flex items-center gap-1">
-										<IconClock class="size-3" />
-										{formatDate(participation.participated_at)}
-									</span>
-									{#if participation.qr_scan_location}
+									{#if participation.registered_at}
+										<span class="flex items-center gap-1">
+											<IconClock class="size-3" />
+											{formatDate(participation.registered_at)}
+										</span>
+									{/if}
+									{#if participation.activity?.location}
 										<span class="flex items-center gap-1">
 											<IconMapPin class="size-3" />
-											{participation.qr_scan_location}
+											{participation.activity.location}
 										</span>
 									{/if}
 								</div>
