@@ -26,55 +26,24 @@
 		IconBuilding
 	} from '@tabler/icons-svelte';
 
-	import type { PageData } from './$types';
-
-	// Extend PageData with fields returned by this page's load
-	type QRScannerPageData = PageData & {
-		admin?: {
-			first_name: string;
-			last_name: string;
-			admin_level: string;
-			faculty_id?: string;
-			faculty_name?: string;
-		};
-		activities?: Array<{
-			id: string;
-			title: string;
-			description?: string;
-			start_date?: string;
-			end_date?: string;
-			start_time?: string;
-			end_time?: string;
-			activity_type?: string;
-			location?: string;
-			max_participants?: number;
-			participant_count?: number;
-			hours?: number;
-			status?: string;
-			faculty_id?: string;
-			organizer?: string;
-		}>;
-		selectedActivityId?: string;
-	};
-
-	let { data }: { data: QRScannerPageData } = $props();
+	import { authStore } from '$lib/stores/auth.svelte';
+	import { activities as activitiesApi, type Activity } from '$lib/api';
 
 	// Component state
-	let selectedActivityId = $state(untrack(() => data.selectedActivityId || ''));
+	let activities = $state<Activity[]>([]);
+	let selectedActivityId = $state('');
 	let scannerActive = $state(false);
 	let scannerStatus = $state<'idle' | 'requesting' | 'active' | 'error'>('idle');
 	let manualParticipantCount = $state(0);
 
 	// Use $derived for computed values to avoid circular dependencies
 	const selectedActivity = $derived(
-		selectedActivityId
-			? data.activities?.find((a: any) => a.id === selectedActivityId) || null
-			: null
+		selectedActivityId ? activities.find((a: any) => a.id === selectedActivityId) || null : null
 	);
 
 	// Use base participant count from activity data, plus any manual increments from scanning
 	const currentParticipantCount = $derived(
-		(selectedActivity?.participant_count || 0) + manualParticipantCount
+		((selectedActivity as any)?.participant_count || 0) + manualParticipantCount
 	);
 
 	// Track URL updates separately to prevent infinite loops
@@ -109,16 +78,28 @@
 		}
 	});
 
-	onMount(() => {
+	let isLoading = $state(true);
+
+	onMount(async () => {
 		// Initialize URL tracking state first to prevent URL updates during initialization
 		const url = new URL(window.location.href);
-		lastUrlActivityId = url.searchParams.get('activity_id') || '';
+		const urlActivityId = url.searchParams.get('activity_id') || '';
+		lastUrlActivityId = urlActivityId;
 
-		if (data.selectedActivityId && (data.activities?.length || 0) > 0) {
-			selectedActivityId = data.selectedActivityId;
-		} else if ((data.activities?.length || 0) === 1) {
-			// Auto-select if only one activity
-			selectedActivityId = data.activities![0].id;
+		try {
+			const allActivites = await activitiesApi.list();
+			activities = allActivites.filter((a) => a.status === 'ongoing');
+			isLoading = false;
+
+			if (urlActivityId && activities.some((a) => a.id === urlActivityId)) {
+				selectedActivityId = urlActivityId;
+			} else if (activities.length === 1) {
+				// Auto-select if only one activity
+				selectedActivityId = activities[0].id;
+			}
+		} catch (error) {
+			console.error('Failed to load activities:', error);
+			isLoading = false;
 		}
 	});
 
@@ -212,15 +193,17 @@
 			<div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
 				<div>
 					<p class="text-sm text-muted-foreground">ชื่อ</p>
-					<p class="font-medium">{data.admin?.first_name} {data.admin?.last_name}</p>
+					<p class="font-medium">{authStore.user?.first_name} {authStore.user?.last_name}</p>
 				</div>
 				<div>
 					<p class="text-sm text-muted-foreground">ระดับสิทธิ์</p>
-					<Badge variant="outline">{data.admin?.admin_level}</Badge>
+					<Badge variant="outline">{authStore.user?.admin_role?.admin_level || 'General'}</Badge>
 				</div>
 				<div>
 					<p class="text-sm text-muted-foreground">หน่วยงาน</p>
-					<p class="font-medium">{data.admin?.faculty_name || 'ทั้งหมด'}</p>
+					<p class="font-medium">
+						{authStore.user?.organization_name || authStore.user?.department_name || 'ทั้งหมด'}
+					</p>
 				</div>
 			</div>
 		</CardContent>
@@ -235,7 +218,13 @@
 			</CardTitle>
 		</CardHeader>
 		<CardContent class="space-y-4 p-4 lg:p-6">
-			{#if (data.activities?.length || 0) === 0}
+			{#if isLoading}
+				<div class="flex items-center justify-center p-8">
+					<div
+						class="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"
+					></div>
+				</div>
+			{:else if activities.length === 0}
 				<Alert>
 					<IconX class="h-4 w-4" />
 					<AlertDescription>
@@ -258,10 +247,10 @@
 						}}
 					>
 						<Select.Trigger class="w-full">
-							{data.activities?.find((a: any) => a.id === selectedActivityId)?.title ?? 'เลือกกิจกรรม...'}
+							{activities.find((a: any) => a.id === selectedActivityId)?.title ?? 'เลือกกิจกรรม...'}
 						</Select.Trigger>
 						<Select.Content>
-							{#each data.activities || [] as activity}
+							{#each activities as activity}
 								<Select.Item value={activity.id}>
 									{activity.title}
 								</Select.Item>
@@ -281,7 +270,7 @@
 						<div class="grid grid-cols-1 gap-4 text-sm md:grid-cols-2">
 							<div class="flex items-center gap-2">
 								<IconBuilding class="h-4 w-4 text-muted-foreground" />
-								<span>หน่วยงานผู้จัด: {selectedActivity.organizer || 'ไม่ระบุ'}</span>
+								<span>หน่วยงานผู้จัด: {selectedActivity.organizer_name || 'ไม่ระบุ'}</span>
 							</div>
 
 							<div class="flex items-center gap-2">
@@ -292,7 +281,7 @@
 							<div class="flex items-center gap-2">
 								<IconUsers class="h-4 w-4 text-muted-foreground" />
 								<span>
-									ผู้เข้าร่วม: {selectedActivity.participant_count || 0}
+									ผู้เข้าร่วม: {(selectedActivity as any).participant_count || 0}
 									{#if selectedActivity.max_participants}
 										/ {selectedActivity.max_participants}
 									{/if} คน
@@ -306,9 +295,9 @@
 								<IconCalendar class="h-4 w-4 text-muted-foreground" />
 								<span>
 									{formatDate(selectedActivity.start_date)}
-									{formatTime(selectedActivity.start_time)}
+									{formatTime(selectedActivity.start_time_only || undefined)}
 									- {formatDate(selectedActivity.end_date)}
-									{formatTime(selectedActivity.end_time)}
+									{formatTime(selectedActivity.end_time_only || undefined)}
 								</span>
 							</div>
 
