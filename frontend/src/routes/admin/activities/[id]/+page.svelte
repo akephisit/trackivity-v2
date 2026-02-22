@@ -37,6 +37,7 @@
 	let registrationOpen = $state(false);
 	let regToggleBusy = $state(false);
 	let deleteActivityDialogOpen = $state(false);
+	let deleting = $state(false);
 
 	onMount(async () => {
 		const id = page.params.id!;
@@ -112,13 +113,15 @@
 	}
 
 	async function handleDeleteActivity() {
-		if (!activity) return;
+		if (!activity || deleting) return;
+		deleting = true;
 		try {
 			await activitiesApi.delete(activity.id);
-			deleteActivityDialogOpen = false;
 			toast.success('ลบกิจกรรมสำเร็จ');
 			goto('/admin/activities?deleted=1');
 		} catch (e: any) {
+			deleting = false;
+			deleteActivityDialogOpen = false;
 			toast.error(e?.message || 'เกิดข้อผิดพลาดในการลบกิจกรรม');
 		}
 	}
@@ -304,7 +307,13 @@
 			</AlertDialog.Header>
 			<AlertDialog.Footer>
 				<AlertDialog.Cancel onclick={() => deleteActivityDialogOpen = false}>ยกเลิก</AlertDialog.Cancel>
-				<Button class="bg-red-600 text-white hover:bg-red-700" onclick={handleDeleteActivity}>ลบกิจกรรม</Button>
+				<AlertDialog.Action
+					class="bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
+					onclick={(e) => { e.preventDefault(); handleDeleteActivity(); }}
+					disabled={deleting}
+				>
+					{deleting ? 'กำลังลบ...' : 'ลบกิจกรรม'}
+				</AlertDialog.Action>
 			</AlertDialog.Footer>
 		</AlertDialog.Content>
 	</AlertDialog.Root>
