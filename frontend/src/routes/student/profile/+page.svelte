@@ -1,6 +1,5 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
-	import { currentUser, auth } from '$lib/stores/auth';
+	import { authStore } from '$lib/stores/auth.svelte';
 	import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
@@ -64,34 +63,37 @@
 		confirm_password: ''
 	});
 
-	onMount(() => {
-		initializeFormData();
+	// Initialize form data reactively when authStore.user is available
+	$effect(() => {
+		if (authStore.user && !editing) {
+			initializeFormData();
+		}
 	});
 
 	// Watch for form changes to show/hide save button
 	$effect(() => {
-		if ($currentUser && editing) {
+		if (authStore.user && editing) {
 			hasFormChanges =
-				formData.prefix !== ($currentUser.prefix || '') ||
-				formData.first_name !== ($currentUser.first_name || '') ||
-				formData.last_name !== ($currentUser.last_name || '') ||
-				formData.email !== ($currentUser.email || '') ||
-				formData.phone !== ($currentUser.phone || '') ||
-				formData.address !== ($currentUser.address || '');
+				formData.prefix !== (authStore.user.prefix || '') ||
+				formData.first_name !== (authStore.user.first_name || '') ||
+				formData.last_name !== (authStore.user.last_name || '') ||
+				formData.email !== (authStore.user.email || '') ||
+				formData.phone !== (authStore.user.phone || '') ||
+				formData.address !== (authStore.user.address || '');
 		} else {
 			hasFormChanges = false;
 		}
 	});
 
 	function initializeFormData() {
-		if ($currentUser) {
+		if (authStore.user) {
 			formData = {
-				prefix: $currentUser.prefix || '',
-				first_name: $currentUser.first_name || '',
-				last_name: $currentUser.last_name || '',
-				email: $currentUser.email || '',
-				phone: $currentUser.phone || '',
-				address: $currentUser.address || ''
+				prefix: authStore.user.prefix || '',
+				first_name: authStore.user.first_name || '',
+				last_name: authStore.user.last_name || '',
+				email: authStore.user.email || '',
+				phone: authStore.user.phone || '',
+				address: authStore.user.address || ''
 			};
 		}
 	}
@@ -137,7 +139,7 @@
 	}
 
 	async function saveProfile() {
-		if (!$currentUser) return;
+		if (!authStore.user) return;
 
 		loading = true;
 		error = null;
@@ -158,7 +160,7 @@
 			toast.success('บันทึกข้อมูลส่วนตัวสำเร็จ');
 			editing = false;
 			// Refresh user data
-			await auth.validateSession();
+			await authStore.initialize();
 			// Reinitialize form data to reflect updated values
 			initializeFormData();
 		} catch (err: any) {
@@ -321,7 +323,7 @@
 		{/if}
 	</div>
 
-	{#if $currentUser}
+	{#if authStore.user}
 		<!-- Profile Info -->
 		<div class="grid gap-6 lg:grid-cols-2">
 			<!-- Basic Information -->
@@ -466,17 +468,17 @@
 						<div class="space-y-4">
 							<div>
 								<span class="text-sm text-muted-foreground">คำนำหน้า</span>
-								<p class="font-medium">{getPrefixLabel($currentUser.prefix)}</p>
+								<p class="font-medium">{getPrefixLabel(authStore.user.prefix)}</p>
 							</div>
 
 							<div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
 								<div>
 									<span class="text-sm text-muted-foreground">ชื่อ</span>
-									<p class="font-medium">{$currentUser.first_name}</p>
+									<p class="font-medium">{authStore.user.first_name}</p>
 								</div>
 								<div>
 									<span class="text-sm text-muted-foreground">นามสกุล</span>
-									<p class="font-medium">{$currentUser.last_name}</p>
+									<p class="font-medium">{authStore.user.last_name}</p>
 								</div>
 							</div>
 
@@ -485,7 +487,7 @@
 									<IconMail class="size-3" />
 									อีเมล
 								</span>
-								<p class="font-medium">{$currentUser.email}</p>
+								<p class="font-medium">{authStore.user.email}</p>
 							</div>
 
 							<div>
@@ -493,7 +495,7 @@
 									<IconPhone class="size-3" />
 									เบอร์โทรศัพท์
 								</span>
-								<p class="font-medium">{$currentUser.phone || 'ไม่ได้ระบุ'}</p>
+								<p class="font-medium">{authStore.user.phone || 'ไม่ได้ระบุ'}</p>
 							</div>
 
 							<div>
@@ -501,7 +503,7 @@
 									<IconMapPin class="size-3" />
 									ที่อยู่
 								</span>
-								<p class="font-medium break-words">{$currentUser.address || 'ไม่ได้ระบุ'}</p>
+								<p class="font-medium break-words">{authStore.user.address || 'ไม่ได้ระบุ'}</p>
 							</div>
 						</div>
 					{/if}
@@ -519,20 +521,20 @@
 				<CardContent class="space-y-4">
 					<div>
 						<span class="text-sm text-muted-foreground">รหัสนักศึกษา</span>
-						<p class="text-lg font-medium">{$currentUser.student_id}</p>
+						<p class="text-lg font-medium">{authStore.user.student_id}</p>
 					</div>
 
-					{#if $currentUser.organization_name}
+					{#if authStore.user.organization_name}
 						<div>
 							<span class="text-sm text-muted-foreground">หน่วยงาน</span>
-							<p class="font-medium">{$currentUser.organization_name}</p>
+							<p class="font-medium">{authStore.user.organization_name}</p>
 						</div>
 					{/if}
 
-					{#if $currentUser.department_name}
+					{#if authStore.user.department_name}
 						<div>
 							<span class="text-sm text-muted-foreground">ภาควิชา</span>
-							<p class="font-medium">{$currentUser.department_name}</p>
+							<p class="font-medium">{authStore.user.department_name}</p>
 						</div>
 					{/if}
 
@@ -543,13 +545,13 @@
 							<IconCalendar class="size-3" />
 							วันที่สมัครสมาชิก
 						</span>
-						<p class="font-medium">{formatDate($currentUser.created_at)}</p>
+						<p class="font-medium">{formatDate(authStore.user.created_at ?? undefined)}</p>
 					</div>
 
-					{#if $currentUser.updated_at}
+					{#if authStore.user.updated_at}
 						<div>
 							<span class="text-sm text-muted-foreground">อัพเดตล่าสุด</span>
-							<p class="text-sm">{formatDate($currentUser.updated_at)}</p>
+							<p class="text-sm">{formatDate(authStore.user.updated_at ?? undefined)}</p>
 						</div>
 					{/if}
 				</CardContent>

@@ -81,6 +81,8 @@ export interface UserResponse {
     prefix: string;
     first_name: string;
     last_name: string;
+    phone?: string | null;
+    address?: string | null;
     admin_role: AdminRole | null;
     organization_id?: string | null;
     organization_name?: string | null;
@@ -88,6 +90,8 @@ export interface UserResponse {
     department_name?: string | null;
     session_id: string;
     expires_at: string;
+    created_at?: string | null;
+    updated_at?: string | null;
 }
 
 export interface AuthResponse {
