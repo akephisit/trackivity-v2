@@ -221,9 +221,8 @@ export class QRClient {
 		this.error.set(null);
 
 		try {
-			// Try to generate via API first
+			// Try to generate via API
 			let qrCode: QRCode;
-			let useOfflineMode = false;
 
 			try {
 				const response = await qrApi.generateQRCode();
@@ -295,12 +294,9 @@ export class QRClient {
 				} else {
 					console.log('[QR] Server did not provide SVG, generating client-side');
 				}
-			} catch (apiError) {
-				// Fallback to offline generation
-				// Silent fail on console error if offline works
-				useOfflineMode = true;
-				const sessionId = this.getSessionId();
-				qrCode = await this.generateOfflineQRCode(sessionId || undefined, user);
+			} catch (apiError: any) {
+				console.error('[QR] API generation failed:', apiError);
+				throw new Error(apiError?.message || 'Failed to generate QR Code from server');
 			}
 
 			// Generate visual QR code using the real qrcode library
@@ -314,9 +310,7 @@ export class QRClient {
 			// Schedule automatic refresh
 			this.scheduleRefresh();
 
-			console.log(
-				`[QR] QR Code generated successfully (${useOfflineMode ? 'offline' : 'online'} mode)`
-			);
+			console.log('[QR] QR Code generated successfully (online mode)');
 		} catch (error) {
 			console.error('[QR] QR generation failed:', error);
 			this.error.set(error instanceof Error ? error.message : 'QR generation failed');
@@ -325,53 +319,6 @@ export class QRClient {
 			this.isGenerating = false;
 			this.lastGeneratedAt = Date.now();
 		}
-	}
-
-	private async generateOfflineQRCode(sessionId?: string, user?: SessionUser): Promise<QRCode> {
-		const userId = user?.user_id || (user as any)?.id || 'unknown';
-		console.log('[QR] Generating offline QR code for user:', userId);
-
-		const qrData: QRData = {
-			user_id: userId,
-			timestamp: Date.now(),
-			session_id: sessionId || 'offline-session',
-			device_fingerprint: generateDeviceFingerprint()
-		};
-
-		// Sign the data if possible
-		try {
-			if (sessionId && sessionId !== 'offline-session') {
-				const dataString = JSON.stringify({
-					user_id: qrData.user_id,
-					timestamp: qrData.timestamp,
-					device_fingerprint: qrData.device_fingerprint
-				});
-
-				qrData.signature = await CryptoHelper.signData(dataString, sessionId);
-			}
-		} catch (error) {
-			console.warn('[QR] Failed to sign QR data (non-critical):', error);
-		}
-
-		const expiresAt = new Date(Date.now() + this.config.refreshInterval * 60 * 1000).toISOString();
-		const qrCodeId =
-			globalThis.crypto?.randomUUID?.() ??
-			`offline-${Date.now()}-${Math.random().toString(36).slice(2)}`;
-
-		const offlineQRCode = {
-			id: qrCodeId,
-			user_id: qrData.user_id,
-			qr_data: JSON.stringify(qrData),
-			signature: qrData.signature || '',
-			created_at: new Date().toISOString(),
-			expires_at: expiresAt,
-			is_active: true,
-			usage_count: 0,
-			device_fingerprint: qrData.device_fingerprint
-		};
-
-		console.log('[QR] Offline QR code generated successfully:', offlineQRCode.id);
-		return offlineQRCode;
 	}
 
 	// ===== QR CODE SCANNING =====

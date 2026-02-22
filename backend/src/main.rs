@@ -19,6 +19,7 @@ use modules::organizations;
 use modules::users;
 use modules::departments;
 use modules::admins;
+use modules::qr;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -102,6 +103,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/users/:id", get(users::get_user))
         .route("/users/me/profile", put(users::update_profile))
         .route("/users/me/password", post(users::change_password))
+        // ─── QR Code ──────────────────────────────────────
+        .route("/qr/generate", post(qr::handlers::generate_qr_handler))
         // ─── Admins ───────────────────────────────────────
         .route("/admins", get(admins::handlers::list_admins).post(admins::handlers::create_admin))
         .route("/admins/:id", put(admins::handlers::update_admin).delete(admins::handlers::delete_admin))

@@ -4,3 +4,4 @@ pub mod organizations;
 pub mod users;
 pub mod departments;
 pub mod admins;
+pub mod qr;
