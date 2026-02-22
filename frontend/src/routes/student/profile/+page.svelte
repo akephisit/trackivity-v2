@@ -28,7 +28,7 @@
 		IconEyeOff
 	} from '@tabler/icons-svelte';
 	import { toast } from 'svelte-sonner';
-	import { apiClient } from '$lib/api/client';
+	import { usersApi, ApiError } from '$lib/api';
 	import { profileUpdateSchema, changePasswordSchema, PrefixOptions } from '$lib/schemas/auth';
 	import type { ProfileUpdateFormData, ChangePasswordFormData } from '$lib/schemas/auth';
 
@@ -168,27 +168,26 @@
 			}
 
 			// Update profile via API
-			const response = await apiClient.updateStudentProfile(formData);
+			const response = await usersApi.updateProfile(formData);
 
-			if (response.success) {
-				toast.success('บันทึกข้อมูลส่วนตัวสำเร็จ');
-				editing = false;
-				// Refresh user data
-				await auth.validateSession();
-				// Reinitialize form data to reflect updated values
-				initializeFormData();
-			} else {
-				if (response.error?.field_errors) {
-					fieldErrors = response.error.field_errors;
-				}
-				error = response.error?.message || 'ไม่สามารถบันทึกข้อมูลได้';
-			}
+			toast.success('บันทึกข้อมูลส่วนตัวสำเร็จ');
+			editing = false;
+			// Refresh user data
+			await auth.validateSession();
+			// Reinitialize form data to reflect updated values
+			initializeFormData();
 		} catch (err: any) {
 			console.error('Failed to update profile:', err);
-			if (err.code === 'VALIDATION_ERROR' && err.details?.field_errors) {
-				fieldErrors = err.details.field_errors;
+			// Try to parse ApiError JSON if it exists
+			try {
+				const errorData = JSON.parse(err.message);
+				if (errorData.field_errors) {
+					fieldErrors = errorData.field_errors;
+				}
+				error = errorData.error || errorData.message || 'ไม่สามารถบันทึกข้อมูลได้';
+			} catch (_) {
+				error = err.message || 'ไม่สามารถบันทึกข้อมูลได้ กรุณาลองอีกครั้ง';
 			}
-			error = err.message || 'ไม่สามารถบันทึกข้อมูลได้ กรุณาลองอีกครั้ง';
 		} finally {
 			loading = false;
 		}
@@ -217,23 +216,21 @@
 			}
 
 			// Change password via API
-			const response = await apiClient.changeStudentPassword(passwordData);
+			await usersApi.changePassword(passwordData.current_password, passwordData.new_password);
 
-			if (response.success) {
-				toast.success('เปลี่ยนรหัสผ่านสำเร็จ');
-				cancelPasswordChange();
-			} else {
-				if (response.error?.field_errors) {
-					passwordFieldErrors = response.error.field_errors;
-				}
-				passwordError = response.error?.message || 'ไม่สามารถเปลี่ยนรหัสผ่านได้';
-			}
+			toast.success('เปลี่ยนรหัสผ่านสำเร็จ');
+			cancelPasswordChange();
 		} catch (err: any) {
 			console.error('Failed to change password:', err);
-			if (err.code === 'VALIDATION_ERROR' && err.details?.field_errors) {
-				passwordFieldErrors = err.details.field_errors;
+			try {
+				const errorData = JSON.parse(err.message);
+				if (errorData.field_errors) {
+					passwordFieldErrors = errorData.field_errors;
+				}
+				passwordError = errorData.error || errorData.message || 'ไม่สามารถเปลี่ยนรหัสผ่านได้';
+			} catch (_) {
+				passwordError = err.message || 'ไม่สามารถเปลี่ยนรหัสผ่านได้ กรุณาลองอีกครั้ง';
 			}
-			passwordError = err.message || 'ไม่สามารถเปลี่ยนรหัสผ่านได้ กรุณาลองอีกครั้ง';
 		} finally {
 			passwordLoading = false;
 		}

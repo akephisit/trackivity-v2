@@ -4,7 +4,7 @@
  */
 
 import { browser } from '$app/environment';
-import { apiClient } from '$lib/api/client';
+import { auth } from '$lib/api';
 
 class ActivityTracker {
 	private lastActivity: number = Date.now();
@@ -89,7 +89,7 @@ class ActivityTracker {
 
 		try {
 			// Refresh session ถ้ามีการใช้งานอยู่
-			await apiClient.refreshSession();
+			await auth.refresh();
 			console.log('[ActivityTracker] Session refreshed successfully');
 		} catch (error) {
 			console.warn('[ActivityTracker] Failed to refresh session:', error);

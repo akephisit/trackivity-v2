@@ -1,7 +1,7 @@
 import { writable, derived } from 'svelte/store';
 import { browser } from '$app/environment';
 import { goto } from '$app/navigation';
-import { apiClient, isApiSuccess, handleApiError, isApiError } from '$lib/api/client';
+import { auth as apiAuth, ApiError } from '$lib/api';
 import type {
 	SessionUser,
 	LoginRequest,
@@ -57,37 +57,46 @@ function createAuthStore() {
 			update((state) => ({ ...state, isLoading: true, error: null }));
 
 			try {
-				const response = await apiClient.login(credentials);
+				const response = await apiAuth.login(credentials);
 
-				if (isApiSuccess(response)) {
-					const { user } = response.data;
-
-					// Update auth state with successful login
-					update((state) => ({
-						...state,
-						user,
-						isLoading: false,
-						isAuthenticated: true,
-						error: null,
-						isInitialized: true
-					}));
-
-					return { success: true, user };
-				}
-			} catch (error) {
-				const errorMessage = handleApiError(error);
+				// Update auth state with successful login
 				update((state) => ({
 					...state,
-					user: null,
+					user: response.user as any, // Type casting to match SessionUser
 					isLoading: false,
-					isAuthenticated: false,
-					error: errorMessage,
+					isAuthenticated: true,
+					error: null,
 					isInitialized: true
 				}));
-				return { success: false, error: errorMessage };
-			}
 
-			return { success: false, error: 'Login failed' };
+				return { success: true, user: response.user };
+			} catch (error: any) {
+				const errorMessage = error instanceof ApiError ? (error.message || 'Login failed') : 'Login failed';
+				try {
+					const parsed = JSON.parse(errorMessage);
+					// Set detailed error if backend sends JSON
+					const formattedMsg = parsed.error || parsed.message || errorMessage;
+					update((state) => ({
+						...state,
+						user: null,
+						isLoading: false,
+						isAuthenticated: false,
+						error: formattedMsg,
+						isInitialized: true
+					}));
+					return { success: false, error: formattedMsg };
+				} catch {
+					update((state) => ({
+						...state,
+						user: null,
+						isLoading: false,
+						isAuthenticated: false,
+						error: errorMessage,
+						isInitialized: true
+					}));
+					return { success: false, error: errorMessage };
+				}
+			}
 		},
 
 		/**
@@ -98,19 +107,17 @@ function createAuthStore() {
 			update((state) => ({ ...state, isLoading: true, error: null }));
 
 			try {
-				const response = await apiClient.register(userData);
+				const response = await apiAuth.register(userData as any); // Cast as API properties match mostly
 
-				if (isApiSuccess(response)) {
-					update((state) => ({
-						...state,
-						isLoading: false,
-						error: null
-					}));
+				update((state) => ({
+					...state,
+					isLoading: false,
+					error: null
+				}));
 
-					return { success: true, user: response.data };
-				}
-			} catch (error) {
-				const errorMessage = handleApiError(error);
+				return { success: true, user: response };
+			} catch (error: any) {
+				const errorMessage = error instanceof ApiError ? (error.message || 'Registration failed') : 'Registration failed';
 				update((state) => ({
 					...state,
 					isLoading: false,
@@ -118,8 +125,6 @@ function createAuthStore() {
 				}));
 				return { success: false, error: errorMessage };
 			}
-
-			return { success: false, error: 'Registration failed' };
 		},
 
 		/**
@@ -131,7 +136,7 @@ function createAuthStore() {
 
 			try {
 				// Clear server-side session (httpOnly cookie)
-				await apiClient.logout().catch((err) => {
+				await apiAuth.logout().catch((err: any) => {
 					console.warn('Server logout failed (continuing with client cleanup):', err);
 				});
 			} catch (error) {
@@ -169,24 +174,21 @@ function createAuthStore() {
 			lastSessionCheck = now;
 			sessionValidationPromise = (async () => {
 				try {
-					const response = await apiClient.me();
-					if (isApiSuccess(response)) {
-						const user = response.data;
-						update((state) => ({
-							...state,
-							user,
-							isAuthenticated: true,
-							error: null,
-							isInitialized: true
-						}));
+					const response = await apiAuth.me();
+					const user = response as any; // Cast down
+					update((state) => ({
+						...state,
+						user,
+						isAuthenticated: true,
+						error: null,
+						isInitialized: true
+					}));
 
-						return user;
-					}
-				} catch (error) {
+					return user;
+				} catch (error: any) {
 					// Handle session validation errors silently for better UX
-					if (isApiError(error)) {
-						const code = error.code;
-						if (['SESSION_EXPIRED', 'SESSION_INVALID', 'NO_SESSION', 'AUTH_ERROR'].includes(code)) {
+					if (error instanceof ApiError) {
+						if ([401, 403].includes(error.status)) {
 							console.debug('[Auth] No valid session found');
 							update((state) => ({
 								...state,

@@ -1,7 +1,8 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { apiClient, isApiSuccess } from '$lib/api/client';
-	import type { Analytics, Organization, UserSession } from '$lib/types';
+	import { systemApi, organizationsApi } from '$lib/api';
+	import type { Analytics, UserSession } from '$lib/api';
+	import type { Organization } from '$lib/types';
 
 	import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
 	import { Button } from '$lib/components/ui/button';
@@ -46,11 +47,8 @@
 	async function loadAnalytics() {
 		try {
 			loading.analytics = true;
-			const response = await apiClient.getAnalytics();
-
-			if (isApiSuccess(response)) {
-				analytics = response.data;
-			}
+			const response = await systemApi.getAnalytics();
+			analytics = response;
 		} catch (err) {
 			console.error('Failed to load analytics:', err);
 			error = 'ไม่สามารถโหลดข้อมูลการวิเคราะห์ได้';
@@ -62,11 +60,9 @@
 	async function loadFaculties() {
 		try {
 			loading.faculties = true;
-			const response = await apiClient.getFaculties();
-
-			if (isApiSuccess(response)) {
-				faculties = response.data;
-			}
+			const response = await organizationsApi.list();
+			// API returns organization array directly
+			faculties = response as any;
 		} catch (err) {
 			console.error('Failed to load faculties:', err);
 		} finally {
@@ -77,14 +73,12 @@
 	async function loadActiveSessions() {
 		try {
 			loading.sessions = true;
-			const response = await apiClient.getAllSessions({
+			const response = await systemApi.getAllSessions({
 				per_page: 10,
 				active_only: true
 			});
 
-			if (isApiSuccess(response)) {
-				activeSessions = response.data;
-			}
+			activeSessions = Array.isArray(response) ? response : (response.data || response.sessions || []);
 		} catch (err) {
 			console.error('Failed to load sessions:', err);
 		} finally {

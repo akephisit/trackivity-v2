@@ -5,7 +5,7 @@
 
 import { browser } from '$app/environment';
 import { writable, type Writable, get } from 'svelte/store';
-import { apiClient } from '$lib/api/client';
+import { qrApi } from '$lib/api';
 import type { QRCode, QRScanResult, SessionUser } from '$lib/types';
 import QRCodeGenerator from 'qrcode';
 
@@ -222,29 +222,16 @@ export class QRClient {
 			let useOfflineMode = false;
 
 			try {
-				const response = await apiClient.generateQRCode();
+				const response = await qrApi.generateQRCode();
 				console.log('[QR] API Response:', response);
 
 				// Handle different response formats more robustly
-				let payload: any = null;
-
-				if (response && typeof response === 'object') {
-					// Check for new API format: { success: true, data: {...} }
-					if ('success' in response && response.success && 'data' in response && response.data) {
-						payload = response.data;
-					}
-					// Check for backend format: { status: "success", data: {...} }
-					else if (
-						'status' in response &&
-						response.status === 'success' &&
-						'data' in response &&
-						response.data
-					) {
-						payload = response.data;
-					}
+				let payload: any = response;
+				// Extract payload properly
+				if (payload && payload.data) {
 					// Check if response itself is the data (another format)
-					else if ((response as any).data && (response as any).data.qr_data) {
-						payload = (response as any).data;
+					if (payload.data.qr_data || payload.data.id) {
+						payload = payload.data;
 					}
 				}
 
@@ -404,8 +391,12 @@ export class QRClient {
 			}
 
 			// Send to backend for processing
-			const response = await apiClient.scanQRCode(qrData, activityId);
-			return response.data!;
+			const response = await qrApi.scanQRCode(
+				qrData,
+				activityId,
+				{ device_fingerprint: typeof generateDeviceFingerprint === 'function' ? generateDeviceFingerprint() : 'unknown' }
+			);
+			return response.data || response; // Dependent on whether API wraps in { data: ... }
 		} catch (error) {
 			console.error('QR scanning failed:', error);
 			return {
