@@ -55,10 +55,14 @@ export async function exportSummaryPDF(
         fetchFontAsBase64(SARABUN_BOLD_URL)
     ]);
 
-    (pdfMake as any).vfs = {
-        'Sarabun-Regular.ttf': regularB64,
-        'Sarabun-Bold.ttf': boldB64
-    };
+    // Make sure vfs exists
+    if (!(pdfMake as any).vfs) {
+        (pdfMake as any).vfs = {};
+    }
+
+    // Add custom fonts to virtual file system safely
+    (pdfMake as any).vfs['Sarabun-Regular.ttf'] = regularB64;
+    (pdfMake as any).vfs['Sarabun-Bold.ttf'] = boldB64;
 
     (pdfMake as any).fonts = {
         Sarabun: {
