@@ -36,6 +36,7 @@
 	import { activitiesApi, auth as authApi, ApiError } from '$lib/api';
 	import { onMount } from 'svelte';
 	import { Skeleton } from '$lib/components/ui/skeleton';
+	import { exportSummaryPDF } from '$lib/utils/export-pdf';
 
 	// CSR state
 	let participationHistoryData: any[] = $state([]);
@@ -96,26 +97,12 @@
 	let isExporting = $state(false);
 
 	async function handleExport() {
-		if (isExporting) return;
+		if (isExporting || !userInfoData) return;
 		isExporting = true;
 		try {
-			const response = await fetch('/student/summary/export');
-			if (!response.ok) {
-				throw new Error('ดาวน์โหลดไฟล์ไม่สำเร็จ');
-			}
-			const blob = await response.blob();
-			const url = URL.createObjectURL(blob);
-			const link = document.createElement('a');
-			const timestamp = new Date().toISOString().slice(0, 10);
-			link.href = url;
-			link.download = `student-activity-summary-${timestamp}.pdf`;
-			document.body.appendChild(link);
-			link.click();
-			link.remove();
-			URL.revokeObjectURL(url);
-			toast.success('ส่งออก PDF สำเร็จ');
-		} catch (error) {
-			console.error('Export PDF failed:', error);
+			await exportSummaryPDF(userInfoData, stats, participationHistoryData);
+		} catch (err) {
+			console.error('Export PDF failed:', err);
 			toast.error('ไม่สามารถส่งออกไฟล์ PDF ได้ กรุณาลองใหม่อีกครั้ง');
 		} finally {
 			isExporting = false;
