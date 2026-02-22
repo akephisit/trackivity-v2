@@ -5,11 +5,11 @@
 import type { ActivitySummaryStats } from '$lib/utils/activity-summary';
 import { browser } from '$app/environment';
 
-// Sarabun Regular & Bold TTF from Google Fonts CDN
+// Sarabun Regular & Bold TTF from Google Fonts repository (stable URLs)
 const SARABUN_REGULAR_URL =
-    'https://fonts.gstatic.com/s/sarabun/v15/DtVmJx26TKEr37c9YL5.ttf';
+    'https://raw.githubusercontent.com/google/fonts/main/ofl/sarabun/Sarabun-Regular.ttf';
 const SARABUN_BOLD_URL =
-    'https://fonts.gstatic.com/s/sarabun/v15/DtVhJx26TKEr37c9aBBe_zI.ttf';
+    'https://raw.githubusercontent.com/google/fonts/main/ofl/sarabun/Sarabun-Bold.ttf';
 
 async function fetchFontAsBase64(url: string): Promise<string> {
     const res = await fetch(url);
