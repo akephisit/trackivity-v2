@@ -13,8 +13,10 @@ const ACTIVITY_SELECT: &str = r#"
         a.hours, a.max_participants, a.registration_open,
         a.status::text AS status,
         a.created_at, a.updated_at,
-        o.name AS organizer_name,
-        u.first_name AS creator_name
+        a.organizer_id, o.name AS organizer_name,
+        u.first_name AS creator_name,
+        a.activity_level::text AS activity_level,
+        a.eligible_organizations
     FROM activities a
     JOIN organizations o ON a.organizer_id = o.id
     JOIN users u ON a.created_by = u.id

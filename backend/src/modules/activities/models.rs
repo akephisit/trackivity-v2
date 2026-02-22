@@ -21,8 +21,11 @@ pub struct ActivityPublic {
     pub status: String,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
+    pub organizer_id: Uuid,
     pub organizer_name: String,
     pub creator_name: String,
+    pub activity_level: Option<String>,
+    pub eligible_organizations: Option<serde_json::Value>,
 }
 
 #[derive(Debug, Deserialize)]
