@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { z } from 'zod';
+	import { untrack } from 'svelte';
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
@@ -156,7 +157,7 @@
 		email: '',
 		password: '',
 		admin_level: AdminLevel.RegularAdmin,
-		organization_id: data.userOrganizationId || '',
+		organization_id: untrack(() => data.userOrganizationId || ''),
 		permissions: [ADMIN_PERMISSIONS.VIEW_DASHBOARD, ADMIN_PERMISSIONS.MANAGE_ACTIVITIES]
 	});
 

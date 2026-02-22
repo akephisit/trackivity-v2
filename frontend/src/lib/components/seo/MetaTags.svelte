@@ -21,21 +21,18 @@
 		locale = 'th_TH'
 	}: Props = $props();
 
-	let canonical = $state<string>('');
-	let ogImage = $state<string>(image);
-
-	$effect(() => {
+	let canonical = $derived(url || $page.url?.href || '');
+	let ogImage = $derived.by(() => {
 		const current = $page.url;
-		canonical = url || current?.href || '';
-		// Ensure og:image is absolute for scrapers that require it
 		if (image?.startsWith('http')) {
-			ogImage = image;
+			return image;
 		} else if (current && image) {
-			ogImage = `${current.origin}${image.startsWith('/') ? image : `/${image}`}`;
+			return `${current.origin}${image.startsWith('/') ? image : `/${image}`}`;
 		}
+		return image || '';
 	});
 
-	const fullTitle = `${title}${siteName ? ` - ${siteName}` : ''}`;
+	const fullTitle = $derived(`${title}${siteName ? ` - ${siteName}` : ''}`);
 </script>
 
 <svelte:head>

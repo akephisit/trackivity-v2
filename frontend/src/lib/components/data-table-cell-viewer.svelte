@@ -36,11 +36,12 @@
 
 	const isMobile = new IsMobile();
 
+	import { untrack } from 'svelte';
 	let { item }: { item: Schema } = $props();
 
-	let type = $state(item.type);
-	let status = $state(item.status);
-	let reviewer = $state(item.reviewer);
+	let type = $state(untrack(() => item.type));
+	let status = $state(untrack(() => item.status));
+	let reviewer = $state(untrack(() => item.reviewer));
 </script>
 
 <Drawer.Root direction={isMobile.current ? 'bottom' : 'right'}>

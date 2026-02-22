@@ -60,7 +60,7 @@
 	let { data }: { data: QRScannerPageData } = $props();
 
 	// Component state
-	let selectedActivityId = $state(data.selectedActivityId || '');
+	let selectedActivityId = $state(untrack(() => data.selectedActivityId || ''));
 	let selectedActivityOption = $state<{ value: string; label: string } | undefined>(undefined);
 	let scannerActive = $state(false);
 	let scannerStatus = $state<'idle' | 'requesting' | 'active' | 'error'>('idle');
