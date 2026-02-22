@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { currentUser } from '$lib/stores/auth';
+	import { authStore } from '$lib/stores/auth.svelte';
 	import { useQRCode } from '$lib/qr/client';
 	import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
 	import { Button } from '$lib/components/ui/button';
@@ -21,18 +21,34 @@
 
 	const { qrCode, status: qrStatus, generate } = useQRCode();
 
-	// State for initial loading
-	let initialLoadComplete = $state(false);
-
-	async function refreshQR() {
-		await generate();
-	}
+	const user = $derived(authStore.user);
 
 	let copied = $state(false);
 	let refreshing = $state(false);
 
-	function formatDate(dateString: string): string {
-		return new Date(dateString).toLocaleDateString('th-TH', {
+	// Countdown state (updated every second)
+	let timeRemainingSeconds = $state(0);
+	let countdownTimer: ReturnType<typeof setInterval> | null = null;
+
+	function updateCountdown() {
+		if (!$qrCode) {
+			timeRemainingSeconds = 0;
+			return;
+		}
+		const expiresAt = new Date($qrCode.expires_at).getTime();
+		const remaining = Math.max(0, expiresAt - Date.now());
+		timeRemainingSeconds = Math.floor(remaining / 1000);
+	}
+
+	function formatTimeRemaining(seconds: number): string {
+		if (seconds <= 0) return 'หมดอายุแล้ว';
+		const minutes = Math.floor(seconds / 60);
+		const secs = seconds % 60;
+		return `${minutes} นาที ${secs.toString().padStart(2, '0')} วินาที`;
+	}
+
+	function formatDate(isoString: string): string {
+		return new Date(isoString).toLocaleDateString('th-TH', {
 			year: 'numeric',
 			month: 'long',
 			day: 'numeric',
@@ -42,25 +58,24 @@
 		});
 	}
 
-	function formatTimeRemaining(expiresAt: string): string {
-		const now = new Date();
-		const expiry = new Date(expiresAt);
-		const diff = expiry.getTime() - now.getTime();
+	$effect(() => {
+		if ($qrCode) {
+			updateCountdown();
+		}
+	});
 
-		if (diff <= 0) return 'หมดอายุแล้ว';
+	onMount(() => {
+		countdownTimer = setInterval(() => {
+			updateCountdown();
+		}, 1000);
 
-		const minutes = Math.floor(diff / (1000 * 60));
-		const hours = Math.floor(minutes / 60);
-		const days = Math.floor(hours / 24);
-
-		if (days > 0) return `เหลือ ${days} วัน`;
-		if (hours > 0) return `เหลือ ${hours} ชั่วโมง`;
-		return `เหลือ ${minutes} นาที`;
-	}
+		return () => {
+			if (countdownTimer) clearInterval(countdownTimer);
+		};
+	});
 
 	async function copyQRData() {
 		if (!$qrCode) return;
-
 		try {
 			await navigator.clipboard.writeText($qrCode.id);
 			copied = true;
@@ -68,7 +83,7 @@
 			setTimeout(() => {
 				copied = false;
 			}, 2000);
-		} catch (err) {
+		} catch {
 			toast.error('ไม่สามารถคัดลอกได้');
 		}
 	}
@@ -76,11 +91,9 @@
 	async function handleRefreshQR() {
 		refreshing = true;
 		try {
-			console.log('[QR Page] Manual refresh requested');
-			await refreshQR();
+			await generate();
 			toast.success('รีเฟรช QR Code แล้ว');
 		} catch (err) {
-			console.error('[QR Page] Manual refresh failed:', err);
 			toast.error(
 				'ไม่สามารถรีเฟรช QR Code ได้: ' +
 					(err instanceof Error ? err.message : 'เกิดข้อผิดพลาดไม่ทราบสาเหตุ')
@@ -102,46 +115,6 @@
 				return { variant: 'outline' as const, text: 'ไม่พร้อม', icon: IconAlertCircle };
 		}
 	}
-
-	// Auto-refresh every minute to update time remaining
-	onMount(() => {
-		// Generate QR code when page loads if user is available
-		if ($currentUser && !$qrCode) {
-			console.log('[QR Page] User available, generating QR code on mount');
-			generate().catch((error) => {
-				console.error('[QR Page] Failed to generate QR on mount:', error);
-			});
-		}
-		initialLoadComplete = true;
-
-		const interval = setInterval(() => {
-			// Trigger reactivity for time remaining
-			if ($qrCode) {
-				qrCode.set($qrCode);
-			}
-		}, 60000);
-
-		return () => clearInterval(interval);
-	});
-
-	// Watch for user authentication changes using $effect
-	let lastUserCheck = $state('');
-	$effect(() => {
-		const userKey = $currentUser?.user_id || '';
-		if (
-			userKey &&
-			userKey !== lastUserCheck &&
-			initialLoadComplete &&
-			!$qrCode &&
-			$qrStatus === 'idle'
-		) {
-			lastUserCheck = userKey;
-			console.log('[QR Page] User authenticated, generating QR code');
-			generate().catch((error) => {
-				console.error('[QR Page] Failed to generate QR after user auth:', error);
-			});
-		}
-	});
 </script>
 
 <svelte:head>
@@ -157,7 +130,7 @@
 	</div>
 
 	<!-- User Info Card -->
-	{#if $currentUser}
+	{#if user}
 		<Card>
 			<CardHeader>
 				<CardTitle class="flex items-center gap-2 text-lg">
@@ -170,19 +143,19 @@
 					<div>
 						<span class="text-muted-foreground">ชื่อ:</span>
 						<span class="ml-2 font-medium">
-							{$currentUser.first_name}
-							{$currentUser.last_name}
+							{user.first_name}
+							{user.last_name}
 						</span>
 					</div>
 					<div>
 						<span class="text-muted-foreground">รหัสนักศึกษา:</span>
 						<span class="ml-2 font-medium">
-							{$currentUser.student_id}
+							{user.student_id}
 						</span>
 					</div>
 					<div class="sm:col-span-2">
 						<span class="text-muted-foreground">อีเมล:</span>
-						<span class="ml-2 font-medium">{$currentUser.email}</span>
+						<span class="ml-2 font-medium">{user.email}</span>
 					</div>
 				</div>
 			</CardContent>
@@ -209,21 +182,19 @@
 				{#if $qrCode && $qrStatus === 'ready'}
 					<div class="grid grid-cols-1 gap-4 text-sm sm:grid-cols-2">
 						<div>
-							<span class="text-muted-foreground">สร้างเมื่อ:</span>
-							<p class="mt-1 text-xs">
-								{formatDate($qrCode.created_at)}
-							</p>
-						</div>
-						<div>
 							<span class="text-muted-foreground">หมดอายุ:</span>
 							<p class="mt-1 text-xs">
 								{formatDate($qrCode.expires_at)}
 							</p>
 						</div>
-						<div class="sm:col-span-2">
+						<div>
 							<span class="text-muted-foreground">เวลาที่เหลือ:</span>
-							<p class="mt-1 font-medium text-primary">
-								{formatTimeRemaining($qrCode.expires_at)}
+							<p
+								class="mt-1 font-mono font-medium {timeRemainingSeconds <= 60
+									? 'text-destructive'
+									: 'text-primary'}"
+							>
+								{formatTimeRemaining(timeRemainingSeconds)}
 							</p>
 						</div>
 					</div>
@@ -284,7 +255,7 @@
 			<QRCodeGenerator size="large" showStatus={false} />
 		</div>
 		<div class="space-y-1 text-center text-xs text-muted-foreground">
-			<p>ID: <span>{$qrCode.id}</span></p>
+			<p>ID: <span class="font-mono">{$qrCode.id}</span></p>
 			<p class="text-muted-foreground/70">แสดง QR Code นี้ให้เจ้าหน้าที่สแกนเพื่อเข้าร่วมกิจกรรม</p>
 		</div>
 	{/if}
@@ -301,14 +272,14 @@
 			<ol class="list-inside list-decimal space-y-2 text-sm text-muted-foreground">
 				<li>แสดง QR Code นี้ให้เจ้าหน้าที่ที่กิจกรรม</li>
 				<li>เจ้าหน้าที่จะสแกน QR Code เพื่อบันทึกการเข้าร่วม</li>
-				<li>QR Code จะหมดอายุและสร้างใหม่อัตโนมัติเพื่อความปลอดภัย</li>
-				<li>คุณสามารถใช้ QR Code เดียวกันสำหรับกิจกรรมหลายๆ กิจกรรม</li>
+				<li>QR Code มีอายุ 3 นาที และสร้างใหม่อัตโนมัติเพื่อความปลอดภัย</li>
+				<li>คุณสามารถใช้ QR Code เดียวกันสำหรับกิจกรรมหลายๆ กิจกรรมได้</li>
 				<li>หาก QR Code หมดอายุ กรุณากด "รีเฟรช" เพื่อสร้างใหม่</li>
 			</ol>
 		</CardContent>
 	</Card>
 
-	<!-- Tips for Mobile -->
+	<!-- Mobile tips -->
 	<Card class="border-primary/20 bg-primary/5 lg:hidden">
 		<CardHeader>
 			<CardTitle class="flex items-center gap-2 text-sm text-primary">
@@ -319,7 +290,7 @@
 		<CardContent class="space-y-1 text-xs text-muted-foreground">
 			<p>• เพิ่มความสว่างของหน้าจอให้เต็มที่เมื่อแสดง QR Code</p>
 			<p>• ถือโทรศัพท์ให้มั่นคงเมื่อเจ้าหน้าที่กำลังสแกน</p>
-			<p>• สามารถจับภาพหน้าจอ QR Code เก็บไว้ได้</p>
+			<p>• QR Code จะหมดอายุทุก 3 นาที เพื่อป้องกันการปลอมแปลง</p>
 		</CardContent>
 	</Card>
 </div>

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount, onDestroy } from 'svelte';
-	import { currentUser } from '$lib/stores/auth';
+	import { authStore } from '$lib/stores/auth.svelte';
 	import { useQRCode } from '$lib/qr/client';
 	import type { QRStatus } from '$lib/qr/client';
 
@@ -39,10 +39,12 @@
 		size = 'medium'
 	}: Props = $props();
 
+	const user = $derived(authStore.user);
+
 	// Reactive variables
-	let refreshTimer: NodeJS.Timeout | null = null;
+	let refreshTimer: ReturnType<typeof setInterval> | null = null;
 	let timeUntilExpiry = $state(0);
-	let expiryTimer: NodeJS.Timeout | null = null;
+	let expiryTimer: ReturnType<typeof setInterval> | null = null;
 
 	// Size configurations - responsive classes
 	const sizeConfig = {
@@ -65,16 +67,12 @@
 
 	// Initialize QR code
 	onMount(async () => {
-		console.log(
-			'[QRGenerator] Component mounted, user:',
-			$currentUser ? 'available' : 'not available'
-		);
-		if ($currentUser) {
+		if (user) {
 			try {
-				await generate();
+				await generate(user as any);
 				startTimers();
-			} catch (error) {
-				console.error('[QRGenerator] Failed to generate QR on mount:', error);
+			} catch (e) {
+				console.error('[QRGenerator] Failed to generate QR on mount:', e);
 			}
 		}
 	});
@@ -84,17 +82,7 @@
 		clearTimers();
 	});
 
-	// Watch for user changes
-	$effect(() => {
-		if ($currentUser && ($status === 'idle' || !$qrCode)) {
-			console.log('[QRGenerator] User available and QR needed, generating...');
-			generate().catch((error) => {
-				console.error('[QRGenerator] Failed to generate QR for user:', error);
-			});
-		}
-	});
-
-	// Watch for QR code changes to update timers
+	// Watch for QR code changes to update countdown
 	$effect(() => {
 		if ($qrCode) {
 			updateExpiryTimer();
@@ -114,7 +102,7 @@
 
 	function clearTimers() {
 		if (refreshTimer) {
-			clearTimeout(refreshTimer);
+			clearInterval(refreshTimer);
 			refreshTimer = null;
 		}
 		if (expiryTimer) {
@@ -130,8 +118,9 @@
 
 		if (!$qrCode) return;
 
+		// expires_at was already converted to ISO string in client.ts
 		expiryTimer = setInterval(() => {
-			const expiresAt = new Date($qrCode.expires_at).getTime();
+			const expiresAt = new Date($qrCode!.expires_at).getTime();
 			const now = Date.now();
 			const remaining = Math.max(0, expiresAt - now);
 
@@ -145,15 +134,14 @@
 	}
 
 	function handleRefresh() {
-		console.log('[QRGenerator] Manual refresh triggered');
-		generate().catch((error) => {
-			console.error('[QRGenerator] Manual refresh failed:', error);
+		generate().catch((e) => {
+			console.error('[QRGenerator] Manual refresh failed:', e);
 		});
 	}
 
 	function handleDownload() {
 		if ($qrDataURL) {
-			const filename = `qr-code-${$currentUser?.student_id || 'user'}-${Date.now()}.png`;
+			const filename = `qr-code-${user?.student_id || 'user'}-${Date.now()}.png`;
 			download(filename);
 		}
 	}
@@ -168,13 +156,13 @@
 		if (!$qrCode) return 0;
 
 		const expiresAt = new Date($qrCode.expires_at).getTime();
-		const created_at = new Date($qrCode.created_at).getTime();
+		// We know expiry is 3 minutes = 180 seconds total
+		const totalMs = 3 * 60 * 1000;
+		const startMs = expiresAt - totalMs;
 		const now = Date.now();
 
-		const totalDuration = expiresAt - created_at;
-		const elapsed = now - created_at;
-
-		return Math.min(100, Math.max(0, (elapsed / totalDuration) * 100));
+		const elapsed = now - startMs;
+		return Math.min(100, Math.max(0, (elapsed / totalMs) * 100));
 	}
 
 	const currentStatusConfig = $derived(statusConfig[$status]);
@@ -245,7 +233,7 @@
 			</Alert>
 		{/if}
 
-		<!-- Expiry Information -->
+		<!-- Expiry Countdown -->
 		{#if $qrCode && $status === 'ready'}
 			<div class="space-y-2">
 				<div class="flex items-center justify-between text-sm text-muted-foreground">
@@ -269,14 +257,14 @@
 		{/if}
 
 		<!-- User Information -->
-		{#if $currentUser}
+		{#if user}
 			<div class="space-y-1 border-t py-2 text-center">
 				<p class="text-sm font-medium">
-					{$currentUser.first_name}
-					{$currentUser.last_name}
+					{user.first_name}
+					{user.last_name}
 				</p>
 				<p class="text-xs text-muted-foreground">
-					รหัสนักศึกษา: {$currentUser.student_id}
+					รหัสนักศึกษา: {user.student_id}
 				</p>
 			</div>
 		{/if}
