@@ -2,8 +2,10 @@ use axum::{
     routing::{get, post, put},
     Router,
 };
-use sqlx::postgres::PgPoolOptions;
+use sqlx::postgres::{PgPoolOptions, PgConnectOptions};
 use std::net::SocketAddr;
+use std::str::FromStr;
+use std::time::Duration;
 use tower_http::{cors::CorsLayer, trace::TraceLayer};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 use axum::http::{HeaderValue, Method, header};
@@ -30,9 +32,18 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .init();
 
     let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
+    let connect_options = PgConnectOptions::from_str(&database_url)
+        .expect("Invalid DATABASE_URL format")
+        // Essential for Neon's connection pooler (-pooler.neon.tech)
+        // to prevent "prepared statement does not exist" errors:
+        .statement_cache_capacity(0);
+
     let pool = PgPoolOptions::new()
         .max_connections(10)
-        .connect(&database_url)
+        .min_connections(0) // Let pool scale down completely to allow Neon to sleep
+        .idle_timeout(Duration::from_secs(30)) // Close idle connections quickly
+        .max_lifetime(Duration::from_secs(1800)) // 30 mins max lifetime
+        .connect_with(connect_options)
         .await
         .expect("Failed to connect to database");
 
