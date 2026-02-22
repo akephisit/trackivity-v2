@@ -1,49 +1,46 @@
 /**
  * Activity Tracker for Session Management
- * จับการดำเนินการของผู้ใช้เพื่อรักษา session ไว้ (mouse, keyboard, page navigation)
+ * จับการใช้งานของผู้ใช้ทุก 30 นาที → เรียก /auth/me เพื่อ verify ว่า session ยังอยู่
+ * ถ้า 401 (session หมดหรือถูก revoke) → logout อัตโนมัติ
+ * ไม่มี DB write ต่อ request — ใช้ JWT Long Expiry (7 วัน) ทำงานร่วมกัน
  */
 
 import { browser } from '$app/environment';
 import { auth } from '$lib/api';
+import { authStore } from '$lib/stores/auth.svelte';
 
 class ActivityTracker {
 	private lastActivity: number = Date.now();
-	private refreshTimer: number | null = null;
+	private checkTimer: ReturnType<typeof setTimeout> | null = null;
 	private isTracking: boolean = false;
-	private readonly REFRESH_INTERVAL = 30 * 60 * 1000; // 30 minutes
-	private readonly ACTIVITY_THRESHOLD = 5 * 60 * 1000; // 5 minutes since last activity
+
+	// ตรวจสอบทุก 30 นาที
+	private readonly CHECK_INTERVAL = 30 * 60 * 1000;
+	// ถ้า user ไม่มีการใช้งานเกิน 60 นาที → หยุดตรวจ (ค่อยเริ่มใหม่เมื่อ active อีกครั้ง)
+	private readonly INACTIVE_THRESHOLD = 60 * 60 * 1000;
 
 	constructor() {
 		if (browser) {
-			this.init();
+			this.bindEvents();
 		}
 	}
 
-	private init(): void {
-		// Track mouse movement
-		document.addEventListener('mousemove', this.updateActivity.bind(this), { passive: true });
-
-		// Track keyboard activity
-		document.addEventListener('keypress', this.updateActivity.bind(this), { passive: true });
-
-		// Track page navigation
-		document.addEventListener('visibilitychange', this.updateActivity.bind(this), {
-			passive: true
-		});
-
-		// Track page focus/blur
-		window.addEventListener('focus', this.updateActivity.bind(this), { passive: true });
-
-		// Track scroll activity
-		document.addEventListener('scroll', this.updateActivity.bind(this), { passive: true });
-
-		// Track click events
-		document.addEventListener('click', this.updateActivity.bind(this), { passive: true });
+	private bindEvents(): void {
+		const update = () => this.onUserActivity();
+		document.addEventListener('click', update, { passive: true });
+		document.addEventListener('keypress', update, { passive: true });
+		document.addEventListener('scroll', update, { passive: true });
+		document.addEventListener('mousemove', update, { passive: true });
+		window.addEventListener('focus', update, { passive: true });
+		document.addEventListener('visibilitychange', () => {
+			// เมื่อ Tab กลับมา focus → รีเซ็ต activity ทันที
+			if (document.visibilityState === 'visible') update();
+		}, { passive: true });
 	}
 
-	private updateActivity(): void {
+	private onUserActivity(): void {
 		this.lastActivity = Date.now();
-
+		// ถ้ายังไม่มี timer วิ่งอยู่ → เริ่มใหม่
 		if (!this.isTracking) {
 			this.startTracking();
 		}
@@ -51,65 +48,61 @@ class ActivityTracker {
 
 	public startTracking(): void {
 		if (this.isTracking) return;
-
 		this.isTracking = true;
-		this.scheduleRefresh();
+		this.scheduleCheck();
 	}
 
 	public stopTracking(): void {
 		this.isTracking = false;
-
-		if (this.refreshTimer) {
-			clearTimeout(this.refreshTimer);
-			this.refreshTimer = null;
+		if (this.checkTimer) {
+			clearTimeout(this.checkTimer);
+			this.checkTimer = null;
 		}
 	}
 
-	private scheduleRefresh(): void {
-		if (this.refreshTimer) {
-			clearTimeout(this.refreshTimer);
-		}
-
-		this.refreshTimer = window.setTimeout(() => {
-			this.checkAndRefresh();
-		}, this.REFRESH_INTERVAL);
+	private scheduleCheck(): void {
+		if (this.checkTimer) clearTimeout(this.checkTimer);
+		this.checkTimer = setTimeout(() => this.runCheck(), this.CHECK_INTERVAL);
 	}
 
-	private async checkAndRefresh(): Promise<void> {
+	private async runCheck(): Promise<void> {
 		if (!this.isTracking) return;
 
-		const timeSinceActivity = Date.now() - this.lastActivity;
+		const idle = Date.now() - this.lastActivity;
 
-		// ถ้าไม่มีการใช้งานมากกว่า 5 นาที ให้หยุด refresh
-		if (timeSinceActivity > this.ACTIVITY_THRESHOLD) {
-			console.log('[ActivityTracker] User inactive, stopping session refresh');
+		// User ไม่ active เกิน threshold → หยุดตรวจ รอให้ user กลับมา
+		if (idle > this.INACTIVE_THRESHOLD) {
+			console.log('[ActivityTracker] User idle, pausing checks');
 			this.stopTracking();
 			return;
 		}
 
 		try {
-			// Refresh session ถ้ามีการใช้งานอยู่
-			await auth.refresh();
-			console.log('[ActivityTracker] Session refreshed successfully');
-		} catch (error) {
-			console.warn('[ActivityTracker] Failed to refresh session:', error);
-			// หยุด tracking ถ้า refresh ไม่สำเร็จ (เช่น session หมดอายุแล้ว)
-			this.stopTracking();
+			// แค่ verify ว่า JWT ยังใช้ได้ — ไม่มี DB write
+			await auth.me();
+		} catch (err: any) {
+			const status = err?.status ?? err?.response?.status;
+			if (status === 401 || status === 403) {
+				// Session หมดหรือถูก admin revoke → logout อัตโนมัติ
+				console.warn('[ActivityTracker] Session invalid, logging out');
+				authStore.logout();
+				return;
+			}
+			// Network error ชั่วคราว → ไม่ logout แค่ skip รอรอบต่อไป
+			console.warn('[ActivityTracker] Check failed (network?), will retry:', err?.message);
 		}
 
-		// Schedule next refresh
-		this.scheduleRefresh();
+		this.scheduleCheck();
+	}
+
+	public isUserActive(): boolean {
+		return Date.now() - this.lastActivity <= this.INACTIVE_THRESHOLD;
 	}
 
 	public getLastActivity(): number {
 		return this.lastActivity;
 	}
-
-	public isUserActive(): boolean {
-		const timeSinceActivity = Date.now() - this.lastActivity;
-		return timeSinceActivity <= this.ACTIVITY_THRESHOLD;
-	}
 }
 
-// Export singleton instance
+// Singleton
 export const activityTracker = new ActivityTracker();

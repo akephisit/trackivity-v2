@@ -111,9 +111,6 @@ export const auth = {
     logout: () =>
         request<{ message: string }>('/auth/logout', { method: 'POST' }),
 
-    refresh: () =>
-        request<AuthResponse>('/auth/refresh', { method: 'POST' }),
-
     me: () =>
         request<UserResponse>('/auth/me'),
 };
