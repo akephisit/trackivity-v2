@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { activities as activitiesApi, type Activity } from '$lib/api';
+	import { activitiesApi, type Activity } from '$lib/api';
 	import { onMount } from 'svelte';
 	import { getActivityTypeDisplayName } from '$lib/utils/activity';
 	import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
@@ -17,7 +17,9 @@
 		IconMapPin,
 		IconSearch,
 		IconAlertCircle,
-		IconChevronRight
+		IconChevronRight,
+		IconHourglassHigh,
+		IconCircleCheck
 	} from '@tabler/icons-svelte';
 	import { goto } from '$app/navigation';
 
@@ -25,32 +27,36 @@
 	let loading = $state(true);
 	let error = $state<string | null>(null);
 	let searchQuery = $state('');
-	let selectedTab = $state('all');
-	let selectedFilter = $state('upcoming');
+	let selectedFilter = $state('active');
 
 	onMount(async () => {
 		try {
 			allActivities = await activitiesApi.list();
-		} catch (e: any) {
+		} catch {
 			error = 'ไม่สามารถโหลดกิจกรรมได้ กรุณาลองใหม่';
 		} finally {
 			loading = false;
 		}
 	});
 
-	let filteredActivities = $derived(() => {
+	const filteredActivities = $derived.by(() => {
 		let filtered = allActivities;
 
 		if (searchQuery.trim()) {
-			const query = searchQuery.toLowerCase();
+			const q = searchQuery.toLowerCase();
 			filtered = filtered.filter(
-				(a) => a.title?.toLowerCase().includes(query) || a.description?.toLowerCase().includes(query)
+				(a) => a.title?.toLowerCase().includes(q) || a.description?.toLowerCase().includes(q)
 			);
 		}
 
 		switch (selectedFilter) {
+			case 'active':
+				filtered = filtered.filter((a) => a.status === 'published' || a.status === 'ongoing');
+				break;
 			case 'upcoming':
-				filtered = filtered.filter((a) => a.status === 'published');
+				filtered = filtered.filter(
+					(a) => a.status === 'published' && new Date(a.start_date) >= new Date()
+				);
 				break;
 			case 'ongoing':
 				filtered = filtered.filter((a) => a.status === 'ongoing');
@@ -60,31 +66,50 @@
 				break;
 		}
 
-		return filtered;
+		return filtered.sort(
+			(a, b) => new Date(a.start_date).getTime() - new Date(b.start_date).getTime()
+		);
 	});
 
 	function formatDate(dateString: string): string {
 		return new Date(dateString).toLocaleDateString('th-TH', {
-			year: 'numeric', month: 'short', day: 'numeric'
+			year: 'numeric',
+			month: 'short',
+			day: 'numeric'
 		});
 	}
 
-	function getActivityStatus(activity: Activity): { text: string; variant: 'default' | 'outline' | 'destructive' } {
+	function getStatusBadge(activity: Activity): {
+		text: string;
+		variant: 'default' | 'secondary' | 'outline' | 'destructive';
+	} {
 		switch (activity.status) {
-			case 'draft': return { text: 'ร่าง', variant: 'outline' };
-			case 'published': return { text: 'เผยแพร่แล้ว', variant: 'default' };
-			case 'ongoing': return { text: 'กำลังดำเนินการ', variant: 'default' };
-			case 'completed': return { text: 'เสร็จสิ้น', variant: 'outline' };
-			case 'cancelled': return { text: 'ยกเลิก', variant: 'destructive' };
-			default: return { text: activity.status, variant: 'outline' };
+			case 'published':
+				return { text: 'เปิดรับสมัคร', variant: 'default' };
+			case 'ongoing':
+				return { text: 'กำลังดำเนินการ', variant: 'secondary' };
+			case 'completed':
+				return { text: 'เสร็จสิ้น', variant: 'outline' };
+			case 'cancelled':
+				return { text: 'ยกเลิก', variant: 'destructive' };
+			default:
+				return { text: activity.status, variant: 'outline' };
 		}
 	}
 
-	function resetFilters() {
-		searchQuery = '';
-		selectedTab = 'all';
-		selectedFilter = 'upcoming';
+	function isRegistrationOpen(activity: Activity): boolean {
+		return activity.registration_open === true && activity.status === 'published';
 	}
+
+	// Tab counts derived from all data regardless of search
+	const counts = $derived({
+		active: allActivities.filter((a) => a.status === 'published' || a.status === 'ongoing').length,
+		upcoming: allActivities.filter(
+			(a) => a.status === 'published' && new Date(a.start_date) >= new Date()
+		).length,
+		ongoing: allActivities.filter((a) => a.status === 'ongoing').length,
+		completed: allActivities.filter((a) => a.status === 'completed').length
+	});
 </script>
 
 <MetaTags
@@ -99,103 +124,180 @@
 		<p class="text-muted-foreground">ดูและติดตามกิจกรรมต่างๆ ที่มีอยู่ในระบบ</p>
 	</div>
 
-	<div class="space-y-4">
-		<div class="relative">
-			<IconSearch class="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
-			<Input bind:value={searchQuery} placeholder="ค้นหากิจกรรม..." class="pl-9" />
-		</div>
+	<!-- Search -->
+	<div class="relative">
+		<IconSearch class="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+		<Input bind:value={searchQuery} placeholder="ค้นหากิจกรรม..." class="pl-9" />
+	</div>
 
-		<Tabs bind:value={selectedFilter} class="w-full">
-			<TabsList class="grid w-full grid-cols-3">
-				<TabsTrigger value="upcoming" class="text-xs sm:text-sm">เร็ว ๆ นี้</TabsTrigger>
-				<TabsTrigger value="ongoing" class="text-xs sm:text-sm">กำลังดำเนินการ</TabsTrigger>
-				<TabsTrigger value="completed" class="text-xs sm:text-sm">สิ้นสุดแล้ว</TabsTrigger>
-			</TabsList>
+	<!-- Filter Tabs -->
+	<Tabs bind:value={selectedFilter} class="w-full">
+		<TabsList class="grid w-full grid-cols-4">
+			<TabsTrigger value="active" class="text-xs sm:text-sm">
+				ทั้งหมด
+				{#if !loading}
+					<span
+						class="ml-1 rounded-full bg-primary/15 px-1.5 py-0.5 text-xs font-semibold text-primary"
+					>
+						{counts.active}
+					</span>
+				{/if}
+			</TabsTrigger>
+			<TabsTrigger value="upcoming" class="text-xs sm:text-sm">
+				เปิดรับ
+				{#if !loading}
+					<span
+						class="ml-1 rounded-full bg-primary/15 px-1.5 py-0.5 text-xs font-semibold text-primary"
+					>
+						{counts.upcoming}
+					</span>
+				{/if}
+			</TabsTrigger>
+			<TabsTrigger value="ongoing" class="text-xs sm:text-sm">
+				ดำเนินการ
+				{#if !loading}
+					<span class="ml-1 rounded-full bg-secondary/80 px-1.5 py-0.5 text-xs font-semibold">
+						{counts.ongoing}
+					</span>
+				{/if}
+			</TabsTrigger>
+			<TabsTrigger value="completed" class="text-xs sm:text-sm">เสร็จสิ้น</TabsTrigger>
+		</TabsList>
 
-			<div class="mt-6">
-				{#if error}
-					<Alert variant="destructive">
-						<IconAlertCircle class="size-4" />
-						<AlertDescription>{error}</AlertDescription>
-					</Alert>
-				{:else if loading}
-					<div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-						{#each Array(6) as _}
-							<Card>
-								<CardHeader>
-									<div class="space-y-2">
-										<Skeleton class="h-4 w-3/4" />
-										<Skeleton class="h-3 w-1/2" />
-									</div>
-								</CardHeader>
-								<CardContent>
-									<div class="space-y-2">
-										<Skeleton class="h-3 w-full" />
-										<Skeleton class="h-3 w-full" />
-									</div>
-								</CardContent>
-							</Card>
-						{/each}
-					</div>
-				{:else if filteredActivities().length === 0}
-					<div class="py-12 text-center">
-						<IconCalendarEvent class="mx-auto mb-4 size-12 text-muted-foreground/50" />
-						<h3 class="mb-2 text-lg font-medium">ไม่พบกิจกรรม</h3>
-						<p class="text-muted-foreground">
-							{searchQuery ? 'ลองเปลี่ยนคำค้นหาหรือตัวกรอง' : 'ยังไม่มีกิจกรรมในระบบ'}
-						</p>
-						{#if searchQuery}
-							<Button variant="outline" onclick={resetFilters} class="mt-4">ล้างการค้นหา</Button>
-						{/if}
-					</div>
-				{:else}
-					<div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-						{#each filteredActivities() as activity}
-							{@const status = getActivityStatus(activity)}
-							<Card
-								class="group cursor-pointer transition-shadow hover:shadow-md"
-								onclick={() => goto(`/student/activities/${activity.id}`)}
-							>
-								<CardHeader class="pb-3">
-									<div class="flex items-start justify-between gap-2">
-										<CardTitle class="line-clamp-2 text-base transition-colors group-hover:text-primary">
+		<div class="mt-6">
+			{#if error}
+				<Alert variant="destructive">
+					<IconAlertCircle class="size-4" />
+					<AlertDescription>{error}</AlertDescription>
+				</Alert>
+			{:else if loading}
+				<div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+					{#each Array(6) as _}
+						<Card>
+							<CardHeader>
+								<div class="space-y-2">
+									<Skeleton class="h-4 w-3/4" />
+									<Skeleton class="h-3 w-1/2" />
+								</div>
+							</CardHeader>
+							<CardContent>
+								<div class="space-y-2">
+									<Skeleton class="h-3 w-full" />
+									<Skeleton class="h-3 w-2/3" />
+									<Skeleton class="mt-3 h-8 w-full" />
+								</div>
+							</CardContent>
+						</Card>
+					{/each}
+				</div>
+			{:else if filteredActivities.length === 0}
+				<div class="py-16 text-center">
+					<IconCalendarEvent class="mx-auto mb-4 size-14 text-muted-foreground/40" />
+					<h3 class="mb-2 text-lg font-medium">ไม่พบกิจกรรม</h3>
+					<p class="text-muted-foreground">
+						{searchQuery ? 'ลองเปลี่ยนคำค้นหา' : 'ยังไม่มีกิจกรรมในหมวดนี้'}
+					</p>
+					{#if searchQuery}
+						<Button variant="outline" onclick={() => (searchQuery = '')} class="mt-4">
+							ล้างการค้นหา
+						</Button>
+					{/if}
+				</div>
+			{:else}
+				<div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+					{#each filteredActivities as activity}
+						{@const statusBadge = getStatusBadge(activity)}
+						{@const openReg = isRegistrationOpen(activity)}
+						<Card
+							class="group flex cursor-pointer flex-col transition-all hover:shadow-md"
+							onclick={() => goto(`/student/activities/${activity.id}`)}
+						>
+							<CardHeader class="pb-2">
+								<div class="flex items-start justify-between gap-2">
+									<div class="min-w-0 flex-1">
+										<CardTitle
+											class="line-clamp-2 text-base transition-colors group-hover:text-primary"
+										>
 											{activity.title || 'ไม่ระบุชื่อ'}
 										</CardTitle>
-										{#if activity.activity_type}
-											<Badge variant="secondary">{getActivityTypeDisplayName(activity.activity_type)}</Badge>
-										{/if}
 									</div>
-									{#if activity.description}
-										<p class="mt-2 line-clamp-2 text-sm text-muted-foreground">{activity.description}</p>
-									{/if}
-								</CardHeader>
-								<CardContent class="space-y-3">
+									<Badge variant={statusBadge.variant} class="shrink-0 text-xs">
+										{statusBadge.text}
+									</Badge>
+								</div>
+								{#if activity.description}
+									<p class="mt-1 line-clamp-2 text-sm text-muted-foreground">
+										{activity.description}
+									</p>
+								{/if}
+							</CardHeader>
+
+							<CardContent class="flex flex-1 flex-col justify-between space-y-3">
+								<div class="space-y-2">
+									<!-- Date -->
 									<div class="flex items-center gap-2 text-sm text-muted-foreground">
-										<IconClock class="size-4 flex-shrink-0" />
-										<span>{formatDate(activity.start_date)}</span>
+										<IconClock class="size-3.5 shrink-0" />
+										<span>
+											{formatDate(activity.start_date)}
+											{#if activity.end_date !== activity.start_date}
+												– {formatDate(activity.end_date)}
+											{/if}
+										</span>
 									</div>
+
+									<!-- Location -->
 									{#if activity.location}
 										<div class="flex items-center gap-2 text-sm text-muted-foreground">
-											<IconMapPin class="size-4 flex-shrink-0" />
+											<IconMapPin class="size-3.5 shrink-0" />
 											<span class="line-clamp-1">{activity.location}</span>
 										</div>
 									{/if}
-									<div class="flex items-center justify-between pt-2">
-										<Badge variant={status.variant}>{status.text}</Badge>
-										<Button size="sm" variant="ghost" class="transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
-											ดูรายละเอียด
-											<IconChevronRight class="ml-1 size-4" />
-										</Button>
+
+									<!-- Hours & Participants -->
+									<div class="flex items-center gap-4 text-sm text-muted-foreground">
+										{#if activity.hours}
+											<div class="flex items-center gap-1">
+												<IconHourglassHigh class="size-3.5" />
+												<span>{activity.hours} ชม.</span>
+											</div>
+										{/if}
+										{#if activity.max_participants}
+											<div class="flex items-center gap-1">
+												<IconUsers class="size-3.5" />
+												<span>ไม่เกิน {activity.max_participants} คน</span>
+											</div>
+										{/if}
 									</div>
-								</CardContent>
-							</Card>
-						{/each}
-					</div>
-					<div class="mt-6 text-center text-sm text-muted-foreground">
-						พบ {filteredActivities().length} กิจกรรม
-					</div>
-				{/if}
-			</div>
-		</Tabs>
-	</div>
+								</div>
+
+								<!-- Footer -->
+								<div class="flex items-center justify-between border-t pt-3">
+									{#if openReg}
+										<Badge variant="default" class="gap-1 text-xs">
+											<IconCircleCheck class="size-3" />
+											เปิดลงทะเบียน
+										</Badge>
+									{:else}
+										<div></div>
+									{/if}
+									<Button
+										size="sm"
+										variant="ghost"
+										class="gap-1 transition-colors group-hover:bg-primary group-hover:text-primary-foreground"
+									>
+										ดูรายละเอียด
+										<IconChevronRight class="size-4" />
+									</Button>
+								</div>
+							</CardContent>
+						</Card>
+					{/each}
+				</div>
+
+				<div class="mt-4 text-center text-sm text-muted-foreground">
+					แสดง {filteredActivities.length} กิจกรรม
+				</div>
+			{/if}
+		</div>
+	</Tabs>
 </div>
