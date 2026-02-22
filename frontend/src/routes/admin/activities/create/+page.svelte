@@ -24,7 +24,7 @@
 	} from '@tabler/icons-svelte/icons';
 	import { toast } from 'svelte-sonner';
 	import { goto } from '$app/navigation';
-	import { type DateValue, parseDate } from '@internationalized/date';
+	import { type DateValue, parseDate, getLocalTimeZone } from '@internationalized/date';
 	import { cn } from '$lib/utils';
 	import { buttonVariants } from '$lib/components/ui/button';
 	import { formatThaiMonth, toBuddhistEra } from '$lib/utils/thai-date';
@@ -85,7 +85,8 @@
 
 	function formatDateLabel(d: DateValue | undefined): string {
 		if (!d) return 'เลือกวันที่';
-		return `${toBuddhistEra(d.year)}/${String(d.month).padStart(2, '0')}/${String(d.day).padStart(2, '0')}`;
+		const jsDate = d.toDate(getLocalTimeZone());
+		return new Intl.DateTimeFormat('th-TH', { dateStyle: 'full' }).format(jsDate);
 	}
 
 	// ─── Selected eligible orgs (derived display) ──────────────────────────────
@@ -289,7 +290,7 @@
 								{formatDateLabel(startDateValue)}
 							</Popover.Trigger>
 							<Popover.Content class="w-auto p-0" align="start">
-								<Calendar type="single" bind:value={startDateValue} calendarLabel="วันที่เริ่ม" />
+								<Calendar locale="th-TH" type="single" bind:value={startDateValue} calendarLabel="วันที่เริ่ม" />
 							</Popover.Content>
 						</Popover.Root>
 						{#if errors.start_date}<p class="text-sm text-red-500">{errors.start_date}</p>{/if}
@@ -306,7 +307,7 @@
 								{formatDateLabel(endDateValue)}
 							</Popover.Trigger>
 							<Popover.Content class="w-auto p-0" align="start">
-								<Calendar type="single" bind:value={endDateValue} calendarLabel="วันที่สิ้นสุด" />
+								<Calendar locale="th-TH" type="single" bind:value={endDateValue} calendarLabel="วันที่สิ้นสุด" />
 							</Popover.Content>
 						</Popover.Root>
 						{#if errors.end_date}<p class="text-sm text-red-500">{errors.end_date}</p>{/if}
