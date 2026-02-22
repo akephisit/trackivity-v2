@@ -154,15 +154,7 @@
 			// Validate form data
 			const validation = profileUpdateSchema.safeParse(formData);
 			if (!validation.success) {
-				const errors: Record<string, string[]> = {};
-				validation.error.errors.forEach((err) => {
-					const field = err.path.join('.');
-					if (!errors[field]) {
-						errors[field] = [];
-					}
-					errors[field].push(err.message);
-				});
-				fieldErrors = errors;
+				fieldErrors = validation.error.flatten().fieldErrors as Record<string, string[]>;
 				error = 'กรุณาตรวจสอบข้อมูลที่ป้อน';
 				return;
 			}
@@ -202,15 +194,7 @@
 			// Validate password data
 			const validation = changePasswordSchema.safeParse(passwordData);
 			if (!validation.success) {
-				const errors: Record<string, string[]> = {};
-				validation.error.errors.forEach((err) => {
-					const field = err.path.join('.');
-					if (!errors[field]) {
-						errors[field] = [];
-					}
-					errors[field].push(err.message);
-				});
-				passwordFieldErrors = errors;
+				passwordFieldErrors = validation.error.flatten().fieldErrors as Record<string, string[]>;
 				passwordError = 'กรุณาตรวจสอบข้อมูลที่ป้อน';
 				return;
 			}
