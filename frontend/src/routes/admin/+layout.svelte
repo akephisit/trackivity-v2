@@ -16,28 +16,43 @@
 
 	let isLoginPage = $derived(page.url.pathname === '/admin/login');
 
+	let lastFetchedOrgId = $state<string | null>(null);
+
 	onMount(async () => {
 		if (isLoginPage) return;
-
 		await authStore.initialize();
+	});
 
-		if (!authStore.isAuthenticated) {
-			await goto(`/admin/login?redirectTo=${page.url.pathname}`);
-			return;
-		}
+	$effect(() => {
+		if (!authStore.loading) {
+			if (!isLoginPage && !authStore.isAuthenticated) {
+				goto(`/admin/login?redirectTo=${page.url.pathname}`);
+				return;
+			}
 
-		if (!authStore.isAdmin) {
-			await goto('/student');
-			return;
-		}
+			if (!isLoginPage && authStore.isAuthenticated && !authStore.isAdmin) {
+				goto('/student');
+				return;
+			}
 
-		if (authStore.user?.admin_role?.organization_id) {
-			try {
-				const orgResponse = await organizationsApi.list();
-				currentOrganization =
-					orgResponse.all.find((o) => o.id === authStore.user?.admin_role?.organization_id) || null;
-			} catch (e) {
-				console.error('Failed to load organization', e);
+			const orgId = authStore.user?.admin_role?.organization_id;
+			if (
+				!isLoginPage &&
+				authStore.isAuthenticated &&
+				authStore.isAdmin &&
+				orgId &&
+				orgId !== lastFetchedOrgId
+			) {
+				lastFetchedOrgId = orgId;
+				organizationsApi
+					.list()
+					.then((orgResponse) => {
+						currentOrganization = orgResponse.all.find((o) => o.id === orgId) || null;
+					})
+					.catch((e) => {
+						console.error('Failed to load organization', e);
+						lastFetchedOrgId = null;
+					});
 			}
 		}
 	});
