@@ -31,6 +31,7 @@ pub struct CreateActivityInput {
     pub description: Option<String>,
     pub location: Option<String>,
     pub activity_type: ActivityType,
+    pub activity_level: Option<String>,
     pub start_date: chrono::NaiveDate,
     pub end_date: chrono::NaiveDate,
     pub start_time_only: Option<chrono::NaiveTime>,
@@ -38,6 +39,8 @@ pub struct CreateActivityInput {
     pub hours: i16,
     pub max_participants: Option<i32>,
     pub organizer_id: Uuid,
+    pub registration_open: Option<bool>,
+    pub eligible_organizations: Option<serde_json::Value>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -48,6 +51,13 @@ pub struct UpdateActivityInput {
     pub status: Option<ActivityStatus>,
     pub registration_open: Option<bool>,
     pub max_participants: Option<i32>,
+    pub organizer_id: Option<Uuid>,
+    pub activity_level: Option<String>,
+    pub start_date: Option<chrono::NaiveDate>,
+    pub end_date: Option<chrono::NaiveDate>,
+    pub start_time_only: Option<chrono::NaiveTime>,
+    pub end_time_only: Option<chrono::NaiveTime>,
+    pub eligible_organizations: Option<serde_json::Value>,
 }
 
 #[derive(Debug, Serialize)]

@@ -101,25 +101,28 @@ pub async fn create_activity(
     sqlx::query(r#"
         INSERT INTO activities (
             id, title, description, location, activity_type,
+            activity_level, eligible_organizations,
             start_date, end_date, start_time_only, end_time_only,
             hours, max_participants, registration_open, status,
             organizer_id, created_by, created_at, updated_at, academic_year
         )
-        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,NOW(),NOW(),$16)
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,NOW(),NOW(),$18)
     "#)
     .bind(activity_id)
     .bind(payload.title)
     .bind(payload.description.unwrap_or_default())
     .bind(payload.location.unwrap_or_default())
     .bind(payload.activity_type)
+    .bind(payload.activity_level.as_deref().unwrap_or("faculty"))
+    .bind(payload.eligible_organizations.unwrap_or(serde_json::json!([])))
     .bind(payload.start_date)
     .bind(payload.end_date)
     .bind(payload.start_time_only)
     .bind(payload.end_time_only)
     .bind(payload.hours)
     .bind(payload.max_participants)
-    .bind(true)
-    .bind(ActivityStatus::Published)
+    .bind(payload.registration_open.unwrap_or(false))
+    .bind(ActivityStatus::Draft)
     .bind(payload.organizer_id)
     .bind(user_id)
     .bind(academic_year)
@@ -148,25 +151,38 @@ pub async fn update_activity(
     let mut set_parts: Vec<String> = vec!["updated_at = NOW()".to_string()];
     let mut i = 1usize;
 
-    if payload.title.is_some() { i += 1; set_parts.push(format!("title = ${}", i)); }
-    if payload.description.is_some() { i += 1; set_parts.push(format!("description = ${}", i)); }
-    if payload.location.is_some() { i += 1; set_parts.push(format!("location = ${}", i)); }
-    if payload.status.is_some() { i += 1; set_parts.push(format!("status = ${}", i)); }
-    if payload.registration_open.is_some() { i += 1; set_parts.push(format!("registration_open = ${}", i)); }
-    if payload.max_participants.is_some() { i += 1; set_parts.push(format!("max_participants = ${}", i)); }
-    let _ = i; // suppress unused warning
+    if payload.title.is_some()                { i += 1; set_parts.push(format!("title = ${}", i)); }
+    if payload.description.is_some()          { i += 1; set_parts.push(format!("description = ${}", i)); }
+    if payload.location.is_some()             { i += 1; set_parts.push(format!("location = ${}", i)); }
+    if payload.status.is_some()               { i += 1; set_parts.push(format!("status = ${}", i)); }
+    if payload.registration_open.is_some()    { i += 1; set_parts.push(format!("registration_open = ${}", i)); }
+    if payload.max_participants.is_some()     { i += 1; set_parts.push(format!("max_participants = ${}", i)); }
+    if payload.organizer_id.is_some()         { i += 1; set_parts.push(format!("organizer_id = ${}", i)); }
+    if payload.activity_level.is_some()       { i += 1; set_parts.push(format!("activity_level = ${}", i)); }
+    if payload.start_date.is_some()           { i += 1; set_parts.push(format!("start_date = ${}", i)); }
+    if payload.end_date.is_some()             { i += 1; set_parts.push(format!("end_date = ${}", i)); }
+    if payload.start_time_only.is_some()      { i += 1; set_parts.push(format!("start_time_only = ${}", i)); }
+    if payload.end_time_only.is_some()        { i += 1; set_parts.push(format!("end_time_only = ${}", i)); }
+    if payload.eligible_organizations.is_some() { i += 1; set_parts.push(format!("eligible_organizations = ${}", i)); }
+    let _ = i;
 
     let set_clause = set_parts.join(", ");
     let update_query = format!("UPDATE activities SET {} WHERE id = $1", set_clause);
 
-    // For simplicity, use individual binds based on provided fields
     let mut q = sqlx::query(&update_query).bind(activity_id);
-    if let Some(t) = payload.title { q = q.bind(t); }
-    if let Some(d) = payload.description { q = q.bind(d); }
-    if let Some(l) = payload.location { q = q.bind(l); }
-    if let Some(s) = payload.status { q = q.bind(s); }
-    if let Some(r) = payload.registration_open { q = q.bind(r); }
-    if let Some(m) = payload.max_participants { q = q.bind(m); }
+    if let Some(v) = payload.title               { q = q.bind(v); }
+    if let Some(v) = payload.description         { q = q.bind(v); }
+    if let Some(v) = payload.location            { q = q.bind(v); }
+    if let Some(v) = payload.status              { q = q.bind(v); }
+    if let Some(v) = payload.registration_open   { q = q.bind(v); }
+    if let Some(v) = payload.max_participants    { q = q.bind(v); }
+    if let Some(v) = payload.organizer_id        { q = q.bind(v); }
+    if let Some(v) = payload.activity_level      { q = q.bind(v); }
+    if let Some(v) = payload.start_date          { q = q.bind(v); }
+    if let Some(v) = payload.end_date            { q = q.bind(v); }
+    if let Some(v) = payload.start_time_only     { q = q.bind(v); }
+    if let Some(v) = payload.end_time_only       { q = q.bind(v); }
+    if let Some(v) = payload.eligible_organizations { q = q.bind(v); }
 
     q.execute(&pool)
         .await
