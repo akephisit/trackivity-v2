@@ -106,7 +106,7 @@ pub async fn create_activity(
             hours, max_participants, registration_open, status,
             organizer_id, created_by, created_at, updated_at, academic_year
         )
-        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,NOW(),NOW(),$18)
+        VALUES ($1,$2,$3,$4,$5,$6::activity_level,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,NOW(),NOW(),$18)
     "#)
     .bind(activity_id)
     .bind(payload.title)
@@ -158,7 +158,7 @@ pub async fn update_activity(
     if payload.registration_open.is_some()    { i += 1; set_parts.push(format!("registration_open = ${}", i)); }
     if payload.max_participants.is_some()     { i += 1; set_parts.push(format!("max_participants = ${}", i)); }
     if payload.organizer_id.is_some()         { i += 1; set_parts.push(format!("organizer_id = ${}", i)); }
-    if payload.activity_level.is_some()       { i += 1; set_parts.push(format!("activity_level = ${}", i)); }
+    if payload.activity_level.is_some()       { i += 1; set_parts.push(format!("activity_level = ${}::activity_level", i)); }
     if payload.start_date.is_some()           { i += 1; set_parts.push(format!("start_date = ${}", i)); }
     if payload.end_date.is_some()             { i += 1; set_parts.push(format!("end_date = ${}", i)); }
     if payload.start_time_only.is_some()      { i += 1; set_parts.push(format!("start_time_only = ${}", i)); }
