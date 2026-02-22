@@ -280,6 +280,13 @@ export async function exportSummaryPDF(
         }
     };
 
-    const timestamp = new Date().toISOString().slice(0, 10);
-    (pdfMake as any).createPdf(docDefinition).download(`activity-summary-${timestamp}.pdf`);
+    const d = new Date();
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const year = d.getFullYear() + 543; // Buddhist year
+    const hours = String(d.getHours()).padStart(2, '0');
+    const minutes = String(d.getMinutes()).padStart(2, '0');
+
+    const filename = `${userInfo.first_name}-${day}-${month}-${year}-${hours}-${minutes}.pdf`;
+    (pdfMake as any).createPdf(docDefinition).download(filename);
 }
