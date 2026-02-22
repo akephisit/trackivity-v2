@@ -2,7 +2,7 @@
 	import { onMount, createEventDispatcher } from 'svelte';
 	import { formatDistanceToNow, format } from 'date-fns';
 	import { th } from 'date-fns/locale';
-	import { authService, currentUser } from '$lib/stores/auth';
+	import { authStore } from '$lib/stores/auth.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import { Badge } from '$lib/components/ui/badge';
 	import {
@@ -135,7 +135,7 @@
 
 	// Check if session is current
 	function isCurrentSession(sessionId: string): boolean {
-		return $currentUser?.session_id === sessionId;
+		return authStore.user?.session_id === sessionId;
 	}
 
 	// Check if session is expiring soon (within 1 hour)

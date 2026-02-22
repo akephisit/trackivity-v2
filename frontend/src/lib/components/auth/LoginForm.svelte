@@ -2,7 +2,7 @@
 	import { createEventDispatcher, onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
-	import { authService, isLoading, authError } from '$lib/stores/auth';
+	import { authStore } from '$lib/stores/auth.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
@@ -64,7 +64,7 @@
 		}
 
 		try {
-			const result = await authService.login({
+			const result = await authStore.login({
 				email: email.trim(),
 				password,
 				remember_me: rememberMe
@@ -116,10 +116,10 @@
 	</CardHeader>
 
 	<CardContent>
-		{#if $authError}
+		{#if authStore.error}
 			<Alert variant="destructive" class="mb-4">
 				<IconAlertCircle class="h-4 w-4" />
-				<AlertDescription>{$authError}</AlertDescription>
+				<AlertDescription>{authStore.error}</AlertDescription>
 			</Alert>
 		{/if}
 
@@ -134,7 +134,7 @@
 					bind:value={email}
 					oninput={() => clearFieldError('email')}
 					class={validationErrors.email ? 'border-red-500' : ''}
-					disabled={$isLoading}
+					disabled={authStore.loading}
 					autocomplete="username"
 					required
 				/>
@@ -154,7 +154,7 @@
 						bind:value={password}
 						oninput={() => clearFieldError('password')}
 						class={validationErrors.password ? 'border-red-500 pr-10' : 'pr-10'}
-						disabled={$isLoading}
+						disabled={authStore.loading}
 						autocomplete="current-password"
 						required
 					/>
@@ -162,7 +162,7 @@
 						type="button"
 						class="absolute inset-y-0 right-0 flex items-center pr-3"
 						onclick={togglePasswordVisibility}
-						disabled={$isLoading}
+						disabled={authStore.loading}
 						aria-label={showPassword ? 'ซ่อนรหัสผ่าน' : 'แสดงรหัสผ่าน'}
 					>
 						{#if showPassword}
@@ -183,7 +183,7 @@
 					id="remember"
 					bind:checked={rememberMe}
 					onkeydown={handleCheckboxKeydown}
-					disabled={$isLoading}
+					disabled={authStore.loading}
 				/>
 				<Label for="remember" class="cursor-pointer text-sm font-normal select-none">
 					จดจำการเข้าสู่ระบบ (30 วัน)
@@ -191,8 +191,8 @@
 			</div>
 
 			<!-- Submit Button -->
-			<Button type="submit" class="w-full" disabled={$isLoading}>
-				{#if $isLoading}
+			<Button type="submit" class="w-full" disabled={authStore.loading}>
+				{#if authStore.loading}
 					<IconLoader class="mr-2 h-4 w-4 animate-spin" />
 					กำลังเข้าสู่ระบบ...
 				{:else}
