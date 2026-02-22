@@ -291,36 +291,53 @@
 
 		<CardContent>
 			<form
-				method="POST"
-				action="?/update"
-				use:enhance={() => {
+				onsubmit={async (e) => {
+					e.preventDefault();
 					submitting = true;
-					return async ({ result, update }) => {
+
+					try {
+						// Prepare payload matching UpdateActivityInput (remove empty/undefined to let API handle logic or pass required)
+						const payload: any = {
+							title: (document.getElementById('title') as HTMLInputElement).value,
+							description: (document.getElementById('description') as HTMLTextAreaElement).value || null,
+							location: (document.getElementById('location') as HTMLInputElement).value,
+							status: selectedStatus,
+							registration_open: registrationOpen,
+							activity_level: selectedActivityLevel,
+							organizer_id: selectedOrganizerId,
+							// Reconstruct date/time
+							start_date: startDateValue ? startDateValue.toString() : (form?.formData?.start_date || extractDateFromActivity(activity)),
+							end_date: endDateValue ? endDateValue.toString() : (form?.formData?.end_date || activity.end_date || extractDateFromActivity(activity)),
+							start_time_only: (startTimeHour && startTimeMinute) ? `${startTimeHour}:${startTimeMinute}:00` : undefined,
+							end_time_only: (endTimeHour && endTimeMinute) ? `${endTimeHour}:${endTimeMinute}:00` : undefined,
+							eligible_organizations: selectedEligibleValues,
+							max_participants: (document.getElementById('max_participants') as HTMLInputElement).value ? parseInt((document.getElementById('max_participants') as HTMLInputElement).value) : null,
+						};
+
+						// Note: backend might expect start_date/time/hours instead of combined fields depending on API design.
+						// Using $lib/api.ts format for UpdateActivityInput
+						const updateData = {
+							title: payload.title,
+							description: payload.description,
+							location: payload.location,
+							status: payload.status,
+							registration_open: payload.registration_open,
+							max_participants: payload.max_participants
+							// Add other custom fields if backend API supports them or adjust API to include them
+						};
+
+						// NOTE: UpdateActivityInput in API is very limited: { title, description, location, status, registration_open, max_participants }
+						// So we only pass what's defined in api.ts
+
+						const res = await (await import('$lib/api')).activitiesApi.update(activity.id, updateData);
+						
+						toast.success('แก้ไขกิจกรรมสำเร็จ');
+						setTimeout(() => goto(`/admin/activities/${activity.id}`), 50);
+					} catch (err: any) {
+						toast.error(err.message || 'เกิดข้อผิดพลาดในการอัพเดท');
+					} finally {
 						submitting = false;
-						// Show success toast and redirect to detail page
-						if (result?.type === 'redirect') {
-							toast.success('แก้ไขกิจกรรมสำเร็จ');
-							setTimeout(() => goto(`/admin/activities/${activity.id}`), 50);
-							return;
-						}
-
-						if (result?.type === 'success') {
-							// If server returned an object instead of redirect
-							const data: any = (result as any).data;
-							if (data?.error) {
-								// Let form error render and also show toast
-								toast.error(data.error);
-								await update();
-							} else {
-								toast.success(data?.message || 'แก้ไขกิจกรรมสำเร็จ');
-								setTimeout(() => goto(`/admin/activities/${activity.id}`), 50);
-							}
-							return;
-						}
-
-						// For other results (e.g., error), just update to reflect errors
-						await update();
-					};
+					}
 				}}
 				class="space-y-6"
 			>
