@@ -157,6 +157,9 @@ export interface CreateActivityInput {
     hours: number;
     max_participants?: number | null;
     organizer_id: string;
+    activity_level?: string;
+    registration_open?: boolean;
+    eligible_organizations?: string[];
 }
 
 export interface UpdateActivityInput {
