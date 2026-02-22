@@ -77,7 +77,10 @@
 			);
 		} else if (adminLevel === 'organization_admin') {
 			// Show departments menu only for faculty-type organizations
-			if (organization?.organizationType === 'faculty') {
+			if (
+				organization?.organization_type === 'faculty' ||
+				organization?.organizationType === 'faculty'
+			) {
 				baseItems.push({
 					title: 'จัดการภาควิชา',
 					href: '/admin/departments',
@@ -99,7 +102,10 @@
 		}
 
 		// Show settings menu only for faculty-type organizations
-		if (organization?.organizationType === 'faculty') {
+		if (
+			organization?.organization_type === 'faculty' ||
+			organization?.organizationType === 'faculty'
+		) {
 			baseItems.push({
 				title: 'ตั้งค่า',
 				href: '/admin/settings',
