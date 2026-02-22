@@ -23,11 +23,15 @@
 	} from '@tabler/icons-svelte';
 	import { toast } from 'svelte-sonner';
 	import { authStore } from '$lib/stores/auth.svelte';
+	import { organizationsApi, type Organization } from '$lib/api';
+	import { onMount } from 'svelte';
 
 	let { form } = $props();
 
 	// CSR state — org info from authStore
 	const user = $derived(authStore.user);
+	let organization = $state<Organization | null>(null);
+	let isLoadingOrg = $state(true);
 
 	let isSubmitting = $state(false);
 	let requiredFacultyHours = $state(6);
@@ -36,16 +40,28 @@
 	function handleSubmit(e: Event) {
 		e.preventDefault();
 		isSubmitting = true;
-		
+
 		// In a real application, you'd want a settings API call here.
 		// For now, since we removed the server action, we just simulate success.
-		// If there is a settings storage API, we should use it. 
+		// If there is a settings storage API, we should use it.
 		// Since we don't have it in $lib/api.ts, we simulate it.
 		setTimeout(() => {
 			toast.success('การตั้งค่าได้รับการอัพเดทเรียบร้อยแล้ว (CSR)');
 			isSubmitting = false;
 		}, 600);
 	}
+
+	onMount(async () => {
+		if (user?.admin_role?.organization_id) {
+			try {
+				const response = await organizationsApi.list();
+				organization = response.all.find((o) => o.id === user.admin_role?.organization_id) || null;
+			} catch (e) {
+				console.error('Failed to load organization details', e);
+			}
+		}
+		isLoadingOrg = false;
+	});
 </script>
 
 <svelte:head>
@@ -74,16 +90,26 @@
 			<div class="grid gap-4 sm:grid-cols-2">
 				<div>
 					<Label class="text-sm font-medium">ชื่อองค์กร</Label>
-					<p class="mt-1 text-sm text-muted-foreground">{user?.organization_name ?? '-'}</p>
+					<p class="mt-1 text-sm text-muted-foreground">
+						{#if isLoadingOrg}กำลังโหลด...{:else}{organization?.name ||
+								user?.organization_name ||
+								'-'}{/if}
+					</p>
 				</div>
 				<div>
 					<Label class="text-sm font-medium">รหัสองค์กร</Label>
-					<p class="mt-1 text-sm text-muted-foreground">-</p>
+					<p class="mt-1 text-sm text-muted-foreground">
+						{#if isLoadingOrg}กำลังโหลด...{:else}{organization?.code || '-'}{/if}
+					</p>
 				</div>
 				<div>
 					<Label class="text-sm font-medium">ประเภทองค์กร</Label>
 					<p class="mt-1 text-sm text-muted-foreground">
-						หน่วยงาน
+						{#if isLoadingOrg}กำลังโหลด...{:else}{organization?.organization_type === 'faculty'
+								? 'คณะ (Faculty)'
+								: organization?.organization_type === 'office'
+									? 'หน่วยงาน (Office)'
+									: 'หน่วยงาน'}{/if}
 					</p>
 				</div>
 			</div>
