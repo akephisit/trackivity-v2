@@ -61,7 +61,6 @@
 
 	// Component state
 	let selectedActivityId = $state(untrack(() => data.selectedActivityId || ''));
-	let selectedActivityOption = $state<{ value: string; label: string } | undefined>(undefined);
 	let scannerActive = $state(false);
 	let scannerStatus = $state<'idle' | 'requesting' | 'active' | 'error'>('idle');
 	let manualParticipantCount = $state(0);
@@ -117,14 +116,9 @@
 
 		if (data.selectedActivityId && (data.activities?.length || 0) > 0) {
 			selectedActivityId = data.selectedActivityId;
-			const activity = data.activities?.find((a: any) => a.id === selectedActivityId);
-			if (activity) {
-				selectedActivityOption = { value: activity.id, label: activity.title };
-			}
 		} else if ((data.activities?.length || 0) === 1) {
 			// Auto-select if only one activity
 			selectedActivityId = data.activities![0].id;
-			selectedActivityOption = { value: data.activities![0].id, label: data.activities![0].title };
 		}
 	});
 
@@ -253,22 +247,18 @@
 					<Label class="text-sm font-medium">
 						เลือกกิจกรรมที่ต้องการสแกน (เฉพาะกิจกรรมที่กำลังดำเนินการ):
 					</Label>
-					<input type="hidden" bind:value={selectedActivityId} />
+					<input type="hidden" name="selectedActivityId" bind:value={selectedActivityId} />
 					<Select.Root
 						type="single"
-						bind:value={selectedActivityOption as any}
+						bind:value={selectedActivityId as any}
 						onValueChange={(value) => {
-							if (value && value !== selectedActivityId) {
-								const activity = data.activities?.find((a: any) => a.id === value);
-								if (activity) {
-									selectedActivityOption = { value: activity.id, label: activity.title };
-								}
+							if (value && typeof value === 'string' && value !== selectedActivityId) {
 								handleActivityChange(value);
 							}
 						}}
 					>
 						<Select.Trigger class="w-full">
-							{selectedActivityOption?.label ?? 'เลือกกิจกรรม...'}
+							{data.activities?.find((a: any) => a.id === selectedActivityId)?.title ?? 'เลือกกิจกรรม...'}
 						</Select.Trigger>
 						<Select.Content>
 							{#each data.activities || [] as activity}
