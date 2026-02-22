@@ -68,13 +68,6 @@
 		initializeFormData();
 	});
 
-	// Watch for user changes
-	$effect(() => {
-		if ($currentUser && !editing) {
-			initializeFormData();
-		}
-	});
-
 	// Watch for form changes to show/hide save button
 	$effect(() => {
 		if ($currentUser && editing) {
@@ -160,7 +153,7 @@
 			}
 
 			// Update profile via API
-			const response = await usersApi.updateProfile(formData);
+			await usersApi.updateProfile(formData);
 
 			toast.success('บันทึกข้อมูลส่วนตัวสำเร็จ');
 			editing = false;
@@ -800,9 +793,7 @@
 					</div>
 
 					<div class="rounded-lg border p-4 text-center">
-						<Badge variant="outline" class="mb-2">
-							{$currentUser.permissions?.length || 0}
-						</Badge>
+						<Badge variant="outline" class="mb-2">ผู้ใช้ทั่วไป</Badge>
 						<p class="text-sm text-muted-foreground">สิทธิ์การใช้งาน</p>
 					</div>
 
@@ -822,7 +813,7 @@
 					<div class="space-y-1">
 						<h3 class="text-sm font-medium">ข้อมูลส่วนบุคคล</h3>
 						<p class="text-xs text-muted-foreground">
-							ข้อมูลส่วนบุคคลของคุณได้รับการป้องกันตามนีสยประปิสย์ของมหาวิทยาลัย
+							ข้อมูลส่วนบุคคลของคุณได้รับการป้องกันตามนโยบายความเป็นส่วนตัวของมหาวิทยาลัย
 							เราจะไม่เปิดเผยข้อมูลของคุณให้บุคคลที่สามโดยไม่ได้รับความยินยอมจากคุณ
 						</p>
 					</div>
