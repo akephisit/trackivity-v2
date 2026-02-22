@@ -61,6 +61,8 @@ pub struct UpdateActivityInput {
     pub start_time_only: Option<chrono::NaiveTime>,
     pub end_time_only: Option<chrono::NaiveTime>,
     pub eligible_organizations: Option<serde_json::Value>,
+    pub activity_type: Option<ActivityType>,
+    pub hours: Option<i16>,
 }
 
 #[derive(Debug, Serialize)]

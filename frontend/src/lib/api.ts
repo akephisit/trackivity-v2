@@ -173,6 +173,8 @@ export interface UpdateActivityInput {
     start_time_only?: string;
     end_time_only?: string;
     eligible_organizations?: string[];
+    activity_type?: string;
+    hours?: number | null;
 }
 
 export interface Participation {

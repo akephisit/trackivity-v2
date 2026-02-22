@@ -30,7 +30,7 @@
 	import { buttonVariants } from '$lib/components/ui/button';
 	import { formatThaiDate, formatThaiMonth, toBuddhistEra } from '$lib/utils/thai-date';
 	import { onMount } from 'svelte';
-	import { activityLevelOptions } from '$lib/utils/activity';
+	import { activityLevelOptions, activityTypeOptions } from '$lib/utils/activity';
 
 	// ─── State ─────────────────────────────────────────────────────────────────
 	let activity = $state<Activity | null>(null);
@@ -59,6 +59,8 @@
 	let descriptionValue = $state('');
 	let locationValue = $state('');
 	let maxParticipantsValue = $state('');
+	let activityTypeValue = $state('');
+	let hoursValue = $state('');
 
 	// ─── Load data on mount ────────────────────────────────────────────────────
 	onMount(async () => {
@@ -84,6 +86,8 @@
 			descriptionValue = act.description || '';
 			locationValue = act.location || '';
 			maxParticipantsValue = act.max_participants != null ? String(act.max_participants) : '';
+			activityTypeValue = (act as any).activity_type || '';
+			hoursValue = act.hours != null ? String(act.hours) : '';
 
 			// Init date pickers
 			const startDateStr = extractDateStr(act, 'start');
@@ -195,7 +199,9 @@
 				end_date: endDateValue ? endDateValue.toString() : undefined,
 				start_time_only: (startTimeHour && startTimeMinute) ? `${startTimeHour}:${startTimeMinute}:00` : undefined,
 				end_time_only: (endTimeHour && endTimeMinute) ? `${endTimeHour}:${endTimeMinute}:00` : undefined,
-				eligible_organizations: selectedEligibleValues
+				eligible_organizations: selectedEligibleValues,
+				activity_type: activityTypeValue || undefined,
+				hours: hoursValue ? parseInt(hoursValue) : null
 			});
 			toast.success('แก้ไขกิจกรรมสำเร็จ');
 			setTimeout(() => goto(`/admin/activities/${activity!.id}`), 50);
@@ -326,6 +332,20 @@
 						<Select.Content>
 							{#each (activityLevelOptions || []) as option}
 								<Select.Item value={(option as any).value}>{(option as any).label}</Select.Item>
+							{/each}
+						</Select.Content>
+					</Select.Root>
+				</div>
+
+				<div class="space-y-2">
+					<Label for="activityType">ประเภทกิจกรรม</Label>
+					<Select.Root type="single" bind:value={activityTypeValue as any}>
+						<Select.Trigger class="w-full">
+							{activityTypeOptions.find((o) => o.value === activityTypeValue)?.label || 'เลือกประเภท'}
+						</Select.Trigger>
+						<Select.Content>
+							{#each activityTypeOptions as opt}
+								<Select.Item value={opt.value}>{opt.label}</Select.Item>
 							{/each}
 						</Select.Content>
 					</Select.Root>
@@ -489,6 +509,18 @@
 					{/if}
 				</div>
 
+				<!-- Hours -->
+				<div class="space-y-2">
+					<Label for="hours">ชั่วโมงกิจกรรม</Label>
+					<Input
+						id="hours"
+						type="number"
+						placeholder="เช่น 3"
+						bind:value={hoursValue}
+						min="1"
+					/>
+				</div>
+
 				<!-- Status -->
 				<div class="space-y-2">
 					<Label>สถานะกิจกรรม *</Label>
@@ -523,22 +555,10 @@
 
 				<!-- Read-only info -->
 				<div class="grid gap-4 md:grid-cols-2">
-					{#if (activity as any).activity_type}
-						<div>
-							<Label>ประเภทกิจกรรม</Label>
-							<p class="text-sm text-muted-foreground">{getActivityTypeDisplayName((activity as any).activity_type)}</p>
-						</div>
-					{/if}
 					{#if (activity as any).academic_year}
 						<div>
 							<Label>ปีการศึกษา</Label>
 							<p class="text-sm text-muted-foreground">{(activity as any).academic_year}</p>
-						</div>
-					{/if}
-					{#if activity.hours}
-						<div>
-							<Label>ชั่วโมงกิจกรรม</Label>
-							<p class="text-sm text-muted-foreground">{activity.hours}</p>
 						</div>
 					{/if}
 				</div>

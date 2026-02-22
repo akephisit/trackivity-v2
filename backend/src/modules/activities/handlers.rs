@@ -166,6 +166,8 @@ pub async fn update_activity(
     if payload.start_time_only.is_some()      { i += 1; set_parts.push(format!("start_time_only = ${}", i)); }
     if payload.end_time_only.is_some()        { i += 1; set_parts.push(format!("end_time_only = ${}", i)); }
     if payload.eligible_organizations.is_some() { i += 1; set_parts.push(format!("eligible_organizations = ${}", i)); }
+    if payload.activity_type.is_some()        { i += 1; set_parts.push(format!("activity_type = ${}", i)); }
+    if payload.hours.is_some()                { i += 1; set_parts.push(format!("hours = ${}", i)); }
     let _ = i;
 
     let set_clause = set_parts.join(", ");
@@ -185,6 +187,8 @@ pub async fn update_activity(
     if let Some(v) = payload.start_time_only     { q = q.bind(v); }
     if let Some(v) = payload.end_time_only       { q = q.bind(v); }
     if let Some(v) = payload.eligible_organizations { q = q.bind(v); }
+    if let Some(v) = payload.activity_type       { q = q.bind(v); }
+    if let Some(v) = payload.hours               { q = q.bind(v); }
 
     q.execute(&pool)
         .await
