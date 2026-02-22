@@ -1,4 +1,4 @@
-export type ActivityType = 'Academic' | 'Sports' | 'Cultural' | 'Social' | 'Other';
+export type ActivityType = 'academic' | 'sports' | 'cultural' | 'social' | 'other';
 export type ActivityStatus = 'draft' | 'published' | 'ongoing' | 'completed' | 'cancelled';
 export type ParticipationStatus = 'registered' | 'checked_in' | 'checked_out' | 'completed';
 export type ActivityLevel = 'faculty' | 'university';

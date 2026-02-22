@@ -30,7 +30,7 @@ EXCEPTION
 END $$;
 
 DO $$ BEGIN
-    CREATE TYPE activity_type AS ENUM ('Academic', 'Sports', 'Cultural', 'Social', 'Other');
+    CREATE TYPE activity_type AS ENUM ('academic', 'sports', 'cultural', 'social', 'other');
 EXCEPTION
     WHEN duplicate_object THEN null;
 END $$;

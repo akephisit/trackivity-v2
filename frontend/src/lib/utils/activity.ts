@@ -91,14 +91,14 @@ export function isValidActivityLevel(level: string): boolean {
  */
 export function getActivityTypeDisplayName(type: string): string {
 	const typeMapping: Record<string, string> = {
-		Academic: 'วิชาการ',
-		Sports: 'กีฬา',
-		Cultural: 'วัฒนธรรม',
-		Social: 'สังคม',
-		Other: 'อื่นๆ'
+		academic: 'วิชาการ',
+		sports: 'กีฬา',
+		cultural: 'วัฒนธรรม',
+		social: 'สังคม',
+		other: 'อื่นๆ'
 	};
 
-	return typeMapping[type] || type;
+	return typeMapping[type?.toLowerCase()] || type;
 }
 
 /**
@@ -131,27 +131,27 @@ export function isValidActivityType(type: string): boolean {
  */
 export const activityTypeOptions = [
 	{
-		value: 'Academic' as const,
+		value: 'academic' as const,
 		label: 'วิชาการ',
 		description: 'กิจกรรมทางการศึกษาและการเรียนรู้'
 	},
 	{
-		value: 'Sports' as const,
+		value: 'sports' as const,
 		label: 'กีฬา',
 		description: 'กิจกรรมกีฬาและการออกกำลังกาย'
 	},
 	{
-		value: 'Cultural' as const,
+		value: 'cultural' as const,
 		label: 'วัฒนธรรม',
 		description: 'กิจกรรมด้านศิลปะและวัฒนธรรม'
 	},
 	{
-		value: 'Social' as const,
+		value: 'social' as const,
 		label: 'สังคม',
 		description: 'กิจกรรมเพื่อสังคมและการพัฒนาชุมชน'
 	},
 	{
-		value: 'Other' as const,
+		value: 'other' as const,
 		label: 'อื่นๆ',
 		description: 'กิจกรรมประเภทอื่นๆ'
 	}

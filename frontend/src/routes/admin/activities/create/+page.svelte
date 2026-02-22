@@ -124,7 +124,7 @@
 				title,
 				description: description || null,
 				location,
-				activity_type: activityType.toLowerCase(),
+				activity_type: activityType,
 				activity_level: activityLevel,
 				start_date: startDateValue!.toString(),
 				end_date: endDateValue!.toString(),

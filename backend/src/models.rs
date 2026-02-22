@@ -25,7 +25,7 @@ pub enum AdminLevel {
 }
 
 #[derive(Debug, Serialize, Deserialize, sqlx::Type, Clone)]
-#[sqlx(type_name = "activity_type", rename_all = "PascalCase")]
+#[sqlx(type_name = "activity_type", rename_all = "snake_case")]
 #[serde(rename_all = "snake_case")]
 pub enum ActivityType {
     Academic,
