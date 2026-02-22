@@ -77,10 +77,7 @@
 			);
 		} else if (adminLevel === 'organization_admin') {
 			// Show departments menu only for faculty-type organizations
-			if (
-				organization?.organization_type === 'faculty' ||
-				organization?.organizationType === 'faculty'
-			) {
+			if (organization?.organization_type === 'faculty') {
 				baseItems.push({
 					title: 'จัดการภาควิชา',
 					href: '/admin/departments',
