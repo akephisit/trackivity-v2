@@ -1,5 +1,6 @@
 <script lang="ts">
-	import type { Activity, ActivityStatus } from '$lib/types/activity';
+	import { activitiesApi, organizationsApi, type Activity } from '$lib/api';
+	import type { ActivityStatus } from '$lib/types/activity';
 	import { getActivityTypeDisplayName } from '$lib/utils/activity';
 	import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
 	import { Button } from '$lib/components/ui/button';
@@ -7,6 +8,7 @@
 	import { Label } from '$lib/components/ui/label';
 	import { Textarea } from '$lib/components/ui/textarea';
 	import { Alert, AlertDescription } from '$lib/components/ui/alert';
+	import { Skeleton } from '$lib/components/ui/skeleton';
 	import * as Select from '$lib/components/ui/select';
 	import * as Popover from '$lib/components/ui/popover';
 	import { Calendar } from '$lib/components/ui/calendar';
@@ -21,257 +23,219 @@
 		IconClock
 	} from '@tabler/icons-svelte';
 	import { goto } from '$app/navigation';
-	import { enhance } from '$app/forms';
 	import { toast } from 'svelte-sonner';
-	import { type DateValue, getLocalTimeZone, today, parseDate } from '@internationalized/date';
+	import { page } from '$app/state';
+	import { type DateValue, parseDate } from '@internationalized/date';
 	import { cn } from '$lib/utils';
 	import { buttonVariants } from '$lib/components/ui/button';
 	import { formatThaiDate, formatThaiMonth, toBuddhistEra } from '$lib/utils/thai-date';
-
-	const { data, form } = $props<{
-		data: {
-			activity: Activity;
-			faculties: any[];
-			user: any;
-		};
-		form?: { error?: string; formData?: any };
-	}>();
-
-	const { activity, faculties } = data;
-	// user is available in data but not currently used
-
-	let submitting = $state(false);
-	let selectedStatus = $state(activity.status);
-	// No department selection in edit page per requirement
-
-	// Registration open toggle
-	let registrationOpen = $state(!!activity.registration_open);
-
-	// Eligible faculties selection (multi-select)
-	// Build options from provided faculties list (server now supplies it)
-	const facultyOptions = (Array.isArray(faculties) ? faculties : []).map((f: any) => ({
-		value: f.id,
-		label: f.name
-	}));
-
-	// Organizer selection state
-	let selectedOrganizerId = $state(
-		(form as any)?.formData?.organizer_id || activity.organizer_id || ''
-	);
-	const isSuperAdmin = $derived(data?.user?.admin_role?.admin_level === 'super_admin');
-
-	// Import activity level options from utils
+	import { onMount } from 'svelte';
 	import { activityLevelOptions } from '$lib/utils/activity';
 
-	// Activity level selection state - convert display value to storage value
-	let selectedActivityLevel = $state(
-		(form as any)?.formData?.activity_level || activity.activity_level || 'faculty'
-	);
+	// ─── State ─────────────────────────────────────────────────────────────────
+	let activity = $state<Activity | null>(null);
+	let faculties = $state<{ id: string; name: string }[]>([]);
+	let loading = $state(true);
+	let notFound = $state(false);
+	let submitting = $state(false);
 
-	// Thai date formatting functions for calendar
-	function formatCalendarMonth(monthNumber: number): string {
-		const monthIndex = monthNumber - 1; // Convert to 0-based index
-		return formatThaiMonth(monthIndex, 'long');
-	}
+	// Form state (initialised after data loads)
+	let selectedStatus = $state<ActivityStatus>('draft');
+	let registrationOpen = $state(false);
+	let selectedOrganizerId = $state('');
+	let selectedActivityLevel = $state('faculty');
+	let selectedEligibleValues = $state<string[]>([]);
 
-	function formatCalendarYear(year: number): string {
-		return toBuddhistEra(year).toString();
-	}
-
-	// Date picker values
+	// Date/time pickers
 	let startDateValue = $state<DateValue | undefined>(undefined);
 	let endDateValue = $state<DateValue | undefined>(undefined);
+	let startTimeHour = $state('');
+	let startTimeMinute = $state('');
+	let endTimeHour = $state('');
+	let endTimeMinute = $state('');
 
-	// Time picker values
-	let startTimeHour = $state<string>('');
-	let startTimeMinute = $state<string>('');
-	let endTimeHour = $state<string>('');
-	let endTimeMinute = $state<string>('');
+	// Form fields (bound to inputs)
+	let titleValue = $state('');
+	let descriptionValue = $state('');
+	let locationValue = $state('');
+	let maxParticipantsValue = $state('');
 
-	// Generate hour options (00-23)
-	function generateHourOptions() {
-		return Array.from({ length: 24 }, (_, i) => {
-			const hour = i.toString().padStart(2, '0');
-			return { value: hour, label: hour };
-		});
+	// ─── Load data on mount ────────────────────────────────────────────────────
+	onMount(async () => {
+		const id = page.params.id!;
+		try {
+			const [act, orgs] = await Promise.all([
+				activitiesApi.get(id),
+				organizationsApi.listAdmin()
+			]);
+			activity = act;
+			faculties = orgs as any[];
+
+			// Initialise form from loaded data
+			selectedStatus = act.status as ActivityStatus;
+			registrationOpen = !!act.registration_open;
+			selectedOrganizerId = (act as any).organizer_id || '';
+			selectedActivityLevel = (act as any).activity_level || 'faculty';
+			selectedEligibleValues = Array.isArray((act as any).eligible_organizations)
+				? (act as any).eligible_organizations
+				: [];
+
+			titleValue = act.title || '';
+			descriptionValue = act.description || '';
+			locationValue = act.location || '';
+			maxParticipantsValue = act.max_participants != null ? String(act.max_participants) : '';
+
+			// Init date pickers
+			const startDateStr = extractDateStr(act, 'start');
+			if (startDateStr) {
+				try { startDateValue = parseDate(startDateStr); } catch {}
+			}
+			const endDateStr = extractDateStr(act, 'end');
+			if (endDateStr) {
+				try { endDateValue = parseDate(endDateStr); } catch {}
+			}
+
+			// Init time pickers
+			const st = extractTimeStr(act, true);
+			if (st) { const [h, m] = st.split(':'); startTimeHour = h; startTimeMinute = m; }
+			const et = extractTimeStr(act, false);
+			if (et) { const [h, m] = et.split(':'); endTimeHour = h; endTimeMinute = m; }
+
+		} catch (e: any) {
+			if (e?.status === 404) notFound = true;
+			else toast.error('ไม่สามารถโหลดข้อมูลกิจกรรมได้');
+		} finally {
+			loading = false;
+		}
+	});
+
+	// ─── Helpers ───────────────────────────────────────────────────────────────
+	function extractDateStr(act: any, which: 'start' | 'end'): string {
+		const field = which === 'start' ? 'start_date' : 'end_date';
+		if (act[field]) return act[field];
+		const dt = which === 'start' ? act.start_time : act.end_time;
+		if (dt) return new Date(dt).toISOString().split('T')[0];
+		return '';
 	}
 
-	// Generate minute options (00, 05, 10, 15, etc.)
+	function extractTimeStr(act: any, isStart: boolean): string {
+		const field = isStart ? 'start_time_only' : 'end_time_only';
+		if (act[field]) {
+			const parts = act[field].toString().split(':');
+			if (parts.length >= 2) return `${parts[0].padStart(2, '0')}:${parts[1].padStart(2, '0')}`;
+		}
+		return '';
+	}
+
+	function formatCalendarMonth(m: number) { return formatThaiMonth(m - 1, 'long'); }
+	function formatCalendarYear(y: number) { return toBuddhistEra(y).toString(); }
+
+	function generateHourOptions() {
+		return Array.from({ length: 24 }, (_, i) => {
+			const h = i.toString().padStart(2, '0');
+			return { value: h, label: h };
+		});
+	}
 	function generateMinuteOptions() {
 		return Array.from({ length: 12 }, (_, i) => {
-			const minute = (i * 5).toString().padStart(2, '0');
-			return { value: minute, label: minute };
+			const m = (i * 5).toString().padStart(2, '0');
+			return { value: m, label: m };
 		});
 	}
 
 	const hourOptions = generateHourOptions();
 	const minuteOptions = generateMinuteOptions();
 
-	// Initial selected values from server - use array of strings (faculty IDs)
-	let selectedEligibleValues = $state<string[]>((data as any).eligible_organizations_selected || []);
-	// Derive faculty objects for display purposes
+	// ─── Derived ───────────────────────────────────────────────────────────────
+	let facultyOptions = $derived(
+		faculties.map((f: any) => ({ value: f.id, label: f.name }))
+	);
+
 	let selectedEligible = $derived(
-		selectedEligibleValues.map((id: string) => {
+		selectedEligibleValues.map((id) => {
 			const opt = facultyOptions.find((o) => o.value === id);
 			return { value: id, label: opt?.label || id };
 		})
 	);
 
-	// Extract date and time components from ISO string or separate database fields
-	function extractDateFromActivity(activity: any): string {
-		// Try to use separate date field first (more reliable)
-		if (activity.start_date) {
-			return activity.start_date;
-		}
-		// Fallback to parsing ISO string if needed
-		if (activity.start_time) {
-			return new Date(activity.start_time).toISOString().split('T')[0];
-		}
-		return '';
-	}
+	let currentParticipants = $derived((activity as any)?.participant_count || 0);
 
-	function extractTimeFromActivity(activity: any, isStart: boolean = true): string {
-		const timeField = isStart ? 'start_time_only' : 'end_time_only';
-
-		// Use the dedicated time field from database (PostgreSQL time type)
-		if (activity[timeField]) {
-			// The database time field is already in HH:MM:SS format
-			// We need to extract just HH:MM for the HTML time input
-			const timeStr = activity[timeField].toString();
-			// Handle both HH:MM:SS and HH:MM formats
-			if (timeStr.includes(':')) {
-				const parts = timeStr.split(':');
-				if (parts.length >= 2) {
-					return `${parts[0].padStart(2, '0')}:${parts[1].padStart(2, '0')}`;
-				}
-			}
-		}
-
-		return '';
-	}
-
-	function goBack() {
-		goto(`/admin/activities/${activity.id}`);
-	}
-
-	function goToList() {
-		goto('/admin/activities');
-	}
-
-	function previewActivity() {
-		goto(`/admin/activities/${activity.id}`);
-	}
+	let isSuperAdmin = $derived(false); // Will be set from auth store if needed
 
 	const statusOptions: { value: ActivityStatus; label: string; description: string }[] = [
-		{
-			value: 'draft',
-			label: 'ร่าง',
-			description: 'กิจกรรมยังไม่เผยแพร่ มองเห็นได้เฉพาะผู้จัดการ'
-		},
-		{
-			value: 'published',
-			label: 'เผยแพร่แล้ว',
-			description: 'กิจกรรมเผยแพร่แล้ว ผู้ใช้สามารถลงทะเบียนได้'
-		},
-		{
-			value: 'ongoing',
-			label: 'กำลังดำเนินการ',
-			description: 'กิจกรรมกำลังดำเนินการอยู่'
-		},
-		{
-			value: 'completed',
-			label: 'เสร็จสิ้น',
-			description: 'กิจกรรมสิ้นสุดแล้ว'
-		},
-		{
-			value: 'cancelled',
-			label: 'ยกเลิก',
-			description: 'กิจกรรมถูกยกเลิก'
-		}
+		{ value: 'draft', label: 'ร่าง', description: 'กิจกรรมยังไม่เผยแพร่ มองเห็นได้เฉพาะผู้จัดการ' },
+		{ value: 'published', label: 'เผยแพร่แล้ว', description: 'กิจกรรมเผยแพร่แล้ว ผู้ใช้สามารถลงทะเบียนได้' },
+		{ value: 'ongoing', label: 'กำลังดำเนินการ', description: 'กิจกรรมกำลังดำเนินการอยู่' },
+		{ value: 'completed', label: 'เสร็จสิ้น', description: 'กิจกรรมสิ้นสุดแล้ว' },
+		{ value: 'cancelled', label: 'ยกเลิก', description: 'กิจกรรมถูกยกเลิก' }
 	];
 
-	// Get current participants count for validation
-	let currentParticipants = $derived(activity.participant_count || 0);
-
-	// Initialize date picker values from activity data
-	$effect(() => {
-		// Initialize start date
-		if (!startDateValue) {
-			const dateStr = (form as any)?.formData?.start_date || extractDateFromActivity(activity);
-			if (dateStr) {
-				try {
-					startDateValue = parseDate(dateStr);
-				} catch (e) {
-					// Invalid date format, ignore
-				}
-			}
+	// ─── Submit ────────────────────────────────────────────────────────────────
+	async function handleSubmit(e: SubmitEvent) {
+		e.preventDefault();
+		if (!activity) return;
+		submitting = true;
+		try {
+			await activitiesApi.update(activity.id, {
+				title: titleValue,
+				description: descriptionValue || null,
+				location: locationValue,
+				status: selectedStatus,
+				registration_open: registrationOpen,
+				max_participants: maxParticipantsValue ? parseInt(maxParticipantsValue) : null,
+				organizer_id: selectedOrganizerId || undefined,
+				activity_level: selectedActivityLevel || undefined,
+				start_date: startDateValue ? startDateValue.toString() : undefined,
+				end_date: endDateValue ? endDateValue.toString() : undefined,
+				start_time_only: (startTimeHour && startTimeMinute) ? `${startTimeHour}:${startTimeMinute}:00` : undefined,
+				end_time_only: (endTimeHour && endTimeMinute) ? `${endTimeHour}:${endTimeMinute}:00` : undefined,
+				eligible_organizations: selectedEligibleValues
+			});
+			toast.success('แก้ไขกิจกรรมสำเร็จ');
+			setTimeout(() => goto(`/admin/activities/${activity!.id}`), 50);
+		} catch (err: any) {
+			toast.error(err.message || 'เกิดข้อผิดพลาดในการอัปเดต');
+		} finally {
+			submitting = false;
 		}
-
-		// Initialize end date
-		if (!endDateValue) {
-			const dateStr =
-				(form as any)?.formData?.end_date || activity.end_date || extractDateFromActivity(activity);
-			if (dateStr) {
-				try {
-					endDateValue = parseDate(dateStr);
-				} catch (e) {
-					// Invalid date format, ignore
-				}
-			}
-		}
-
-		// Initialize start time
-		if (!startTimeHour) {
-			const timeStr =
-				(form as any)?.formData?.start_time || extractTimeFromActivity(activity, true);
-			if (timeStr) {
-				const [hour, minute] = timeStr.split(':');
-				startTimeHour = hour || '';
-				startTimeMinute = minute || '';
-			}
-		}
-
-		// Initialize end time
-		if (!endTimeHour) {
-			const timeStr = (form as any)?.formData?.end_time || extractTimeFromActivity(activity, false);
-			if (timeStr) {
-				const [hour, minute] = timeStr.split(':');
-				endTimeHour = hour || '';
-				endTimeMinute = minute || '';
-			}
-		}
-	});
+	}
 </script>
 
 <svelte:head>
-	<title>แก้ไข{activity.title} - Trackivity</title>
+	<title>{activity ? `แก้ไข${activity.title}` : 'แก้ไขกิจกรรม'} - Trackivity</title>
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
 </svelte:head>
 
+{#if loading}
+	<div class="space-y-6">
+		<div class="flex items-center gap-4">
+			<Skeleton class="h-9 w-20" />
+			<Skeleton class="h-8 w-64" />
+		</div>
+		<Skeleton class="h-96 w-full" />
+	</div>
+{:else if notFound || !activity}
+	<div class="py-12 text-center">
+		<h2 class="text-xl font-bold">ไม่พบกิจกรรม</h2>
+		<Button variant="outline" class="mt-4" onclick={() => goto('/admin/activities')}>กลับ</Button>
+	</div>
+{:else}
 <div class="space-y-6">
 	<!-- Header -->
 	<div class="flex items-center gap-4">
-		<Button variant="ghost" size="sm" onclick={goBack}>
+		<Button variant="ghost" size="sm" onclick={() => goto(`/admin/activities/${activity!.id}`)}>
 			<IconArrowLeft class="mr-2 size-4" />
 			กลับ
 		</Button>
 		<div class="flex-1">
 			<h1 class="admin-page-title"><IconCalendar class="size-6 text-primary" /> แก้ไขกิจกรรม</h1>
-			<p class="text-muted-foreground">{activity.title} - Trackivity</p>
+			<p class="text-muted-foreground">{activity.title}</p>
 		</div>
-		<Button variant="outline" size="sm" onclick={previewActivity}>
+		<Button variant="outline" size="sm" onclick={() => goto(`/admin/activities/${activity!.id}`)}>
 			<IconEye class="mr-2 size-4" />
 			ดูตัวอย่าง
 		</Button>
 	</div>
-
-	<!-- Error Alert -->
-	{#if form?.error}
-		<Alert variant="destructive">
-			<IconAlertCircle class="size-4" />
-			<AlertDescription>{form.error}</AlertDescription>
-		</Alert>
-	{/if}
 
 	<!-- Participants Warning -->
 	{#if currentParticipants > 0}
@@ -288,60 +252,8 @@
 		<CardHeader>
 			<CardTitle>รายละเอียดกิจกรรม</CardTitle>
 		</CardHeader>
-
 		<CardContent>
-			<form
-				onsubmit={async (e) => {
-					e.preventDefault();
-					submitting = true;
-
-					try {
-						// Prepare payload matching UpdateActivityInput (remove empty/undefined to let API handle logic or pass required)
-						const payload: any = {
-							title: (document.getElementById('title') as HTMLInputElement).value,
-							description: (document.getElementById('description') as HTMLTextAreaElement).value || null,
-							location: (document.getElementById('location') as HTMLInputElement).value,
-							status: selectedStatus,
-							registration_open: registrationOpen,
-							activity_level: selectedActivityLevel,
-							organizer_id: selectedOrganizerId,
-							// Reconstruct date/time
-							start_date: startDateValue ? startDateValue.toString() : (form?.formData?.start_date || extractDateFromActivity(activity)),
-							end_date: endDateValue ? endDateValue.toString() : (form?.formData?.end_date || activity.end_date || extractDateFromActivity(activity)),
-							start_time_only: (startTimeHour && startTimeMinute) ? `${startTimeHour}:${startTimeMinute}:00` : undefined,
-							end_time_only: (endTimeHour && endTimeMinute) ? `${endTimeHour}:${endTimeMinute}:00` : undefined,
-							eligible_organizations: selectedEligibleValues,
-							max_participants: (document.getElementById('max_participants') as HTMLInputElement).value ? parseInt((document.getElementById('max_participants') as HTMLInputElement).value) : null,
-						};
-
-						// Note: backend might expect start_date/time/hours instead of combined fields depending on API design.
-						// Using $lib/api.ts format for UpdateActivityInput
-						const updateData = {
-							title: payload.title,
-							description: payload.description,
-							location: payload.location,
-							status: payload.status,
-							registration_open: payload.registration_open,
-							max_participants: payload.max_participants
-							// Add other custom fields if backend API supports them or adjust API to include them
-						};
-
-						// NOTE: UpdateActivityInput in API is very limited: { title, description, location, status, registration_open, max_participants }
-						// So we only pass what's defined in api.ts
-
-						const res = await (await import('$lib/api')).activitiesApi.update(activity.id, updateData);
-						
-						toast.success('แก้ไขกิจกรรมสำเร็จ');
-						setTimeout(() => goto(`/admin/activities/${activity.id}`), 50);
-					} catch (err: any) {
-						toast.error(err.message || 'เกิดข้อผิดพลาดในการอัพเดท');
-					} finally {
-						submitting = false;
-					}
-				}}
-				class="space-y-6"
-			>
-				<input type="hidden" name="status" value={selectedStatus} />
+			<form onsubmit={handleSubmit} class="space-y-6">
 				<!-- Title -->
 				<div class="space-y-2">
 					<Label for="title">ชื่อกิจกรรม *</Label>
@@ -351,7 +263,7 @@
 						type="text"
 						required
 						placeholder="ชื่อกิจกรรม"
-						value={form?.formData?.title || activity.title}
+						bind:value={titleValue}
 						class="text-base"
 					/>
 				</div>
@@ -363,7 +275,7 @@
 						id="description"
 						name="description"
 						placeholder="คำอธิบายเกี่ยวกับกิจกรรม"
-						value={form?.formData?.description || activity.description}
+						bind:value={descriptionValue}
 						rows={4}
 						class="resize-none"
 					/>
@@ -378,27 +290,17 @@
 						type="text"
 						required
 						placeholder="สถานที่จัดกิจกรรม"
-						value={form?.formData?.location || activity.location}
+						bind:value={locationValue}
 						class="text-base"
 					/>
 				</div>
 
-				<!-- Organizer (หน่วยงานผู้จัด) -->
+				<!-- Organizer -->
 				<div class="space-y-2">
 					<Label for="organizer_id">หน่วยงานผู้จัด *</Label>
-					<input type="hidden" name="organizer_id" bind:value={selectedOrganizerId} />
-					<Select.Root
-						type="single"
-						bind:value={selectedOrganizerId as any}
-						disabled={!isSuperAdmin}
-					>
+					<Select.Root type="single" bind:value={selectedOrganizerId as any}>
 						<Select.Trigger>
-							{#if selectedOrganizerId}
-								{(facultyOptions.find((o) => o.value === selectedOrganizerId) || {}).label ||
-									'เลือกหน่วยงานผู้จัด'}
-							{:else}
-								เลือกหน่วยงานผู้จัด
-							{/if}
+							{facultyOptions.find((o) => o.value === selectedOrganizerId)?.label || 'เลือกหน่วยงานผู้จัด'}
 						</Select.Trigger>
 						<Select.Content>
 							{#each facultyOptions as option}
@@ -408,272 +310,159 @@
 					</Select.Root>
 				</div>
 
-				<!-- Activity Level (ระดับกิจกรรม) -->
+				<!-- Activity Level -->
 				<div class="space-y-2">
-					<Label for="activity_level">ระดับกิจกรรม *</Label>
-					<input type="hidden" name="activity_level" bind:value={selectedActivityLevel} />
-					<Select.Root
-						type="single"
-						bind:value={selectedActivityLevel as any}
-						disabled={submitting}
-					>
+					<Label>ระดับกิจกรรม</Label>
+					<Select.Root type="single" bind:value={selectedActivityLevel as any}>
 						<Select.Trigger>
-							{activityLevelOptions.find((opt) => opt.value === selectedActivityLevel)?.label ||
-								'เลือกระดับกิจกรรม'}
+							{activityLevelOptions?.find((o: any) => o.value === selectedActivityLevel)?.label || selectedActivityLevel || 'เลือกระดับกิจกรรม'}
 						</Select.Trigger>
 						<Select.Content>
-							{#each activityLevelOptions as option}
-								<Select.Item value={option.value}>
-									<div class="flex flex-col">
-										<span class="font-medium">{option.label}</span>
-										<span class="text-sm text-gray-500">{option.description}</span>
-									</div>
-								</Select.Item>
+							{#each (activityLevelOptions || []) as option}
+								<Select.Item value={(option as any).value}>{(option as any).label}</Select.Item>
 							{/each}
 						</Select.Content>
 					</Select.Root>
 				</div>
 
-				<!-- Date and Time -->
-				<div class="space-y-4">
-					<h3 class="flex items-center gap-2 text-lg font-semibold">
-						<IconCalendar class="h-5 w-5 text-blue-600" />
-						วันที่และเวลา
-					</h3>
-
-					<div class="grid gap-4 md:grid-cols-2">
-						<!-- Start Date -->
-						<div class="space-y-2">
-							<Label class="text-base font-medium">วันที่เริ่ม *</Label>
-							<input
-								type="hidden"
-								name="start_date"
-								value={startDateValue
-									? startDateValue.toString()
-									: form?.formData?.start_date || extractDateFromActivity(activity)}
-							/>
-							<Popover.Root>
-								<Popover.Trigger
-									class={cn(
-										buttonVariants({
-											variant: 'outline',
-											class: 'w-full justify-start text-left text-base font-normal'
-										}),
-										!startDateValue && 'text-muted-foreground'
-									)}
-									disabled={submitting}
-								>
-									<IconCalendar class="mr-2 h-4 w-4" />
-									{startDateValue ? formatThaiDate(startDateValue) : 'เลือกวันที่เริ่ม'}
-								</Popover.Trigger>
-								<Popover.Content class="w-auto p-0">
-									<Calendar
-										type="single"
-										bind:value={startDateValue}
-										minValue={today(getLocalTimeZone())}
-										disabled={submitting}
-										locale="th-TH"
-										captionLayout="dropdown"
-										monthFormat={formatCalendarMonth}
-										yearFormat={formatCalendarYear}
-									/>
-								</Popover.Content>
-							</Popover.Root>
-						</div>
-
-						<!-- End Date -->
-						<div class="space-y-2">
-							<Label class="text-base font-medium">วันที่สิ้นสุด *</Label>
-							<input
-								type="hidden"
-								name="end_date"
-								value={endDateValue
-									? endDateValue.toString()
-									: form?.formData?.end_date ||
-										activity.end_date ||
-										extractDateFromActivity(activity)}
-							/>
-							<Popover.Root>
-								<Popover.Trigger
-									class={cn(
-										buttonVariants({
-											variant: 'outline',
-											class: 'w-full justify-start text-left text-base font-normal'
-										}),
-										!endDateValue && 'text-muted-foreground'
-									)}
-									disabled={submitting}
-								>
-									<IconCalendar class="mr-2 h-4 w-4" />
-									{endDateValue ? formatThaiDate(endDateValue) : 'เลือกวันที่สิ้นสุด'}
-								</Popover.Trigger>
-								<Popover.Content class="w-auto p-0">
-									<Calendar
-										type="single"
-										bind:value={endDateValue}
-										minValue={startDateValue || today(getLocalTimeZone())}
-										disabled={submitting}
-										locale="th-TH"
-										captionLayout="dropdown"
-										monthFormat={formatCalendarMonth}
-										yearFormat={formatCalendarYear}
-									/>
-								</Popover.Content>
-							</Popover.Root>
-						</div>
-
-						<!-- Start Time -->
-						<div class="space-y-2">
-							<Label class="flex items-center gap-2 text-base font-medium">
-								<IconClock class="h-4 w-4" />
-								เวลาเริ่ม *
-							</Label>
-							<input
-								type="hidden"
-								name="start_time"
-								value={startTimeHour && startTimeMinute
-									? `${startTimeHour}:${startTimeMinute}`
-									: form?.formData?.start_time || extractTimeFromActivity(activity, true)}
-							/>
-							<div class="flex gap-2">
-								<Select.Root type="single" bind:value={startTimeHour as any} disabled={submitting}>
-									<Select.Trigger class="w-20">
-										{startTimeHour || 'ชม'}
-									</Select.Trigger>
-									<Select.Content class="max-h-60">
-										{#each hourOptions as option}
-											<Select.Item value={option.value}>
-												{option.label}
-											</Select.Item>
-										{/each}
-									</Select.Content>
-								</Select.Root>
-								<span class="flex items-center text-gray-500">:</span>
-								<Select.Root
+				<!-- Dates -->
+				<div class="grid gap-4 md:grid-cols-2">
+					<!-- Start Date -->
+					<div class="space-y-2">
+						<Label>วันที่เริ่มต้น *</Label>
+						<Popover.Root>
+							<Popover.Trigger
+								class={cn(buttonVariants({ variant: 'outline' }), 'w-full justify-start text-left font-normal')}
+							>
+								<IconCalendar class="mr-2 size-4" />
+								{startDateValue
+									? `${formatCalendarYear(startDateValue.year)}/${String(startDateValue.month).padStart(2,'0')}/${String(startDateValue.day).padStart(2,'0')}`
+									: 'เลือกวันที่'}
+							</Popover.Trigger>
+							<Popover.Content class="w-auto p-0" align="start">
+								<Calendar
 									type="single"
-									bind:value={startTimeMinute as any}
-									disabled={submitting}
-								>
-									<Select.Trigger class="w-20">
-										{startTimeMinute || 'นาที'}
-									</Select.Trigger>
-									<Select.Content class="max-h-60">
-										{#each minuteOptions as option}
-											<Select.Item value={option.value}>
-												{option.label}
-											</Select.Item>
-										{/each}
-									</Select.Content>
-								</Select.Root>
-							</div>
-						</div>
+									bind:value={startDateValue}
+									calendarLabel="วันที่เริ่มต้น"
+								/>
+							</Popover.Content>
+						</Popover.Root>
+					</div>
 
-						<!-- End Time -->
-						<div class="space-y-2">
-							<Label class="flex items-center gap-2 text-base font-medium">
-								<IconClock class="h-4 w-4" />
-								เวลาสิ้นสุด *
-							</Label>
-							<input
-								type="hidden"
-								name="end_time"
-								value={endTimeHour && endTimeMinute
-									? `${endTimeHour}:${endTimeMinute}`
-									: form?.formData?.end_time || extractTimeFromActivity(activity, false)}
-							/>
-							<div class="flex gap-2">
-								<Select.Root type="single" bind:value={endTimeHour as any} disabled={submitting}>
-									<Select.Trigger class="w-20">
-										{endTimeHour || 'ชม'}
-									</Select.Trigger>
-									<Select.Content class="max-h-60">
-										{#each hourOptions as option}
-											<Select.Item value={option.value}>
-												{option.label}
-											</Select.Item>
-										{/each}
-									</Select.Content>
-								</Select.Root>
-								<span class="flex items-center text-gray-500">:</span>
-								<Select.Root type="single" bind:value={endTimeMinute as any} disabled={submitting}>
-									<Select.Trigger class="w-20">
-										{endTimeMinute || 'นาที'}
-									</Select.Trigger>
-									<Select.Content class="max-h-60">
-										{#each minuteOptions as option}
-											<Select.Item value={option.value}>
-												{option.label}
-											</Select.Item>
-										{/each}
-									</Select.Content>
-								</Select.Root>
-							</div>
+					<!-- End Date -->
+					<div class="space-y-2">
+						<Label>วันที่สิ้นสุด *</Label>
+						<Popover.Root>
+							<Popover.Trigger
+								class={cn(buttonVariants({ variant: 'outline' }), 'w-full justify-start text-left font-normal')}
+							>
+								<IconCalendar class="mr-2 size-4" />
+								{endDateValue
+									? `${formatCalendarYear(endDateValue.year)}/${String(endDateValue.month).padStart(2,'0')}/${String(endDateValue.day).padStart(2,'0')}`
+									: 'เลือกวันที่'}
+							</Popover.Trigger>
+							<Popover.Content class="w-auto p-0" align="start">
+								<Calendar
+									type="single"
+									bind:value={endDateValue}
+									calendarLabel="วันที่สิ้นสุด"
+								/>
+							</Popover.Content>
+						</Popover.Root>
+					</div>
+				</div>
+
+				<!-- Times -->
+				<div class="grid gap-4 md:grid-cols-2">
+					<!-- Start Time -->
+					<div class="space-y-2">
+						<Label class="flex items-center gap-2">
+							<IconClock class="size-4" />เวลาเริ่มงาน *
+						</Label>
+						<div class="flex gap-2">
+							<Select.Root type="single" bind:value={startTimeHour as any}>
+								<Select.Trigger class="flex-1">
+									{startTimeHour || 'ชั่วโมง'}
+								</Select.Trigger>
+								<Select.Content class="max-h-48 overflow-y-auto">
+									{#each hourOptions as opt}
+										<Select.Item value={opt.value}>{opt.label}</Select.Item>
+									{/each}
+								</Select.Content>
+							</Select.Root>
+							<span class="flex items-center">:</span>
+							<Select.Root type="single" bind:value={startTimeMinute as any}>
+								<Select.Trigger class="flex-1">
+									{startTimeMinute || 'นาที'}
+								</Select.Trigger>
+								<Select.Content class="max-h-48 overflow-y-auto">
+									{#each minuteOptions as opt}
+										<Select.Item value={opt.value}>{opt.label}</Select.Item>
+									{/each}
+								</Select.Content>
+							</Select.Root>
+						</div>
+					</div>
+
+					<!-- End Time -->
+					<div class="space-y-2">
+						<Label class="flex items-center gap-2">
+							<IconClock class="size-4" />เวลาสิ้นสุด *
+						</Label>
+						<div class="flex gap-2">
+							<Select.Root type="single" bind:value={endTimeHour as any}>
+								<Select.Trigger class="flex-1">
+									{endTimeHour || 'ชั่วโมง'}
+								</Select.Trigger>
+								<Select.Content class="max-h-48 overflow-y-auto">
+									{#each hourOptions as opt}
+										<Select.Item value={opt.value}>{opt.label}</Select.Item>
+									{/each}
+								</Select.Content>
+							</Select.Root>
+							<span class="flex items-center">:</span>
+							<Select.Root type="single" bind:value={endTimeMinute as any}>
+								<Select.Trigger class="flex-1">
+									{endTimeMinute || 'นาที'}
+								</Select.Trigger>
+								<Select.Content class="max-h-48 overflow-y-auto">
+									{#each minuteOptions as opt}
+										<Select.Item value={opt.value}>{opt.label}</Select.Item>
+									{/each}
+								</Select.Content>
+							</Select.Root>
 						</div>
 					</div>
 				</div>
 
-				<!-- Eligible Faculties -->
+				<!-- Eligible Orgs (Multi-select) -->
 				<div class="space-y-2">
-					<Label for="eligible_organizations">หน่วยงานที่สามารถเข้าร่วมได้ *</Label>
-					<input
-						type="hidden"
-						name="eligible_organizations"
-						value={selectedEligibleValues.join(',')}
-					/>
+					<Label>หน่วยงานที่เข้าร่วมได้ (เลือกได้หลายหน่วยงาน)</Label>
 					<Select.Root
 						type="multiple"
 						bind:value={selectedEligibleValues as any}
-						onValueChange={(values) => {
-							if (values && Array.isArray(values)) {
-								selectedEligibleValues = values as string[];
-							}
-						}}
 					>
 						<Select.Trigger>
-							{#if selectedEligible.length === 0}
-								เลือกหน่วยงานที่สามารถเข้าร่วมได้
-							{:else if selectedEligible.length === 1}
-								{selectedEligible[0].label}
-							{:else}
-								เลือกแล้ว {selectedEligible.length} หน่วยงาน
-							{/if}
+							{selectedEligibleValues.length > 0
+								? `เลือกแล้ว ${selectedEligibleValues.length} หน่วยงาน`
+								: 'เลือกหน่วยงานที่เข้าร่วมได้'}
 						</Select.Trigger>
-						<Select.Content>
+						<Select.Content class="max-h-64 overflow-y-auto">
 							{#each facultyOptions as option}
-								<Select.Item value={option.value}>
-									<div class="flex items-center gap-2">
-										<div class="flex h-4 w-4 items-center justify-center">
-											{#if selectedEligibleValues.includes(option.value)}
-												<div class="h-3 w-3 rounded-sm bg-blue-600"></div>
-											{:else}
-												<div class="h-3 w-3 rounded-sm border border-gray-300 bg-white"></div>
-											{/if}
-										</div>
-										{option.label}
-									</div>
-								</Select.Item>
+								<Select.Item value={option.value}>{option.label}</Select.Item>
 							{/each}
 						</Select.Content>
 					</Select.Root>
-
 					{#if selectedEligible.length > 0}
-						<div class="mt-2 flex flex-wrap gap-1">
-							{#each selectedEligible as faculty}
-								<span
-									class="inline-flex items-center gap-1 rounded-md bg-blue-100 px-2 py-1 text-sm text-blue-800"
-								>
-									{faculty.label}
+						<div class="flex flex-wrap gap-1 pt-1">
+							{#each selectedEligible as org}
+								<span class="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs">
+									{org.label}
 									<button
 										type="button"
-										onclick={() => {
-											selectedEligibleValues = selectedEligibleValues.filter(
-												(v) => v !== faculty.value
-											);
-										}}
-										class="text-blue-600 hover:text-blue-800"
-									>
-										×
-									</button>
+										onclick={() => selectedEligibleValues = selectedEligibleValues.filter((v) => v !== org.value)}
+										class="ml-1 text-muted-foreground hover:text-foreground"
+									>×</button>
 								</span>
 							{/each}
 						</div>
@@ -682,32 +471,26 @@
 
 				<!-- Max Participants -->
 				<div class="space-y-2">
-					<Label for="max_participants">จำนวนผู้เข้าร่วมสูงสุด</Label>
+					<Label for="max_participants">จำนวนผู้เข้าร่วมสูงสุด (ว่างไว้ = ไม่จำกัด)</Label>
 					<Input
 						id="max_participants"
 						name="max_participants"
 						type="number"
-						min={currentParticipants || 1}
+						min={currentParticipants || 0}
 						placeholder="ไม่จำกัด"
-						value={form?.formData?.max_participants || activity.max_participants || ''}
-						class="text-base"
+						bind:value={maxParticipantsValue}
 					/>
-					<p class="text-sm text-muted-foreground">
-						เว้นว่างหากไม่ต้องการจำกัดจำนวนผู้เข้าร่วม
-						{#if currentParticipants > 0}
-							(ขั้นต่ำ {currentParticipants} คน เนื่องจากมีผู้เข้าร่วมแล้ว)
-						{/if}
-					</p>
+					{#if currentParticipants > 0}
+						<p class="text-xs text-muted-foreground">ผู้ลงทะเบียนปัจจุบัน: {currentParticipants} คน</p>
+					{/if}
 				</div>
 
 				<!-- Status -->
 				<div class="space-y-2">
-					<Label for="status">สถานะกิจกรรม *</Label>
-					<Select.Root type="single" bind:value={selectedStatus}>
+					<Label>สถานะกิจกรรม *</Label>
+					<Select.Root type="single" bind:value={selectedStatus as any}>
 						<Select.Trigger>
-							{selectedStatus
-								? statusOptions.find((s) => s.value === selectedStatus)?.label || 'เลือกสถานะ'
-								: 'เลือกสถานะ'}
+							{statusOptions.find((s) => s.value === selectedStatus)?.label || 'เลือกสถานะ'}
 						</Select.Trigger>
 						<Select.Content>
 							{#each statusOptions as option}
@@ -721,27 +504,42 @@
 						</Select.Content>
 					</Select.Root>
 					{#if selectedStatus}
-						{@const selectedOption = statusOptions.find((opt) => opt.value === selectedStatus)}
-						{#if selectedOption}
-							<p class="text-sm text-muted-foreground">
-								{selectedOption.description}
-							</p>
+						{@const opt = statusOptions.find((s) => s.value === selectedStatus)}
+						{#if opt}
+							<p class="text-sm text-muted-foreground">{opt.description}</p>
 						{/if}
 					{/if}
 				</div>
 
-				<!-- Registration toggle -->
-				<input type="hidden" name="registration_open" value={registrationOpen ? '1' : '0'} />
+				<!-- Registration Open toggle -->
 				<div class="flex items-center gap-3">
 					<Switch bind:checked={registrationOpen} />
 					<Label>เปิดให้นักศึกษาลงทะเบียน (ใช้ได้เฉพาะสถานะ "เผยแพร่แล้ว")</Label>
 				</div>
 
-				<!-- Faculty assignment removed in favor of organization (หน่วยงาน) -->
+				<!-- Read-only info -->
+				<div class="grid gap-4 md:grid-cols-2">
+					{#if (activity as any).activity_type}
+						<div>
+							<Label>ประเภทกิจกรรม</Label>
+							<p class="text-sm text-muted-foreground">{getActivityTypeDisplayName((activity as any).activity_type)}</p>
+						</div>
+					{/if}
+					{#if (activity as any).academic_year}
+						<div>
+							<Label>ปีการศึกษา</Label>
+							<p class="text-sm text-muted-foreground">{(activity as any).academic_year}</p>
+						</div>
+					{/if}
+					{#if activity.hours}
+						<div>
+							<Label>ชั่วโมงกิจกรรม</Label>
+							<p class="text-sm text-muted-foreground">{activity.hours}</p>
+						</div>
+					{/if}
+				</div>
 
-				<!-- No department selection on edit page -->
-
-				<!-- Admin Info -->
+				<!-- Admin tips -->
 				<Alert>
 					<IconInfoCircle class="size-4" />
 					<AlertDescription>
@@ -757,42 +555,16 @@
 					</AlertDescription>
 				</Alert>
 
-				<!-- Read-only extra fields (not editable in current API) -->
-				<div class="grid gap-4 md:grid-cols-2">
-					{#if activity.activity_type}
-						<div>
-							<Label>ประเภทกิจกรรม</Label>
-							<p class="text-sm text-muted-foreground">
-								{getActivityTypeDisplayName(activity.activity_type)}
-							</p>
-						</div>
-					{/if}
-					{#if activity.academic_year}
-						<div>
-							<Label>ปีการศึกษา</Label>
-							<p class="text-sm text-muted-foreground">{activity.academic_year}</p>
-						</div>
-					{/if}
-					{#if activity.hours}
-						<div>
-							<Label>ชั่วโมงกิจกรรม</Label>
-							<p class="text-sm text-muted-foreground">{activity.hours}</p>
-						</div>
-					{/if}
-				</div>
-
 				<!-- Action Buttons -->
 				<div class="flex flex-col gap-4 pt-4 sm:flex-row">
 					<Button type="submit" disabled={submitting} class="flex-1 sm:flex-none">
 						<IconDeviceFloppy class="mr-2 size-4" />
 						{submitting ? 'กำลังบันทึก...' : 'บันทึกการเปลี่ยนแปลง'}
 					</Button>
-
-					<Button type="button" variant="outline" onclick={goBack} disabled={submitting}>
+					<Button type="button" variant="outline" onclick={() => goto(`/admin/activities/${activity!.id}`)} disabled={submitting}>
 						ยกเลิก
 					</Button>
-
-					<Button type="button" variant="ghost" onclick={goToList} disabled={submitting}>
+					<Button type="button" variant="ghost" onclick={() => goto('/admin/activities')} disabled={submitting}>
 						กลับสู่รายการกิจกรรม
 					</Button>
 				</div>
@@ -800,7 +572,7 @@
 		</CardContent>
 	</Card>
 
-	<!-- Activity Current Info -->
+	<!-- Current Info -->
 	<Card>
 		<CardHeader>
 			<CardTitle class="text-lg">ข้อมูลปัจจุบันของกิจกรรม</CardTitle>
@@ -811,52 +583,24 @@
 					<p class="font-medium text-muted-foreground">ผู้เข้าร่วมปัจจุบัน</p>
 					<p class="text-lg font-semibold">
 						{currentParticipants}
-						{#if activity.max_participants}
-							/ {activity.max_participants}
-						{/if}
+						{#if activity.max_participants}/ {activity.max_participants}{/if}
 						คน
 					</p>
 				</div>
 				<div>
 					<p class="font-medium text-muted-foreground">สร้างโดย</p>
-					<p>{activity.created_by_name}</p>
+					<p>{(activity as any).created_by_name || (activity as any).creator_name || '-'}</p>
 				</div>
 				<div>
 					<p class="font-medium text-muted-foreground">สร้างเมื่อ</p>
-					<p>
-						{new Date(activity.created_at).toLocaleDateString('th-TH', {
-							year: 'numeric',
-							month: 'long',
-							day: 'numeric',
-							hour: '2-digit',
-							minute: '2-digit'
-						})}
-					</p>
+					<p>{new Date(activity.created_at).toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
 				</div>
 				<div>
 					<p class="font-medium text-muted-foreground">แก้ไขล่าสุด</p>
-					<p>
-						{new Date(activity.updated_at).toLocaleDateString('th-TH', {
-							year: 'numeric',
-							month: 'long',
-							day: 'numeric',
-							hour: '2-digit',
-							minute: '2-digit'
-						})}
-					</p>
+					<p>{new Date(activity.updated_at).toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
 				</div>
 			</div>
 		</CardContent>
 	</Card>
 </div>
-
-<style>
-	:global(input[type='datetime-local']) {
-		font-size: 0.875rem; /* text-sm */
-	}
-
-	/* Improve Select component readability */
-	:global([data-radix-select-content]) {
-		max-height: 400px;
-	}
-</style>
+{/if}

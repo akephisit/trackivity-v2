@@ -81,8 +81,14 @@
 	async function handleUpdateStatus() {
 		if (!activity || selectedStatus === activity.status) return;
 		updatingStatus = true;
+		const prev = activity.status;
 		try {
-			toast.info('การอัปเดตสถานะจะพร้อมใช้งานเมื่อ Rust API รองรับ endpoint');
+			const updated = await activitiesApi.update(activity.id, { status: selectedStatus });
+			activity = updated;
+			toast.success('อัปเดตสถานะสำเร็จ');
+		} catch (e: any) {
+			selectedStatus = prev;
+			toast.error(e?.message || 'ไม่สามารถอัปเดตสถานะได้');
 		} finally {
 			updatingStatus = false;
 		}
@@ -94,9 +100,12 @@
 		const newVal = !registrationOpen;
 		registrationOpen = newVal;
 		try {
-			toast.info('การเปิด/ปิดรับลงทะเบียนจะพร้อมใช้งานเมื่อ Rust API รองรับ endpoint');
-		} catch {
+			const updated = await activitiesApi.update(activity.id, { registration_open: newVal });
+			activity = updated;
+			toast.success(newVal ? 'เปิดรับลงทะเบียนสำเร็จ' : 'ปิดรับลงทะเบียนสำเร็จ');
+		} catch (e: any) {
 			registrationOpen = !newVal;
+			toast.error(e?.message || 'ไม่สามารถเปลี่ยนสถานะการลงทะเบียนได้');
 		} finally {
 			regToggleBusy = false;
 		}
@@ -105,8 +114,10 @@
 	async function handleDeleteActivity() {
 		if (!activity) return;
 		try {
-			toast.info('การลบกิจกรรมจะพร้อมใช้งานเมื่อ Rust API รองรับ endpoint');
+			await activitiesApi.delete(activity.id);
 			deleteActivityDialogOpen = false;
+			toast.success('ลบกิจกรรมสำเร็จ');
+			goto('/admin/activities?deleted=1');
 		} catch (e: any) {
 			toast.error(e?.message || 'เกิดข้อผิดพลาดในการลบกิจกรรม');
 		}

@@ -166,6 +166,13 @@ export interface UpdateActivityInput {
     status?: string;
     registration_open?: boolean;
     max_participants?: number | null;
+    organizer_id?: string;
+    activity_level?: string;
+    start_date?: string;
+    end_date?: string;
+    start_time_only?: string;
+    end_time_only?: string;
+    eligible_organizations?: string[];
 }
 
 export interface Participation {
