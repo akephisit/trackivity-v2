@@ -8,6 +8,7 @@ import { writable, type Writable, get } from 'svelte/store';
 import { qrApi } from '$lib/api';
 import type { QRCode, QRScanResult, SessionUser } from '$lib/types';
 import QRCodeGenerator from 'qrcode';
+import { authStore } from '$lib/stores/auth.svelte';
 
 // ===== QR CODE CONFIGURATION =====
 interface QRConfig {
@@ -204,13 +205,16 @@ export class QRClient {
 	}
 
 	// ===== QR CODE GENERATION =====
-	async generateQRCode(user?: SessionUser): Promise<void> {
+	async generateQRCode(userArg?: SessionUser): Promise<void> {
 		if (!browser) return;
 		const now = Date.now();
 		// Short-circuit if a generation is in-flight or fired too recently
 		if (this.isGenerating || now - this.lastGeneratedAt < 300) {
 			return;
 		}
+
+		// Fallback to global authStore if no user provided
+		const user = userArg || (authStore.user as unknown as SessionUser);
 
 		this.isGenerating = true;
 		this.status.set('generating');
@@ -223,7 +227,7 @@ export class QRClient {
 
 			try {
 				const response = await qrApi.generateQRCode();
-				console.log('[QR] API Response:', response);
+				// suppress console on API response if it works
 
 				// Handle different response formats more robustly
 				let payload: any = response;
@@ -293,7 +297,7 @@ export class QRClient {
 				}
 			} catch (apiError) {
 				// Fallback to offline generation
-				console.warn('[QR] API generation failed, using offline mode:', apiError);
+				// Silent fail on console error if offline works
 				useOfflineMode = true;
 				const sessionId = this.getSessionId();
 				qrCode = await this.generateOfflineQRCode(sessionId || undefined, user);
@@ -324,10 +328,11 @@ export class QRClient {
 	}
 
 	private async generateOfflineQRCode(sessionId?: string, user?: SessionUser): Promise<QRCode> {
-		console.log('[QR] Generating offline QR code for user:', user?.user_id);
+		const userId = user?.user_id || (user as any)?.id || 'unknown';
+		console.log('[QR] Generating offline QR code for user:', userId);
 
 		const qrData: QRData = {
-			user_id: user?.user_id || 'unknown',
+			user_id: userId,
 			timestamp: Date.now(),
 			session_id: sessionId || 'offline-session',
 			device_fingerprint: generateDeviceFingerprint()
@@ -599,7 +604,7 @@ export function useQRCode() {
 			setTimeout(() => {
 				if (get(status) === 'idle' && !get(qrCode)) {
 					console.log('[QR] Auto-initializing QR client');
-					qrClient.generateQRCode().catch((error) => {
+					qrClient.generateQRCode(authStore.user as unknown as SessionUser).catch((error) => {
 						console.warn('[QR] Auto-initialization failed:', error);
 					});
 				}
