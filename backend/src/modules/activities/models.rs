@@ -26,6 +26,8 @@ pub struct ActivityPublic {
     pub creator_name: String,
     pub activity_level: Option<String>,
     pub eligible_organizations: Option<serde_json::Value>,
+    pub participant_count: i64,   // total registered
+    pub checked_in_count: i64,    // currently checked in
 }
 
 #[derive(Debug, Deserialize)]

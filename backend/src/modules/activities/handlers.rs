@@ -16,7 +16,9 @@ const ACTIVITY_SELECT: &str = r#"
         a.organizer_id, o.name AS organizer_name,
         u.first_name AS creator_name,
         a.activity_level::text AS activity_level,
-        a.eligible_organizations
+        a.eligible_organizations,
+        (SELECT COUNT(*) FROM participations p WHERE p.activity_id = a.id) AS participant_count,
+        (SELECT COUNT(*) FROM participations p WHERE p.activity_id = a.id AND p.status IN ('checked_in'::participation_status, 'checked_out'::participation_status)) AS checked_in_count
     FROM activities a
     JOIN organizations o ON a.organizer_id = o.id
     JOIN users u ON a.created_by = u.id

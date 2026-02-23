@@ -139,6 +139,8 @@ export interface Activity {
     updated_at: string;
     organizer_name: string;
     creator_name: string;
+    participant_count: number;
+    checked_in_count: number;
 }
 
 export interface DashboardResponse {

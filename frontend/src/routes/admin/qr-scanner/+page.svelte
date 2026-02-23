@@ -32,20 +32,15 @@
 	// Component state
 	let activities = $state<Activity[]>([]);
 	let selectedActivityId = $state('');
-	let scannerActive = $state(false); // Controls isActive prop passed to QRScanner
-	let scannerMounted = $state(false); // Controls whether QRScanner is in the DOM
+	let scannerActive = $state(false);
+	let scannerMounted = $state(false);
 	let scannerStatus = $state<'idle' | 'requesting' | 'active' | 'error'>('idle');
-	let manualParticipantCount = $state(0);
 
-	// Use $derived for computed values to avoid circular dependencies
+	// Derived — no manual counter needed; backend sends real counts
 	const selectedActivity = $derived(
-		selectedActivityId ? activities.find((a: any) => a.id === selectedActivityId) || null : null
+		selectedActivityId ? activities.find((a) => a.id === selectedActivityId) || null : null
 	);
-
-	// Use base participant count from activity data, plus any manual increments from scanning
-	const currentParticipantCount = $derived(
-		((selectedActivity as any)?.participant_count || 0) + manualParticipantCount
-	);
+	const currentParticipantCount = $derived(selectedActivity?.checked_in_count ?? 0);
 
 	// Track URL updates separately to prevent infinite loops
 	let isUpdatingUrl = $state(false);
@@ -106,9 +101,6 @@
 
 	function handleActivityChange(activityId: string) {
 		selectedActivityId = activityId;
-		// Reset manual participant count when changing activities
-		manualParticipantCount = 0;
-		// Stop scanner when changing activities
 		if (scannerActive || scannerMounted) {
 			scannerActive = false;
 			setTimeout(() => {
@@ -135,13 +127,16 @@
 		}, 600);
 	}
 
-	function handleScanResult(result: { success: boolean; message?: string }, _qrData: string) {
-		if (result.success) {
-			// Increment manual participant count on successful check-in
-			manualParticipantCount++;
-			// Toast notification removed - QRScanner component handles notifications
+	async function handleScanResult(result: { success: boolean; message?: string }, _qrData: string) {
+		if (result.success && selectedActivityId) {
+			// Refresh this activity's counts from backend
+			try {
+				const updated = await activitiesApi.get(selectedActivityId);
+				activities = activities.map((a) => (a.id === selectedActivityId ? updated : a));
+			} catch {
+				// Ignore — count will refresh on next page load
+			}
 		}
-		// Error handling is done by QRScanner component
 	}
 
 	function handleStatusChange(status: typeof scannerStatus) {
