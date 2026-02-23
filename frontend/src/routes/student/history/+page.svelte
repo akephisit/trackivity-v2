@@ -497,12 +497,12 @@
 								: 'border-l-4 border-l-muted'}
 
 					<Card class={`transition-all hover:-translate-y-0.5 hover:shadow-md ${borderClasses}`}>
-						<CardContent class="px-4 pt-3 pb-2.5">
-							<div class="flex flex-col gap-2">
+						<CardContent class="px-4 py-2">
+							<div class="flex flex-col gap-1.5">
 								<!-- Header Area (Title & Badges) -->
-								<div class="flex flex-col justify-between gap-2 sm:flex-row sm:items-start">
+								<div class="flex flex-col justify-between gap-1 sm:flex-row sm:items-start">
 									<div class="flex-1 space-y-1">
-										<div class="mb-1 flex flex-wrap items-center gap-2">
+										<div class="mb-0.5 flex flex-wrap items-center gap-1.5">
 											<Badge
 												variant={getStatusBadgeVariant(participation.status)}
 												class="px-2.5 py-0.5"
@@ -552,9 +552,9 @@
 
 								<!-- Timeline Details -->
 								<div
-									class="mt-0.5 grid gap-x-6 gap-y-2 rounded-lg border bg-muted/20 p-3 sm:grid-cols-2"
+									class="mt-0.5 grid gap-x-6 gap-y-1.5 rounded-lg border bg-muted/20 px-3 py-2 sm:grid-cols-2"
 								>
-									<div class="space-y-2">
+									<div class="space-y-1.5">
 										{#if participation.activity?.start_date}
 											<div class="flex items-start gap-2 text-sm">
 												<IconCalendarEvent class="mt-0.5 size-4 shrink-0 text-muted-foreground" />
@@ -643,7 +643,7 @@
 								<!-- Notes -->
 								{#if participation.notes}
 									<div
-										class="flex gap-2 rounded-lg border border-orange-100 bg-orange-50/50 px-3 py-2 text-sm dark:border-orange-900/30 dark:bg-orange-950/20"
+										class="flex gap-2 rounded-lg border border-orange-100 bg-orange-50/50 px-3 py-1.5 text-sm dark:border-orange-900/30 dark:bg-orange-950/20"
 									>
 										<IconAlertCircle class="mt-0.5 size-4 shrink-0 text-orange-500" />
 										<div>
