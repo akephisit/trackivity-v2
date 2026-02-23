@@ -111,134 +111,168 @@ export async function exportSummaryPDF(
     const docDefinition: any = {
         defaultStyle: { font: 'Sarabun', fontSize: 13, lineHeight: 1.4 },
         pageSize: 'A4',
-        pageMargins: [40, 60, 40, 60],
+        pageMargins: [40, 70, 40, 60],
+        background: function (currentPage: number, pageSize: any) {
+            // Elegant blue top border accent for every page
+            return {
+                canvas: [
+                    {
+                        type: 'rect',
+                        x: 0,
+                        y: 0,
+                        w: pageSize.width,
+                        h: 12,
+                        color: '#1e3a8a'
+                    }
+                ]
+            };
+        },
         content: [
-            // Header
+            // Header Section
             {
-                text: 'รายงานสรุปผลการเข้าร่วมกิจกรรม',
-                style: 'header',
-                alignment: 'center',
-                margin: [0, 0, 0, 4]
+                columns: [
+                    {
+                        width: '*',
+                        stack: [
+                            { text: 'รายงานสรุปผลการเข้าร่วมกิจกรรม', style: 'header' },
+                            { text: 'Academic Activity Summary Report', style: 'subheader' }
+                        ]
+                    },
+                    {
+                        width: 'auto',
+                        text: 'Trackivity',
+                        style: 'brandName',
+                        margin: [0, 5, 0, 0]
+                    }
+                ],
+                margin: [0, 0, 0, 15]
             },
             {
-                text: 'Academic Activity Summary Report',
-                style: 'subheader',
-                alignment: 'center',
+                canvas: [{ type: 'line', x1: 0, y1: 0, x2: 515, y2: 0, lineWidth: 1, lineColor: '#e5e7eb' }],
                 margin: [0, 0, 0, 20]
             },
 
-            // Student Info
+            // Student Information
+            { text: 'ข้อมูลนักศึกษา (Student Information)', style: 'sectionTitle', margin: [0, 0, 0, 10] },
             {
                 table: {
-                    widths: ['30%', '70%'],
+                    widths: ['25%', '35%', '15%', '25%'],
                     body: [
                         [
-                            { text: 'ชื่อ-นามสกุล', style: 'label' },
-                            { text: `${getPrefixLabel(userInfo.prefix)}${userInfo.first_name} ${userInfo.last_name}`, style: 'value' }
+                            { text: 'ชื่อ-นามสกุล:', style: 'label' },
+                            { text: `${getPrefixLabel(userInfo.prefix)}${userInfo.first_name} ${userInfo.last_name}`, style: 'value' },
+                            { text: 'รหัสนักศึกษา:', style: 'label' },
+                            { text: userInfo.student_id, style: 'highlightValue' }
                         ],
                         [
-                            { text: 'รหัสนักศึกษา', style: 'label' },
-                            { text: userInfo.student_id, style: 'value' }
-                        ],
-                        [
-                            { text: 'อีเมล', style: 'label' },
-                            { text: userInfo.email, style: 'value' }
-                        ],
-                        [
-                            { text: 'วันที่ออกรายงาน', style: 'label' },
+                            { text: 'อีเมล:', style: 'label' },
+                            { text: userInfo.email, style: 'value' },
+                            { text: 'วันที่พิมพ์:', style: 'label' },
                             { text: now, style: 'value' }
                         ]
                     ]
                 },
                 layout: 'noBorders',
-                margin: [0, 0, 0, 20]
+                margin: [0, 0, 0, 25]
             },
 
-            // Summary Stats
-            { text: 'สรุปภาพรวม', style: 'sectionTitle', margin: [0, 0, 0, 8] },
+            // Summary Stats and Level Breakdown side-by-side
             {
                 columns: [
+                    // Left Column: Summary Stats
                     {
-                        table: {
-                            widths: ['*', '*'],
-                            body: [
-                                [
-                                    { text: 'กิจกรรมทั้งหมด', style: 'label' },
-                                    { text: `${stats.totalActivities} กิจกรรม`, style: 'statValue' }
-                                ],
-                                [
-                                    { text: 'เสร็จสิ้น', style: 'label' },
-                                    { text: `${stats.completedActivities} กิจกรรม`, style: 'statValue' }
-                                ],
-                                [
-                                    { text: 'ชั่วโมงรวม', style: 'label' },
-                                    { text: `${stats.totalHours} ชั่วโมง`, style: 'statValue' }
-                                ],
-                                [
-                                    { text: 'อัตราเสร็จสิ้น', style: 'label' },
-                                    { text: `${stats.completionRate}%`, style: 'statValue' }
-                                ]
-                            ]
-                        },
-                        layout: 'lightHorizontalLines'
+                        width: '45%',
+                        stack: [
+                            { text: 'สรุปภาพรวม (Overview)', style: 'sectionTitle', margin: [0, 0, 0, 10] },
+                            {
+                                table: {
+                                    widths: ['*', 'auto'],
+                                    body: [
+                                        [
+                                            { text: 'กิจกรรมทั้งหมด', style: 'label' },
+                                            { text: `${stats.totalActivities} กิจกรรม`, style: 'statValue' }
+                                        ],
+                                        [
+                                            { text: 'เสร็จสิ้น', style: 'label' },
+                                            { text: `${stats.completedActivities} กิจกรรม`, style: 'statValueValid' }
+                                        ],
+                                        [
+                                            { text: 'ชั่วโมงรวม', style: 'label' },
+                                            { text: `${stats.totalHours} ชั่วโมง`, style: 'statValueValid' }
+                                        ],
+                                        [
+                                            { text: 'อัตราเสร็จสิ้น', style: 'label' },
+                                            { text: `${stats.completionRate}%`, style: 'statValue' }
+                                        ]
+                                    ]
+                                },
+                                layout: {
+                                    hLineWidth: (i: number, node: any) => (i === 0 || i === node.table.body.length ? 1 : 0.5),
+                                    vLineWidth: () => 0,
+                                    hLineColor: () => '#e5e7eb',
+                                    paddingTop: () => 6,
+                                    paddingBottom: () => 6
+                                }
+                            }
+                        ]
+                    },
+                    { width: '10%', text: '' }, // Spacer
+                    // Right Column: Level Breakdown
+                    {
+                        width: '45%',
+                        stack: [
+                            { text: 'สัดส่วนกิจกรรม (Distribution)', style: 'sectionTitle', margin: [0, 0, 0, 10] },
+                            {
+                                table: {
+                                    widths: ['*', 'auto', 'auto'],
+                                    body: [
+                                        [
+                                            { text: 'ระดับ', style: 'tableHeaderSmall', alignment: 'left' },
+                                            { text: 'กิจกรรม', style: 'tableHeaderSmall', alignment: 'center' },
+                                            { text: 'ชั่วโมง', style: 'tableHeaderSmall', alignment: 'center' }
+                                        ],
+                                        [
+                                            { text: 'ระดับคณะ', style: 'tableCell' },
+                                            { text: `${stats.facultyLevel.activities}`, style: 'tableCell', alignment: 'center' },
+                                            { text: `${stats.facultyLevel.hours}`, style: 'tableCell', alignment: 'center' }
+                                        ],
+                                        [
+                                            { text: 'ระดับมหาวิทยาลัย', style: 'tableCell' },
+                                            { text: `${stats.universityLevel.activities}`, style: 'tableCell', alignment: 'center' },
+                                            { text: `${stats.universityLevel.hours}`, style: 'tableCell', alignment: 'center' }
+                                        ],
+                                        [
+                                            { text: 'รวม', style: 'tableCellBold' },
+                                            { text: `${stats.completedActivities}`, style: 'tableCellBold', alignment: 'center' },
+                                            { text: `${stats.totalHours}`, style: 'tableCellBold', alignment: 'center' }
+                                        ]
+                                    ]
+                                },
+                                layout: {
+                                    hLineWidth: (i: number, node: any) => (i === 0 || i === 1 || i === node.table.body.length - 1 || i === node.table.body.length ? 1 : 0.5),
+                                    vLineWidth: () => 0,
+                                    hLineColor: () => '#e5e7eb',
+                                    paddingTop: () => 6,
+                                    paddingBottom: () => 6
+                                }
+                            }
+                        ]
                     }
                 ],
-                margin: [0, 0, 0, 16]
+                margin: [0, 0, 0, 30]
             },
 
-            // Level Breakdown
-            { text: 'แยกตามระดับกิจกรรม', style: 'sectionTitle', margin: [0, 0, 0, 8] },
+            // Line Separator
             {
-                table: {
-                    widths: ['*', '*', '*'],
-                    body: [
-                        [
-                            { text: 'ระดับ', style: 'tableHeader', alignment: 'center' },
-                            { text: 'จำนวนกิจกรรม', style: 'tableHeader', alignment: 'center' },
-                            { text: 'ชั่วโมง', style: 'tableHeader', alignment: 'center' }
-                        ],
-                        [
-                            { text: 'ระดับคณะ', style: 'tableCell' },
-                            { text: `${stats.facultyLevel.activities}`, style: 'tableCell', alignment: 'center' },
-                            {
-                                text: `${stats.facultyLevel.hours} ชม.`,
-                                style: 'tableCell',
-                                alignment: 'center'
-                            }
-                        ],
-                        [
-                            { text: 'ระดับมหาวิทยาลัย', style: 'tableCell' },
-                            {
-                                text: `${stats.universityLevel.activities}`,
-                                style: 'tableCell',
-                                alignment: 'center'
-                            },
-                            {
-                                text: `${stats.universityLevel.hours} ชม.`,
-                                style: 'tableCell',
-                                alignment: 'center'
-                            }
-                        ],
-                        [
-                            { text: 'รวม', style: 'tableCellBold' },
-                            {
-                                text: `${stats.completedActivities}`,
-                                style: 'tableCellBold',
-                                alignment: 'center'
-                            },
-                            { text: `${stats.totalHours} ชม.`, style: 'tableCellBold', alignment: 'center' }
-                        ]
-                    ]
-                },
-                layout: 'lightHorizontalLines',
+                canvas: [{ type: 'line', x1: 0, y1: 0, x2: 515, y2: 0, lineWidth: 1, lineColor: '#e5e7eb' }],
                 margin: [0, 0, 0, 20]
             },
 
             // Activity List
             {
-                text: `รายการกิจกรรมที่เสร็จสิ้น (${completedParticipations.length} รายการ)`,
+                text: `รายการกิจกรรมที่เข้าร่วมเสร็จสิ้น (${completedParticipations.length} รายการ)`,
                 style: 'sectionTitle',
-                margin: [0, 0, 0, 8]
+                margin: [0, 0, 0, 10]
             },
             participationRows.length > 0
                 ? {
@@ -248,38 +282,53 @@ export async function exportSummaryPDF(
                         body: [
                             [
                                 { text: '#', style: 'tableHeader', alignment: 'center' },
-                                { text: 'ชื่อกิจกรรม', style: 'tableHeader' },
-                                { text: 'ระดับ', style: 'tableHeader', alignment: 'center' },
-                                { text: 'ชั่วโมง', style: 'tableHeader', alignment: 'center' },
-                                { text: 'วันที่ลงทะเบียน', style: 'tableHeader', alignment: 'center' }
+                                { text: 'ชื่อกิจกรรม (Activity Title)', style: 'tableHeader' },
+                                { text: 'ระดับ (Level)', style: 'tableHeader', alignment: 'center' },
+                                { text: 'ชั่วโมง (hrs)', style: 'tableHeader', alignment: 'center' },
+                                { text: 'วันที่ลงทะเบียน (Date)', style: 'tableHeader', alignment: 'center' }
                             ],
                             ...participationRows
                         ]
                     },
-                    layout: 'lightHorizontalLines'
+                    layout: {
+                        hLineWidth: (i: number, node: any) => (i === 0 || i === 1 || i === node.table.body.length ? 1 : 0.5),
+                        vLineWidth: () => 0,
+                        hLineColor: (i: number, node: any) => (i === 0 || i === 1 || i === node.table.body.length ? '#1e3a8a' : '#e5e7eb'),
+                        fillColor: (rowIndex: number) => (rowIndex === 0 ? '#eff6ff' : null),
+                        paddingTop: () => 8,
+                        paddingBottom: () => 8
+                    }
                 }
-                : { text: 'ยังไม่มีกิจกรรมที่เสร็จสิ้น', style: 'muted', margin: [0, 0, 0, 16] },
+                : { text: 'ยังไม่มีประวัติการเข้าร่วมกิจกรรมที่เสร็จสิ้น', style: 'muted', margin: [0, 0, 0, 20] },
 
-            // Footer
-            { text: ' ', margin: [0, 20, 0, 0] },
+            // Footer / Sign-off
             {
-                text: 'รายงานนี้สร้างขึ้นโดยระบบ Trackivity - Activity Tracking System',
-                style: 'footer',
+                stack: [
+                    { text: 'เอกสารอ้างอิงรายบุคคล', style: 'footerBold' },
+                    { text: 'ระบบจัดการกิจกรรม Trackivity (Activity Tracking System)', style: 'footer' },
+                    { text: `ออกรายงานเมื่อ: ${now}`, style: 'footer' }
+                ],
+                margin: [0, 40, 0, 0],
                 alignment: 'center'
             }
         ],
         styles: {
-            header: { fontSize: 18, bold: true, font: 'Sarabun' },
-            subheader: { fontSize: 13, color: '#666666', font: 'Sarabun' },
-            sectionTitle: { fontSize: 14, bold: true, font: 'Sarabun', color: '#1a1a1a' },
-            label: { fontSize: 12, color: '#555555', font: 'Sarabun' },
-            value: { fontSize: 12, font: 'Sarabun' },
-            statValue: { fontSize: 12, bold: true, font: 'Sarabun' },
-            tableHeader: { fontSize: 12, bold: true, fillColor: '#f3f4f6', font: 'Sarabun' },
-            tableCell: { fontSize: 11, font: 'Sarabun' },
-            tableCellBold: { fontSize: 11, bold: true, font: 'Sarabun' },
-            muted: { fontSize: 12, color: '#888888', font: 'Sarabun', italics: true },
-            footer: { fontSize: 10, color: '#aaaaaa', font: 'Sarabun' }
+            header: { fontSize: 20, bold: true, font: 'Sarabun', color: '#111827' },
+            subheader: { fontSize: 13, color: '#4b5563', font: 'Sarabun' },
+            brandName: { fontSize: 16, bold: true, color: '#1e3a8a', font: 'Sarabun' },
+            sectionTitle: { fontSize: 14, bold: true, font: 'Sarabun', color: '#1f2937' },
+            label: { fontSize: 12, color: '#6b7280', font: 'Sarabun' },
+            value: { fontSize: 12, color: '#111827', font: 'Sarabun' },
+            highlightValue: { fontSize: 12, bold: true, color: '#1e3a8a', font: 'Sarabun' },
+            statValue: { fontSize: 12, bold: true, color: '#111827', font: 'Sarabun', alignment: 'right' },
+            statValueValid: { fontSize: 12, bold: true, color: '#166534', font: 'Sarabun', alignment: 'right' },
+            tableHeader: { fontSize: 11, bold: true, color: '#1e3a8a', font: 'Sarabun' },
+            tableHeaderSmall: { fontSize: 11, bold: true, color: '#4b5563', font: 'Sarabun' },
+            tableCell: { fontSize: 11, color: '#374151', font: 'Sarabun' },
+            tableCellBold: { fontSize: 11, bold: true, color: '#111827', font: 'Sarabun' },
+            muted: { fontSize: 12, color: '#9ca3af', font: 'Sarabun', italics: true },
+            footer: { fontSize: 10, color: '#6b7280', font: 'Sarabun' },
+            footerBold: { fontSize: 10, bold: true, color: '#4b5563', font: 'Sarabun' }
         }
     };
 
