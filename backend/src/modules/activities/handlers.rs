@@ -127,9 +127,9 @@ pub async fn list_activities(
     };
 
     let activities = if let Some(org_id) = user_org_id {
-        // Show published + ongoing, filtered by eligible_organizations
+        // Show published, ongoing + completed, filtered by eligible_organizations
         sqlx::query_as::<_, ActivityPublic>(&format!(
-            "{} WHERE a.status IN ('published', 'ongoing') AND (a.eligible_organizations = '[]'::jsonb OR a.eligible_organizations @> $1::jsonb) ORDER BY a.start_date ASC",
+            "{} WHERE a.status IN ('published', 'ongoing', 'completed') AND (a.eligible_organizations = '[]'::jsonb OR a.eligible_organizations @> $1::jsonb) ORDER BY a.start_date ASC",
             ACTIVITY_SELECT
         ))
         .bind(serde_json::json!([org_id.to_string()]))
@@ -137,9 +137,9 @@ pub async fn list_activities(
         .await
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, format!("Failed to fetch activities: {}", e)))?
     } else {
-        // No org found — show all published + ongoing
+        // No org found — show all published, ongoing + completed
         sqlx::query_as::<_, ActivityPublic>(&format!(
-            "{} WHERE a.status IN ('published', 'ongoing') ORDER BY a.start_date ASC",
+            "{} WHERE a.status IN ('published', 'ongoing', 'completed') ORDER BY a.start_date ASC",
             ACTIVITY_SELECT
         ))
         .fetch_all(&pool)
