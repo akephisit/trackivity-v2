@@ -160,8 +160,9 @@ pub async fn login_handler(
             last_name: user.last_name,
             prefix: user.prefix,
             admin_role,
-            // organization_name and department_name not fetched at login (use /auth/me)
+            organization_id: None,
             organization_name: None,
+            department_id: user.department_id,
             department_name: None,
             session_id,
             expires_at,
@@ -213,18 +214,36 @@ pub async fn me_handler(
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
 
     // Fetch organization_name from admin_role's organization_id
-    let organization_name: Option<String> = if let Some(ref role) = admin_role {
+    let (organization_id, organization_name): (Option<Uuid>, Option<String>) = if let Some(ref role) = admin_role {
         if let Some(org_id) = role.organization_id {
-            sqlx::query_scalar::<_, String>("SELECT name FROM organizations WHERE id = $1")
+            let name = sqlx::query_scalar::<_, String>("SELECT name FROM organizations WHERE id = $1")
                 .bind(org_id)
                 .fetch_optional(&pool)
                 .await
-                .unwrap_or(None)
+                .unwrap_or(None);
+            (Some(org_id), name)
         } else {
-            None
+            (None, None)
+        }
+    } else if let Some(dept_id) = user.department_id {
+        let org_details = sqlx::query_as::<_, (Uuid, String)>("
+            SELECT o.id, o.name 
+            FROM organizations o
+            JOIN departments d ON o.id = d.organization_id
+            WHERE d.id = $1
+        ")
+        .bind(dept_id)
+        .fetch_optional(&pool)
+        .await
+        .unwrap_or(None);
+        
+        if let Some((org_id, name)) = org_details {
+            (Some(org_id), Some(name))
+        } else {
+            (None, None)
         }
     } else {
-        None
+        (None, None)
     };
 
     // Fetch department_name from user's department_id
@@ -249,7 +268,9 @@ pub async fn me_handler(
         last_name: user.last_name,
         prefix: user.prefix,
         admin_role,
+        organization_id,
         organization_name,
+        department_id: user.department_id,
         department_name,
         session_id: claims.session_id,
         expires_at,
