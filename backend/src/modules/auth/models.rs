@@ -46,6 +46,8 @@ pub struct UserResponse {
     pub first_name: String,
     pub last_name: String,
     pub admin_role: Option<AdminRole>,
+    pub organization_name: Option<String>,
+    pub department_name: Option<String>,
     pub session_id: String,
     pub expires_at: DateTime<Utc>,
 }

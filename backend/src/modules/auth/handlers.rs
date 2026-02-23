@@ -160,6 +160,9 @@ pub async fn login_handler(
             last_name: user.last_name,
             prefix: user.prefix,
             admin_role,
+            // organization_name and department_name not fetched at login (use /auth/me)
+            organization_name: None,
+            department_name: None,
             session_id,
             expires_at,
         }
@@ -209,6 +212,32 @@ pub async fn me_handler(
         .await
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
 
+    // Fetch organization_name from admin_role's organization_id
+    let organization_name: Option<String> = if let Some(ref role) = admin_role {
+        if let Some(org_id) = role.organization_id {
+            sqlx::query_scalar::<_, String>("SELECT name FROM organizations WHERE id = $1")
+                .bind(org_id)
+                .fetch_optional(&pool)
+                .await
+                .unwrap_or(None)
+        } else {
+            None
+        }
+    } else {
+        None
+    };
+
+    // Fetch department_name from user's department_id
+    let department_name: Option<String> = if let Some(dept_id) = user.department_id {
+        sqlx::query_scalar::<_, String>("SELECT name FROM departments WHERE id = $1")
+            .bind(dept_id)
+            .fetch_optional(&pool)
+            .await
+            .unwrap_or(None)
+    } else {
+        None
+    };
+
     let expires_at = chrono::DateTime::from_timestamp(claims.exp as i64, 0)
         .unwrap_or_else(Utc::now);
 
@@ -220,6 +249,8 @@ pub async fn me_handler(
         last_name: user.last_name,
         prefix: user.prefix,
         admin_role,
+        organization_name,
+        department_name,
         session_id: claims.session_id,
         expires_at,
     }))
