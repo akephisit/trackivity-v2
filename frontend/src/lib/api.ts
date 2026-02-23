@@ -199,6 +199,7 @@ export interface Participation {
         end_date: string;
         hours: number;
         organizer_name: string;
+        activity_type: string;
         activity_level: string | null;
         status: string | null;
     };

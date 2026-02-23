@@ -368,6 +368,8 @@ pub async fn get_my_participations(
         end_date: chrono::NaiveDate,
         hours: i16,
         organizer_name: String,
+        activity_type: String,
+        activity_level: Option<String>,
     }
 
     let rows = sqlx::query_as::<_, ParticipationRow>(r#"
@@ -380,7 +382,9 @@ pub async fn get_my_participations(
             a.start_date,
             a.end_date,
             a.hours,
-            o.name AS organizer_name
+            o.name AS organizer_name,
+            a.activity_type::text AS activity_type,
+            a.activity_level::text AS activity_level
         FROM participations p
         JOIN activities a ON p.activity_id = a.id
         JOIN organizations o ON a.organizer_id = o.id
@@ -408,7 +412,9 @@ pub async fn get_my_participations(
                 "start_date": r.start_date,
                 "end_date": r.end_date,
                 "hours": r.hours,
-                "organizer_name": r.organizer_name
+                "organizer_name": r.organizer_name,
+                "activity_type": r.activity_type,
+                "activity_level": r.activity_level
             }
         })
     }).collect();
