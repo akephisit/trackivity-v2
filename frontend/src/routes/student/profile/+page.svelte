@@ -28,7 +28,12 @@
 	} from '@tabler/icons-svelte';
 	import { toast } from 'svelte-sonner';
 	import { usersApi, ApiError } from '$lib/api';
-	import { profileUpdateSchema, changePasswordSchema, PrefixOptions } from '$lib/schemas/auth';
+	import {
+		profileUpdateSchema,
+		changePasswordSchema,
+		PrefixOptions,
+		getPrefixLabel
+	} from '$lib/schemas/auth';
 	import type { ProfileUpdateFormData, ChangePasswordFormData } from '$lib/schemas/auth';
 
 	let editing = $state(false);
@@ -222,12 +227,6 @@
 			month: 'long',
 			day: 'numeric'
 		});
-	}
-
-	function getPrefixLabel(prefixValue?: string): string {
-		if (!prefixValue) return 'ไม่ระบุ';
-		const prefix = PrefixOptions.find((p) => p.value === prefixValue);
-		return prefix ? prefix.label : 'ไม่ระบุ';
 	}
 
 	function getFieldError(fieldName: string, errors: Record<string, string[]>): string {

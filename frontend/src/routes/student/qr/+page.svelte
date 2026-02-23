@@ -2,6 +2,7 @@
 	import { onMount } from 'svelte';
 	import { authStore } from '$lib/stores/auth.svelte';
 	import { useQRCode } from '$lib/qr/client';
+	import { getPrefixLabel } from '$lib/schemas/auth';
 	import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
 	import { Button } from '$lib/components/ui/button';
 	import { Badge } from '$lib/components/ui/badge';
@@ -143,7 +144,7 @@
 					<div>
 						<span class="text-muted-foreground">ชื่อ:</span>
 						<span class="ml-2 font-medium">
-							{user.first_name}
+							{getPrefixLabel(user.prefix)}{user.first_name}
 							{user.last_name}
 						</span>
 					</div>

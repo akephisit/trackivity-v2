@@ -38,6 +38,12 @@ export const BasicPrefixOptions = [
 	{ value: 'Miss', label: 'นางสาว' }
 ] as const;
 
+export function getPrefixLabel(prefixValue?: string | null): string {
+	if (!prefixValue) return '';
+	const prefix = PrefixOptions.find((p) => p.value === prefixValue);
+	return prefix ? prefix.label : prefixValue;
+}
+
 // Student registration schema with prefix support
 export const registerSchema = z
 	.object({

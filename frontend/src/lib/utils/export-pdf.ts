@@ -3,6 +3,7 @@
  * Uses pdfmake with Sarabun font loaded at runtime (supports Thai)
  */
 import type { ActivitySummaryStats } from '$lib/utils/activity-summary';
+import { getPrefixLabel } from '$lib/schemas/auth';
 import { browser } from '$app/environment';
 
 // Sarabun Regular & Bold TTF from Google Fonts repository (stable URLs)
@@ -36,6 +37,7 @@ interface UserInfo {
     first_name: string;
     last_name: string;
     email: string;
+    prefix?: string | null;
 }
 
 export async function exportSummaryPDF(
@@ -132,7 +134,7 @@ export async function exportSummaryPDF(
                     body: [
                         [
                             { text: 'ชื่อ-นามสกุล', style: 'label' },
-                            { text: `${userInfo.first_name} ${userInfo.last_name}`, style: 'value' }
+                            { text: `${getPrefixLabel(userInfo.prefix)}${userInfo.first_name} ${userInfo.last_name}`, style: 'value' }
                         ],
                         [
                             { text: 'รหัสนักศึกษา', style: 'label' },

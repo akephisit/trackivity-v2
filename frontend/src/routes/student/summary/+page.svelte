@@ -13,6 +13,7 @@
 		type ActivitySummaryStats,
 		type ActivityRequirements
 	} from '$lib/utils/activity-summary';
+	import { getPrefixLabel } from '$lib/schemas/auth';
 	import {
 		IconFileText,
 		IconPrinter,
@@ -45,6 +46,7 @@
 		first_name: string;
 		last_name: string;
 		email: string;
+		prefix?: string | null;
 	} | null = $state(null);
 	let activityRequirementsData: ActivityRequirements | null = $state(null);
 	let loading = $state(true);
@@ -68,7 +70,8 @@
 				student_id: user.student_id,
 				first_name: user.first_name,
 				last_name: user.last_name,
-				email: user.email
+				email: user.email,
+				prefix: user.prefix
 			};
 			participationHistoryData = participations;
 		} catch (e) {
@@ -237,7 +240,7 @@
 									<div>
 										<p class="text-sm font-medium text-muted-foreground">ชื่อ-นามสกุล</p>
 										<p class="mt-0.5 text-base font-semibold">
-											{userInfoData?.first_name}
+											{getPrefixLabel(userInfoData?.prefix)}{userInfoData?.first_name}
 											{userInfoData?.last_name}
 										</p>
 									</div>
