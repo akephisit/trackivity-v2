@@ -138,45 +138,6 @@
 		></div>
 
 		<CardContent class="p-6 pt-8">
-			{#if user}
-				<!-- User Identity -->
-				<div class="mb-6 flex flex-col items-center text-center">
-					<div
-						class="mb-3 flex size-[60px] items-center justify-center rounded-2xl bg-primary/10 text-primary shadow-inner"
-					>
-						<IconShieldCheck class="size-8" />
-					</div>
-					<h2 class="text-xl font-bold text-foreground">
-						{getPrefixLabel(user.prefix)}{user.first_name}
-						{user.last_name}
-					</h2>
-					<p class="mt-1 font-mono text-base tracking-widest text-muted-foreground">
-						{user.student_id}
-					</p>
-					{#if user.email}
-						<Badge variant="secondary" class="mt-2 font-normal text-muted-foreground"
-							>{user.email}</Badge
-						>
-					{/if}
-				</div>
-			{/if}
-
-			<!-- QR Display Divider -->
-			<div class="relative my-6 flex w-full items-center justify-center">
-				<div class="w-full border-t border-dashed"></div>
-				<div
-					class="absolute bg-card px-3 text-[10px] tracking-wider text-muted-foreground uppercase opacity-70"
-				>
-					บัตรเข้าร่วมกิจกรรม
-				</div>
-				<div
-					class="absolute -left-8 size-4 rounded-full border border-r-0 bg-muted shadow-inner"
-				></div>
-				<div
-					class="absolute -right-8 size-4 rounded-full border border-l-0 bg-muted shadow-inner"
-				></div>
-			</div>
-
 			<!-- QR Code Interactive Area -->
 			<div class="flex flex-col items-center justify-center space-y-6">
 				{#if $qrStatus === 'ready' && $qrCode}
@@ -253,6 +214,35 @@
 					</div>
 				{/if}
 			</div>
+
+			<!-- Divider -->
+			<div class="relative my-6 flex w-full items-center justify-center">
+				<div class="w-full border-t border-dashed"></div>
+				<div
+					class="absolute bg-card px-3 text-[10px] tracking-wider text-muted-foreground uppercase opacity-70"
+				>
+					ข้อมูลผู้ถือบัตร
+				</div>
+				<div
+					class="absolute -left-8 size-4 rounded-full border border-r-0 bg-muted shadow-inner"
+				></div>
+				<div
+					class="absolute -right-8 size-4 rounded-full border border-l-0 bg-muted shadow-inner"
+				></div>
+			</div>
+
+			{#if user}
+				<!-- User Identity -->
+				<div class="flex flex-col items-center text-center">
+					<h2 class="text-lg font-bold text-foreground">
+						{getPrefixLabel(user.prefix)}{user.first_name}
+						{user.last_name}
+					</h2>
+					<p class="mt-1 font-mono text-sm tracking-widest text-muted-foreground">
+						{user.student_id}
+					</p>
+				</div>
+			{/if}
 		</CardContent>
 	</Card>
 
