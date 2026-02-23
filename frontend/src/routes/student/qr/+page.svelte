@@ -138,16 +138,12 @@
 			<div class="relative mx-auto mb-7 flex justify-center">
 				{#if $qrStatus === 'ready' && $qrDataURL}
 					<div
-						class="relative rounded-[2rem] border-4 p-3 shadow-sm {timeRemainingSeconds <= 60
-							? 'border-orange-400 bg-orange-50'
-							: 'border-slate-100 bg-white'} transition-colors duration-500"
+						class="relative rounded-[2rem] border-4 border-slate-100 bg-white p-3 shadow-sm transition-colors duration-500"
 					>
 						<img
 							src={$qrDataURL}
 							alt="QR Code"
-							class="h-48 w-48 rounded-xl object-contain sm:h-56 sm:w-56 {timeRemainingSeconds <= 60
-								? 'opacity-80'
-								: 'opacity-100'} transition-opacity"
+							class="h-48 w-48 rounded-xl object-contain transition-opacity sm:h-56 sm:w-56"
 						/>
 					</div>
 				{:else if $qrStatus === 'generating' || $qrStatus === 'idle'}
