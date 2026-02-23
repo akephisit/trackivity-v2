@@ -76,9 +76,11 @@
 		const uniqueActivities = new Map();
 		data.forEach((p) => {
 			const activityId = p.activity?.id;
+			const pDate = p.checked_in_at || p.registered_at || new Date().toISOString();
 			if (activityId) {
 				const existing = uniqueActivities.get(activityId);
-				if (!existing || new Date(p.participated_at) > new Date(existing.participated_at)) {
+				const existingDate = existing ? existing.checked_in_at || existing.registered_at : null;
+				if (!existing || new Date(pDate) > new Date(existingDate)) {
 					uniqueActivities.set(activityId, p);
 				}
 			}
@@ -113,8 +115,9 @@
 
 		stats = {
 			total: data.length,
-			thisMonth: data.filter((p) => new Date(p.participated_at) >= thisMonth).length,
-			thisYear: data.filter((p) => new Date(p.participated_at) >= thisYear).length,
+			thisMonth: data.filter((p) => new Date(p.checked_in_at || p.registered_at) >= thisMonth)
+				.length,
+			thisYear: data.filter((p) => new Date(p.checked_in_at || p.registered_at) >= thisYear).length,
 			uniqueActivities: uniqueActivities.size,
 			totalHours,
 			facultyHours,
@@ -132,12 +135,13 @@
 		const activityMap = new Map();
 		filtered.forEach((p) => {
 			const activityId = p.activity?.id;
+			const pDate = p.checked_in_at || p.registered_at || new Date().toISOString();
 			if (activityId) {
 				const existingParticipation = activityMap.get(activityId);
-				if (
-					!existingParticipation ||
-					new Date(p.participated_at) > new Date(existingParticipation.participated_at)
-				) {
+				const existingDate = existingParticipation
+					? existingParticipation.checked_in_at || existingParticipation.registered_at
+					: null;
+				if (!existingParticipation || new Date(pDate) > new Date(existingDate)) {
 					activityMap.set(activityId, p);
 				}
 			}
@@ -159,21 +163,23 @@
 		switch (filterBy) {
 			case 'this_month': {
 				const thisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-				filtered = filtered.filter((p) => new Date(p.participated_at) >= thisMonth);
+				filtered = filtered.filter(
+					(p) => new Date(p.checked_in_at || p.registered_at) >= thisMonth
+				);
 				break;
 			}
 			case 'last_month': {
 				const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
 				const thisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 				filtered = filtered.filter((p) => {
-					const date = new Date(p.participated_at);
+					const date = new Date(p.checked_in_at || p.registered_at);
 					return date >= lastMonth && date < thisMonth;
 				});
 				break;
 			}
 			case 'this_year': {
 				const thisYear = new Date(now.getFullYear(), 0, 1);
-				filtered = filtered.filter((p) => new Date(p.participated_at) >= thisYear);
+				filtered = filtered.filter((p) => new Date(p.checked_in_at || p.registered_at) >= thisYear);
 				break;
 			}
 			case 'completed': {
@@ -190,12 +196,16 @@
 		switch (sortBy) {
 			case 'recent':
 				filtered.sort(
-					(a, b) => new Date(b.participated_at).getTime() - new Date(a.participated_at).getTime()
+					(a, b) =>
+						new Date(b.checked_in_at || b.registered_at).getTime() -
+						new Date(a.checked_in_at || a.registered_at).getTime()
 				);
 				break;
 			case 'oldest':
 				filtered.sort(
-					(a, b) => new Date(a.participated_at).getTime() - new Date(b.participated_at).getTime()
+					(a, b) =>
+						new Date(a.checked_in_at || a.registered_at).getTime() -
+						new Date(b.checked_in_at || b.registered_at).getTime()
 				);
 				break;
 			case 'title':
@@ -334,93 +344,69 @@
 
 	<!-- Statistics -->
 	<div class="grid grid-cols-2 gap-4 md:grid-cols-4">
-		<Card>
-			<CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
-				<CardTitle class="text-sm font-medium">ทั้งหมด</CardTitle>
-				<IconTrendingUp class="size-4 text-muted-foreground" />
-			</CardHeader>
-			<CardContent>
-				<div class="text-2xl font-bold">{stats.total}</div>
-				<p class="text-xs text-muted-foreground">กิจกรรมที่เข้าร่วม</p>
-			</CardContent>
-		</Card>
+		<div
+			class="flex items-center gap-4 rounded-xl border bg-card p-4 shadow-sm transition-all hover:shadow-md"
+		>
+			<div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10">
+				<IconTrendingUp class="size-5 text-primary" />
+			</div>
+			<div>
+				<p class="text-2xl leading-none font-bold tracking-tight">{stats.total}</p>
+				<p class="mt-1 text-xs font-medium text-muted-foreground">รายการเข้าร่วม</p>
+			</div>
+		</div>
 
-		<Card>
-			<CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
-				<CardTitle class="text-sm font-medium">เสร็จสิ้น</CardTitle>
-				<IconCheck class="size-4 text-muted-foreground" />
-			</CardHeader>
-			<CardContent>
-				<div class="text-2xl font-bold">{stats.completedActivities}</div>
-				<p class="text-xs text-muted-foreground">กิจกรรมที่เสร็จสิ้น</p>
-			</CardContent>
-		</Card>
+		<div
+			class="flex items-center gap-4 rounded-xl border bg-card p-4 shadow-sm transition-all hover:shadow-md"
+		>
+			<div
+				class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30"
+			>
+				<IconCheck class="size-5 text-green-600 dark:text-green-500" />
+			</div>
+			<div>
+				<p
+					class="text-2xl leading-none font-bold tracking-tight text-green-600 dark:text-green-500"
+				>
+					{stats.completedActivities}
+				</p>
+				<p class="mt-1 text-xs font-medium text-muted-foreground">กิจกรรมที่เสร็จสิ้น</p>
+			</div>
+		</div>
 
-		<Card>
-			<CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
-				<CardTitle class="text-sm font-medium">เดือนนี้</CardTitle>
-				<IconCalendarEvent class="size-4 text-muted-foreground" />
-			</CardHeader>
-			<CardContent>
-				<div class="text-2xl font-bold">{stats.thisMonth}</div>
-				<p class="text-xs text-muted-foreground">กิจกรรมในเดือนนี้</p>
-			</CardContent>
-		</Card>
+		<div
+			class="flex items-center gap-4 rounded-xl border bg-card p-4 shadow-sm transition-all hover:shadow-md"
+		>
+			<div
+				class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/30"
+			>
+				<IconCalendarEvent class="size-5 text-blue-600 dark:text-blue-500" />
+			</div>
+			<div>
+				<p class="text-2xl leading-none font-bold tracking-tight text-blue-600 dark:text-blue-500">
+					{stats.thisMonth}
+				</p>
+				<p class="mt-1 text-xs font-medium text-muted-foreground">รายการเดือนนี้</p>
+			</div>
+		</div>
 
-		<Card>
-			<CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
-				<CardTitle class="text-sm font-medium">ปีนี้</CardTitle>
-				<IconAward class="size-4 text-muted-foreground" />
-			</CardHeader>
-			<CardContent>
-				<div class="text-2xl font-bold">{stats.thisYear}</div>
-				<p class="text-xs text-muted-foreground">กิจกรรมในปีนี้</p>
-			</CardContent>
-		</Card>
-
-		<Card>
-			<CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
-				<CardTitle class="text-sm font-medium">ไม่ซ้ำ</CardTitle>
-				<IconHistory class="size-4 text-muted-foreground" />
-			</CardHeader>
-			<CardContent>
-				<div class="text-2xl font-bold">{stats.uniqueActivities}</div>
-				<p class="text-xs text-muted-foreground">กิจกรรมที่แตกต่าง</p>
-			</CardContent>
-		</Card>
-
-		<Card>
-			<CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
-				<CardTitle class="text-sm font-medium">รวมชั่วโมง</CardTitle>
-				<IconHourglass class="size-4 text-muted-foreground" />
-			</CardHeader>
-			<CardContent>
-				<div class="text-2xl font-bold">{stats.totalHours}</div>
-				<p class="text-xs text-muted-foreground">ชั่วโมงจากกิจกรรม</p>
-			</CardContent>
-		</Card>
-
-		<Card>
-			<CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
-				<CardTitle class="text-sm font-medium">ชั่วโมงคณะ</CardTitle>
-				<IconSchool class="size-4 text-muted-foreground" />
-			</CardHeader>
-			<CardContent>
-				<div class="text-2xl font-bold">{stats.facultyHours}</div>
-				<p class="text-xs text-muted-foreground">กิจกรรมระดับคณะ</p>
-			</CardContent>
-		</Card>
-
-		<Card>
-			<CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
-				<CardTitle class="text-sm font-medium">ชั่วโมงมหาวิทยาลัย</CardTitle>
-				<IconBuilding class="size-4 text-muted-foreground" />
-			</CardHeader>
-			<CardContent>
-				<div class="text-2xl font-bold">{stats.universityHours}</div>
-				<p class="text-xs text-muted-foreground">กิจกรรมระดับมหาวิทยาลัย</p>
-			</CardContent>
-		</Card>
+		<div
+			class="flex items-center gap-4 rounded-xl border bg-card p-4 shadow-sm transition-all hover:shadow-md"
+		>
+			<div
+				class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-orange-100 dark:bg-orange-900/30"
+			>
+				<IconHourglass class="size-5 text-orange-600 dark:text-orange-500" />
+			</div>
+			<div>
+				<p
+					class="text-2xl leading-none font-bold tracking-tight text-orange-600 dark:text-orange-500"
+				>
+					{stats.totalHours}
+				</p>
+				<p class="mt-1 text-xs font-medium text-muted-foreground">ชั่วโมงสะสม</p>
+			</div>
+		</div>
 	</div>
 
 	<!-- Filters -->
@@ -497,123 +483,176 @@
 			<div class="space-y-4">
 				{#each filteredHistory as participation}
 					{@const StatusIcon = getStatusIcon(participation.status)}
-					<Card class="transition-shadow hover:shadow-md">
-						<CardContent class="p-4">
-							<div class="space-y-4">
-								<!-- Header -->
+					{@const levelVariant = participation.activity?.activity_level
+						? getActivityLevelBadgeVariant(participation.activity.activity_level)
+						: 'outline'}
+					{@const LevelIcon = participation.activity?.activity_level
+						? getActivityLevelIcon(participation.activity.activity_level)
+						: IconBuildingStore}
+					{@const borderClasses =
+						levelVariant === 'secondary'
+							? 'border-l-4 border-l-green-500'
+							: levelVariant === 'default'
+								? 'border-l-4 border-l-blue-500'
+								: 'border-l-4 border-l-muted'}
+
+					<Card class={`transition-all hover:-translate-y-0.5 hover:shadow-md ${borderClasses}`}>
+						<CardContent class="p-5">
+							<div class="flex flex-col gap-4">
+								<!-- Header Area (Title & Badges) -->
 								<div class="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
-									<div class="space-y-2">
-										<div class="flex items-start gap-3">
-											<div class="mt-1">
-												<StatusIcon class="size-5 text-muted-foreground" />
-											</div>
-											<div class="flex-1 space-y-1">
-												<h3 class="text-base leading-tight font-medium">
-													{participation.activity?.title || 'ไม่ระบุชื่อกิจกรรม'}
-												</h3>
-												{#if participation.activity?.description}
-													<p class="line-clamp-2 text-sm text-muted-foreground">
-														{participation.activity.description}
-													</p>
-												{/if}
-												{#if participation.activity?.organizer_name}
-													<div class="flex items-center gap-1 text-xs text-muted-foreground">
-														<IconBuildingStore class="size-3" />
-														<span>{participation.activity.organizer_name}</span>
-													</div>
-												{/if}
-											</div>
+									<div class="flex-1 space-y-1.5">
+										<div class="mb-1 flex flex-wrap items-center gap-2">
+											<Badge
+												variant={getStatusBadgeVariant(participation.status)}
+												class="px-2.5 py-0.5"
+											>
+												<StatusIcon class="mr-1.5 size-3.5" />
+												{getParticipationStatusText(participation.status)}
+											</Badge>
+
+											{#if participation.activity?.activity_level}
+												<Badge
+													variant={levelVariant}
+													class="gap-1 border bg-background px-2 shadow-sm"
+												>
+													<LevelIcon class="size-3" />
+													{getActivityLevelDisplayName(participation.activity.activity_level)}
+												</Badge>
+											{/if}
+
+											{#if participation.activity?.activity_type}
+												<Badge variant="outline" class="px-2 text-muted-foreground">
+													{getActivityTypeDisplayName(participation.activity.activity_type)}
+												</Badge>
+											{/if}
 										</div>
-									</div>
-									<div class="flex flex-wrap gap-2 sm:flex-col sm:items-end">
-										<Badge variant={getStatusBadgeVariant(participation.status)}>
-											{getParticipationStatusText(participation.status)}
-										</Badge>
-										{#if participation.activity?.activity_level}
-											{@const LevelIcon = getActivityLevelIcon(
-												participation.activity.activity_level
-											)}
-											<Badge
-												variant={getActivityLevelBadgeVariant(
-													participation.activity.activity_level
-												)}
-												class="gap-1"
-											>
-												<LevelIcon class="size-3" />
-												{getActivityLevelDisplayName(participation.activity.activity_level)}
-											</Badge>
-										{/if}
-										{#if participation.activity?.activity_type}
-											<Badge
-												variant={getActivityBadgeVariant(participation.activity.activity_type)}
-											>
-												{getActivityTypeDisplayName(participation.activity.activity_type)}
-											</Badge>
+
+										<h3 class="text-lg leading-tight font-bold text-foreground">
+											{participation.activity?.title || 'ไม่ระบุชื่อกิจกรรม'}
+										</h3>
+
+										{#if participation.activity?.organizer_name}
+											<div class="flex items-center gap-1.5 text-sm font-medium text-primary/80">
+												<IconBuildingStore class="size-4" />
+												<span>{participation.activity.organizer_name}</span>
+											</div>
 										{/if}
 									</div>
+
+									{#if participation.activity?.hours}
+										<div
+											class="flex shrink-0 items-center gap-1.5 rounded-lg bg-muted/50 px-3 py-2 text-sm font-semibold text-foreground"
+										>
+											<IconHourglass class="size-4 text-orange-500" />
+											<span class="text-lg">{participation.activity.hours}</span> ชั่วโมง
+										</div>
+									{/if}
 								</div>
 
 								<!-- Timeline Details -->
-								<div class="space-y-3 border-l-2 border-muted pl-4">
-									<!-- Activity Schedule -->
-									<div class="grid grid-cols-1 gap-2 text-sm">
+								<div
+									class="mt-1 grid gap-x-6 gap-y-3 rounded-lg border bg-muted/20 p-4 sm:grid-cols-2"
+								>
+									<div class="space-y-3">
 										{#if participation.activity?.start_date}
-											<div class="flex items-center gap-2 text-muted-foreground">
-												<IconCalendarEvent class="size-4 flex-shrink-0" />
-												<span>กำหนดการ: {formatDate(participation.activity.start_date)}</span>
-												{#if participation.activity.start_time}
-													<span>- {participation.activity.start_time}</span>
-												{/if}
+											<div class="flex items-start gap-2.5 text-sm">
+												<IconCalendarEvent class="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+												<div class="grid gap-0.5">
+													<span
+														class="text-xs font-medium tracking-wide text-muted-foreground uppercase"
+														>กำหนดการ</span
+													>
+													<span class="font-medium text-foreground">
+														{formatDate(participation.activity.start_date)}
+														{#if participation.activity.start_time}
+															- {participation.activity.start_time}
+														{/if}
+													</span>
+												</div>
 											</div>
 										{/if}
 
 										{#if participation.activity?.location}
-											<div class="flex items-center gap-2 text-muted-foreground">
-												<IconMapPin class="size-4 flex-shrink-0" />
-												<span class="truncate">สถานที่: {participation.activity.location}</span>
+											<div class="flex items-start gap-2.5 text-sm">
+												<IconMapPin class="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+												<div class="grid gap-0.5">
+													<span
+														class="text-xs font-medium tracking-wide text-muted-foreground uppercase"
+														>สถานที่จัดกิจกรรม</span
+													>
+													<span class="text-foreground">{participation.activity.location}</span>
+												</div>
 											</div>
 										{/if}
 									</div>
 
-									<!-- Participation Timeline -->
-									<div class="space-y-2">
-										{#if participation.registered_at}
-											<div class="flex items-center gap-2 text-sm text-muted-foreground">
-												<IconUserCheck class="size-4 flex-shrink-0" />
-												<span>ลงทะเบียน: {formatDateShort(participation.registered_at)}</span>
-											</div>
-										{/if}
+									<div class="space-y-3">
+										<div class="flex items-start gap-2.5 text-sm">
+											<IconHistory class="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+											<div class="grid w-full gap-1">
+												<span
+													class="text-xs font-medium tracking-wide text-muted-foreground uppercase"
+													>ประวัติการบันทึกเวลา</span
+												>
 
-										{#if participation.checked_in_at}
-											<div class="flex items-center gap-2 text-sm text-muted-foreground">
-												<IconLogin class="size-4 flex-shrink-0" />
-												<span>เช็คอิน: {formatDateShort(participation.checked_in_at)}</span>
+												<div class="mt-0.5 space-y-1.5">
+													{#if participation.registered_at}
+														<div
+															class="flex items-center justify-between rounded-md border bg-background px-2 py-1 text-xs"
+														>
+															<span class="flex items-center gap-1 text-muted-foreground"
+																><IconUserCheck class="size-3" /> ลงทะเบียน</span
+															>
+															<span class="font-medium"
+																>{formatDateShort(participation.registered_at)}</span
+															>
+														</div>
+													{/if}
+													{#if participation.checked_in_at}
+														<div
+															class="flex items-center justify-between rounded-md border border-green-100 bg-green-50/50 px-2 py-1 text-xs dark:border-green-900 dark:bg-green-950/20"
+														>
+															<span
+																class="flex items-center gap-1 text-green-600 dark:text-green-500"
+																><IconLogin class="size-3" /> เข้าร่วม (เช็คอิน)</span
+															>
+															<span class="font-medium"
+																>{formatDateShort(participation.checked_in_at)}</span
+															>
+														</div>
+													{/if}
+													{#if participation.checked_out_at}
+														<div
+															class="flex items-center justify-between rounded-md border border-blue-100 bg-blue-50/50 px-2 py-1 text-xs dark:border-blue-900 dark:bg-blue-950/20"
+														>
+															<span class="flex items-center gap-1 text-blue-600 dark:text-blue-500"
+																><IconLogout class="size-3" /> เสร็จสิ้น (เช็คเอาท์)</span
+															>
+															<span class="font-medium"
+																>{formatDateShort(participation.checked_out_at)}</span
+															>
+														</div>
+													{/if}
+												</div>
 											</div>
-										{/if}
-
-										{#if participation.checked_out_at}
-											<div class="flex items-center gap-2 text-sm text-muted-foreground">
-												<IconLogout class="size-4 flex-shrink-0" />
-												<span>เช็คเอาท์: {formatDateShort(participation.checked_out_at)}</span>
-											</div>
-										{/if}
-
-										{#if participation.activity?.hours}
-											<div class="flex items-center gap-2 text-sm text-muted-foreground">
-												<IconHourglass class="size-4 flex-shrink-0" />
-												<span>จำนวนชั่วโมงที่ได้: {participation.activity.hours} ชั่วโมง</span>
-											</div>
-										{/if}
-									</div>
-
-									<!-- Notes -->
-									{#if participation.notes}
-										<div class="border-t pt-2 text-sm">
-											<p class="text-muted-foreground">หมายเหตุ:</p>
-											<p class="text-foreground">{participation.notes}</p>
 										</div>
-									{/if}
+									</div>
 								</div>
+
+								<!-- Notes -->
+								{#if participation.notes}
+									<div
+										class="flex gap-2 rounded-lg border border-orange-100 bg-orange-50/50 p-3 text-sm dark:border-orange-900/30 dark:bg-orange-950/20"
+									>
+										<IconAlertCircle class="mt-0.5 size-4 shrink-0 text-orange-500" />
+										<div>
+											<span class="font-medium text-orange-700 dark:text-orange-400">หมายเหตุ:</span
+											>
+											<span class="ml-1 text-muted-foreground">{participation.notes}</span>
+										</div>
+									</div>
+								{/if}
 							</div>
 						</CardContent>
 					</Card>
