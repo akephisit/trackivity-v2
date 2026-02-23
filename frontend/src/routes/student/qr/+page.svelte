@@ -178,49 +178,32 @@
 
 			<!-- Actions -->
 			{#if $qrStatus === 'ready' && $qrCode}
-				<!-- Timer -->
-				<div
-					class="mb-4 flex items-center justify-between rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3"
-				>
-					<div class="flex items-center gap-2.5">
-						<div class="rounded-full bg-white p-1.5 shadow-sm">
-							<IconClock
-								class="size-4 {timeRemainingSeconds <= 60
-									? 'animate-pulse text-orange-500'
-									: 'text-slate-500'}"
-							/>
-						</div>
-						<span
-							class="text-[14.5px] font-medium {timeRemainingSeconds <= 60
-								? 'text-orange-600'
-								: 'text-slate-600'} tabular-nums"
-						>
-							รีเฟรชใน {formatTimeRemaining(timeRemainingSeconds)}
-						</span>
-					</div>
-					<button
+				<div class="flex gap-3">
+					<!-- Copy ID -->
+					<Button
+						onclick={copyQRData}
+						variant="ghost"
+						class="h-[52px] flex-1 rounded-2xl border-2 border-slate-100 font-medium text-slate-500 transition-all hover:bg-slate-50 hover:text-slate-800 active:scale-[0.98]"
+					>
+						{#if copied}
+							<IconCheck class="mr-2 size-5 text-green-500" />
+							<span class="text-green-600">คัดลอกสำเร็จ</span>
+						{:else}
+							<IconCopy class="mr-2 size-5" /> คัดลอกรหัสประจำตัว
+						{/if}
+					</Button>
+
+					<!-- Refresh -->
+					<Button
 						onclick={handleRefreshQR}
 						disabled={refreshing}
-						class="rounded-full p-2 text-primary transition-colors hover:bg-primary/10 active:scale-95 disabled:opacity-50"
-						title="รีเฟรช QR Code"
+						variant="ghost"
+						class="h-[52px] w-[52px] shrink-0 rounded-2xl border-2 border-slate-100 text-slate-500 transition-all hover:bg-slate-50 hover:text-primary active:scale-[0.98]"
+						title="โหลด QR ใหม่"
 					>
-						<IconRefresh class="size-[22px] {refreshing ? 'animate-spin' : ''}" />
-					</button>
+						<IconRefresh class="size-6 {refreshing ? 'animate-spin' : ''}" />
+					</Button>
 				</div>
-
-				<!-- Copy ID -->
-				<Button
-					onclick={copyQRData}
-					variant="ghost"
-					class="h-[52px] w-full rounded-2xl border-2 border-slate-100 font-medium text-slate-500 transition-all hover:bg-slate-50 hover:text-slate-800 active:scale-[0.98]"
-				>
-					{#if copied}
-						<IconCheck class="mr-2 size-5 text-green-500" />
-						<span class="text-green-600">คัดลอกสำเร็จ</span>
-					{:else}
-						<IconCopy class="mr-2 size-5" /> คัดลอกรหัส (ID: {$qrCode.id.substring(0, 8)}...)
-					{/if}
-				</Button>
 			{/if}
 
 			<p class="mt-6 text-[13px] leading-relaxed font-medium text-slate-400">
