@@ -1,6 +1,21 @@
 <script lang="ts">
 	import { onMount, onDestroy } from 'svelte';
 	import { browser } from '$app/environment';
+
+	// Patch canvas getContext to add willReadFrequently=true for 2d contexts
+	// This fixes the warning from qr-scanner which calls getImageData repeatedly
+	if (browser && typeof HTMLCanvasElement !== 'undefined') {
+		const _getContext = HTMLCanvasElement.prototype.getContext;
+		// @ts-ignore – override with willReadFrequently injected
+		HTMLCanvasElement.prototype.getContext = function (type: string, options?: any) {
+			if (type === '2d') {
+				options = { willReadFrequently: true, ...options };
+			}
+			// @ts-ignore
+			return _getContext.call(this, type, options);
+		};
+	}
+
 	import QrScannerLib from 'qr-scanner';
 
 	import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
