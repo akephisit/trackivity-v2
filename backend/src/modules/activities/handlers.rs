@@ -372,7 +372,7 @@ pub async fn get_my_participations(
 
     let rows = sqlx::query_as::<_, ParticipationRow>(r#"
         SELECT
-            p.id, p.status, p.registered_at, p.checked_in_at, p.checked_out_at, p.notes,
+            p.id, p.status::text AS status, p.registered_at, p.checked_in_at, p.checked_out_at, p.notes,
             a.id AS activity_id,
             a.title AS activity_title,
             a.description AS activity_description,
