@@ -1,11 +1,20 @@
 <script lang="ts">
 	import { Button } from '$lib/components/ui/button';
 	import { cn } from '$lib/utils';
-	import { IconLogout, IconSun, IconMoon, IconMenu, IconX, IconShield, IconSettings } from '@tabler/icons-svelte';
+	import {
+		IconLogout,
+		IconSun,
+		IconMoon,
+		IconMenu,
+		IconX,
+		IconShield,
+		IconSettings
+	} from '@tabler/icons-svelte';
 	import { mode, setMode } from 'mode-watcher';
 	import { toast } from 'svelte-sonner';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
+	import NotificationBell from './NotificationBell.svelte';
 
 	interface NavigationItem {
 		title: string;
@@ -106,6 +115,7 @@
 					<span class="text-sm text-muted-foreground">
 						{user.first_name}
 					</span>
+					<NotificationBell />
 					<Button variant="ghost" size="sm" onclick={toggleTheme} class="p-2">
 						{#if mode.current === 'light'}
 							<IconMoon class="size-4" />
@@ -228,7 +238,7 @@
 							</div>
 							{#if showAccountSettings}
 								<Button variant="ghost" size="sm" class="w-full justify-start">
-									<a href={accountSettingsHref} class="flex items-center w-full">
+									<a href={accountSettingsHref} class="flex w-full items-center">
 										<IconSettings class="mr-2 size-4" />
 										ตั้งค่าบัญชี
 									</a>
@@ -351,7 +361,7 @@
 						</div>
 						{#if showAccountSettings}
 							<Button variant="ghost" size="sm" class="w-full justify-start">
-								<a href={accountSettingsHref} class="flex items-center w-full">
+								<a href={accountSettingsHref} class="flex w-full items-center">
 									<IconSettings class="mr-2 size-4" />
 									ตั้งค่าบัญชี
 								</a>
@@ -385,6 +395,7 @@
 						{#if user}
 							<span class="text-sm text-muted-foreground">{user.first_name}</span>
 						{/if}
+						<NotificationBell />
 						<Button variant="ghost" size="sm" onclick={toggleTheme} class="p-2">
 							{#if mode.current === 'light'}
 								<IconMoon class="size-4" />

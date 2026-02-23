@@ -11,6 +11,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::modules::auth::handlers::get_claims_from_headers;
 use super::models::{QRDataPayload, QRGenerateResponse};
+use crate::modules::notifications::service::{NotificationService, NotificationType};
 
 // ─── QR Token Claims (embedded in QR code) ────────────────────────────────────
 
@@ -200,15 +201,15 @@ async fn scan_qr(
     let user_name = format!("{} {}", user.first_name, user.last_name);
 
     // 4. Check activity exists and is ongoing
-    let activity_status: Option<String> = sqlx::query_scalar(
-        "SELECT status::text FROM activities WHERE id = $1"
+    let activity_info: Option<(String, String)> = sqlx::query_as(
+        "SELECT status::text, title FROM activities WHERE id = $1"
     )
     .bind(activity_id)
     .fetch_optional(pool)
     .await
     .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
 
-    match activity_status.as_deref() {
+    let (activity_status, activity_title) = match activity_info {
         None => {
             return Ok(Json(ScanQRResponse {
                 success: false,
@@ -221,32 +222,33 @@ async fn scan_qr(
                 }),
             }));
         }
-        Some("completed") | Some("cancelled") => {
-            return Ok(Json(ScanQRResponse {
-                success: false,
-                message: "กิจกรรมนี้สิ้นสุดแล้ว".to_string(),
-                data: None,
-                error: Some(ScanQRError {
-                    code: "ACTIVITY_EXPIRED".to_string(),
-                    message: "Activity is no longer ongoing".to_string(),
-                    category: "error".to_string(),
-                }),
-            }));
+        Some((status, title)) => {
+            if status == "completed" || status == "cancelled" {
+                return Ok(Json(ScanQRResponse {
+                    success: false,
+                    message: "กิจกรรมนี้สิ้นสุดแล้ว".to_string(),
+                    data: None,
+                    error: Some(ScanQRError {
+                        code: "ACTIVITY_EXPIRED".to_string(),
+                        message: "Activity is no longer ongoing".to_string(),
+                        category: "error".to_string(),
+                    }),
+                }));
+            } else if status == "draft" || status == "published" {
+                return Ok(Json(ScanQRResponse {
+                    success: false,
+                    message: "กิจกรรมยังไม่เปิดให้เช็คอิน".to_string(),
+                    data: None,
+                    error: Some(ScanQRError {
+                        code: "ACTIVITY_NOT_ONGOING".to_string(),
+                        message: "Activity is not ongoing yet".to_string(),
+                        category: "error".to_string(),
+                    }),
+                }));
+            }
+            (Some(status), title)
         }
-        Some("draft") | Some("published") => {
-            return Ok(Json(ScanQRResponse {
-                success: false,
-                message: "กิจกรรมยังไม่เปิดให้เช็คอิน".to_string(),
-                data: None,
-                error: Some(ScanQRError {
-                    code: "ACTIVITY_NOT_ONGOING".to_string(),
-                    message: "Activity is not ongoing yet".to_string(),
-                    category: "error".to_string(),
-                }),
-            }));
-        }
-        _ => {} // ongoing — proceed
-    }
+    };
 
     // 5. Check participation record
     #[derive(sqlx::FromRow)]
@@ -283,6 +285,16 @@ async fn scan_qr(
                     .execute(pool)
                     .await
                     .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+
+                    // 🔔 Notify user that they checked in
+                    let _ = NotificationService::send(
+                        pool,
+                        student_id,
+                        &format!("✅ เช็คอินสำเร็จ: {}", activity_title),
+                        &format!("คุณได้เช็คอินเข้าร่วมกิจกรรม {}", activity_title),
+                        NotificationType::Success,
+                        Some(&format!("/student/activities/{}", activity_id)),
+                    ).await;
 
                     Ok(Json(ScanQRResponse {
                         success: true,
@@ -343,6 +355,16 @@ async fn scan_qr(
                     .execute(pool)
                     .await
                     .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+
+                    // 🔔 Notify user that they checked in
+                    let _ = NotificationService::send(
+                        pool,
+                        student_id,
+                        &format!("✅ เช็คอินสำเร็จ: {}", activity_title),
+                        &format!("คุณได้เช็คอินเข้าร่วมกิจกรรม {}", activity_title),
+                        NotificationType::Success,
+                        Some(&format!("/student/activities/{}", activity_id)),
+                    ).await;
 
                     Ok(Json(ScanQRResponse {
                         success: true,

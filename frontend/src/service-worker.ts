@@ -113,4 +113,53 @@ sw.addEventListener('fetch', (event) => {
     );
 });
 
+// ─── Web Push Notifications ───────────────────────────────────────────────
+
+sw.addEventListener('push', (event) => {
+    console.log('[ServiceWorker] Push event received:', event);
+
+    let data;
+    try {
+        data = event.data?.json();
+    } catch (e) {
+        data = { title: 'การแจ้งเตือนจาก Trackivity', body: event.data?.text() };
+    }
+
+    const options = {
+        body: data.body,
+        icon: '/pwa-192x192.png',
+        badge: '/pwa-192x192.png', // Small icon for Android status bar
+        data: { url: data.link || '/' },
+        vibrate: [200, 100, 200, 100, 200, 100, 200]
+    };
+
+    event.waitUntil(sw.registration.showNotification(data.title, options));
+});
+
+sw.addEventListener('notificationclick', (event) => {
+    console.log('[ServiceWorker] Notification click received.', event);
+    event.notification.close();
+
+    const urlToOpen = event.notification.data?.url || '/';
+
+    event.waitUntil(
+        sw.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+            // If the app is already open, focus it and maybe navigate
+            for (const client of clientList) {
+                if ('focus' in client) {
+                    return client.focus().then((c) => {
+                        if (c && 'navigate' in c) {
+                            return c.navigate(urlToOpen);
+                        }
+                    });
+                }
+            }
+            // If the app is not open, open a new window
+            if (sw.clients.openWindow) {
+                return sw.clients.openWindow(urlToOpen);
+            }
+        })
+    );
+});
+
 console.log(`[ServiceWorker] Script loaded - Network-Only mode (v${VERSION})`);

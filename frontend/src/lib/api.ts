@@ -493,6 +493,39 @@ export const qrApi = {
         request<any[]>('/qr/user'),
 };
 
+// ─── Notifications ─────────────────────────────────────────────────────────
+
+export interface NotificationItem {
+    id: string;
+    title: string;
+    message: string;
+    type_: string;
+    link: string | null;
+    read_at: string | null;
+    created_at: string;
+}
+
+export const notificationsApi = {
+    list: () =>
+        request<NotificationItem[]>('/notifications'),
+
+    subscribe: (endpoint: string, keys: { p256dh: string, auth: string }) =>
+        request<{ message: string }>('/notifications/subscribe', {
+            method: 'POST',
+            body: JSON.stringify({ endpoint, keys }),
+        }),
+
+    markRead: (id: string) =>
+        request<{ message: string }>(`/notifications/${id}/read`, {
+            method: 'PUT',
+        }),
+
+    markAllRead: () =>
+        request<{ message: string }>('/notifications/read-all', {
+            method: 'PUT',
+        }),
+};
+
 // ─── Backwards-compatible re-exports ────────────────────────────────────────
 // For any code that still imports `activities` or `organizations`
 export const activities = activitiesApi;

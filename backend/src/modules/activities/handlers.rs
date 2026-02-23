@@ -257,6 +257,9 @@ pub async fn update_activity(
     let set_clause = set_parts.join(", ");
     let update_query = format!("UPDATE activities SET {} WHERE id = $1", set_clause);
 
+    let just_published = matches!(payload.status, Some(crate::models::ActivityStatus::Published));
+    let just_opened = payload.registration_open == Some(true);
+
     let mut q = sqlx::query(&update_query).bind(activity_id);
     if let Some(v) = payload.title               { q = q.bind(v); }
     if let Some(v) = payload.description         { q = q.bind(v); }
@@ -285,6 +288,40 @@ pub async fn update_activity(
         .await
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
         .ok_or((StatusCode::NOT_FOUND, "Activity not found".to_string()))?;
+
+    // 🔔 Notify if activity is newly published or registration just opened
+    if just_published || just_opened {
+        let pool_for_notify = pool.clone();
+        let activity_title = activity.title.clone();
+        let activity_id_str = activity_id.to_string();
+        let eligible = activity.eligible_organizations.clone();
+
+        tokio::spawn(async move {
+            let user_ids = sqlx::query_scalar::<_, Uuid>(
+                r#"
+                SELECT u.id FROM users u
+                LEFT JOIN departments d ON u.department_id = d.id
+                WHERE $1::jsonb = '[]'::jsonb 
+                   OR ($1::jsonb ? d.organization_id::text)
+                "#
+            )
+            .bind(&eligible)
+            .fetch_all(&pool_for_notify)
+            .await
+            .unwrap_or_default();
+
+            for u_id in user_ids {
+                let _ = crate::modules::notifications::service::NotificationService::send(
+                    &pool_for_notify,
+                    u_id,
+                    &format!("🎉 มีกิจกรรมใหม่: {}", activity_title),
+                    &format!("กิจกรรม '{}' เปิดรับสมัครแล้ว! เข้าร่วมได้เลย", activity_title),
+                    crate::modules::notifications::service::NotificationType::Info,
+                    Some(&format!("/student/activities/{}", activity_id_str)),
+                ).await;
+            }
+        });
+    }
 
     Ok(Json(activity))
 }

@@ -114,6 +114,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/admins/:id/toggle-status", post(admins::handlers::toggle_admin_status))
         // ─── Organization Admins ──────────────────────────
         .route("/organization-admins", get(admins::handlers::list_organization_admins))
+        // ─── Notifications ────────────────────────────────
+        .route("/notifications", get(modules::notifications::handlers::list_notifications))
+        .route("/notifications/subscribe", post(modules::notifications::handlers::subscribe_push))
+        .route("/notifications/read-all", put(modules::notifications::handlers::mark_all_read))
+        .route("/notifications/:id/read", put(modules::notifications::handlers::mark_read))
         // ─── Middleware ───────────────────────────────────
         .layer(cors)
         .layer(TraceLayer::new_for_http())
