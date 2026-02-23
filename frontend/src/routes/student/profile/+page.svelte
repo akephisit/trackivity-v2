@@ -104,6 +104,7 @@
 	}
 
 	function startEdit() {
+		initializeFormData();
 		editing = true;
 		error = null;
 		fieldErrors = {};
@@ -344,8 +345,7 @@
 									<Select.Trigger
 										class={getFieldError('prefix', fieldErrors) ? 'border-red-500' : ''}
 									>
-										{PrefixOptions.find((opt) => opt.value === formData.prefix)?.label ??
-											'เลือกคำนำหน้า'}
+										{getPrefixLabel(formData.prefix) || 'เลือกคำนำหน้า'}
 									</Select.Trigger>
 									<Select.Content>
 										{#each PrefixOptions as option}
