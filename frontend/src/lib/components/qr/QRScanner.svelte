@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount, onDestroy } from 'svelte';
 	import { browser } from '$app/environment';
-	import jsQR from 'jsqr';
+	import QrScannerLib from 'qr-scanner';
 
 	import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
 	import { Button } from '$lib/components/ui/button';
@@ -30,7 +30,6 @@
 		IconInfoCircle
 	} from '@tabler/icons-svelte';
 
-	// Types and imports
 	import {
 		type QRScanResult,
 		type StatusCode,
@@ -87,567 +86,184 @@
 		vibrationEnabled?: boolean;
 	} = $props();
 
-	// Component state
+	// DOM ref
 	let videoElement = $state<HTMLVideoElement>();
-	let stream = $state<MediaStream | null>(null);
-	let isScanning = $state(false);
-	let error = $state<string | null>(null);
-	let lastScanTime = 0;
-	let scanCooldown = 2000; // 2 seconds between scans
-	let lastScannedQRData = ''; // Track last scanned QR to prevent immediate duplicates
 
-	// Debouncing and cleanup state
-	let cameraRequestInProgress = $state(false);
-	let retryCount = $state(0);
-	let maxRetries = 3;
-	let retryDelay = 1000; // Start with 1 second
-	let cleanupPromise: Promise<void> | null = null;
-
-	let debugInfo = $state({
-		hasCamera: false,
-		cameraPermission: 'unknown',
-		videoReady: false,
-		streamActive: false,
-		deviceOrientation: 'unknown',
-		deviceType: 'unknown' as 'desktop' | 'mobile' | 'tablet' | 'unknown',
-		isDesktop: false
-	});
-
-	// QR Code validation state
-	let invalidScansCount = $state(0);
-	let lastInvalidScanTime = 0;
+	// qr-scanner instance
+	let qrScanner: QrScannerLib | null = null;
 
 	// Scanner state
 	let cameraStatus = $state<'idle' | 'requesting' | 'active' | 'error'>('idle');
+	let error = $state<string | null>(null);
 	let scanHistory = $state<ScannedUser[]>([]);
 	let isProcessingScan = $state(false);
 
-	// Status feedback state
+	// Scan cooldown
+	let lastScanTime = 0;
+	let lastScannedQRData = '';
+	const scanCooldown = 2000;
+
+	// Status feedback
 	let currentStatus = $state<QRScanResult | null>(null);
 	let statusDisplayTimer = $state<NodeJS.Timeout | null>(null);
 	let statusProgress = $state<number>(100);
 	let statusProgressTimer = $state<NodeJS.Timeout | null>(null);
-	let lastStatusHash = ''; // Track last status to prevent duplicate displays
+	let lastStatusHash = '';
 
-	// Enhanced duplicate tracking
+	// Duplicate tracking
 	let recentlyScannedUsers = $state<
 		Map<string, { timestamp: number; scanMode: string; status: string }>
 	>(new Map());
 	let duplicateAttemptCount = $state<number>(0);
 
-	// Scan mode: check-in or check-out
+	// Scan mode
 	let scanMode = $state<'checkin' | 'checkout'>('checkin');
 
-	// Reactive effect
+	// Reactive: start/stop based on isActive prop
 	$effect(() => {
-		if (browser && isActive && activity_id && cameraStatus === 'idle') {
-			console.log('Effect: Starting camera due to state change');
-			// Small delay to ensure DOM is ready
-			setTimeout(() => {
-				if (cameraStatus === 'idle') {
-					// Check again in case status changed
-					startCamera();
-				}
-			}, 100);
-		} else if (browser && !isActive && cameraStatus !== 'idle') {
-			console.log('Effect: Stopping camera due to state change');
-			stopCamera();
+		if (browser && isActive && activity_id && videoElement) {
+			startScanner();
+		} else if (browser && !isActive) {
+			stopScanner();
 		}
 	});
 
-	onMount(async () => {
-		console.log('onMount: Component mounted', { isActive, activity_id, cameraStatus });
+	// Also react when videoElement becomes available
+	$effect(() => {
+		if (browser && isActive && activity_id && videoElement && cameraStatus === 'idle') {
+			startScanner();
+		}
+	});
 
-		if (browser) {
-			// Check camera availability
-			debugInfo.hasCamera = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
-
-			// Check camera permission if available
-			if (navigator.permissions) {
-				try {
-					const permissionStatus = await navigator.permissions.query({
-						name: 'camera' as PermissionName
-					});
-					debugInfo.cameraPermission = permissionStatus.state;
-				} catch (e) {
-					console.log('Cannot check camera permission:', e);
-				}
-			}
-
-			// Set up device and orientation detection
-			setupDeviceDetection();
-			setupOrientationDetection();
-
-			if (isActive && activity_id && cameraStatus === 'idle') {
-				console.log('onMount: Starting camera');
-				startCamera();
-			}
+	onMount(() => {
+		if (browser && isActive && activity_id) {
+			// Will start once videoElement is bound
 		}
 	});
 
 	onDestroy(() => {
-		stopCamera();
+		destroyScanner();
 		clearStatusDisplay();
 	});
 
-	async function startCamera() {
-		if (!browser || !activity_id) {
-			console.log('startCamera: browser or activity_id not available');
-			return;
-		}
-
-		// Prevent multiple simultaneous calls
-		if (cameraStatus === 'requesting' || cameraStatus === 'active') {
-			console.log('startCamera: Camera already starting/active, skipping');
-			return;
-		}
-
-		console.log('startCamera: Starting camera...');
-
-		// Check if getUserMedia is supported
-		if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-			const errorMsg = 'เบราว์เซอร์นี้ไม่รองรับการเข้าถึงกล้อง';
-			handleCameraError(errorMsg);
-			return;
-		}
-
-		// Ensure any existing stream is completely stopped before starting new one
-		await ensureStreamCleanup();
+	async function startScanner() {
+		if (!browser || !activity_id || !videoElement) return;
+		if (cameraStatus === 'requesting' || cameraStatus === 'active') return;
 
 		cameraStatus = 'requesting';
 		error = null;
 		onStatusChange?.(cameraStatus);
 
 		try {
-			// Get camera stream with retry mechanism
-			stream = await getCameraStreamWithRetry();
-			console.log('Camera stream obtained successfully:', stream);
+			// Destroy existing instance first
+			if (qrScanner) {
+				qrScanner.destroy();
+				qrScanner = null;
+			}
 
-			console.log('Checking video element and stream:', {
-				hasVideoElement: !!videoElement,
-				hasStream: !!stream,
-				videoElementTagName: videoElement?.tagName,
-				streamId: stream?.id
+			qrScanner = new QrScannerLib(videoElement, (result) => handleQrResult(result.data), {
+				onDecodeError: () => {
+					// Intentionally silent — fires constantly when no QR visible
+				},
+				highlightScanRegion: true,
+				highlightCodeOutline: true,
+				preferredCamera: 'environment', // Use back camera on mobile
+				maxScansPerSecond: 10,
+				calculateScanRegion: (video) => {
+					// Scan a centered square region for better performance
+					const smallestDimension = Math.min(video.videoWidth, video.videoHeight);
+					const scanRegionSize = Math.round(smallestDimension * 0.7);
+					return {
+						x: Math.round((video.videoWidth - scanRegionSize) / 2),
+						y: Math.round((video.videoHeight - scanRegionSize) / 2),
+						width: scanRegionSize,
+						height: scanRegionSize
+					};
+				}
 			});
 
-			if (!videoElement) {
-				console.error('Video element not available, waiting for DOM...');
-				// Wait for video element to be available in DOM
-				await new Promise((resolve) => {
-					const checkElement = () => {
-						// Try to find video element in DOM (only in browser)
-						if (!browser) {
-							resolve(false);
-							return;
-						}
-						const domVideoElement = document.querySelector('#video-container video');
-						console.log('Checking for video element in DOM:', {
-							domVideoElement: !!domVideoElement,
-							bindVideoElement: !!videoElement,
-							domElementTag: domVideoElement?.tagName
-						});
+			await qrScanner.start();
 
-						if (domVideoElement) {
-							console.log('Video element found in DOM, binding...');
-							videoElement = domVideoElement as HTMLVideoElement;
-							resolve(true);
-						} else if (videoElement) {
-							console.log('Video element now available via binding');
-							resolve(true);
-						} else {
-							console.log('Video element still not found, retrying...');
-							setTimeout(checkElement, 100);
-						}
-					};
-					checkElement();
-				});
-			}
-
-			if (videoElement && stream) {
-				console.log('Setting video stream');
-				videoElement.srcObject = stream;
-
-				// Wait for video metadata to load
-				await new Promise((resolve, reject) => {
-					if (!videoElement) {
-						reject(new Error('Video element not available'));
-						return;
-					}
-
-					const timeoutId = setTimeout(() => reject(new Error('Video load timeout')), 10000);
-
-					const onLoadedMetadata = () => {
-						if (!videoElement) return;
-						clearTimeout(timeoutId);
-						console.log(
-							'Video metadata loaded:',
-							videoElement.videoWidth,
-							'x',
-							videoElement.videoHeight
-						);
-						console.log(
-							'Video element dimensions:',
-							videoElement.offsetWidth,
-							'x',
-							videoElement.offsetHeight
-						);
-						console.log(
-							'Video element styles:',
-							browser ? window.getComputedStyle(videoElement) : 'N/A (SSR)'
-						);
-						debugInfo.videoReady = true;
-						debugInfo.streamActive = true;
-						resolve(true);
-					};
-
-					const onVideoError = (e: Event) => {
-						clearTimeout(timeoutId);
-						console.error('Video error:', e);
-						reject(new Error('Video element error'));
-					};
-
-					videoElement.addEventListener('loadedmetadata', onLoadedMetadata, { once: true });
-					videoElement.addEventListener('error', onVideoError, { once: true });
-
-					// Also listen for canplay event as backup
-					videoElement.addEventListener(
-						'canplay',
-						() => {
-							console.log('Video can start playing');
-							debugInfo.videoReady = true;
-						},
-						{ once: true }
-					);
-				});
-
-				// Play video with error handling for mobile
-				console.log('Starting video playback');
-
-				if (!videoElement) {
-					throw new Error('Video element not available for playback');
-				}
-
-				try {
-					const playPromise = videoElement.play();
-					if (playPromise !== undefined) {
-						await playPromise;
-					}
-				} catch (playError) {
-					console.warn('Video play failed, trying again:', playError);
-					// Sometimes the first play fails, try again after a short delay
-					await new Promise((resolve) => setTimeout(resolve, 100));
-					if (videoElement) {
-						await videoElement.play();
-					}
-				}
-
-				// Set mobile-specific attributes
-				if (videoElement) {
-					videoElement.setAttribute('webkit-playsinline', 'true');
-					videoElement.setAttribute('data-webkit-playsinline', 'true');
-
-					// Force video visibility and correct sizing
-					videoElement.style.visibility = 'visible';
-					videoElement.style.opacity = '1';
-					videoElement.style.display = 'block';
-					videoElement.style.width = '100%';
-					videoElement.style.height = '100%';
-					videoElement.style.objectFit = 'cover';
-					videoElement.style.zIndex = '1';
-
-					// Force a reflow to ensure proper sizing
-					videoElement.offsetHeight;
-				}
-
-				// Additional checks for video display (browser only)
-				if (videoElement && browser) {
-					console.log('Video element computed styles:', {
-						display: window.getComputedStyle(videoElement).display,
-						visibility: window.getComputedStyle(videoElement).visibility,
-						opacity: window.getComputedStyle(videoElement).opacity,
-						position: window.getComputedStyle(videoElement).position,
-						width: window.getComputedStyle(videoElement).width,
-						height: window.getComputedStyle(videoElement).height,
-						objectFit: window.getComputedStyle(videoElement).objectFit,
-						transform: window.getComputedStyle(videoElement).transform
-					});
-				}
-
-				// Additional debugging for video display
-				setTimeout(() => {
-					if (videoElement) {
-						console.log('Video final check:', {
-							videoWidth: videoElement.videoWidth,
-							videoHeight: videoElement.videoHeight,
-							offsetWidth: videoElement.offsetWidth,
-							offsetHeight: videoElement.offsetHeight,
-							clientWidth: videoElement.clientWidth,
-							clientHeight: videoElement.clientHeight,
-							readyState: videoElement.readyState,
-							paused: videoElement.paused,
-							srcObject: !!videoElement.srcObject,
-							parentElement: !!videoElement.parentElement,
-							isConnected: videoElement.isConnected,
-							style: videoElement.style.cssText
-						});
-
-						// Try to force repaint (browser only)
-						const parent = videoElement.parentElement;
-						if (parent && browser) {
-							console.log('Parent element info:', {
-								offsetWidth: parent.offsetWidth,
-								offsetHeight: parent.offsetHeight,
-								className: parent.className,
-								computedStyle: window.getComputedStyle(parent).cssText
-							});
-
-							// Force repaint by temporarily hiding and showing
-							parent.style.display = 'none';
-							parent.offsetHeight; // Force reflow
-							parent.style.display = '';
-						}
-					}
-				}, 1000);
-
-				cameraStatus = 'active';
-				isScanning = true;
-				debugInfo.streamActive = true;
-				console.log('Camera started successfully');
-
-				// Start QR detection after a short delay to ensure video is rendering
-				setTimeout(() => {
-					startQRDetection();
-				}, 500);
-			}
-		} catch (err) {
-			console.error('Failed to start camera:', err);
-
-			// Handle the error with retry logic
-			await handleCameraStartError(err as Error);
+			cameraStatus = 'active';
+			onStatusChange?.(cameraStatus);
+		} catch (err: any) {
+			console.error('QR Scanner start error:', err);
+			const msg = getErrorMessage(err);
+			error = msg;
+			cameraStatus = 'error';
+			onStatusChange?.(cameraStatus);
+			onError?.(msg);
 		}
-
-		cameraRequestInProgress = false;
-		onStatusChange?.(cameraStatus);
 	}
 
-	function stopCamera() {
-		console.log('Stopping camera');
-
-		// Create cleanup promise to track completion
-		cleanupPromise = performStreamCleanup();
-
-		// Don't wait for cleanup to complete, but track it
-		cleanupPromise.finally(() => {
-			cleanupPromise = null;
-		});
-
-		isScanning = false;
+	function stopScanner() {
+		if (qrScanner) {
+			try {
+				qrScanner.stop();
+			} catch (e) {
+				// ignore
+			}
+		}
 		cameraStatus = 'idle';
-		cameraRequestInProgress = false;
-		retryCount = 0;
 		error = null;
-		lastScannedQRData = ''; // Reset last scanned QR data
+		lastScannedQRData = '';
 		onStatusChange?.(cameraStatus);
 	}
 
-	/**
-	 * Performs thorough stream cleanup
-	 */
-	async function performStreamCleanup(): Promise<void> {
-		console.log('Performing stream cleanup');
-
-		if (stream) {
+	function destroyScanner() {
+		if (qrScanner) {
 			try {
-				// Stop all tracks with proper error handling
-				const tracks = stream.getTracks();
-				for (const track of tracks) {
-					try {
-						console.log('Stopping track:', track.label, 'State:', track.readyState);
-						track.stop();
-
-						// Wait for track to actually stop
-						let attempts = 0;
-						while (track.readyState !== 'ended' && attempts < 10) {
-							await new Promise((resolve) => setTimeout(resolve, 10));
-							attempts++;
-						}
-
-						if (track.readyState !== 'ended') {
-							console.warn('Track did not stop properly:', track.label);
-						}
-					} catch (e) {
-						console.warn('Error stopping track:', track.label, e);
-					}
-				}
+				qrScanner.destroy();
 			} catch (e) {
-				console.warn('Error during track cleanup:', e);
-			} finally {
-				stream = null;
+				// ignore
 			}
+			qrScanner = null;
 		}
-
-		if (videoElement) {
-			try {
-				videoElement.pause();
-				videoElement.srcObject = null;
-
-				// Wait a bit for the video element to fully release the stream
-				await new Promise((resolve) => setTimeout(resolve, 100));
-			} catch (e) {
-				console.warn('Error cleaning up video element:', e);
-			}
-		}
-
-		debugInfo.streamActive = false;
-		debugInfo.videoReady = false;
+		cameraStatus = 'idle';
+		onStatusChange?.(cameraStatus);
 	}
 
-	/**
-	 * Ensures all streams are properly cleaned up before starting new ones
-	 */
-	async function ensureStreamCleanup(): Promise<void> {
-		if (stream || videoElement?.srcObject) {
-			console.log('Ensuring complete stream cleanup before new camera start');
-			await performStreamCleanup();
-
-			// Additional safety delay to ensure hardware is released
-			await new Promise((resolve) => setTimeout(resolve, 200));
+	function getErrorMessage(err: any): string {
+		const msg = err?.message || err?.toString() || '';
+		if (msg.includes('Permission') || msg.includes('NotAllowed') || msg.includes('denied')) {
+			return 'กรุณาอนุญาตการใช้งานกล้องในเบราว์เซอร์';
+		} else if (msg.includes('NotFound') || msg.includes('no camera')) {
+			return 'ไม่พบกล้องในอุปกรณ์';
+		} else if (msg.includes('NotReadable') || msg.includes('busy')) {
+			return 'กล้องถูกใช้งานโดยแอปพลิเคชันอื่น โปรดปิดแอปอื่นและลองใหม่';
 		}
+		return `ไม่สามารถเข้าถึงกล้องได้: ${msg || 'ข้อผิดพลาดไม่ทราบสาเหตุ'}`;
 	}
 
-	async function startQRDetection() {
-		if (!isScanning || !videoElement || cameraStatus !== 'active') return;
+	async function handleQrResult(qrData: string) {
+		if (isProcessingScan) return;
 
-		try {
-			// Use HTML5 QRCode library or create canvas-based detection
-			await detectQRCode();
-		} catch (err) {
-			console.error('QR Detection error:', err);
-		}
+		const now = Date.now();
 
-		// Continue scanning
-		if (isScanning) {
-			requestAnimationFrame(startQRDetection);
-		}
-	}
+		// Cooldown: same QR within 2 seconds → skip
+		if (qrData === lastScannedQRData && now - lastScanTime < scanCooldown) return;
+		// Global cooldown between any scans
+		if (now - lastScanTime < 1000) return;
 
-	async function detectQRCode() {
-		if (!videoElement || isProcessingScan) return;
-
-		// Check if video is ready
-		if (videoElement.videoWidth === 0 || videoElement.videoHeight === 0) {
-			return; // Video not ready yet
-		}
-
-		// Create canvas to capture video frame (only in browser)
-		if (!browser) return;
-
-		const canvas = document.createElement('canvas');
-		const ctx = canvas.getContext('2d');
-
-		if (!ctx) return;
-
-		canvas.width = videoElement.videoWidth;
-		canvas.height = videoElement.videoHeight;
-
-		// Draw video frame normally (no flipping)
-		ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
-
-		// Get image data
-		const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-
-		// Use jsQR library for QR code detection
-		try {
-			await handleQRDetection(imageData);
-		} catch (err) {
-			console.error('QR Code detection error:', err);
-		}
-	}
-
-	async function handleQRDetection(imageData: ImageData) {
-		// Use jsQR to detect QR codes in the image data
-		try {
-			const code = jsQR(imageData.data, imageData.width, imageData.height, {
-				inversionAttempts: 'attemptBoth'
-			});
-
-			if (code) {
-				// Check scan cooldown
-				const now = Date.now();
-				if (now - lastScanTime < scanCooldown) return;
-
-				// Check if this is the same QR data as the last scan to prevent immediate duplicates
-				if (code.data === lastScannedQRData && now - lastScanTime < scanCooldown * 2) {
-					return; // Skip processing same QR data within extended cooldown
-				}
-
-				// Validate that this is actually a proper QR code for our system
-				if (isValidQRCode(code.data)) {
-					// Found valid QR code, process it
-					await processQRCode(code.data);
-				} else {
-					// Invalid QR code or barcode detected
-					handleInvalidCode(code.data, now);
-				}
-			}
-		} catch (err) {
-			console.error('jsQR detection error:', err);
-		}
-	}
-
-	async function processQRCode(qrData: string) {
-		if (isProcessingScan) {
-			console.log('Scan already in progress, skipping duplicate');
-			return;
-		}
-
-		// Additional check for same QR data to prevent processing duplicates
-		if (qrData === lastScannedQRData && Date.now() - lastScanTime < scanCooldown) {
-			console.log('Same QR data detected within cooldown period, skipping');
+		// Validate QR
+		if (!isValidQRCode(qrData)) {
+			handleInvalidCode(qrData, now);
 			return;
 		}
 
 		isProcessingScan = true;
-		const now = Date.now();
-
-		// Check cooldown
-		if (now - lastScanTime < scanCooldown) {
-			console.log('Scan within cooldown period, skipping');
-			isProcessingScan = false;
-			return;
-		}
-
 		lastScanTime = now;
-		lastScannedQRData = qrData; // Track this QR data to prevent immediate duplicates
+		lastScannedQRData = qrData;
 
 		try {
-			// Double-check QR code validity before sending to server
-			if (!isValidQRCode(qrData)) {
-				const errorResult = processQRScanResult({
-					success: false,
-					error: {
-						code: 'QR_INVALID',
-						message: 'รูปแบบ QR Code ไม่ถูกต้อง หรือเสียหาย',
-						category: 'error'
-					}
-				});
-
-				displayStatus(errorResult);
-				return;
-			}
-
 			const response = await fetch(`/api/activities/${activity_id}/${scanMode}`, {
 				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json'
-				},
+				headers: { 'Content-Type': 'application/json' },
 				credentials: 'include',
 				body: JSON.stringify({ qr_data: qrData })
 			});
 
 			const result = await response.json();
-
-			// Process the API response through our status system
 			const processedResult = processQRScanResult(result);
 			displayStatus(processedResult);
 
@@ -663,39 +279,35 @@
 					statusCode: scanMode === 'checkin' ? 'CHECKIN_SUCCESS' : 'CHECKOUT_SUCCESS'
 				};
 
-				// The flags are already set by the API, no need to modify them here
-
-				// Add to history
 				if (scanResult.user_name && scanResult.student_id) {
-					const historyItem: ScannedUser = {
-						user_name: scanResult.user_name,
-						student_id: scanResult.student_id,
-						participation_status:
-							scanResult.participation_status ||
-							(scanMode === 'checkin' ? 'checked_in' : 'checked_out'),
-						checked_in_at: scanResult.checked_in_at || new Date().toISOString(),
-						timestamp: now
-					};
-
-					scanHistory = [historyItem, ...scanHistory.slice(0, maxHistoryItems - 1)];
+					scanHistory = [
+						{
+							user_name: scanResult.user_name,
+							student_id: scanResult.student_id,
+							participation_status:
+								scanResult.participation_status ||
+								(scanMode === 'checkin' ? 'checked_in' : 'checked_out'),
+							checked_in_at: scanResult.checked_in_at || new Date().toISOString(),
+							timestamp: now
+						},
+						...scanHistory.slice(0, maxHistoryItems - 1)
+					];
 				}
 
 				onScan?.(scanResult, qrData);
 			} else {
-				const scanResult: ScanResult = {
-					success: false,
-					message: processedResult.message,
-					category: processedResult.category,
-					statusCode: processedResult.error?.code,
-					details: processedResult.error?.details
-						? formatStatusDetails(processedResult.error.details)
-						: undefined
-				};
-
-				onScan?.(scanResult, qrData);
+				onScan?.(
+					{
+						success: false,
+						message: processedResult.message,
+						category: processedResult.category,
+						statusCode: processedResult.error?.code
+					},
+					qrData
+				);
 			}
 		} catch (err) {
-			console.error('Scan processing error:', err);
+			console.error('Scan error:', err);
 			const errorResult = processQRScanResult({
 				success: false,
 				error: {
@@ -704,7 +316,6 @@
 					category: 'error'
 				}
 			});
-
 			displayStatus(errorResult);
 			onError?.(errorResult.message);
 		} finally {
@@ -712,23 +323,73 @@
 		}
 	}
 
-	/**
-	 * Display status with visual and audio feedback
-	 */
+	// ─── QR Validation ──────────────────────────────────────────────────────────
+
+	function isValidQRCode(qrData: string): boolean {
+		if (!qrData || typeof qrData !== 'string' || qrData.length < 10) return false;
+		if (!browser) return false;
+
+		// 1. JWT token format (xxxx.yyyy.zzzz) — backend generates this
+		const parts = qrData.split('.');
+		if (parts.length === 3) {
+			try {
+				const b64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+				const padded = b64.padEnd(b64.length + ((4 - (b64.length % 4)) % 4), '=');
+				const payload = JSON.parse(atob(padded));
+				if (payload?.sub) return true;
+			} catch {
+				// not JWT
+			}
+		}
+
+		// 2. Base64 encoded JSON with uid/sub/user_id
+		try {
+			const obj = JSON.parse(atob(qrData));
+			if (obj && (obj.uid || obj.sub || obj.user_id)) return true;
+		} catch {}
+
+		// 3. Direct JSON
+		try {
+			const obj = JSON.parse(qrData);
+			if (obj && (obj.uid || obj.sub || obj.user_id)) return true;
+		} catch {}
+
+		// Reject pure numeric barcodes
+		if (/^\d+$/.test(qrData)) return false;
+
+		return false;
+	}
+
+	let lastInvalidScanTime = 0;
+	let invalidScansCount = $state(0);
+
+	function handleInvalidCode(data: string, timestamp: number) {
+		if (timestamp - lastInvalidScanTime < 3000) return;
+		lastInvalidScanTime = timestamp;
+		invalidScansCount++;
+
+		const message = /^\d+$/.test(data)
+			? 'ตรวจพบบาร์โค้ด กรุณาสแกน QR Code เท่านั้น'
+			: 'รูปแบบ QR Code ไม่ถูกต้อง';
+
+		displayStatus({
+			success: false,
+			message,
+			category: 'error',
+			error: { code: 'QR_INVALID', message, category: 'error' }
+		});
+	}
+
+	// ─── Status Display ─────────────────────────────────────────────────────────
+
 	function displayStatus(result: QRScanResult) {
-		// Handle duplicate detection with minimal feedback for new flexible flow
 		const now = Date.now();
 		const isDuplicateSuccess =
 			result.success && result.data && (result.data as any).is_duplicate === true;
 
-		// Minimal tracking for duplicate attempts - less intrusive
 		if (isDuplicateSuccess) {
-			// Simple duplicate counter without complex timing logic
 			duplicateAttemptCount = (duplicateAttemptCount || 0) + 1;
-
-			// Minimal message enhancement for duplicates
 			if (duplicateAttemptCount > 2) {
-				// Only show after multiple duplicates
 				result = {
 					...result,
 					message: `${result.message} (สแกนซ้ำ ${duplicateAttemptCount} ครั้ง)`
@@ -736,45 +397,32 @@
 			}
 		}
 
-		// Track this user's recent scan with minimal data
 		if (result.data?.student_id) {
 			recentlyScannedUsers.set(result.data.student_id, {
 				timestamp: now,
-				scanMode: scanMode,
+				scanMode,
 				status: result.success ? 'SUCCESS' : result.error?.code || 'ERROR'
 			});
-
-			// Clean up old entries (older than 2 minutes)
-			for (const [studentId, data] of recentlyScannedUsers.entries()) {
-				if (now - data.timestamp > 120000) {
-					recentlyScannedUsers.delete(studentId);
-				}
+			// Clean old entries
+			for (const [id, data] of recentlyScannedUsers.entries()) {
+				if (now - data.timestamp > 120000) recentlyScannedUsers.delete(id);
 			}
 		}
 
-		// Create a hash of the current status to prevent duplicate displays
 		const statusHash = JSON.stringify({
 			success: result.success,
 			message: result.message,
 			errorCode: result.error?.code,
-			userData: result.data?.student_id, // Use student_id as unique identifier
+			userData: result.data?.student_id,
 			duplicateCount: duplicateAttemptCount
 		});
 
-		// Skip if this is the same status as the last one displayed within a short time
-		if (statusHash === lastStatusHash) {
-			console.log('Duplicate status display prevented');
-			return;
-		}
+		if (statusHash === lastStatusHash) return;
 
-		// Clear any existing status display
 		clearStatusDisplay();
-
-		// Set the current status and update last status hash
 		currentStatus = result;
 		lastStatusHash = statusHash;
 
-		// Determine status code for configuration
 		const statusCode =
 			result.error?.code ||
 			(result.success
@@ -783,69 +431,42 @@
 					: 'CHECKOUT_SUCCESS'
 				: 'INTERNAL_ERROR');
 		const config = getStatusConfig(statusCode);
-
-		// Minimal duration for all statuses - less intrusive
 		const displayDuration = isDuplicateSuccess
 			? Math.min(config.duration, 2500)
 			: Math.min(config.duration, 4000);
 
-		// Audio feedback
-		if (soundEnabled) {
-			playStatusSound(statusCode);
-		}
+		if (soundEnabled) playStatusSound(statusCode);
+		if (vibrationEnabled) triggerStatusVibration(statusCode);
 
-		// Minimal haptic feedback
-		if (vibrationEnabled) {
-			// Use standard vibration for all cases, no special handling for duplicates
-			triggerStatusVibration(statusCode);
-		}
-
-		// Start progress animation
 		statusProgress = 100;
 		statusProgressTimer = setInterval(() => {
 			statusProgress -= 100 / (displayDuration / 100);
-			if (statusProgress <= 0) {
-				clearStatusDisplay();
-			}
+			if (statusProgress <= 0) clearStatusDisplay();
 		}, 100);
 
-		// Auto-hide after duration
-		statusDisplayTimer = setTimeout(() => {
-			clearStatusDisplay();
-		}, displayDuration);
+		statusDisplayTimer = setTimeout(() => clearStatusDisplay(), displayDuration);
 
-		// Reset duplicate count after successful non-duplicate scans
-		if (!isDuplicateSuccess) {
-			duplicateAttemptCount = 0;
-		}
+		if (!isDuplicateSuccess) duplicateAttemptCount = 0;
 	}
 
-	/**
-	 * Clear status display timers and reset state
-	 */
 	function clearStatusDisplay() {
 		if (statusDisplayTimer) {
 			clearTimeout(statusDisplayTimer);
 			statusDisplayTimer = null;
 		}
-
 		if (statusProgressTimer) {
 			clearInterval(statusProgressTimer);
 			statusProgressTimer = null;
 		}
-
 		currentStatus = null;
 		statusProgress = 100;
-
-		// Clear last status hash after a delay to allow new statuses
 		setTimeout(() => {
 			lastStatusHash = '';
 		}, 1000);
 	}
 
-	/**
-	 * Get appropriate icon component for status
-	 */
+	// ─── Status Icons ────────────────────────────────────────────────────────────
+
 	function getStatusIcon(statusCode: StatusCode) {
 		const iconMap: Record<StatusCode, any> = {
 			CHECKIN_SUCCESS: IconCheck,
@@ -873,28 +494,18 @@
 			VALIDATION_ERROR: IconAlertTriangle,
 			INTERNAL_ERROR: IconAlertTriangle
 		};
-
 		return iconMap[statusCode] || IconAlertTriangle;
 	}
 
-	// Manual scan trigger for testing/accessibility
-	async function triggerManualScan() {
-		// In development or for testing, allow manual QR data input
-		const qrData = prompt('กรุณาป้อน QR Data สำหรับทดสอบ:');
-		if (qrData) {
-			await processQRCode(qrData);
-		}
-	}
+	// ─── Helpers ─────────────────────────────────────────────────────────────────
 
 	function clearHistory() {
 		scanHistory = [];
-		// Toast notification removed - component focuses on enhanced status display
 	}
 
 	function formatDateTime(dateString: string): string {
 		try {
-			const date = new Date(dateString);
-			return date.toLocaleString('th-TH', {
+			return new Date(dateString).toLocaleString('th-TH', {
 				year: '2-digit',
 				month: '2-digit',
 				day: '2-digit',
@@ -916,8 +527,6 @@
 			case 'checked_out':
 			case 'checkedout':
 				return 'secondary';
-			case 'registered':
-				return 'secondary';
 			default:
 				return 'outline';
 		}
@@ -938,429 +547,12 @@
 		}
 	}
 
-	// QR Code validation function
-	function isValidQRCode(qrData: string): boolean {
-		if (!qrData || typeof qrData !== 'string') {
-			return false;
-		}
-
-		// Check if it's too short to be a valid QR code
-		if (qrData.length < 10) {
-			return false;
-		}
-
-		if (!browser) {
-			return false; // Skip validation on server-side
-		}
-
-		// 1. Check if it's a JWT token (format: xxxxx.yyyyy.zzzzz)
-		// Backend generates QR codes as JWT tokens
-		const jwtParts = qrData.split('.');
-		if (jwtParts.length === 3) {
-			try {
-				// Decode the JWT payload (second part)
-				// JWT uses base64url encoding (no padding), need to normalize
-				const base64Payload = jwtParts[1].replace(/-/g, '+').replace(/_/g, '/');
-				const paddedPayload = base64Payload.padEnd(
-					base64Payload.length + ((4 - (base64Payload.length % 4)) % 4),
-					'='
-				);
-				const payload = JSON.parse(atob(paddedPayload));
-				// Valid JWT QR if it has a 'sub' (user id) field
-				if (payload && typeof payload === 'object' && payload.sub) {
-					return true;
-				}
-			} catch {
-				// Not a valid JWT
-			}
-		}
-
-		// 2. Try to parse as Base64 encoded JSON (legacy format)
-		try {
-			const decoded = atob(qrData);
-			const obj = JSON.parse(decoded);
-			// Check if it has required fields (uid or sub)
-			if (obj && typeof obj === 'object' && (obj.uid || obj.sub || obj.user_id)) {
-				return true;
-			}
-		} catch {
-			// Try parsing as direct JSON
-			try {
-				const obj = JSON.parse(qrData);
-				if (obj && typeof obj === 'object' && (obj.uid || obj.sub || obj.user_id)) {
-					return true;
-				}
-			} catch {
-				// Not valid JSON
-			}
-		}
-
-		// Check for common barcode patterns that are NOT QR codes
-		if (isLikelyBarcode(qrData)) {
-			return false;
-		}
-
-		return false;
-	}
-
-	// Function to detect common barcode patterns
-	function isLikelyBarcode(data: string): boolean {
-		// Common barcode patterns:
-		// 1. Only digits (UPC, EAN)
-		if (/^\d+$/.test(data)) {
-			return true;
-		}
-
-		// 2. Simple alphanumeric patterns without structure
-		if (/^[A-Z0-9]+$/.test(data) && data.length < 20) {
-			return true;
-		}
-
-		// 3. Common barcode prefixes
-		const barcodePatterns = [
-			/^\d{12,13}$/, // UPC/EAN
-			/^[A-Z]{2}\d+$/, // Some product codes
-			/^\d{1,4}-\d{4,6}-\d{1,6}$/ // Hyphenated numbers
-		];
-
-		return barcodePatterns.some((pattern) => pattern.test(data));
-	}
-
-	// Handle invalid codes (barcodes, etc.)
-	function handleInvalidCode(data: string, timestamp: number) {
-		// Prevent spam of invalid scan notifications
-		if (timestamp - lastInvalidScanTime < 3000) {
-			return;
-		}
-
-		lastInvalidScanTime = timestamp;
-		invalidScansCount++;
-
-		// Show a helpful message via the enhanced status display
-		const message = isLikelyBarcode(data)
-			? 'ตรวจพบบาร์โค้ด กรุณาสแกน QR Code เท่านั้น'
-			: 'รูปแบบ QR Code ไม่ถูกต้อง';
-
-		// Use the enhanced status display instead of toast
-		const invalidResult = {
-			success: false,
-			message,
-			category: 'error' as const,
-			error: {
-				code: 'QR_INVALID' as const,
-				message,
-				category: 'error' as const
-			}
-		};
-
-		displayStatus(invalidResult);
-		console.log('Invalid code detected:', {
-			data,
-			isLikelyBarcode: isLikelyBarcode(data),
-			length: data.length
-		});
-	}
-
-	// Device type detection
-	function getDeviceType(): 'desktop' | 'mobile' | 'tablet' | 'unknown' {
-		if (!browser) return 'unknown';
-
-		const userAgent = navigator.userAgent.toLowerCase();
-		const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-		const screenWidth = window.screen.width;
-		const screenHeight = window.screen.height;
-		const maxDimension = Math.max(screenWidth, screenHeight);
-		const minDimension = Math.min(screenWidth, screenHeight);
-
-		// Check for mobile user agents
-		const mobileUserAgents = [
-			'android',
-			'webos',
-			'iphone',
-			'ipad',
-			'ipod',
-			'blackberry',
-			'iemobile',
-			'opera mini'
-		];
-
-		const isMobileUA = mobileUserAgents.some((device) => userAgent.includes(device));
-
-		// Desktop detection: Large screen + no mobile UA + mouse/keyboard interaction
-		if (
-			maxDimension >= 1024 &&
-			minDimension >= 768 &&
-			!isMobileUA &&
-			(!isTouchDevice || (isTouchDevice && maxDimension >= 1366))
-		) {
-			return 'desktop';
-		}
-
-		// Tablet detection: Medium screen or iPad
-		if (
-			(minDimension >= 768 && maxDimension >= 1024) ||
-			userAgent.includes('ipad') ||
-			(userAgent.includes('android') && !userAgent.includes('mobile'))
-		) {
-			return 'tablet';
-		}
-
-		// Mobile detection: Small screen or mobile UA
-		if (isMobileUA || maxDimension < 768) {
-			return 'mobile';
-		}
-
-		// Additional desktop check: pointer precision
-		if (window.matchMedia && window.matchMedia('(pointer: fine)').matches) {
-			return 'desktop';
-		}
-
-		return 'unknown';
-	}
-
-	// Setup device detection
-	function setupDeviceDetection() {
-		if (!browser) return;
-
-		debugInfo.deviceType = getDeviceType();
-		debugInfo.isDesktop = debugInfo.deviceType === 'desktop';
-
-		console.log('Device detection:', {
-			type: debugInfo.deviceType,
-			isDesktop: debugInfo.isDesktop,
-			userAgent: navigator.userAgent,
-			screenSize: `${window.screen.width}x${window.screen.height}`,
-			windowSize: `${window.innerWidth}x${window.innerHeight}`,
-			touchDevice: 'ontouchstart' in window || navigator.maxTouchPoints > 0,
-			pointerFine: window.matchMedia && window.matchMedia('(pointer: fine)').matches
-		});
-	}
-
-	// Device orientation detection
-	function getDeviceOrientation(): 'portrait' | 'landscape' {
-		if (!browser) return 'portrait';
-
-		// Use screen orientation API if available
-		if (screen.orientation) {
-			return screen.orientation.angle === 0 || screen.orientation.angle === 180
-				? 'portrait'
-				: 'landscape';
-		}
-
-		// Fallback to window dimensions
-		return window.innerHeight > window.innerWidth ? 'portrait' : 'landscape';
-	}
-
-	// Setup orientation change detection
-	function setupOrientationDetection() {
-		if (!browser) return;
-
-		debugInfo.deviceOrientation = getDeviceOrientation();
-
-		// Listen for orientation changes
-		const handleOrientationChange = () => {
-			const newOrientation = getDeviceOrientation();
-			if (newOrientation !== debugInfo.deviceOrientation) {
-				debugInfo.deviceOrientation = newOrientation;
-				console.log('Orientation changed to:', newOrientation);
-
-				// For mobile/tablet devices, restart camera with new constraints
-				// For desktop, orientation changes are less relevant since we use fixed landscape
-				if (!debugInfo.isDesktop && cameraStatus === 'active' && stream) {
-					console.log('Restarting camera for orientation change on mobile/tablet');
-					stopCamera();
-					setTimeout(() => {
-						if (isActive) {
-							startCamera();
-						}
-					}, 500);
-				}
-			}
-		};
-
-		// Listen for both orientationchange and resize
-		window.addEventListener('orientationchange', handleOrientationChange);
-		window.addEventListener('resize', handleOrientationChange);
-
-		// Clean up listeners on destroy
-		return () => {
-			window.removeEventListener('orientationchange', handleOrientationChange);
-			window.removeEventListener('resize', handleOrientationChange);
-		};
-	}
-
-	/**
-	 * Gets camera stream with retry mechanism for better reliability
-	 */
-	async function getCameraStreamWithRetry(): Promise<MediaStream> {
-		// Determine camera constraints based on device type and orientation
-		const deviceType = debugInfo.deviceType;
-		const isDesktop = debugInfo.isDesktop;
-		const orientation = getDeviceOrientation();
-
-		console.log('Camera constraints calculation:', {
-			deviceType,
-			isDesktop,
-			orientation
-		});
-
-		let constraints: MediaStreamConstraints;
-
-		if (isDesktop) {
-			// Desktop: Always use landscape-oriented constraints for better QR scanning
-			constraints = {
-				video: {
-					facingMode: { ideal: 'user' }, // Desktop usually has front-facing camera
-					width: { min: 640, ideal: 1280, max: 1920 },
-					height: { min: 480, ideal: 720, max: 1080 },
-					frameRate: { ideal: 30, max: 60 },
-					aspectRatio: { ideal: 16 / 9 } // Force landscape aspect ratio
-				},
-				audio: false
-			};
-		} else if (deviceType === 'tablet') {
-			// Tablet: Use orientation to determine constraints
-			const isPortrait = orientation === 'portrait';
-			constraints = {
-				video: {
-					facingMode: { ideal: 'environment' }, // Prefer back camera
-					width: isPortrait
-						? { min: 480, ideal: 720, max: 1080 }
-						: { min: 720, ideal: 1280, max: 1920 },
-					height: isPortrait
-						? { min: 640, ideal: 1280, max: 1920 }
-						: { min: 480, ideal: 720, max: 1080 },
-					frameRate: { ideal: 30, max: 60 }
-				},
-				audio: false
-			};
+	function handleStopClick() {
+		if (onStop) {
+			onStop();
 		} else {
-			// Mobile: Use orientation-based constraints
-			const isPortrait = orientation === 'portrait';
-			constraints = {
-				video: {
-					facingMode: { ideal: 'environment' }, // Prefer back camera for mobile
-					width: isPortrait
-						? { min: 320, ideal: 720, max: 1080 }
-						: { min: 480, ideal: 1280, max: 1920 },
-					height: isPortrait
-						? { min: 480, ideal: 1280, max: 1920 }
-						: { min: 320, ideal: 720, max: 1080 },
-					frameRate: { ideal: 30, max: 60 }
-				},
-				audio: false
-			};
+			stopScanner();
 		}
-
-		console.log('Requesting camera with constraints:', constraints);
-
-		// Try with ideal constraints first
-		try {
-			const stream = await navigator.mediaDevices.getUserMedia(constraints);
-			console.log('Camera stream obtained successfully with ideal constraints');
-			return stream;
-		} catch (error) {
-			console.warn('Failed with ideal constraints, trying fallback:', error);
-
-			// Try with fallback constraints if ideal fails
-			const fallbackConstraints = {
-				video: {
-					facingMode: 'environment', // Remove ideal, just prefer back camera
-					width: { min: 320, max: 1920 },
-					height: { min: 240, max: 1080 }
-				},
-				audio: false
-			};
-
-			try {
-				const stream = await navigator.mediaDevices.getUserMedia(fallbackConstraints);
-				console.log('Camera stream obtained with fallback constraints');
-				return stream;
-			} catch (fallbackError) {
-				console.warn('Fallback constraints failed, trying minimal:', fallbackError);
-
-				// Last resort - minimal constraints
-				const minimalConstraints = {
-					video: true,
-					audio: false
-				};
-
-				const stream = await navigator.mediaDevices.getUserMedia(minimalConstraints);
-				console.log('Camera stream obtained with minimal constraints');
-				return stream;
-			}
-		}
-	}
-
-	/**
-	 * Handles camera start errors with retry logic
-	 */
-	async function handleCameraStartError(cameraError: Error): Promise<void> {
-		console.error('Camera start error:', cameraError);
-
-		const errorObj = cameraError as Error & { name?: string };
-
-		// Check if this is a retryable error
-		if (errorObj.name === 'NotReadableError' && retryCount < maxRetries) {
-			retryCount++;
-			const delay = retryDelay * Math.pow(2, retryCount - 1); // Exponential backoff
-
-			console.log(
-				`Camera access failed, retrying in ${delay}ms (attempt ${retryCount}/${maxRetries})`
-			);
-
-			const retryMessage = `กล้องถูกใช้งาน กำลังลองใหม่... (${retryCount}/${maxRetries})`;
-			error = retryMessage;
-
-			// Wait and retry
-			setTimeout(async () => {
-				if (cameraStatus === 'requesting' && isActive && activity_id) {
-					console.log(`Retrying camera start (attempt ${retryCount})`);
-					// Reset status to allow retry
-					cameraStatus = 'idle';
-					cameraRequestInProgress = false;
-					await startCamera();
-				}
-			}, delay);
-
-			return;
-		}
-
-		// Non-retryable error or max retries reached
-		const errorMessage = getCameraErrorMessage(errorObj);
-		handleCameraError(errorMessage);
-	}
-
-	/**
-	 * Gets user-friendly error message for camera errors
-	 */
-	function getCameraErrorMessage(error: Error & { name?: string }): string {
-		if (error.name === 'NotAllowedError') {
-			return 'กรุณาอนุญาตการใช้งานกล้องในเบราว์เซอร์';
-		} else if (error.name === 'NotFoundError') {
-			return 'ไม่พบกล้องในอุปกรณ์';
-		} else if (error.name === 'NotReadableError') {
-			if (retryCount >= maxRetries) {
-				return 'กล้องถูกใช้งานโดยแอปพลิเคชันอื่น โปรดปิดแอปอื่นและลองใหม่';
-			}
-			return 'กล้องถูกใช้งานโดยแอปพลิเคชันอื่น';
-		} else if (error.name === 'OverconstrainedError') {
-			return 'กล้องไม่รองรับการตั้งค่าที่ต้องการ';
-		} else if (error.name === 'SecurityError') {
-			return 'การเข้าถึงกล้องถูกบล็อกโดยนโยบายความปลอดภัย';
-		} else {
-			return `ไม่สามารถเข้าถึงกล้องได้: ${error.message || 'ข้อผิดพลาดไม่ทราบสาเหตุ'}`;
-		}
-	}
-
-	/**
-	 * Handles camera errors uniformly
-	 */
-	function handleCameraError(errorMessage: string): void {
-		error = errorMessage;
-		cameraStatus = 'error';
-		cameraRequestInProgress = false;
-		onError?.(errorMessage);
 	}
 </script>
 
@@ -1384,21 +576,13 @@
 					>
 						{#if cameraStatus === 'requesting'}
 							<IconCamera class="mr-1 size-3 animate-pulse" />
-							{#if retryCount > 0}
-								กำลังลองใหม่... ({retryCount}/{maxRetries})
-							{:else}
-								กำลังเชื่อมต่อ...
-							{/if}
+							กำลังเชื่อมต่อ...
 						{:else if cameraStatus === 'active'}
-							<IconCamera class="mr-1 size-3" />
+							<div class="mr-1 h-2 w-2 animate-pulse rounded-full bg-green-400"></div>
 							พร้อมสแกน
 						{:else if cameraStatus === 'error'}
 							<IconCameraOff class="mr-1 size-3" />
-							{#if retryCount >= maxRetries}
-								เชื่อมต่อล้มเหลว
-							{:else}
-								ข้อผิดพลาด
-							{/if}
+							ข้อผิดพลาด
 						{:else}
 							<IconCameraOff class="mr-1 size-3" />
 							ปิด
@@ -1419,178 +603,71 @@
 			<!-- Camera Preview -->
 			<div class="relative">
 				<div
-					class="relative overflow-hidden rounded-lg border-2 border-dashed bg-muted {debugInfo.isDesktop
-						? 'aspect-video'
-						: debugInfo.deviceOrientation === 'portrait'
-							? 'aspect-[3/4]'
-							: 'aspect-video'} max-h-[600px] min-h-[300px] {debugInfo.isDesktop
-						? 'mx-auto max-w-2xl'
-						: ''}"
+					class="relative overflow-hidden rounded-xl border-2 bg-black"
+					style="aspect-ratio: 4/3; max-height: 500px;"
 					id="video-container"
 				>
-					{#if cameraStatus === 'active' || cameraStatus === 'requesting'}
-						<!-- svelte-ignore a11y_media_has_caption -->
-						<video
-							bind:this={videoElement}
-							class="absolute inset-0 h-full w-full bg-black object-cover transition-transform duration-300"
-							playsinline={true}
-							muted={true}
-							autoplay={true}
-							controls={false}
-							preload="auto"
-							style="width: 100% !important; height: 100% !important; object-fit: cover !important; background-color: black !important; z-index: 10;"
-							onloadstart={() => console.log('Video load start')}
-							onloadeddata={() => console.log('Video data loaded')}
-							onloadedmetadata={() => {
-								if (videoElement) {
-									console.log(
-										'Video metadata loaded - size:',
-										videoElement.videoWidth,
-										'x',
-										videoElement.videoHeight
-									);
-									// Force video to be visible after metadata loads
-									videoElement.style.opacity = '1';
-									videoElement.style.visibility = 'visible';
-									videoElement.style.display = 'block';
-								}
-							}}
-							oncanplay={() => {
-								if (videoElement) {
-									console.log('Video can play');
-									// Ensure video is visible when it can play
-									videoElement.style.opacity = '1';
-									videoElement.style.visibility = 'visible';
-									videoElement.style.display = 'block';
-								}
-							}}
-							oncanplaythrough={() => console.log('Video can play through')}
-							onplaying={() => {
-								if (videoElement) {
-									console.log('Video playing');
-									// Final check to make sure video is visible
-									videoElement.style.opacity = '1';
-									videoElement.style.visibility = 'visible';
-									videoElement.style.display = 'block';
-								}
-							}}
-							onerror={(e) => console.error('Video element error:', e)}
-						></video>
+					<!-- svelte-ignore a11y_media_has_caption -->
+					<video
+						bind:this={videoElement}
+						class="absolute inset-0 h-full w-full object-cover"
+						playsinline
+						muted
+						autoplay
+					></video>
 
-						<!-- Debug overlay -->
-						{#if import.meta.env.DEV}
-							<div class="absolute top-2 left-2 z-30 rounded bg-black/70 p-2 text-xs text-white">
-								Status: {cameraStatus}<br />
-								Device: {debugInfo.deviceType} ({debugInfo.isDesktop
-									? 'Desktop'
-									: 'Mobile/Tablet'})<br />
-								Orientation: {debugInfo.deviceOrientation}<br />
-								Stream: {debugInfo.streamActive ? 'Yes' : 'No'}<br />
-								Video: {videoElement?.videoWidth || 0}x{videoElement?.videoHeight || 0}<br />
-								Element: {videoElement?.offsetWidth || 0}x{videoElement?.offsetHeight || 0}<br />
-								Ready: {debugInfo.videoReady ? 'Yes' : 'No'}
-							</div>
-						{/if}
-
-						<!-- Fallback debug overlay -->
-						{#if debugInfo.streamActive && videoElement?.videoWidth === 0}
-							<div
-								class="absolute inset-0 z-20 flex items-center justify-center bg-red-500/20 text-sm text-white"
-							>
-								กล้องเชื่อมต่อแล้ว แต่ไม่มีภาพ
-								<br />
-								กรุณาตรวจสอบ Console
-							</div>
-						{/if}
-
-						<!-- Scanning overlay -->
-						<div class="pointer-events-none absolute inset-0">
-							<!-- Scanning frame -->
-							<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 transform">
-								<div class="relative h-48 w-48 rounded-lg border-2 border-primary">
-									<div
-										class="absolute top-0 left-0 h-6 w-6 border-t-4 border-l-4 border-primary"
-									></div>
-									<div
-										class="absolute top-0 right-0 h-6 w-6 border-t-4 border-r-4 border-primary"
-									></div>
-									<div
-										class="absolute bottom-0 left-0 h-6 w-6 border-b-4 border-l-4 border-primary"
-									></div>
-									<div
-										class="absolute right-0 bottom-0 h-6 w-6 border-r-4 border-b-4 border-primary"
-									></div>
-								</div>
-							</div>
-
-							<!-- Instructions -->
-							<div
-								class="absolute bottom-4 left-1/2 -translate-x-1/2 transform rounded bg-black/50 px-3 py-1 text-sm text-white"
-							>
-								วางกรอบให้อยู่บน QR Code
+					<!-- Overlay shown when not active -->
+					{#if cameraStatus !== 'active' && cameraStatus !== 'requesting'}
+						<div class="absolute inset-0 flex items-center justify-center bg-black/70">
+							<div class="space-y-3 text-center text-white">
+								{#if cameraStatus === 'error'}
+									<IconCameraOff class="mx-auto size-14 text-red-400" />
+									<p class="text-sm font-medium text-red-300">ไม่สามารถเข้าถึงกล้องได้</p>
+								{:else}
+									<IconCamera class="mx-auto size-14 text-gray-400" />
+									<p class="text-sm text-gray-300">กดปุ่มเริ่มสแกนเพื่อเปิดกล้อง</p>
+								{/if}
 							</div>
 						</div>
-					{:else if cameraStatus === 'error'}
-						<div class="absolute inset-0 flex items-center justify-center">
-							<div class="space-y-3 text-center text-muted-foreground">
-								<IconCameraOff class="mx-auto size-12 text-destructive" />
-								<div>
-									<p class="font-medium text-destructive">ไม่สามารถเข้าถึงกล้องได้</p>
-									<p class="text-sm">กรุณาอนุญาตการใช้งานกล้องและรีเฟรชหน้า</p>
-								</div>
-							</div>
-						</div>
-					{:else}
-						<div class="absolute inset-0 flex items-center justify-center">
-							<div class="space-y-3 text-center text-muted-foreground">
-								<IconCamera class="mx-auto size-12" />
-								<div>
-									<p class="font-medium">เริ่มต้นการสแกน</p>
-									<p class="text-sm">กดปุ่มเพื่อเปิดกล้อง</p>
-								</div>
+					{/if}
+
+					<!-- Loading overlay -->
+					{#if cameraStatus === 'requesting'}
+						<div class="absolute inset-0 flex items-center justify-center bg-black/60">
+							<div class="text-center text-white">
+								<div
+									class="mx-auto mb-3 h-10 w-10 animate-spin rounded-full border-4 border-white border-t-transparent"
+								></div>
+								<p class="text-sm">กำลังเปิดกล้อง...</p>
 							</div>
 						</div>
 					{/if}
 				</div>
 			</div>
 
-			<!-- Error Alert with Enhanced Feedback -->
+			<!-- Error Alert -->
 			{#if error}
 				<Alert variant={cameraStatus === 'error' ? 'destructive' : 'default'}>
 					<IconAlertTriangle class="h-4 w-4" />
 					<AlertDescription class="space-y-3">
 						<div>{error}</div>
-
 						{#if cameraStatus === 'error'}
 							<div class="space-y-2">
-								<!-- Retry button for camera errors -->
-								<div class="flex gap-2">
-									<Button size="sm" onclick={startCamera} disabled={cameraRequestInProgress}>
-										<IconReload
-											class="mr-2 h-3 w-3 {cameraRequestInProgress ? 'animate-spin' : ''}"
-										/>
-										{cameraRequestInProgress ? 'กำลังลองใหม่...' : 'ลองใหม่'}
-									</Button>
-								</div>
-
-								<!-- Troubleshooting tips -->
+								<Button size="sm" onclick={() => startScanner()}>
+									<IconReload class="mr-2 h-3 w-3" />
+									ลองใหม่
+								</Button>
 								<div class="mt-2 text-sm text-muted-foreground">
-									<p class="mb-1 font-medium">วิธีแก้ไข:</p>
 									<ul class="list-inside list-disc space-y-1 text-xs">
 										{#if error.includes('อนุญาต')}
 											<li>คลิกไอคอนกล้องในแถบที่อยู่ของเบราว์เซอร์และเลือก "อนุญาต"</li>
 											<li>รีเฟรชหน้าเว็บและลองใหม่</li>
-										{:else if error.includes('ถูกใช้งาน') || error.includes('NotReadable')}
-											<li>ปิดแอปหรือแท็บอื่นที่อาจใช้กล้อง (เช่น Google Meet, Zoom)</li>
-											<li>ปิดแอปกล้องในมือถือ</li>
+										{:else if error.includes('ถูกใช้งาน')}
+											<li>ปิดแอปหรือแท็บอื่นที่อาจใช้กล้อง</li>
 											<li>รีสตาร์ทเบราว์เซอร์และลองใหม่</li>
-										{:else if error.includes('ไม่พบ')}
-											<li>ตรวจสอบว่าอุปกรณ์มีกล้อง</li>
-											<li>ลองเชื่อมต่อกล้องภายนอก (ถ้าเป็นคอมพิวเตอร์)</li>
 										{:else}
 											<li>รีเฟรชหน้าเว็บและลองใหม่</li>
-											<li>ลองใช้เบราว์เซอร์อื่น (Chrome, Firefox, Safari)</li>
-											<li>ตรวจสอบการเชื่อมต่ออินเทอร์เน็ต</li>
+											<li>ลองใช้เบราว์เซอร์อื่น (Chrome, Safari)</li>
 										{/if}
 									</ul>
 								</div>
@@ -1600,7 +677,7 @@
 				</Alert>
 			{/if}
 
-			<!-- Enhanced Status Display -->
+			<!-- Status Display -->
 			{#if currentStatus}
 				{@const statusCode =
 					currentStatus.error?.code ||
@@ -1621,19 +698,13 @@
 					></div>
 
 					<div class="flex items-start gap-3">
-						<!-- Status Icon -->
 						<div class="flex-shrink-0 {config.iconColor}">
 							<StatusIcon class="size-6" />
 						</div>
 
-						<!-- Status Content -->
 						<div class="min-w-0 flex-1">
-							<!-- Main message -->
-							<div class="font-medium {config.color} mb-1">
-								{currentStatus.message}
-							</div>
+							<div class="font-medium {config.color} mb-1">{currentStatus.message}</div>
 
-							<!-- User information for successful scans -->
 							{#if currentStatus.success && currentStatus.data}
 								<div class="text-sm {config.color.replace('700', '600')} space-y-1">
 									{#if currentStatus.data.user_name}
@@ -1645,7 +716,6 @@
 											{/if}
 										</div>
 									{/if}
-
 									{#if currentStatus.data.checked_in_at || currentStatus.data.checked_out_at}
 										<div class="flex items-center gap-2">
 											<IconClock class="size-4" />
@@ -1666,7 +736,6 @@
 								</div>
 							{/if}
 
-							<!-- Minimal additional details for errors -->
 							{#if currentStatus.error?.details && formatStatusDetails(currentStatus.error.details).length > 0}
 								<div class="mt-2 text-xs {config.color.replace('700', '600')} space-y-1">
 									{#each formatStatusDetails(currentStatus.error.details) as detail}
@@ -1675,25 +744,13 @@
 											<span>{detail}</span>
 										</div>
 									{/each}
-
-									<!-- Simplified flow violation warning -->
-									{#if currentStatus.error?.category === 'flow_violation'}
-										<div class="mt-2 rounded border border-red-200 bg-red-50 p-2 text-red-700">
-											<div class="mb-1 text-xs font-medium">⚠️ ไม่สามารถดำเนินการได้</div>
-											<p class="text-xs">หลังเช็คเอาท์แล้ว ไม่สามารถเช็คอินอีกครั้งได้</p>
-										</div>
-									{/if}
 								</div>
 							{/if}
 						</div>
 
-						<!-- Manual close button -->
 						<button
 							onclick={clearStatusDisplay}
-							class="flex-shrink-0 {config.color.replace('700', '400')} hover:{config.color.replace(
-								'700',
-								'600'
-							)} transition-colors"
+							class="flex-shrink-0 {config.color.replace('700', '400')} transition-colors"
 							type="button"
 						>
 							<IconX class="size-4" />
@@ -1704,39 +761,35 @@
 
 			<!-- Control Buttons -->
 			<div class="flex flex-col items-center gap-3">
-				<!-- Mode toggle with enhanced visual feedback -->
+				<!-- Mode toggle -->
 				<div class="inline-flex overflow-hidden rounded-md border bg-background">
 					<button
-						class={`px-4 py-2 text-sm font-medium transition-all duration-200 ${scanMode === 'checkin' ? 'bg-green-600 text-white shadow-md' : 'text-muted-foreground hover:bg-muted hover:text-foreground'}`}
+						class={`px-4 py-2 text-sm font-medium transition-all duration-200 ${scanMode === 'checkin' ? 'bg-green-600 text-white shadow-md' : 'text-muted-foreground hover:bg-muted'}`}
 						onclick={() => {
 							scanMode = 'checkin';
-							duplicateAttemptCount = 0; // Reset duplicate count when changing modes
-							recentlyScannedUsers.clear(); // Clear recent scan history
+							duplicateAttemptCount = 0;
+							recentlyScannedUsers.clear();
 						}}
 						type="button"
 						disabled={isProcessingScan}
 					>
 						<div class="flex items-center gap-2">
-							{#if scanMode === 'checkin'}
-								<div class="h-2 w-2 rounded-full bg-white"></div>
-							{/if}
+							{#if scanMode === 'checkin'}<div class="h-2 w-2 rounded-full bg-white"></div>{/if}
 							เช็คอิน
 						</div>
 					</button>
 					<button
-						class={`px-4 py-2 text-sm font-medium transition-all duration-200 ${scanMode === 'checkout' ? 'bg-orange-600 text-white shadow-md' : 'text-muted-foreground hover:bg-muted hover:text-foreground'}`}
+						class={`px-4 py-2 text-sm font-medium transition-all duration-200 ${scanMode === 'checkout' ? 'bg-orange-600 text-white shadow-md' : 'text-muted-foreground hover:bg-muted'}`}
 						onclick={() => {
 							scanMode = 'checkout';
-							duplicateAttemptCount = 0; // Reset duplicate count when changing modes
-							recentlyScannedUsers.clear(); // Clear recent scan history
+							duplicateAttemptCount = 0;
+							recentlyScannedUsers.clear();
 						}}
 						type="button"
 						disabled={isProcessingScan}
 					>
 						<div class="flex items-center gap-2">
-							{#if scanMode === 'checkout'}
-								<div class="h-2 w-2 rounded-full bg-white"></div>
-							{/if}
+							{#if scanMode === 'checkout'}<div class="h-2 w-2 rounded-full bg-white"></div>{/if}
 							เช็คเอาท์
 						</div>
 					</button>
@@ -1751,33 +804,23 @@
 					{/if}
 				</div>
 
-				<!-- Camera controls with status indicators -->
+				<!-- Camera controls -->
 				<div class="flex items-center justify-center gap-3">
 					{#if cameraStatus === 'idle' || cameraStatus === 'error'}
-						<Button onclick={startCamera} disabled={!activity_id} class="px-6 py-2 font-medium">
+						<Button
+							onclick={() => startScanner()}
+							disabled={!activity_id}
+							class="px-6 py-2 font-medium"
+						>
 							<IconCamera class="mr-2 size-4" />
 							เริ่มสแกน
 						</Button>
 					{:else if cameraStatus === 'active' || cameraStatus === 'requesting'}
-						<Button
-							onclick={() => {
-								if (onStop) {
-									// Notify parent to stop — parent will set isActive=false
-									// which triggers $effect to call stopCamera() correctly
-									onStop();
-								} else {
-									// Standalone mode: stop directly
-									stopCamera();
-								}
-							}}
-							variant="outline"
-							class="px-6 py-2 font-medium"
-						>
+						<Button onclick={handleStopClick} variant="outline" class="px-6 py-2 font-medium">
 							<IconCameraOff class="mr-2 size-4" />
 							หยุดสแกน
 						</Button>
 
-						<!-- Reset duplicate counter button -->
 						{#if duplicateAttemptCount > 0}
 							<Button
 								onclick={() => {
@@ -1794,69 +837,22 @@
 							</Button>
 						{/if}
 					{/if}
-
-					<!-- Development: Manual scan trigger -->
-					{#if cameraStatus === 'active' && import.meta.env.DEV}
-						<Button onclick={triggerManualScan} variant="outline" size="sm">
-							<IconQrcode class="mr-2 size-4" />
-							สแกนด้วยตนเอง
-						</Button>
-					{/if}
 				</div>
 			</div>
 
-			<!-- Scanner Info with Recent Activity -->
-			<div class="space-y-3 text-center text-xs text-muted-foreground">
+			<!-- Scanner Info -->
+			<div class="space-y-2 text-center text-xs text-muted-foreground">
 				{#if !activity_id}
 					<p class="text-destructive">กรุณาเลือกกิจกรรมก่อนเริ่มสแกน</p>
-				{:else}
-					<div class="space-y-2">
-						<p>วาง QR Code ของนักศึกษาให้อยู่ในกรอบเพื่อสแกน</p>
-						<p>ระบบจะประมวลผลอัตโนมัติเมื่อตรวจพบ QR Code</p>
-
-						<!-- Minimal recent activity indicator -->
-						{#if recentlyScannedUsers.size > 0}
-							<div class="mt-2 rounded-md border border-green-200 bg-green-50 p-2">
-								<div class="text-xs text-green-700">
-									✅ สแกนล่าสุด: {recentlyScannedUsers.size} คน
-								</div>
+				{:else if cameraStatus === 'active'}
+					<p>วาง QR Code ของนักศึกษาให้อยู่ในกรอบสีน้ำเงินเพื่อสแกน</p>
+					{#if recentlyScannedUsers.size > 0}
+						<div class="rounded-md border border-green-200 bg-green-50 p-2">
+							<div class="text-xs text-green-700">
+								✅ สแกนล่าสุด: {recentlyScannedUsers.size} คน
 							</div>
-						{/if}
-
-						<!-- Minimal duplicate notice (only for excessive duplicates) -->
-						{#if duplicateAttemptCount > 3}
-							<div class="mt-2 rounded-md border border-yellow-200 bg-yellow-50 p-2">
-								<div class="text-xs text-yellow-700">
-									ℹ️ การสแกนซ้ำ {duplicateAttemptCount} ครั้ง (ปกติ)
-								</div>
-							</div>
-						{/if}
-					</div>
-				{/if}
-
-				<!-- Debug Information (development only) -->
-				{#if import.meta.env.DEV}
-					<div class="mt-4 rounded bg-muted/50 p-2 text-left">
-						<p class="mb-1 text-xs font-semibold">Debug Info:</p>
-						<div class="space-y-1 text-xs">
-							<p>Camera Status: {cameraStatus}</p>
-							<p>
-								Device Type: {debugInfo.deviceType} ({debugInfo.isDesktop
-									? 'Desktop'
-									: 'Mobile/Tablet'})
-							</p>
-							<p>Orientation: {debugInfo.deviceOrientation}</p>
-							<p>Request In Progress: {cameraRequestInProgress}</p>
-							<p>Retry Count: {retryCount}/{maxRetries}</p>
-							<p>Video Ready: {debugInfo.videoReady}</p>
-							<p>Stream Active: {debugInfo.streamActive}</p>
-							<p>Invalid Scans: {invalidScansCount}</p>
-							{#if videoElement}
-								<p>Video Size: {videoElement.videoWidth}x{videoElement.videoHeight}</p>
-								<p>Element Size: {videoElement.offsetWidth}x{videoElement.offsetHeight}</p>
-							{/if}
 						</div>
-					</div>
+					{/if}
 				{/if}
 			</div>
 		</CardContent>
@@ -1872,14 +868,12 @@
 						ประวัติการสแกน
 						<Badge variant="outline">{scanHistory.length}</Badge>
 					</CardTitle>
-
 					<Button onclick={clearHistory} variant="outline" size="sm">
 						<IconX class="mr-2 size-4" />
 						ล้างประวัติ
 					</Button>
 				</div>
 			</CardHeader>
-
 			<CardContent>
 				<div class="space-y-3">
 					{#each scanHistory as item, index (item.timestamp)}
@@ -1901,10 +895,7 @@
 								</div>
 							</div>
 						</div>
-
-						{#if index < scanHistory.length - 1}
-							<Separator />
-						{/if}
+						{#if index < scanHistory.length - 1}<Separator />{/if}
 					{/each}
 				</div>
 			</CardContent>
