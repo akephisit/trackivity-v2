@@ -613,10 +613,10 @@
 
 		<CardContent class="space-y-4">
 			<!-- Camera Preview -->
-			<div class="relative">
+			<div class="flex justify-center">
 				<div
-					class="relative overflow-hidden rounded-xl border-2 bg-black"
-					style="aspect-ratio: 4/3; max-height: 500px;"
+					class="relative w-full overflow-hidden rounded-xl border-2 bg-black"
+					style="aspect-ratio: 4/3; max-width: 480px;"
 					id="video-container"
 				>
 					<!-- svelte-ignore a11y_media_has_caption -->
