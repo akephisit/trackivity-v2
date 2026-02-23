@@ -592,11 +592,11 @@ export function processQRScanResult(result: any): QRScanResult {
 
 		return {
 			success: false,
-			message: result.error?.message || result.message || 'เกิดข้อผิดพลาด',
+			message: result.message || result.error?.message || 'เกิดข้อผิดพลาด',
 			category: config.category,
 			error: {
 				code: statusCode,
-				message: result.error?.message || result.message || 'เกิดข้อผิดพลาด',
+				message: result.message || result.error?.message || 'เกิดข้อผิดพลาด',
 				category: config.category,
 				details: result.error?.details
 			}
