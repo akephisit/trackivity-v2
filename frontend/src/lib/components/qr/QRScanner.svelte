@@ -132,8 +132,22 @@
 	>(new Map());
 	let duplicateAttemptCount = $state<number>(0);
 
-	// Scan mode
 	let scanMode = $state<'checkin' | 'checkout'>('checkin');
+
+	// Camera configuration
+	let facingMode = $state<'environment' | 'user'>('environment');
+
+	async function toggleCamera() {
+		facingMode = facingMode === 'environment' ? 'user' : 'environment';
+		if (cameraStatus === 'active' && qrScanner) {
+			try {
+				await qrScanner.setCamera(facingMode);
+			} catch (e) {
+				console.error('Failed to switch camera:', e);
+				startScanner();
+			}
+		}
+	}
 
 	// Reactive: start/stop based on isActive prop
 	$effect(() => {
@@ -183,7 +197,7 @@
 				},
 				highlightScanRegion: true,
 				highlightCodeOutline: true,
-				preferredCamera: 'environment', // Use back camera on mobile
+				preferredCamera: facingMode, // Use selected camera
 				maxScansPerSecond: 10,
 				calculateScanRegion: (video) => {
 					// Scan a centered square region for better performance
@@ -831,6 +845,11 @@
 						<Button onclick={handleStopClick} variant="outline" class="px-6 py-2 font-medium">
 							<IconCameraOff class="mr-2 size-4" />
 							หยุดสแกน
+						</Button>
+
+						<Button onclick={toggleCamera} variant="outline" class="px-4 py-2 font-medium">
+							<IconReload class="mr-2 size-4" />
+							สลับกล้อง
 						</Button>
 
 						{#if duplicateAttemptCount > 0}
