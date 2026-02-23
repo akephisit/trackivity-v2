@@ -228,30 +228,37 @@
 				<CardContent class="space-y-4">
 					<!-- Student Information -->
 					{#if userInfoData}
-						<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-							<div class="flex items-center gap-3">
-								<IconUser class="size-4 text-muted-foreground" />
-								<div>
-									<p class="text-sm font-medium">ชื่อ-นามสกุล</p>
-									<p class="text-sm text-muted-foreground">
-										{userInfoData?.first_name}
-										{userInfoData?.last_name}
-									</p>
+						<div class="rounded-xl border bg-muted/30 p-5 shadow-sm">
+							<div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+								<div class="flex items-start gap-4">
+									<div class="mt-0.5 rounded-full bg-primary/10 p-2 text-primary">
+										<IconUser class="size-5" />
+									</div>
+									<div>
+										<p class="text-sm font-medium text-muted-foreground">ชื่อ-นามสกุล</p>
+										<p class="mt-0.5 text-base font-semibold">
+											{userInfoData?.first_name}
+											{userInfoData?.last_name}
+										</p>
+									</div>
 								</div>
-							</div>
-							<div class="flex items-center gap-3">
-								<IconActivity class="size-4 text-muted-foreground" />
-								<div>
-									<p class="text-sm font-medium">รหัสนักศึกษา</p>
-									<p class="text-sm text-muted-foreground">{userInfoData?.student_id}</p>
+								<div class="flex items-start gap-4">
+									<div class="mt-0.5 rounded-full bg-primary/10 p-2 text-primary">
+										<IconActivity class="size-5" />
+									</div>
+									<div>
+										<p class="text-sm font-medium text-muted-foreground">รหัสนักศึกษา</p>
+										<p class="mt-0.5 text-base font-semibold">{userInfoData?.student_id}</p>
+									</div>
 								</div>
-							</div>
-							<!-- Removed academic year display per request -->
-							<div class="flex items-center gap-3">
-								<IconFileText class="size-4 text-muted-foreground" />
-								<div>
-									<p class="text-sm font-medium">วันที่รายงาน</p>
-									<p class="text-sm text-muted-foreground">{reportDate}</p>
+								<div class="flex items-start gap-4">
+									<div class="mt-0.5 rounded-full bg-primary/10 p-2 text-primary">
+										<IconFileText class="size-5" />
+									</div>
+									<div>
+										<p class="text-sm font-medium text-muted-foreground">วันที่รายงาน</p>
+										<p class="mt-0.5 text-base font-semibold">{reportDate}</p>
+									</div>
 								</div>
 							</div>
 						</div>
@@ -261,40 +268,68 @@
 
 					<!-- Quick Stats -->
 					<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-						<div class="flex items-center gap-3">
-							<div class="rounded-full bg-primary/10 p-2">
-								<IconTrendingUp class="size-4 text-primary" />
+						<div
+							class="flex items-center gap-4 rounded-xl border bg-card p-4 shadow-sm transition-all hover:-translate-y-1 hover:shadow-md"
+						>
+							<div class="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+								<IconTrendingUp class="size-6 text-primary" />
 							</div>
 							<div>
-								<p class="text-2xl font-bold">{stats.totalActivities}</p>
-								<p class="text-xs text-muted-foreground">กิจกรรมทั้งหมด</p>
+								<p class="text-3xl leading-none font-bold tracking-tight">
+									{stats.totalActivities}
+								</p>
+								<p class="mt-1 text-sm font-medium text-muted-foreground">กิจกรรมทั้งหมด</p>
 							</div>
 						</div>
-						<div class="flex items-center gap-3">
-							<div class="rounded-full bg-green-100 p-2 dark:bg-green-900">
-								<IconCircleCheck class="size-4 text-green-600 dark:text-green-400" />
+						<div
+							class="flex items-center gap-4 rounded-xl border bg-card p-4 shadow-sm transition-all hover:-translate-y-1 hover:shadow-md"
+						>
+							<div
+								class="flex h-12 w-12 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30"
+							>
+								<IconCircleCheck class="size-6 text-green-600 dark:text-green-500" />
 							</div>
 							<div>
-								<p class="text-2xl font-bold">{stats.completedActivities}</p>
-								<p class="text-xs text-muted-foreground">เสร็จสิ้น</p>
+								<p
+									class="text-3xl leading-none font-bold tracking-tight text-green-600 dark:text-green-500"
+								>
+									{stats.completedActivities}
+								</p>
+								<p class="mt-1 text-sm font-medium text-muted-foreground">เสร็จสิ้น</p>
 							</div>
 						</div>
-						<div class="flex items-center gap-3">
-							<div class="rounded-full bg-blue-100 p-2 dark:bg-blue-900">
-								<IconHourglass class="size-4 text-blue-600 dark:text-blue-400" />
+						<div
+							class="flex items-center gap-4 rounded-xl border bg-card p-4 shadow-sm transition-all hover:-translate-y-1 hover:shadow-md"
+						>
+							<div
+								class="flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/30"
+							>
+								<IconHourglass class="size-6 text-blue-600 dark:text-blue-500" />
 							</div>
 							<div>
-								<p class="text-2xl font-bold">{stats.totalHours}</p>
-								<p class="text-xs text-muted-foreground">ชั่วโมงรวม</p>
+								<p
+									class="text-3xl leading-none font-bold tracking-tight text-blue-600 dark:text-blue-500"
+								>
+									{stats.totalHours}
+								</p>
+								<p class="mt-1 text-sm font-medium text-muted-foreground">ชั่วโมงรวม</p>
 							</div>
 						</div>
-						<div class="flex items-center gap-3">
-							<div class="rounded-full bg-orange-100 p-2 dark:bg-orange-900">
-								<IconChartBar class="size-4 text-orange-600 dark:text-orange-400" />
+						<div
+							class="flex items-center gap-4 rounded-xl border bg-card p-4 shadow-sm transition-all hover:-translate-y-1 hover:shadow-md"
+						>
+							<div
+								class="flex h-12 w-12 items-center justify-center rounded-full bg-orange-100 dark:bg-orange-900/30"
+							>
+								<IconChartBar class="size-6 text-orange-600 dark:text-orange-500" />
 							</div>
 							<div>
-								<p class="text-2xl font-bold">{stats.completionRate}%</p>
-								<p class="text-xs text-muted-foreground">อัตราเสร็จสิ้น</p>
+								<p
+									class="text-3xl leading-none font-bold tracking-tight text-orange-600 dark:text-orange-500"
+								>
+									{stats.completionRate}%
+								</p>
+								<p class="mt-1 text-sm font-medium text-muted-foreground">อัตราเสร็จสิ้น</p>
 							</div>
 						</div>
 					</div>
@@ -492,14 +527,20 @@
 					</CardHeader>
 					<CardContent class="space-y-4">
 						<!-- Faculty Summary Stats -->
-						<div class="grid grid-cols-2 gap-4">
-							<div class="rounded-lg bg-background/50 p-4 text-center">
-								<p class="text-2xl font-bold">{stats.facultyLevel.activities}</p>
-								<p class="text-sm text-muted-foreground">กิจกรรม</p>
+						<div class="mb-2 grid grid-cols-2 gap-4">
+							<div
+								class="rounded-xl border bg-background/60 p-6 text-center shadow-sm backdrop-blur-sm transition-all hover:-translate-y-1 hover:bg-background/80 hover:shadow-md"
+							>
+								<p class="text-4xl font-extrabold text-foreground">
+									{stats.facultyLevel.activities}
+								</p>
+								<p class="mt-2 text-sm font-medium text-muted-foreground">กิจกรรม</p>
 							</div>
-							<div class="rounded-lg bg-background/50 p-4 text-center">
-								<p class="text-2xl font-bold">{stats.facultyLevel.hours}</p>
-								<p class="text-sm text-muted-foreground">ชั่วโมง</p>
+							<div
+								class="rounded-xl border bg-background/60 p-6 text-center shadow-sm backdrop-blur-sm transition-all hover:-translate-y-1 hover:bg-background/80 hover:shadow-md"
+							>
+								<p class="text-4xl font-extrabold text-foreground">{stats.facultyLevel.hours}</p>
+								<p class="mt-2 text-sm font-medium text-muted-foreground">ชั่วโมง</p>
 							</div>
 						</div>
 
@@ -527,9 +568,15 @@
 								</div>
 							</div>
 						{:else}
-							<div class="py-8 text-center text-muted-foreground">
-								<IconSchool class="mx-auto mb-2 size-8 opacity-50" />
-								<p>ยังไม่มีกิจกรรมระดับคณะที่เสร็จสิ้น</p>
+							<div
+								class="mt-4 rounded-xl border border-dashed bg-background/30 py-10 text-center text-muted-foreground"
+							>
+								<div
+									class="mx-auto mb-3 flex size-12 items-center justify-center rounded-full bg-green-100/50 dark:bg-green-900/20"
+								>
+									<IconSchool class="size-6 text-green-600/60 dark:text-green-500/60" />
+								</div>
+								<p class="font-medium text-foreground/70">ยังไม่มีกิจกรรมระดับคณะที่เสร็จสิ้น</p>
 							</div>
 						{/if}
 					</CardContent>
@@ -550,14 +597,20 @@
 					</CardHeader>
 					<CardContent class="space-y-4">
 						<!-- University Summary Stats -->
-						<div class="grid grid-cols-2 gap-4">
-							<div class="rounded-lg bg-background/50 p-4 text-center">
-								<p class="text-2xl font-bold">{stats.universityLevel.activities}</p>
-								<p class="text-sm text-muted-foreground">กิจกรรม</p>
+						<div class="mb-2 grid grid-cols-2 gap-4">
+							<div
+								class="rounded-xl border bg-background/60 p-6 text-center shadow-sm backdrop-blur-sm transition-all hover:-translate-y-1 hover:bg-background/80 hover:shadow-md"
+							>
+								<p class="text-4xl font-extrabold text-foreground">
+									{stats.universityLevel.activities}
+								</p>
+								<p class="mt-2 text-sm font-medium text-muted-foreground">กิจกรรม</p>
 							</div>
-							<div class="rounded-lg bg-background/50 p-4 text-center">
-								<p class="text-2xl font-bold">{stats.universityLevel.hours}</p>
-								<p class="text-sm text-muted-foreground">ชั่วโมง</p>
+							<div
+								class="rounded-xl border bg-background/60 p-6 text-center shadow-sm backdrop-blur-sm transition-all hover:-translate-y-1 hover:bg-background/80 hover:shadow-md"
+							>
+								<p class="text-4xl font-extrabold text-foreground">{stats.universityLevel.hours}</p>
+								<p class="mt-2 text-sm font-medium text-muted-foreground">ชั่วโมง</p>
 							</div>
 						</div>
 
@@ -586,9 +639,17 @@
 								</div>
 							</div>
 						{:else}
-							<div class="py-8 text-center text-muted-foreground">
-								<IconBuilding class="mx-auto mb-2 size-8 opacity-50" />
-								<p>ยังไม่มีกิจกรรมระดับมหาวิทยาลัยที่เสร็จสิ้น</p>
+							<div
+								class="mt-4 rounded-xl border border-dashed bg-background/30 py-10 text-center text-muted-foreground"
+							>
+								<div
+									class="mx-auto mb-3 flex size-12 items-center justify-center rounded-full bg-blue-100/50 dark:bg-blue-900/20"
+								>
+									<IconBuilding class="size-6 text-blue-600/60 dark:text-blue-500/60" />
+								</div>
+								<p class="font-medium text-foreground/70">
+									ยังไม่มีกิจกรรมระดับมหาวิทยาลัยที่เสร็จสิ้น
+								</p>
 							</div>
 						{/if}
 					</CardContent>
@@ -609,24 +670,27 @@
 				<CardContent>
 					<div class="grid gap-6 md:grid-cols-2">
 						<!-- Hours Distribution -->
-						<div class="space-y-4">
-							<h4 class="font-medium">การกระจายชั่วโมง</h4>
-							<div class="space-y-3">
+						<div class="space-y-5 rounded-xl border bg-muted/20 p-5 shadow-sm">
+							<h4 class="border-b pb-2 font-semibold text-foreground">การกระจายชั่วโมง</h4>
+							<div class="space-y-4">
 								<div class="flex items-center justify-between">
 									<div class="flex items-center gap-2">
-										<div class="size-3 rounded-full bg-green-500"></div>
-										<span class="text-sm">ระดับคณะ</span>
+										<div class="size-3.5 rounded-sm bg-green-500 shadow-sm"></div>
+										<span class="text-sm font-medium">ระดับคณะ</span>
 									</div>
 									<div class="text-right">
-										<p class="text-sm font-medium">{stats.facultyLevel.hours} ชั่วโมง</p>
-										<p class="text-xs text-muted-foreground">
+										<p class="text-sm font-semibold">
+											{stats.facultyLevel.hours}
+											<span class="text-xs font-normal text-muted-foreground">ชั่วโมง</span>
+										</p>
+										<p class="mt-0.5 text-xs text-muted-foreground">
 											{calculatePercentage(stats.facultyLevel.hours, stats.totalHours)}%
 										</p>
 									</div>
 								</div>
-								<div class="h-2 w-full rounded-full bg-gray-200 dark:bg-gray-700">
+								<div class="h-2.5 w-full overflow-hidden rounded-full bg-secondary">
 									<div
-										class="h-2 rounded-full bg-green-500"
+										class="h-full rounded-full bg-green-500 transition-all duration-500 ease-in-out"
 										style="width: {calculatePercentage(
 											stats.facultyLevel.hours,
 											stats.totalHours
@@ -634,21 +698,24 @@
 									></div>
 								</div>
 
-								<div class="flex items-center justify-between">
+								<div class="flex items-center justify-between pt-2">
 									<div class="flex items-center gap-2">
-										<div class="size-3 rounded-full bg-blue-500"></div>
-										<span class="text-sm">ระดับมหาวิทยาลัย</span>
+										<div class="size-3.5 rounded-sm bg-blue-500 shadow-sm"></div>
+										<span class="text-sm font-medium">ระดับมหาวิทยาลัย</span>
 									</div>
 									<div class="text-right">
-										<p class="text-sm font-medium">{stats.universityLevel.hours} ชั่วโมง</p>
-										<p class="text-xs text-muted-foreground">
+										<p class="text-sm font-semibold">
+											{stats.universityLevel.hours}
+											<span class="text-xs font-normal text-muted-foreground">ชั่วโมง</span>
+										</p>
+										<p class="mt-0.5 text-xs text-muted-foreground">
 											{calculatePercentage(stats.universityLevel.hours, stats.totalHours)}%
 										</p>
 									</div>
 								</div>
-								<div class="h-2 w-full rounded-full bg-gray-200 dark:bg-gray-700">
+								<div class="h-2.5 w-full overflow-hidden rounded-full bg-secondary">
 									<div
-										class="h-2 rounded-full bg-blue-500"
+										class="h-full rounded-full bg-blue-500 transition-all duration-500 ease-in-out"
 										style="width: {calculatePercentage(
 											stats.universityLevel.hours,
 											stats.totalHours
@@ -659,17 +726,20 @@
 						</div>
 
 						<!-- Activity Count Distribution -->
-						<div class="space-y-4">
-							<h4 class="font-medium">การกระจายจำนวนกิจกรรม</h4>
-							<div class="space-y-3">
+						<div class="space-y-5 rounded-xl border bg-muted/20 p-5 shadow-sm">
+							<h4 class="border-b pb-2 font-semibold text-foreground">การกระจายจำนวนกิจกรรม</h4>
+							<div class="space-y-4">
 								<div class="flex items-center justify-between">
 									<div class="flex items-center gap-2">
-										<div class="size-3 rounded-full bg-green-500"></div>
-										<span class="text-sm">ระดับคณะ</span>
+										<div class="size-3.5 rounded-sm bg-green-500 shadow-sm"></div>
+										<span class="text-sm font-medium">ระดับคณะ</span>
 									</div>
 									<div class="text-right">
-										<p class="text-sm font-medium">{stats.facultyLevel.activities} กิจกรรม</p>
-										<p class="text-xs text-muted-foreground">
+										<p class="text-sm font-semibold">
+											{stats.facultyLevel.activities}
+											<span class="text-xs font-normal text-muted-foreground">กิจกรรม</span>
+										</p>
+										<p class="mt-0.5 text-xs text-muted-foreground">
 											{calculatePercentage(
 												stats.facultyLevel.activities,
 												stats.completedActivities
@@ -677,9 +747,9 @@
 										</p>
 									</div>
 								</div>
-								<div class="h-2 w-full rounded-full bg-gray-200 dark:bg-gray-700">
+								<div class="h-2.5 w-full overflow-hidden rounded-full bg-secondary">
 									<div
-										class="h-2 rounded-full bg-green-500"
+										class="h-full rounded-full bg-green-500 transition-all duration-500 ease-in-out"
 										style="width: {calculatePercentage(
 											stats.facultyLevel.activities,
 											stats.completedActivities
@@ -687,14 +757,17 @@
 									></div>
 								</div>
 
-								<div class="flex items-center justify-between">
+								<div class="flex items-center justify-between pt-2">
 									<div class="flex items-center gap-2">
-										<div class="size-3 rounded-full bg-blue-500"></div>
-										<span class="text-sm">ระดับมหาวิทยาลัย</span>
+										<div class="size-3.5 rounded-sm bg-blue-500 shadow-sm"></div>
+										<span class="text-sm font-medium">ระดับมหาวิทยาลัย</span>
 									</div>
 									<div class="text-right">
-										<p class="text-sm font-medium">{stats.universityLevel.activities} กิจกรรม</p>
-										<p class="text-xs text-muted-foreground">
+										<p class="text-sm font-semibold">
+											{stats.universityLevel.activities}
+											<span class="text-xs font-normal text-muted-foreground">กิจกรรม</span>
+										</p>
+										<p class="mt-0.5 text-xs text-muted-foreground">
 											{calculatePercentage(
 												stats.universityLevel.activities,
 												stats.completedActivities
@@ -702,9 +775,9 @@
 										</p>
 									</div>
 								</div>
-								<div class="h-2 w-full rounded-full bg-gray-200 dark:bg-gray-700">
+								<div class="h-2.5 w-full overflow-hidden rounded-full bg-secondary">
 									<div
-										class="h-2 rounded-full bg-blue-500"
+										class="h-full rounded-full bg-blue-500 transition-all duration-500 ease-in-out"
 										style="width: {calculatePercentage(
 											stats.universityLevel.activities,
 											stats.completedActivities
