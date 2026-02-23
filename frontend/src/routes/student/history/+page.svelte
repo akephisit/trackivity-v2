@@ -497,11 +497,11 @@
 								: 'border-l-4 border-l-muted'}
 
 					<Card class={`transition-all hover:-translate-y-0.5 hover:shadow-md ${borderClasses}`}>
-						<CardContent class="p-4 pb-3.5">
-							<div class="flex flex-col gap-2.5">
+						<CardContent class="px-4 pt-3 pb-2.5">
+							<div class="flex flex-col gap-2">
 								<!-- Header Area (Title & Badges) -->
-								<div class="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
-									<div class="flex-1 space-y-1.5">
+								<div class="flex flex-col justify-between gap-2 sm:flex-row sm:items-start">
+									<div class="flex-1 space-y-1">
 										<div class="mb-1 flex flex-wrap items-center gap-2">
 											<Badge
 												variant={getStatusBadgeVariant(participation.status)}
