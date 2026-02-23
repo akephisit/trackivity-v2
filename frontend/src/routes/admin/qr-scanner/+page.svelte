@@ -413,6 +413,7 @@
 			isActive={scannerActive}
 			onScan={handleScanResult}
 			onStatusChange={handleStatusChange}
+			onStop={stopScanning}
 			showHistory={true}
 			maxHistoryItems={20}
 			soundEnabled={false}

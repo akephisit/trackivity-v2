@@ -71,6 +71,7 @@
 		onScan = undefined,
 		onError = undefined,
 		onStatusChange = undefined,
+		onStop = undefined,
 		soundEnabled = true,
 		vibrationEnabled = true
 	}: {
@@ -81,6 +82,7 @@
 		onScan?: ((result: ScanResult, qrData: string) => void) | undefined;
 		onError?: ((message: string) => void) | undefined;
 		onStatusChange?: ((status: 'idle' | 'requesting' | 'active' | 'error') => void) | undefined;
+		onStop?: (() => void) | undefined;
 		soundEnabled?: boolean;
 		vibrationEnabled?: boolean;
 	} = $props();
@@ -1757,7 +1759,20 @@
 							เริ่มสแกน
 						</Button>
 					{:else if cameraStatus === 'active' || cameraStatus === 'requesting'}
-						<Button onclick={stopCamera} variant="outline" class="px-6 py-2 font-medium">
+						<Button
+							onclick={() => {
+								if (onStop) {
+									// Notify parent to stop — parent will set isActive=false
+									// which triggers $effect to call stopCamera() correctly
+									onStop();
+								} else {
+									// Standalone mode: stop directly
+									stopCamera();
+								}
+							}}
+							variant="outline"
+							class="px-6 py-2 font-medium"
+						>
 							<IconCameraOff class="mr-2 size-4" />
 							หยุดสแกน
 						</Button>
