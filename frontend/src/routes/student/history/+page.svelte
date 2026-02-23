@@ -497,8 +497,8 @@
 								: 'border-l-4 border-l-muted'}
 
 					<Card class={`transition-all hover:-translate-y-0.5 hover:shadow-md ${borderClasses}`}>
-						<CardContent class="p-5">
-							<div class="flex flex-col gap-4">
+						<CardContent class="p-4 pb-3.5">
+							<div class="flex flex-col gap-2.5">
 								<!-- Header Area (Title & Badges) -->
 								<div class="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
 									<div class="flex-1 space-y-1.5">
@@ -528,7 +528,7 @@
 											{/if}
 										</div>
 
-										<h3 class="text-lg leading-tight font-bold text-foreground">
+										<h3 class="text-base leading-tight font-bold text-foreground">
 											{participation.activity?.title || 'ไม่ระบุชื่อกิจกรรม'}
 										</h3>
 
@@ -542,25 +542,25 @@
 
 									{#if participation.activity?.hours}
 										<div
-											class="flex shrink-0 items-center gap-1.5 rounded-lg bg-muted/50 px-3 py-2 text-sm font-semibold text-foreground"
+											class="flex shrink-0 items-center gap-1.5 rounded-lg bg-muted/50 px-2.5 py-1.5 text-sm font-semibold text-foreground"
 										>
 											<IconHourglass class="size-4 text-orange-500" />
-											<span class="text-lg">{participation.activity.hours}</span> ชั่วโมง
+											<span class="text-base">{participation.activity.hours}</span> ชั่วโมง
 										</div>
 									{/if}
 								</div>
 
 								<!-- Timeline Details -->
 								<div
-									class="mt-1 grid gap-x-6 gap-y-3 rounded-lg border bg-muted/20 p-4 sm:grid-cols-2"
+									class="mt-0.5 grid gap-x-6 gap-y-2 rounded-lg border bg-muted/20 p-3 sm:grid-cols-2"
 								>
-									<div class="space-y-3">
+									<div class="space-y-2">
 										{#if participation.activity?.start_date}
-											<div class="flex items-start gap-2.5 text-sm">
+											<div class="flex items-start gap-2 text-sm">
 												<IconCalendarEvent class="mt-0.5 size-4 shrink-0 text-muted-foreground" />
 												<div class="grid gap-0.5">
 													<span
-														class="text-xs font-medium tracking-wide text-muted-foreground uppercase"
+														class="text-[11px] font-medium tracking-wide text-muted-foreground uppercase"
 														>กำหนดการ</span
 													>
 													<span class="font-medium text-foreground">
@@ -574,11 +574,11 @@
 										{/if}
 
 										{#if participation.activity?.location}
-											<div class="flex items-start gap-2.5 text-sm">
+											<div class="flex items-start gap-2 text-sm">
 												<IconMapPin class="mt-0.5 size-4 shrink-0 text-muted-foreground" />
 												<div class="grid gap-0.5">
 													<span
-														class="text-xs font-medium tracking-wide text-muted-foreground uppercase"
+														class="text-[11px] font-medium tracking-wide text-muted-foreground uppercase"
 														>สถานที่จัดกิจกรรม</span
 													>
 													<span class="text-foreground">{participation.activity.location}</span>
@@ -587,12 +587,12 @@
 										{/if}
 									</div>
 
-									<div class="space-y-3">
-										<div class="flex items-start gap-2.5 text-sm">
+									<div class="space-y-2">
+										<div class="flex items-start gap-2 text-sm">
 											<IconHistory class="mt-0.5 size-4 shrink-0 text-muted-foreground" />
 											<div class="grid w-full gap-1">
 												<span
-													class="text-xs font-medium tracking-wide text-muted-foreground uppercase"
+													class="text-[11px] font-medium tracking-wide text-muted-foreground uppercase"
 													>ประวัติการบันทึกเวลา</span
 												>
 
@@ -643,7 +643,7 @@
 								<!-- Notes -->
 								{#if participation.notes}
 									<div
-										class="flex gap-2 rounded-lg border border-orange-100 bg-orange-50/50 p-3 text-sm dark:border-orange-900/30 dark:bg-orange-950/20"
+										class="flex gap-2 rounded-lg border border-orange-100 bg-orange-50/50 px-3 py-2 text-sm dark:border-orange-900/30 dark:bg-orange-950/20"
 									>
 										<IconAlertCircle class="mt-0.5 size-4 shrink-0 text-orange-500" />
 										<div>
