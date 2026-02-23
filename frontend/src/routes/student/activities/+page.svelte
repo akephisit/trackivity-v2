@@ -7,7 +7,7 @@
 	import { Badge } from '$lib/components/ui/badge';
 	import { Skeleton } from '$lib/components/ui/skeleton';
 	import { Alert, AlertDescription } from '$lib/components/ui/alert';
-	import { Tabs, TabsList, TabsTrigger } from '$lib/components/ui/tabs';
+	import { Tabs, TabsList, TabsTrigger, TabsContent } from '$lib/components/ui/tabs';
 	import { Input } from '$lib/components/ui/input';
 	import MetaTags from '$lib/components/seo/MetaTags.svelte';
 	import {
@@ -131,39 +131,7 @@
 	</div>
 
 	<!-- Filter Tabs -->
-	<Tabs bind:value={selectedFilter} class="w-full">
-		<TabsList class="grid w-full grid-cols-4">
-			<TabsTrigger value="active" class="text-xs sm:text-sm">
-				ทั้งหมด
-				{#if !loading}
-					<span
-						class="ml-1 rounded-full bg-primary/15 px-1.5 py-0.5 text-xs font-semibold text-primary"
-					>
-						{counts.active}
-					</span>
-				{/if}
-			</TabsTrigger>
-			<TabsTrigger value="upcoming" class="text-xs sm:text-sm">
-				เปิดรับ
-				{#if !loading}
-					<span
-						class="ml-1 rounded-full bg-primary/15 px-1.5 py-0.5 text-xs font-semibold text-primary"
-					>
-						{counts.upcoming}
-					</span>
-				{/if}
-			</TabsTrigger>
-			<TabsTrigger value="ongoing" class="text-xs sm:text-sm">
-				ดำเนินการ
-				{#if !loading}
-					<span class="ml-1 rounded-full bg-secondary/80 px-1.5 py-0.5 text-xs font-semibold">
-						{counts.ongoing}
-					</span>
-				{/if}
-			</TabsTrigger>
-			<TabsTrigger value="completed" class="text-xs sm:text-sm">เสร็จสิ้น</TabsTrigger>
-		</TabsList>
-
+	{#snippet activityTabContent()}
 		<div class="mt-6">
 			{#if error}
 				<Alert variant="destructive">
@@ -299,5 +267,59 @@
 				</div>
 			{/if}
 		</div>
+	{/snippet}
+
+	<Tabs bind:value={selectedFilter} class="w-full">
+		<TabsList class="grid w-full grid-cols-4">
+			<TabsTrigger value="active" class="text-xs sm:text-sm">
+				ทั้งหมด
+				{#if !loading}
+					<span
+						class="ml-1 rounded-full bg-primary/15 px-1.5 py-0.5 text-xs font-semibold text-primary"
+					>
+						{counts.active}
+					</span>
+				{/if}
+			</TabsTrigger>
+			<TabsTrigger value="upcoming" class="text-xs sm:text-sm">
+				เปิดรับ
+				{#if !loading}
+					<span
+						class="ml-1 rounded-full bg-primary/15 px-1.5 py-0.5 text-xs font-semibold text-primary"
+					>
+						{counts.upcoming}
+					</span>
+				{/if}
+			</TabsTrigger>
+			<TabsTrigger value="ongoing" class="text-xs sm:text-sm">
+				ดำเนินการ
+				{#if !loading}
+					<span class="ml-1 rounded-full bg-secondary/80 px-1.5 py-0.5 text-xs font-semibold">
+						{counts.ongoing}
+					</span>
+				{/if}
+			</TabsTrigger>
+			<TabsTrigger value="completed" class="text-xs sm:text-sm">
+				เสร็จสิ้น
+				{#if !loading && counts.completed > 0}
+					<span class="ml-1 rounded-full bg-muted/80 px-1.5 py-0.5 text-xs font-semibold">
+						{counts.completed}
+					</span>
+				{/if}
+			</TabsTrigger>
+		</TabsList>
+
+		<TabsContent value="active">
+			{@render activityTabContent()}
+		</TabsContent>
+		<TabsContent value="upcoming">
+			{@render activityTabContent()}
+		</TabsContent>
+		<TabsContent value="ongoing">
+			{@render activityTabContent()}
+		</TabsContent>
+		<TabsContent value="completed">
+			{@render activityTabContent()}
+		</TabsContent>
 	</Tabs>
 </div>
