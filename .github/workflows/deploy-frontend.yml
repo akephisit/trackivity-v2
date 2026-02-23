@@ -52,7 +52,8 @@ jobs:
               }
             ],
             "vars": {
-              "PUBLIC_BACKEND_URL": "${{ secrets.PUBLIC_BACKEND_URL }}"
+              "PUBLIC_BACKEND_URL": "${{ secrets.PUBLIC_BACKEND_URL }}",
+              "PUBLIC_VAPID_KEY": "${{ secrets.PUBLIC_VAPID_KEY }}"
             }
           }
           EOF
@@ -61,6 +62,7 @@ jobs:
         working-directory: frontend
         env:
           PUBLIC_BACKEND_URL: ${{ secrets.PUBLIC_BACKEND_URL }}
+          PUBLIC_VAPID_KEY: ${{ secrets.PUBLIC_VAPID_KEY }}
         run: npm run build
       
       - name: Deploy to Cloudflare Workers
