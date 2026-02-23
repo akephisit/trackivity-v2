@@ -97,11 +97,11 @@
 </svelte:head>
 
 <div
-	class="flex h-[calc(100dvh-140px)] flex-col items-center justify-center overflow-hidden overscroll-none bg-muted/20 px-4 pb-2 sm:min-h-[calc(100vh-80px)] sm:items-start sm:justify-start sm:py-8"
+	class="flex h-[calc(100dvh-140px)] flex-col items-center justify-center overflow-hidden overscroll-none bg-muted/20 px-4 pb-2 sm:min-h-[calc(100vh-80px)] sm:py-8"
 >
 	<!-- Main Card (Bank App Slip Style) -->
 	<div
-		class="w-full max-w-[360px] overflow-hidden rounded-[2rem] border border-border/50 bg-white shadow-xl sm:mt-4"
+		class="w-full max-w-[360px] overflow-hidden rounded-[2rem] border border-border/50 bg-white shadow-xl"
 	>
 		<!-- Brand Header -->
 		<div class="relative bg-primary px-6 py-5 text-center text-primary-foreground">
