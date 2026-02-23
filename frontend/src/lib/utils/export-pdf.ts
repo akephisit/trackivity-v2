@@ -55,23 +55,20 @@ export async function exportSummaryPDF(
         fetchFontAsBase64(SARABUN_BOLD_URL)
     ]);
 
-    // Make sure vfs exists
-    if (!(pdfMake as any).vfs) {
-        (pdfMake as any).vfs = {};
-    }
+    // pdfmake v0.3.x uses addVirtualFileSystem() and addFonts() instead of .vfs / .fonts properties
+    (pdfMake as any).addVirtualFileSystem({
+        'Sarabun-Regular.ttf': regularB64,
+        'Sarabun-Bold.ttf': boldB64
+    });
 
-    // Add custom fonts to virtual file system safely
-    (pdfMake as any).vfs['Sarabun-Regular.ttf'] = regularB64;
-    (pdfMake as any).vfs['Sarabun-Bold.ttf'] = boldB64;
-
-    (pdfMake as any).fonts = {
+    (pdfMake as any).addFonts({
         Sarabun: {
             normal: 'Sarabun-Regular.ttf',
             bold: 'Sarabun-Bold.ttf',
             italics: 'Sarabun-Regular.ttf',
             bolditalics: 'Sarabun-Bold.ttf'
         }
-    };
+    });
 
     const now = new Date().toLocaleDateString('th-TH', {
         year: 'numeric',
