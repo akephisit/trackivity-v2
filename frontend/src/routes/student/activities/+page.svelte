@@ -19,7 +19,12 @@
 		IconAlertCircle,
 		IconChevronRight,
 		IconHourglassHigh,
-		IconCircleCheck
+		IconCircleCheck,
+		IconBook,
+		IconBallBasketball,
+		IconMasksTheater,
+		IconHeartHandshake,
+		IconStars
 	} from '@tabler/icons-svelte';
 	import { goto } from '$app/navigation';
 
@@ -101,7 +106,6 @@
 		return activity.registration_open === true && activity.status === 'published';
 	}
 
-	// Tab counts derived from all data regardless of search
 	const counts = $derived({
 		active: allActivities.filter((a) => a.status === 'published' || a.status === 'ongoing').length,
 		upcoming: allActivities.filter(
@@ -110,6 +114,46 @@
 		ongoing: allActivities.filter((a) => a.status === 'ongoing').length,
 		completed: allActivities.filter((a) => a.status === 'completed').length
 	});
+
+	function getActivityStyle(type: string) {
+		switch (type?.toLowerCase()) {
+			case 'academic':
+				return {
+					color: 'text-blue-600 dark:text-blue-400',
+					bg: 'bg-blue-500/10 dark:bg-blue-400/10',
+					border: 'border-blue-500/20',
+					icon: IconBook
+				};
+			case 'sports':
+				return {
+					color: 'text-orange-600 dark:text-orange-400',
+					bg: 'bg-orange-500/10 dark:bg-orange-400/10',
+					border: 'border-orange-500/20',
+					icon: IconBallBasketball
+				};
+			case 'cultural':
+				return {
+					color: 'text-purple-600 dark:text-purple-400',
+					bg: 'bg-purple-500/10 dark:bg-purple-400/10',
+					border: 'border-purple-500/20',
+					icon: IconMasksTheater
+				};
+			case 'social':
+				return {
+					color: 'text-emerald-600 dark:text-emerald-400',
+					bg: 'bg-emerald-500/10 dark:bg-emerald-400/10',
+					border: 'border-emerald-500/20',
+					icon: IconHeartHandshake
+				};
+			default:
+				return {
+					color: 'text-slate-600 dark:text-slate-400',
+					bg: 'bg-slate-500/10 dark:bg-slate-400/10',
+					border: 'border-slate-500/20',
+					icon: IconStars
+				};
+		}
+	}
 </script>
 
 <MetaTags
@@ -118,51 +162,94 @@
 	type="website"
 />
 
-<div class="space-y-6">
-	<div>
-		<h1 class="text-2xl font-bold lg:text-3xl">กิจกรรมทั้งหมด</h1>
-		<p class="text-muted-foreground">ดูและติดตามกิจกรรมต่างๆ ที่มีอยู่ในระบบ</p>
-	</div>
-
-	<!-- Search -->
-	<div class="relative">
-		<IconSearch class="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
-		<Input bind:value={searchQuery} placeholder="ค้นหากิจกรรม..." class="pl-9" />
+<div class="space-y-6 pb-10 lg:space-y-8">
+	<!-- Hero Section -->
+	<div
+		class="relative overflow-hidden rounded-[2rem] border border-primary/10 bg-gradient-to-br from-primary/10 via-primary/5 to-background p-6 shadow-sm sm:p-10"
+	>
+		<div class="relative z-10 flex flex-col justify-between gap-6 md:flex-row md:items-center">
+			<div class="space-y-3">
+				<h1 class="text-3xl font-bold tracking-tight text-foreground lg:text-4xl xl:text-5xl">
+					ค้นหากิจกรรมที่สนใจ
+				</h1>
+				<p class="max-w-xl text-base text-muted-foreground lg:text-lg">
+					ดูและเลือกลงทะเบียนเข้าร่วมกิจกรรมต่างๆ ที่จะช่วยเสริมสร้างประสบการณ์และทักษะของคุณ
+				</p>
+			</div>
+			<div class="w-full shrink-0 md:w-80">
+				<!-- Search -->
+				<div class="group relative">
+					<IconSearch
+						class="absolute top-1/2 left-4 z-10 size-5 -translate-y-1/2 text-muted-foreground transition-colors group-focus-within:text-primary"
+					/>
+					<Input
+						bind:value={searchQuery}
+						placeholder="ค้นหาชื่อ หรือ รายละเอียด..."
+						class="h-14 rounded-full border-primary/20 bg-background/50 pl-12 text-base shadow-sm backdrop-blur-[2px] transition-all hover:bg-background focus-visible:ring-primary/30"
+					/>
+				</div>
+			</div>
+		</div>
+		<!-- Abstract shapes for decoration -->
+		<div
+			class="pointer-events-none absolute -top-20 -right-20 size-64 rounded-full bg-primary/10 blur-[60px]"
+		></div>
+		<div
+			class="pointer-events-none absolute -bottom-10 -left-10 size-40 rounded-full bg-primary/5 blur-3xl"
+		></div>
 	</div>
 
 	<!-- Filter Tabs -->
 	<Tabs bind:value={selectedFilter} class="w-full">
-		<TabsList class="grid w-full grid-cols-4">
-			<TabsTrigger value="active" class="text-xs sm:text-sm">
-				ทั้งหมด
-				{#if !loading}
-					<span
-						class="ml-1 rounded-full bg-primary/15 px-1.5 py-0.5 text-xs font-semibold text-primary"
-					>
-						{counts.active}
-					</span>
-				{/if}
-			</TabsTrigger>
-			<TabsTrigger value="upcoming" class="text-xs sm:text-sm">
-				เปิดรับ
-				{#if !loading}
-					<span
-						class="ml-1 rounded-full bg-primary/15 px-1.5 py-0.5 text-xs font-semibold text-primary"
-					>
-						{counts.upcoming}
-					</span>
-				{/if}
-			</TabsTrigger>
-			<TabsTrigger value="ongoing" class="text-xs sm:text-sm">
-				ดำเนินการ
-				{#if !loading}
-					<span class="ml-1 rounded-full bg-secondary/80 px-1.5 py-0.5 text-xs font-semibold">
-						{counts.ongoing}
-					</span>
-				{/if}
-			</TabsTrigger>
-			<TabsTrigger value="completed" class="text-xs sm:text-sm">เสร็จสิ้น</TabsTrigger>
-		</TabsList>
+		<div class="scrollbar-hide mb-6 overflow-x-auto pb-2">
+			<TabsList
+				class="inline-flex h-12 min-w-max items-center justify-start rounded-full bg-muted/60 p-1 px-1"
+			>
+				<TabsTrigger
+					value="active"
+					class="rounded-full px-5 py-2.5 text-sm font-medium transition-all data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
+				>
+					ทั้งหมด
+					{#if !loading}
+						<span
+							class="ml-2 rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary"
+						>
+							{counts.active}
+						</span>
+					{/if}
+				</TabsTrigger>
+				<TabsTrigger
+					value="upcoming"
+					class="rounded-full px-5 py-2.5 text-sm font-medium transition-all data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
+				>
+					เปิดรับ
+					{#if !loading}
+						<span
+							class="ml-2 rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary"
+						>
+							{counts.upcoming}
+						</span>
+					{/if}
+				</TabsTrigger>
+				<TabsTrigger
+					value="ongoing"
+					class="rounded-full px-5 py-2.5 text-sm font-medium transition-all data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
+				>
+					ดำเนินการ
+					{#if !loading}
+						<span class="ml-2 rounded-full bg-secondary/80 px-2 py-0.5 text-[11px] font-semibold">
+							{counts.ongoing}
+						</span>
+					{/if}
+				</TabsTrigger>
+				<TabsTrigger
+					value="completed"
+					class="rounded-full px-5 py-2.5 text-sm font-medium transition-all data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
+				>
+					เสร็จสิ้น
+				</TabsTrigger>
+			</TabsList>
+		</div>
 
 		<div class="mt-6">
 			{#if error}
@@ -204,40 +291,78 @@
 					{/if}
 				</div>
 			{:else}
-				<div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+				<div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
 					{#each filteredActivities as activity}
 						{@const statusBadge = getStatusBadge(activity)}
 						{@const openReg = isRegistrationOpen(activity)}
+						{@const style = getActivityStyle(activity.activity_type)}
+
 						<Card
-							class="group flex cursor-pointer flex-col transition-all hover:shadow-md"
+							class="group relative flex h-full cursor-pointer flex-col overflow-hidden border transition-all duration-300 hover:-translate-y-1 hover:shadow-xl dark:hover:shadow-primary/5 {style.border}"
 							onclick={() => goto(`/student/activities/${activity.id}`)}
 						>
-							<CardHeader class="pb-2">
-								<div class="flex items-start justify-between gap-2">
-									<div class="min-w-0 flex-1">
-										<CardTitle
-											class="line-clamp-2 text-base transition-colors group-hover:text-primary"
-										>
-											{activity.title || 'ไม่ระบุชื่อ'}
-										</CardTitle>
+							<!-- Decorative Top Edge -->
+							<div class="absolute inset-x-0 top-0 h-1.5 {style.bg}"></div>
+
+							<CardHeader class="relative space-y-0 pt-6 pb-3 text-left">
+								<div class="mb-4 flex items-start justify-between gap-3">
+									<div
+										class="flex size-[42px] items-center justify-center rounded-xl {style.bg} shrink-0"
+									>
+										<style.icon class="size-[22px] {style.color}" />
 									</div>
-									<Badge variant={statusBadge.variant} class="shrink-0 text-xs">
-										{statusBadge.text}
-									</Badge>
+									<div class="flex shrink-0 flex-col items-end gap-1.5">
+										<Badge
+											variant={statusBadge.variant}
+											class="rounded-full px-2.5 py-0.5 text-[10px] font-bold tracking-wider uppercase shadow-sm"
+										>
+											{statusBadge.text}
+										</Badge>
+										{#if openReg}
+											<span
+												class="flex items-center gap-1.5 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-0.5 text-[11px] font-bold text-emerald-600 dark:text-emerald-400"
+											>
+												<span class="size-1.5 animate-pulse rounded-full bg-emerald-500"></span>
+												เปิดรับสมัคร
+											</span>
+										{/if}
+									</div>
 								</div>
+
+								<div
+									class="text-[12px] font-bold tracking-widest uppercase {style.color} mb-1.5 block"
+								>
+									{getActivityTypeDisplayName(activity.activity_type)}
+								</div>
+								<CardTitle
+									class="line-clamp-2 text-xl leading-snug transition-colors group-hover:text-primary"
+								>
+									{activity.title || 'ไม่ระบุชื่อ'}
+								</CardTitle>
 								{#if activity.description}
-									<p class="mt-1 line-clamp-2 text-sm text-muted-foreground">
+									<p
+										class="mt-2.5 line-clamp-2 text-sm leading-relaxed font-normal text-muted-foreground/90"
+									>
 										{activity.description}
 									</p>
 								{/if}
 							</CardHeader>
 
-							<CardContent class="flex flex-1 flex-col justify-between space-y-3">
-								<div class="space-y-2">
+							<CardContent class="flex flex-1 flex-col justify-between pt-0 pb-5">
+								<div class="mt-4 grid grid-cols-2 gap-x-2 gap-y-3.5 text-[13px]">
 									<!-- Date -->
-									<div class="flex items-center gap-2 text-sm text-muted-foreground">
-										<IconClock class="size-3.5 shrink-0" />
-										<span>
+									<div
+										class="flex items-center gap-2.5 text-muted-foreground {activity.end_date !==
+										activity.start_date
+											? 'col-span-2'
+											: ''}"
+									>
+										<div
+											class="flex size-[26px] shrink-0 items-center justify-center rounded-full bg-muted/80 text-foreground/70"
+										>
+											<IconCalendarEvent class="size-4" />
+										</div>
+										<span class="truncate font-medium text-foreground/80">
 											{formatDate(activity.start_date)}
 											{#if activity.end_date !== activity.start_date}
 												– {formatDate(activity.end_date)}
@@ -247,48 +372,70 @@
 
 									<!-- Location -->
 									{#if activity.location}
-										<div class="flex items-center gap-2 text-sm text-muted-foreground">
-											<IconMapPin class="size-3.5 shrink-0" />
-											<span class="line-clamp-1">{activity.location}</span>
+										<div
+											class="col-span-2 flex items-center gap-2.5 rounded-xl border border-muted/60 bg-muted/20 p-2.5 text-muted-foreground shadow-sm"
+										>
+											<IconMapPin class="size-[18px] shrink-0 text-primary/70" />
+											<span class="line-clamp-1 font-medium text-foreground/80"
+												>{activity.location}</span
+											>
 										</div>
 									{/if}
 
-									<!-- Hours & Participants -->
-									<div class="flex items-center gap-4 text-sm text-muted-foreground">
-										{#if activity.hours}
-											<div class="flex items-center gap-1">
-												<IconHourglassHigh class="size-3.5" />
-												<span>{activity.hours} ชม.</span>
+									<!-- Hours & Participants (Bottom row) -->
+									{#if activity.hours}
+										<div class="flex items-center gap-2.5 whitespace-nowrap text-muted-foreground">
+											<div
+												class="flex size-[26px] shrink-0 items-center justify-center rounded-full bg-muted/80 text-foreground/70"
+											>
+												<IconHourglassHigh class="size-4" />
 											</div>
-										{/if}
-										{#if activity.max_participants}
-											<div class="flex items-center gap-1">
-												<IconUsers class="size-3.5" />
-												<span>ไม่เกิน {activity.max_participants} คน</span>
+											<span class="font-medium text-foreground/80">{activity.hours} ชม.</span>
+										</div>
+									{/if}
+									{#if activity.max_participants}
+										<div class="flex items-center gap-2.5 whitespace-nowrap text-muted-foreground">
+											<div
+												class="flex size-[26px] shrink-0 items-center justify-center rounded-full bg-muted/80 text-foreground/70"
+											>
+												<IconUsers class="size-4" />
 											</div>
-										{/if}
-									</div>
+											<span class="font-medium text-foreground/80"
+												>{activity.max_participants} คน</span
+											>
+										</div>
+									{/if}
 								</div>
 
-								<!-- Footer -->
-								<div class="flex items-center justify-between border-t pt-3">
-									{#if openReg}
-										<Badge variant="default" class="gap-1 text-xs">
-											<IconCircleCheck class="size-3" />
-											เปิดลงทะเบียน
-										</Badge>
-									{:else}
-										<div></div>
-									{/if}
-									<Button
-										size="sm"
-										variant="ghost"
-										class="gap-1 transition-colors group-hover:bg-primary group-hover:text-primary-foreground"
+								<!-- Organizer Footer -->
+								{#if activity.organizer_name}
+									<div class="mt-6 flex items-center justify-between border-t border-muted/40 pt-4">
+										<div class="flex items-center gap-2.5">
+											<div
+												class="flex size-7 items-center justify-center rounded-full border border-primary/10 bg-primary/10 text-[10px] font-bold text-primary uppercase shadow-sm"
+											>
+												{activity.organizer_name.substring(0, 1)}
+											</div>
+											<span
+												class="max-w-[120px] truncate text-xs font-medium text-muted-foreground"
+											>
+												{activity.organizer_name}
+											</span>
+										</div>
+										<div
+											class="flex items-center text-primary/0 transition-colors group-hover:text-primary"
+										>
+											<IconChevronRight class="size-5" />
+										</div>
+									</div>
+								{/if}
+								{#if !activity.organizer_name}
+									<div
+										class="mt-6 flex items-center justify-end border-t border-muted/40 pt-4 text-primary/0 transition-colors group-hover:text-primary"
 									>
-										ดูรายละเอียด
-										<IconChevronRight class="size-4" />
-									</Button>
-								</div>
+										<IconChevronRight class="size-5" />
+									</div>
+								{/if}
 							</CardContent>
 						</Card>
 					{/each}
