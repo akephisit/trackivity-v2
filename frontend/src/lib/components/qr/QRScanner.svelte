@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount, onDestroy } from 'svelte';
 	import { browser } from '$app/environment';
+	import { request } from '$lib/api';
 
 	// Patch canvas getContext to add willReadFrequently=true for 2d contexts
 	// This fixes the warning from qr-scanner which calls getImageData repeatedly
@@ -271,14 +272,10 @@
 		lastScannedQRData = qrData;
 
 		try {
-			const response = await fetch(`/api/activities/${activity_id}/${scanMode}`, {
+			const result = await request<any>(`/activities/${activity_id}/${scanMode}`, {
 				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				credentials: 'include',
 				body: JSON.stringify({ qr_data: qrData })
 			});
-
-			const result = await response.json();
 			const processedResult = processQRScanResult(result);
 			displayStatus(processedResult);
 
