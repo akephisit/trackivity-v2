@@ -32,7 +32,8 @@
 	// Component state
 	let activities = $state<Activity[]>([]);
 	let selectedActivityId = $state('');
-	let scannerActive = $state(false);
+	let scannerActive = $state(false); // Controls isActive prop passed to QRScanner
+	let scannerMounted = $state(false); // Controls whether QRScanner is in the DOM
 	let scannerStatus = $state<'idle' | 'requesting' | 'active' | 'error'>('idle');
 	let manualParticipantCount = $state(0);
 
@@ -108,24 +109,30 @@
 		// Reset manual participant count when changing activities
 		manualParticipantCount = 0;
 		// Stop scanner when changing activities
-		if (scannerActive) {
+		if (scannerActive || scannerMounted) {
 			scannerActive = false;
+			setTimeout(() => {
+				scannerMounted = false;
+			}, 600);
 		}
 	}
 
 	function startScanning() {
 		if (!selectedActivityId) {
-			// Removed toast - QRScanner component handles all notifications
 			return;
 		}
 
 		scannerActive = true;
-		// Removed toast - QRScanner component handles all notifications
+		scannerMounted = true;
 	}
 
 	function stopScanning() {
+		// First deactivate (stop camera) but keep mounted so QRScanner can cleanup gracefully
 		scannerActive = false;
-		// Removed toast - QRScanner component handles all notifications
+		// Then unmount after a short delay to allow camera cleanup to complete
+		setTimeout(() => {
+			scannerMounted = false;
+		}, 600);
 	}
 
 	function handleScanResult(result: { success: boolean; message?: string }, _qrData: string) {
@@ -202,7 +209,11 @@
 				<div>
 					<p class="text-sm text-muted-foreground">หน่วยงาน</p>
 					<p class="font-medium">
-						{authStore.user?.organization_name || authStore.user?.department_name || 'ทั้งหมด'}
+						{#if authStore.user?.organization_name || authStore.user?.department_name}
+							{authStore.user?.organization_name || authStore.user?.department_name}
+						{:else}
+							<span class="text-muted-foreground italic">ทั้งหมด (Super Admin)</span>
+						{/if}
 					</p>
 				</div>
 			</div>
@@ -370,7 +381,7 @@
 
 	<!-- Scanner Control -->
 	<div class="flex justify-center gap-4">
-		{#if !scannerActive}
+		{#if !scannerMounted && !scannerActive}
 			<Button
 				onclick={startScanning}
 				disabled={!selectedActivityId}
@@ -379,16 +390,24 @@
 				<IconQrcode class="h-5 w-5" />
 				เริ่มสแกน QR Code
 			</Button>
-		{:else}
+		{:else if scannerActive}
 			<Button onclick={stopScanning} variant="outline" class="flex items-center gap-2">
 				<IconX class="h-5 w-5" />
 				หยุดสแกน
+			</Button>
+		{:else}
+			<!-- Stopping in progress -->
+			<Button disabled variant="outline" class="flex items-center gap-2">
+				<div
+					class="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"
+				></div>
+				กำลังหยุดสแกน...
 			</Button>
 		{/if}
 	</div>
 
 	<!-- QR Scanner -->
-	{#if scannerActive && selectedActivityId}
+	{#if scannerMounted && selectedActivityId}
 		<QRScanner
 			activity_id={selectedActivityId}
 			isActive={scannerActive}

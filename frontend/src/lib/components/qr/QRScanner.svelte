@@ -947,24 +947,45 @@
 			return false;
 		}
 
-		// Try to parse as Base64 encoded JSON (our expected format)
-		try {
-			// Use atob for browser compatibility, skip server-side
-			if (!browser) {
-				return false; // Skip validation on server-side
-			}
+		if (!browser) {
+			return false; // Skip validation on server-side
+		}
 
+		// 1. Check if it's a JWT token (format: xxxxx.yyyyy.zzzzz)
+		// Backend generates QR codes as JWT tokens
+		const jwtParts = qrData.split('.');
+		if (jwtParts.length === 3) {
+			try {
+				// Decode the JWT payload (second part)
+				// JWT uses base64url encoding (no padding), need to normalize
+				const base64Payload = jwtParts[1].replace(/-/g, '+').replace(/_/g, '/');
+				const paddedPayload = base64Payload.padEnd(
+					base64Payload.length + ((4 - (base64Payload.length % 4)) % 4),
+					'='
+				);
+				const payload = JSON.parse(atob(paddedPayload));
+				// Valid JWT QR if it has a 'sub' (user id) field
+				if (payload && typeof payload === 'object' && payload.sub) {
+					return true;
+				}
+			} catch {
+				// Not a valid JWT
+			}
+		}
+
+		// 2. Try to parse as Base64 encoded JSON (legacy format)
+		try {
 			const decoded = atob(qrData);
 			const obj = JSON.parse(decoded);
-			// Check if it has required fields
-			if (obj && typeof obj === 'object' && obj.uid) {
+			// Check if it has required fields (uid or sub)
+			if (obj && typeof obj === 'object' && (obj.uid || obj.sub || obj.user_id)) {
 				return true;
 			}
 		} catch {
 			// Try parsing as direct JSON
 			try {
 				const obj = JSON.parse(qrData);
-				if (obj && typeof obj === 'object' && obj.uid) {
+				if (obj && typeof obj === 'object' && (obj.uid || obj.sub || obj.user_id)) {
 					return true;
 				}
 			} catch {
