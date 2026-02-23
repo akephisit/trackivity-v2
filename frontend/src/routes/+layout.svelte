@@ -4,9 +4,16 @@
 	import { ModeWatcher } from 'mode-watcher';
 	import { Toaster } from '$lib/components/ui/sonner';
 
+	import { onMount } from 'svelte';
 	let { children } = $props();
 
-
+	onMount(() => {
+		if ('serviceWorker' in navigator) {
+			navigator.serviceWorker.register('/service-worker.js', { type: 'module' }).catch((err) => {
+				console.error('[SW Registration Error]', err);
+			});
+		}
+	});
 </script>
 
 <svelte:head>

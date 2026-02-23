@@ -1,0 +1,17 @@
+{
+    "name": "Trackivity",
+    "short_name": "Trackivity",
+    "description": "ระบบกิจกรรมนักศึกษา Trackivity",
+    "start_url": "/student",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#ffffff",
+    "icons": [
+        {
+            "src": "/favicon.svg",
+            "sizes": "192x192 512x512",
+            "type": "image/svg+xml",
+            "purpose": "any maskable"
+        }
+    ]
+}
