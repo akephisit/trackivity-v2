@@ -37,25 +37,34 @@
 	let requiredFacultyHours = $state(6);
 	let requiredUniversityHours = $state(12);
 
-	function handleSubmit(e: Event) {
+	async function handleSubmit(e: Event) {
 		e.preventDefault();
+		if (!organization) return;
 		isSubmitting = true;
 
-		// In a real application, you'd want a settings API call here.
-		// For now, since we removed the server action, we just simulate success.
-		// If there is a settings storage API, we should use it.
-		// Since we don't have it in $lib/api.ts, we simulate it.
-		setTimeout(() => {
-			toast.success('การตั้งค่าได้รับการอัพเดทเรียบร้อยแล้ว (CSR)');
+		try {
+			const res = await organizationsApi.updateRequirements(organization.id, {
+				required_faculty_hours: requiredFacultyHours,
+				required_university_hours: requiredUniversityHours
+			});
+			toast.success('การตั้งค่าได้รับการอัพเดทเรียบร้อยแล้ว');
+		} catch (e: any) {
+			toast.error(e.message || 'เกิดข้อผิดพลาดในการบันทึกการตั้งค่า');
+		} finally {
 			isSubmitting = false;
-		}, 600);
+		}
 	}
 
 	onMount(async () => {
 		if (user?.admin_role?.organization_id) {
 			try {
+				const orgId = user.admin_role.organization_id;
 				const response = await organizationsApi.list();
-				organization = response.all.find((o) => o.id === user.admin_role?.organization_id) || null;
+				organization = response.all.find((o) => o.id === orgId) || null;
+
+				const reqs = await organizationsApi.getRequirements(orgId);
+				requiredFacultyHours = reqs.required_faculty_hours;
+				requiredUniversityHours = reqs.required_university_hours;
 			} catch (e) {
 				console.error('Failed to load organization details', e);
 			}

@@ -93,6 +93,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/organizations/admin", get(organizations::list_all_organizations_admin).post(organizations::create_organization))
         .route("/organizations/:id", put(organizations::update_organization).delete(organizations::delete_organization))
         .route("/organizations/:id/toggle-status", post(organizations::toggle_organization_status))
+        .route("/organizations/:id/requirements", get(organizations::get_activity_requirements).put(organizations::update_activity_requirements))
         .route("/organizations/:id/departments", get(organizations::get_departments))
         // ─── Departments ──────────────────────────────────
         .route("/departments", get(departments::list_departments).post(departments::create_department))

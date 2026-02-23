@@ -34,7 +34,7 @@
 	} from '@tabler/icons-svelte';
 	import { toast } from 'svelte-sonner';
 
-	import { activitiesApi, auth as authApi, ApiError } from '$lib/api';
+	import { activitiesApi, auth as authApi, organizationsApi, ApiError } from '$lib/api';
 	import { onMount } from 'svelte';
 	import { Skeleton } from '$lib/components/ui/skeleton';
 	import { exportSummaryPDF } from '$lib/utils/export-pdf';
@@ -74,6 +74,19 @@
 				prefix: user.prefix
 			};
 			participationHistoryData = participations;
+
+			if (user.organization_id) {
+				try {
+					const reqs = await organizationsApi.getRequirements(user.organization_id);
+					activityRequirementsData = {
+						requiredFacultyHours: reqs.required_faculty_hours,
+						requiredUniversityHours: reqs.required_university_hours
+					};
+				} catch (reqError) {
+					console.error('Failed to fetch activity requirements:', reqError);
+					// Proceed without requirements if they fail to load
+				}
+			}
 		} catch (e) {
 			if (e instanceof ApiError) {
 				error = `ไม่สามารถโหลดข้อมูลได้: ${e.message}`;

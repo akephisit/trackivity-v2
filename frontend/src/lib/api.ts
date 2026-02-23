@@ -283,6 +283,21 @@ export interface UpdateOrganizationInput {
     status?: boolean;
 }
 
+export interface OrgActivityRequirements {
+    id: string;
+    organization_id: string;
+    required_faculty_hours: number;
+    required_university_hours: number;
+    created_at?: string | null;
+    updated_at?: string | null;
+    created_by: string;
+}
+
+export interface UpdateOrgActivityRequirementsInput {
+    required_faculty_hours: number;
+    required_university_hours: number;
+}
+
 export const organizationsApi = {
     list: () =>
         request<{ all: Organization[]; grouped: { faculty: Organization[]; office: Organization[] } }>('/organizations'),
@@ -314,6 +329,15 @@ export const organizationsApi = {
 
     departments: (organizationId: string) =>
         request<Department[]>(`/organizations/${organizationId}/departments`),
+
+    getRequirements: (organizationId: string) =>
+        request<OrgActivityRequirements>(`/organizations/${organizationId}/requirements`),
+
+    updateRequirements: (organizationId: string, data: UpdateOrgActivityRequirementsInput) =>
+        request<OrgActivityRequirements>(`/organizations/${organizationId}/requirements`, {
+            method: 'PUT',
+            body: JSON.stringify(data),
+        }),
 };
 
 // ─── Departments ───────────────────────────────────────────────────────────

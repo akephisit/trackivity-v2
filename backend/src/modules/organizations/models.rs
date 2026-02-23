@@ -59,3 +59,20 @@ pub struct OrganizationWithStats {
     #[sqlx(default)]
     pub departments_count: Option<i64>,
 }
+
+#[derive(Debug, Serialize, Deserialize, FromRow)]
+pub struct OrgActivityRequirements {
+    pub id: Uuid,
+    pub organization_id: Uuid,
+    pub required_faculty_hours: i32,
+    pub required_university_hours: i32,
+    pub created_at: Option<DateTime<Utc>>,
+    pub updated_at: Option<DateTime<Utc>>,
+    pub created_by: Uuid,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct UpdateOrgActivityRequirementsInput {
+    pub required_faculty_hours: i32,
+    pub required_university_hours: i32,
+}
