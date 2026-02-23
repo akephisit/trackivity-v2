@@ -403,8 +403,11 @@ export function getStatusConfig(statusCode: StatusCode): StatusConfig {
 	return STATUS_CONFIG[statusCode];
 }
 
+let audioCtx: AudioContext | null = null;
+
 /**
- * Plays audio feedback for a status
+ * Plays audio feedback for a status using Web Audio API
+ * No external .mp3 files needed
  */
 export function playStatusSound(statusCode: StatusCode): void {
 	if (typeof window === 'undefined') return;
@@ -413,9 +416,60 @@ export function playStatusSound(statusCode: StatusCode): void {
 	if (!config.sound) return;
 
 	try {
-		const audio = new Audio(`/sounds/${config.sound}.mp3`);
-		audio.volume = 0.5;
-		audio.play().catch(console.warn);
+		if (!audioCtx) {
+			const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
+			if (!AudioContext) return;
+			audioCtx = new AudioContext();
+		}
+
+		if (audioCtx.state === 'suspended') {
+			audioCtx.resume();
+		}
+
+		const playTone = (type: OscillatorType, freq1: number, freq2: number, freq3?: number, duration = 0.3) => {
+			if (!audioCtx) return;
+			const oscillator = audioCtx.createOscillator();
+			const gainNode = audioCtx.createGain();
+
+			oscillator.type = type;
+			oscillator.connect(gainNode);
+			gainNode.connect(audioCtx.destination);
+
+			const now = audioCtx.currentTime;
+
+			// Schedule frequencies
+			oscillator.frequency.setValueAtTime(freq1, now);
+			if (freq2) oscillator.frequency.exponentialRampToValueAtTime(freq2, now + (duration * 0.5));
+			if (freq3) oscillator.frequency.exponentialRampToValueAtTime(freq3, now + duration);
+
+			// Envelope
+			gainNode.gain.setValueAtTime(0, now);
+			gainNode.gain.linearRampToValueAtTime(0.2, now + 0.05);
+			gainNode.gain.exponentialRampToValueAtTime(0.001, now + duration);
+
+			oscillator.start(now);
+			oscillator.stop(now + duration);
+		};
+
+		switch (config.sound) {
+			case 'success':
+				// Pleasant ascending chime (C5 to E5 to G5)
+				playTone('sine', 523.25, 659.25, 783.99, 0.4);
+				break;
+			case 'error':
+				// Harsh descending buzz
+				playTone('sawtooth', 200, 100, 50, 0.5);
+				break;
+			case 'warning':
+				// Double fast beep
+				playTone('square', 400, 400, undefined, 0.15);
+				setTimeout(() => playTone('square', 400, 400, undefined, 0.15), 200);
+				break;
+			case 'info':
+				// Gentle single blip
+				playTone('sine', 600, 600, undefined, 0.2);
+				break;
+		}
 	} catch (e) {
 		console.warn('Could not play status sound:', e);
 	}

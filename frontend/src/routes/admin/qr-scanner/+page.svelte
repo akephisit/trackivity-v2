@@ -411,7 +411,7 @@
 			onStop={stopScanning}
 			showHistory={true}
 			maxHistoryItems={20}
-			soundEnabled={false}
+			soundEnabled={true}
 			vibrationEnabled={true}
 		/>
 	{/if}
