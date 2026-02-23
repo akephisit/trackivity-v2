@@ -3,31 +3,24 @@
 	import { authStore } from '$lib/stores/auth.svelte';
 	import { useQRCode } from '$lib/qr/client';
 	import { getPrefixLabel } from '$lib/schemas/auth';
-	import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
 	import { Button } from '$lib/components/ui/button';
-	import { Badge } from '$lib/components/ui/badge';
-	import { Alert, AlertDescription } from '$lib/components/ui/alert';
-	import QRCodeGenerator from '$lib/components/qr/QRCodeGenerator.svelte';
+	import { toast } from 'svelte-sonner';
 	import {
 		IconQrcode,
 		IconRefresh,
 		IconCopy,
 		IconCheck,
 		IconAlertCircle,
-		IconShieldCheck,
-		IconClock,
-		IconInfoCircle
+		IconClock
 	} from '@tabler/icons-svelte';
-	import { toast } from 'svelte-sonner';
 
-	const { qrCode, status: qrStatus, generate } = useQRCode();
+	const { qrCode, qrDataURL, status: qrStatus, generate } = useQRCode();
 
 	const user = $derived(authStore.user);
 
 	let copied = $state(false);
 	let refreshing = $state(false);
 
-	// Countdown state (updated every second)
 	let timeRemainingSeconds = $state(0);
 	let countdownTimer: ReturnType<typeof setInterval> | null = null;
 
@@ -48,17 +41,6 @@
 		return `${minutes}:${secs.toString().padStart(2, '0')}`;
 	}
 
-	function formatDate(isoString: string): string {
-		return new Date(isoString).toLocaleDateString('th-TH', {
-			year: 'numeric',
-			month: 'long',
-			day: 'numeric',
-			hour: '2-digit',
-			minute: '2-digit',
-			second: '2-digit'
-		});
-	}
-
 	$effect(() => {
 		if ($qrCode) {
 			updateCountdown();
@@ -70,6 +52,10 @@
 			updateCountdown();
 		}, 1000);
 
+		if (user && $qrStatus === 'idle') {
+			generate().catch(console.error);
+		}
+
 		return () => {
 			if (countdownTimer) clearInterval(countdownTimer);
 		};
@@ -80,7 +66,7 @@
 		try {
 			await navigator.clipboard.writeText($qrCode.id);
 			copied = true;
-			toast.success('คัดลอก QR Code ID แล้ว');
+			toast.success('คัดลอกรหัสประจำตัวสำเร็จ');
 			setTimeout(() => {
 				copied = false;
 			}, 2000);
@@ -93,186 +79,152 @@
 		refreshing = true;
 		try {
 			await generate();
-			toast.success('รีเฟรช QR Code แล้ว');
+			toast.success('รีเฟรช QR Code ใหม่แล้ว');
 		} catch (err) {
-			toast.error(
-				'ไม่สามารถรีเฟรช QR Code ได้: ' +
-					(err instanceof Error ? err.message : 'เกิดข้อผิดพลาดไม่ทราบสาเหตุ')
-			);
+			toast.error('เกิดข้อผิดพลาดในการโหลด QR Code');
 		} finally {
 			refreshing = false;
-		}
-	}
-
-	function getStatusBadge(status: string) {
-		switch (status) {
-			case 'ready':
-				return { variant: 'default' as const, text: 'พร้อมใช้', icon: IconShieldCheck };
-			case 'generating':
-				return { variant: 'secondary' as const, text: 'กำลังสร้าง', icon: IconClock };
-			case 'expired':
-				return { variant: 'destructive' as const, text: 'หมดอายุ', icon: IconAlertCircle };
-			default:
-				return { variant: 'outline' as const, text: 'ไม่พร้อม', icon: IconAlertCircle };
 		}
 	}
 </script>
 
 <svelte:head>
 	<title>QR Code - Trackivity</title>
-	<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+	<meta
+		name="viewport"
+		content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover"
+	/>
 </svelte:head>
 
-<div class="mx-auto max-w-sm space-y-6 pt-2 sm:max-w-md sm:pt-6">
-	<!-- Main ID Card -->
-	<Card
-		class="relative overflow-hidden border-2 shadow-lg sm:rounded-2xl {timeRemainingSeconds <= 60 &&
-		$qrStatus === 'ready'
-			? 'border-orange-500/30'
-			: 'border-primary/20'} transition-colors duration-500"
+<div class="flex min-h-[calc(100vh-80px)] items-start justify-center bg-muted/20 px-4 py-4 sm:py-8">
+	<!-- Main Card (Bank App Slip Style) -->
+	<div
+		class="w-full max-w-[360px] overflow-hidden rounded-[2rem] border border-border/50 bg-white shadow-xl"
 	>
-		<div
-			class="absolute inset-x-0 top-0 h-3 {timeRemainingSeconds <= 60 && $qrStatus === 'ready'
-				? 'bg-gradient-to-r from-orange-400 to-orange-600'
-				: 'bg-gradient-to-r from-primary to-primary/60'}"
-		></div>
-
-		<CardContent class="p-6 pt-8">
-			<!-- QR Code Interactive Area -->
-			<div class="flex flex-col items-center justify-center space-y-6">
-				{#if $qrStatus === 'ready' && $qrCode}
-					<!-- The Code Box -->
-					<div class="relative flex flex-col items-center">
-						<div
-							class="rounded-2xl border-[3px] bg-white p-4 shadow-sm {timeRemainingSeconds <= 60
-								? 'border-orange-400'
-								: 'border-transparent ring-1 ring-border'} transition-colors duration-500"
-						>
-							<QRCodeGenerator size="large" showStatus={false} />
-						</div>
-
-						<!-- Copy button floating minimal under QR -->
-						<button
-							onclick={copyQRData}
-							disabled={copied}
-							class="mt-3 flex items-center gap-1.5 rounded-full bg-muted/50 px-3 py-1.5 font-mono text-xs font-medium text-muted-foreground transition-colors hover:bg-muted active:scale-95"
-						>
-							{#if copied}
-								<IconCheck class="size-3.5 text-green-500" />
-								<span class="text-green-600">คัดลอกแล้ว</span>
-							{:else}
-								<IconCopy class="size-3.5" /> ID: {$qrCode.id}
-							{/if}
-						</button>
-					</div>
-
-					<!-- Timer Block -->
-					<div
-						class="flex h-12 w-full items-center justify-center gap-2 rounded-xl border bg-muted/30 px-4"
+		<!-- Brand Header -->
+		<div class="relative bg-primary px-6 py-5 text-center text-primary-foreground">
+			<!-- White curve at bottom -->
+			<div class="absolute inset-x-0 -bottom-1 h-6 rounded-t-[1.5rem] border-none bg-white"></div>
+			<div class="mb-5 flex items-center justify-center gap-2">
+				<IconQrcode class="size-6" />
+				<h2 class="flex items-center gap-1.5 text-[17px] font-bold tracking-wide">
+					TRACKIVITY <span
+						class="rounded-full bg-white px-2 py-0.5 text-[10px] font-extrabold tracking-widest text-primary uppercase shadow-sm"
+						>Pass</span
 					>
-						<IconClock
-							class="size-[18px] {timeRemainingSeconds <= 60
-								? 'animate-pulse text-orange-500'
-								: 'text-primary'}"
+				</h2>
+			</div>
+		</div>
+
+		<!-- Card Content -->
+		<div class="relative z-10 bg-white px-6 pb-8 text-center">
+			<!-- User Info -->
+			<div class="mb-7 space-y-1">
+				<h3 class="text-[22px] leading-tight font-bold text-slate-800">
+					{#if user}
+						{getPrefixLabel(user.prefix)}{user.first_name} {user.last_name}
+					{:else}
+						ชื่อ-นามสกุล
+					{/if}
+				</h3>
+				<p class="font-mono text-[15px] font-semibold tracking-widest text-slate-500">
+					<span class="mr-2 font-sans text-sm tracking-normal text-slate-400">รหัสนักศึกษา</span
+					>{user?.student_id || '-'}
+				</p>
+			</div>
+
+			<!-- QR Code -->
+			<div class="relative mx-auto mb-7 flex justify-center">
+				{#if $qrStatus === 'ready' && $qrDataURL}
+					<div
+						class="relative rounded-[2rem] border-4 p-3 shadow-sm {timeRemainingSeconds <= 60
+							? 'border-orange-400 bg-orange-50'
+							: 'border-slate-100 bg-white'} transition-colors duration-500"
+					>
+						<img
+							src={$qrDataURL}
+							alt="QR Code"
+							class="h-48 w-48 rounded-xl object-contain sm:h-56 sm:w-56 {timeRemainingSeconds <= 60
+								? 'opacity-80'
+								: 'opacity-100'} transition-opacity"
 						/>
-						<span
-							class="text-[15px] font-semibold tracking-wide {timeRemainingSeconds <= 60
-								? 'text-orange-600'
-								: 'text-primary'}"
-							style="font-variant-numeric: tabular-nums;"
-						>
-							รีเฟรชใน {formatTimeRemaining(timeRemainingSeconds)}
-						</span>
 					</div>
-				{:else if $qrStatus === 'generating'}
-					<div class="flex h-[260px] flex-col items-center justify-center space-y-4">
-						<IconQrcode class="size-16 animate-pulse text-muted-foreground/30" />
-						<p class="text-sm font-medium text-muted-foreground">
-							กำลังสร้าง QR Code ส่วนตัวของคุณ...
-						</p>
+				{:else if $qrStatus === 'generating' || $qrStatus === 'idle'}
+					<div
+						class="flex h-48 w-48 flex-col items-center justify-center rounded-[2rem] border-4 border-slate-100 bg-slate-50 sm:h-56 sm:w-56"
+					>
+						<IconQrcode class="size-12 animate-pulse text-slate-300" />
+						<p class="mt-4 animate-pulse text-sm font-medium text-slate-400">กำลังโหลด...</p>
 					</div>
 				{:else}
-					<div class="flex h-[260px] flex-col items-center justify-center space-y-4 text-center">
-						<div class="rounded-full bg-destructive/10 p-4">
-							<IconAlertCircle class="size-10 text-destructive" />
-						</div>
-						<div class="space-y-1">
-							<p class="font-bold text-destructive">QR Code ไม่พร้อมใช้งาน</p>
-							<p class="text-sm text-muted-foreground">
-								คิวอาร์โค้ดหมดอายุการใช้งานแล้ว<br />หรือเกิดข้อผิดพลาดในการโหลด
-							</p>
-						</div>
+					<div
+						class="flex h-48 w-48 flex-col items-center justify-center rounded-[2rem] border-4 border-red-100 bg-red-50 p-4 text-red-500 sm:h-56 sm:w-56"
+					>
+						<IconAlertCircle class="mb-3 size-12" />
+						<p class="text-sm font-bold">QR ไม่พร้อมใช้งาน</p>
 						<Button
 							onclick={handleRefreshQR}
 							disabled={refreshing}
-							variant="default"
-							class="mt-2 w-full font-medium"
+							variant="outline"
+							class="mt-4 rounded-full border-red-200 bg-white text-red-600 hover:bg-red-50"
+							size="sm"
 						>
-							<IconRefresh class="mr-2 size-4 {refreshing ? 'animate-spin' : ''}" /> กดเพื่อขอ QR Code
-							ใหม่
+							กดเพื่อโหลดใหม่
 						</Button>
 					</div>
 				{/if}
 			</div>
 
-			<!-- Divider -->
-			<div class="relative my-6 flex w-full items-center justify-center">
-				<div class="w-full border-t border-dashed"></div>
+			<!-- Actions -->
+			{#if $qrStatus === 'ready' && $qrCode}
+				<!-- Timer -->
 				<div
-					class="absolute bg-card px-3 text-[10px] tracking-wider text-muted-foreground uppercase opacity-70"
+					class="mb-4 flex items-center justify-between rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3"
 				>
-					ข้อมูลผู้ถือบัตร
+					<div class="flex items-center gap-2.5">
+						<div class="rounded-full bg-white p-1.5 shadow-sm">
+							<IconClock
+								class="size-4 {timeRemainingSeconds <= 60
+									? 'animate-pulse text-orange-500'
+									: 'text-slate-500'}"
+							/>
+						</div>
+						<span
+							class="text-[14.5px] font-medium {timeRemainingSeconds <= 60
+								? 'text-orange-600'
+								: 'text-slate-600'} tabular-nums"
+						>
+							รีเฟรชใน {formatTimeRemaining(timeRemainingSeconds)}
+						</span>
+					</div>
+					<button
+						onclick={handleRefreshQR}
+						disabled={refreshing}
+						class="rounded-full p-2 text-primary transition-colors hover:bg-primary/10 active:scale-95 disabled:opacity-50"
+						title="รีเฟรช QR Code"
+					>
+						<IconRefresh class="size-[22px] {refreshing ? 'animate-spin' : ''}" />
+					</button>
 				</div>
-				<div
-					class="absolute -left-8 size-4 rounded-full border border-r-0 bg-muted shadow-inner"
-				></div>
-				<div
-					class="absolute -right-8 size-4 rounded-full border border-l-0 bg-muted shadow-inner"
-				></div>
-			</div>
 
-			{#if user}
-				<!-- User Identity -->
-				<div class="flex flex-col items-center text-center">
-					<h2 class="text-lg font-bold text-foreground">
-						{getPrefixLabel(user.prefix)}{user.first_name}
-						{user.last_name}
-					</h2>
-					<p class="mt-1 font-mono text-sm tracking-widest text-muted-foreground">
-						{user.student_id}
-					</p>
-				</div>
+				<!-- Copy ID -->
+				<Button
+					onclick={copyQRData}
+					variant="ghost"
+					class="h-[52px] w-full rounded-2xl border-2 border-slate-100 font-medium text-slate-500 transition-all hover:bg-slate-50 hover:text-slate-800 active:scale-[0.98]"
+				>
+					{#if copied}
+						<IconCheck class="mr-2 size-5 text-green-500" />
+						<span class="text-green-600">คัดลอกสำเร็จ</span>
+					{:else}
+						<IconCopy class="mr-2 size-5" /> คัดลอกรหัส (ID: {$qrCode.id.substring(0, 8)}...)
+					{/if}
+				</Button>
 			{/if}
-		</CardContent>
-	</Card>
 
-	<!-- Minimal Action / Info -->
-	<div class="flex flex-col space-y-3 pb-6">
-		{#if $qrStatus === 'ready'}
-			<Button
-				variant="outline"
-				size="lg"
-				onclick={handleRefreshQR}
-				disabled={refreshing}
-				class="w-full bg-background/50 font-medium shadow-sm hover:bg-background"
-			>
-				<IconRefresh class="mr-2 size-5 {refreshing ? 'animate-spin' : ''}" /> สร้าง QR Code ใหม่อีกครั้ง
-			</Button>
-		{/if}
-
-		<div class="rounded-xl border bg-card/50 px-4 py-3 text-sm text-muted-foreground shadow-sm">
-			<div class="flex items-start gap-3">
-				<div class="mt-0.5 rounded-full bg-primary/10 p-1.5 text-primary">
-					<IconInfoCircle class="size-4" />
-				</div>
-				<div class="space-y-1">
-					<p class="font-medium text-foreground">ข้อแนะนำการใช้งาน</p>
-					<p class="text-[13px] leading-relaxed">
-						กรุณาปรับความสว่างหน้าจอให้เพียงพอ นำ QR Code ให้เจ้าหน้าที่สแกนเพื่อเข้าร่วมกิจกรรม
-						(รหัสจะถูกรีเฟรชอัตโนมัติทุก 3 นาที)
-					</p>
-				</div>
-			</div>
+			<p class="mt-6 text-[13px] leading-relaxed font-medium text-slate-400">
+				แสดง QR Code เพื่อเข้าร่วมกิจกรรม
+			</p>
 		</div>
 	</div>
 </div>

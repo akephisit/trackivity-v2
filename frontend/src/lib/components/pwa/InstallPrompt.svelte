@@ -18,32 +18,20 @@
 
 		if (isStandalone) return;
 
-		// 2. Check if dismissed recently (e.g. within 7 days)
-		const dismissedAt = localStorage.getItem('pwa-prompt-dismissed');
-		if (dismissedAt) {
-			const daysSinceDismissed = (Date.now() - parseInt(dismissedAt)) / (1000 * 60 * 60 * 24);
-			if (daysSinceDismissed < 7) return; // Don't annoy the user
-		}
-
-		// 3. Android / Chrome - Catch the native banner prompt
+		// 2. Fallback check for Native Prompt on Android/Desktop Chrome
 		window.addEventListener('beforeinstallprompt', (e) => {
-			e.preventDefault(); // Prevent automatic mini-infobar
-			deferredPrompt = e; // Save event to trigger later
-			setTimeout(() => {
-				showPrompt = true;
-			}, 3000); // Show gently after 3s
+			e.preventDefault();
+			deferredPrompt = e;
 		});
 
-		// 4. iOS Safari - Apple doesn't support beforeinstallprompt, detect manually
+		// 3. Check for iOS Device
 		const userAgent = window.navigator.userAgent.toLowerCase();
 		isIOS = /iphone|ipad|ipod/.test(userAgent) && !(window as any).MSStream;
-		const isSafari = /safari/.test(userAgent) && !/chrome|crios|fxios|edgios/.test(userAgent);
 
-		if (isIOS && isSafari && !deferredPrompt && !isStandalone) {
-			setTimeout(() => {
-				showPrompt = true;
-			}, 3000);
-		}
+		// 4. Force show prompt after 1.5s on all devices
+		setTimeout(() => {
+			showPrompt = true;
+		}, 1500);
 	});
 
 	async function installPWA() {
@@ -51,13 +39,13 @@
 			deferredPrompt.prompt();
 			const { outcome } = await deferredPrompt.userChoice;
 			if (outcome === 'accepted') {
-				console.log('User accepted PWA installation');
 				showPrompt = false;
 			}
 			deferredPrompt = null;
-		} else if (isIOS) {
-			// Cannot trigger automatically on iOS, prompt is already showing instructions
-			// User must follow the on-screen instructions
+		} else {
+			alert(
+				'เบราว์เซอร์นี้ไม่รองรับปุ่มติดตั้งอัตโนมัติ\nกรุณากดที่เมนูของเบราว์เซอร์ (จุด 3 จุด หรือปุ่มแชร์)\nและเลือก "ติดตั้ง (Install)" หรือ "เพิ่มลงหน้าจอโฮม"'
+			);
 		}
 	}
 
