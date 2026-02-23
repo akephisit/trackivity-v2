@@ -18,17 +18,27 @@
 
 		if (isStandalone) return;
 
-		// 2. Fallback check for Native Prompt on Android/Desktop Chrome
+		// 2. Check if user dismissed prompt recently (within 7 days)
+		const dismissedAt = localStorage.getItem('pwa-prompt-dismissed');
+		if (dismissedAt) {
+			const dismissedTime = parseInt(dismissedAt, 10);
+			const daysSinceDismissed = (Date.now() - dismissedTime) / (1000 * 60 * 60 * 24);
+			if (daysSinceDismissed < 7) {
+				return; // Don't show again for 7 days
+			}
+		}
+
+		// 3. Fallback check for Native Prompt on Android/Desktop Chrome
 		window.addEventListener('beforeinstallprompt', (e) => {
 			e.preventDefault();
 			deferredPrompt = e;
 		});
 
-		// 3. Check for iOS Device
+		// 4. Check for iOS Device
 		const userAgent = window.navigator.userAgent.toLowerCase();
 		isIOS = /iphone|ipad|ipod/.test(userAgent) && !(window as any).MSStream;
 
-		// 4. Force show prompt after 1.5s on all devices
+		// 5. Force show prompt after 1.5s on all devices
 		setTimeout(() => {
 			showPrompt = true;
 		}, 1500);
