@@ -103,10 +103,14 @@
 				return 'ลงทะเบียนแล้ว';
 			case 'checked_in':
 				return 'เช็คอินแล้ว';
+			case 'checked_out':
+				return 'เช็คเอาท์';
 			case 'completed':
 				return 'เสร็จสิ้น';
 			case 'cancelled':
 				return 'ยกเลิก';
+			case 'no_show':
+				return 'ไม่เข้าร่วม';
 			default:
 				return status;
 		}

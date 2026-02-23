@@ -162,6 +162,11 @@ export function calculateActivitySummary(
  */
 export function getActivityTypeDisplayName(type: string): string {
 	const typeMapping: Record<string, string> = {
+		academic: 'วิชาการ',
+		sports: 'กีฬา',
+		cultural: 'ศิลปวัฒนธรรม',
+		social: 'สังคมและบริการ',
+		other: 'อื่นๆ',
 		Academic: 'วิชาการ',
 		Sports: 'กีฬา',
 		Cultural: 'ศิลปวัฒนธรรม',
@@ -169,7 +174,7 @@ export function getActivityTypeDisplayName(type: string): string {
 		Other: 'อื่นๆ'
 	};
 
-	return typeMapping[type] || type;
+	return typeMapping[type?.toLowerCase()] || typeMapping[type] || type;
 }
 
 /**
