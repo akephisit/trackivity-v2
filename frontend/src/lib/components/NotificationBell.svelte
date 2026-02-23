@@ -45,14 +45,21 @@
 		if (!vapidPublicKey) return;
 
 		try {
-			const permission = await Notification.requestPermission();
-			if (permission !== 'granted') return;
+			// Always explicitly register the service worker for production builds
+			const registration = await navigator.serviceWorker.register('/service-worker.js');
+			await navigator.serviceWorker.ready;
 
-			const registration = await navigator.serviceWorker.ready;
 			let subscription = await registration.pushManager.getSubscription();
 
+			// Only ask for permission if we don't have a subscription yet
+			if (!subscription && Notification.permission !== 'granted') {
+				// We don't block render but iOS might require a button click to grant this.
+				// In a real app we might put this behind a "Enable Notifications" button.
+				const permission = await Notification.requestPermission();
+				if (permission !== 'granted') return;
+			}
+
 			if (!subscription) {
-				// Convert Base64 VAPID to Uint8Array
 				const padding = '='.repeat((4 - (vapidPublicKey.length % 4)) % 4);
 				const base64 = (vapidPublicKey + padding).replace(/\-/g, '+').replace(/_/g, '/');
 				const rawData = window.atob(base64);
@@ -67,12 +74,18 @@
 				});
 			}
 
-			const p256dh = btoa(
-				String.fromCharCode.apply(null, Array.from(new Uint8Array(subscription.getKey('p256dh')!)))
-			);
-			const auth = btoa(
-				String.fromCharCode.apply(null, Array.from(new Uint8Array(subscription.getKey('auth')!)))
-			);
+			// Must be URL-safe base64 for the Rust web-push crate
+			function arrayBufferToUrlSafeBase64(buffer: ArrayBuffer): string {
+				let binary = '';
+				const bytes = new Uint8Array(buffer);
+				for (let i = 0; i < bytes.byteLength; i++) {
+					binary += String.fromCharCode(bytes[i]);
+				}
+				return window.btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+			}
+
+			const p256dh = arrayBufferToUrlSafeBase64(subscription.getKey('p256dh')!);
+			const auth = arrayBufferToUrlSafeBase64(subscription.getKey('auth')!);
 
 			await notificationsApi.subscribe(subscription.endpoint, { p256dh, auth });
 		} catch (e) {

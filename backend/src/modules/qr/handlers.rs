@@ -429,6 +429,16 @@ async fn scan_qr(
                     .await
                     .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
 
+                    // 🔔 Notify user that they checked out
+                    let _ = NotificationService::send(
+                        pool,
+                        student_id,
+                        &format!("✅ เช็คเอาท์สำเร็จ: {}", activity_title),
+                        &format!("คุณได้เช็คเอาท์กิจกรรม {} เรียบร้อยแล้ว ขอบคุณที่เข้าร่วม!", activity_title),
+                        NotificationType::Success,
+                        Some(&format!("/student/activities/{}", activity_id)),
+                    ).await;
+
                     Ok(Json(ScanQRResponse {
                         success: true,
                         message: format!("เช็คเอาท์สำเร็จ! ขอบคุณ {} ที่เข้าร่วมกิจกรรม", user_name),
