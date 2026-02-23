@@ -258,7 +258,7 @@ async fn scan_qr(
     }
 
     let participation = sqlx::query_as::<_, ParticipationRow>(
-        "SELECT id, status, checked_in_at, checked_out_at FROM participations WHERE user_id = $1 AND activity_id = $2"
+        "SELECT id, status::text AS status, checked_in_at, checked_out_at FROM participations WHERE user_id = $1 AND activity_id = $2"
     )
     .bind(student_id)
     .bind(activity_id)
