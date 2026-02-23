@@ -3,6 +3,7 @@
 	import favicon from '$lib/assets/favicon.svg';
 	import { ModeWatcher } from 'mode-watcher';
 	import { Toaster } from '$lib/components/ui/sonner';
+	import InstallPrompt from '$lib/components/pwa/InstallPrompt.svelte';
 
 	import { onMount } from 'svelte';
 	let { children } = $props();
@@ -33,6 +34,7 @@
 
 <ModeWatcher />
 <Toaster richColors closeButton />
+<InstallPrompt />
 
 <!-- SSE removed for now -->
 
