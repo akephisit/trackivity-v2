@@ -127,9 +127,8 @@
 						ชื่อ-นามสกุล
 					{/if}
 				</h3>
-				<p class="font-mono text-[15px] font-semibold tracking-widest text-slate-500">
-					<span class="mr-2 font-sans text-sm tracking-normal text-slate-400">รหัสนักศึกษา</span
-					>{user?.student_id || '-'}
+				<p class="text-[15px] font-semibold text-slate-500">
+					<span class="mr-2 text-sm text-slate-400">รหัสนักศึกษา</span>{user?.student_id || '-'}
 				</p>
 			</div>
 
