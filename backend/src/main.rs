@@ -119,7 +119,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/notifications/subscribe", post(modules::notifications::handlers::subscribe_push))
         .route("/notifications/read-all", put(modules::notifications::handlers::mark_all_read))
         .route("/notifications/:id/read", put(modules::notifications::handlers::mark_read))
-        .route("/notifications/test", post(modules::notifications::handlers::test_push))
         // ─── Middleware ───────────────────────────────────
         .layer(cors)
         .layer(TraceLayer::new_for_http())

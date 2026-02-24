@@ -524,11 +524,6 @@ export const notificationsApi = {
         request<{ message: string }>('/notifications/read-all', {
             method: 'PUT',
         }),
-
-    testPush: () =>
-        request<{ message: string }>('/notifications/test', {
-            method: 'POST',
-        }),
 };
 
 // ─── Backwards-compatible re-exports ────────────────────────────────────────
