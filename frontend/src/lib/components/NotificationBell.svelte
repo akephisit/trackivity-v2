@@ -9,6 +9,7 @@
 
 	let notifications: NotificationItem[] = $state([]);
 	let unreadCount = $derived(notifications.filter((n) => !n.read_at).length);
+	let permissionStatus = $state<NotificationPermission | 'unknown'>('unknown');
 
 	async function loadNotifications() {
 		try {
@@ -38,7 +39,7 @@
 		}
 	}
 
-	async function subscribeToPush() {
+	async function subscribeToPush(interactive = false) {
 		if (!browser || !('serviceWorker' in navigator) || !('PushManager' in window)) return;
 
 		const vapidPublicKey = env.PUBLIC_VAPID_KEY;
@@ -53,10 +54,18 @@
 
 			// Only ask for permission if we don't have a subscription yet
 			if (!subscription && Notification.permission !== 'granted') {
-				// We don't block render but iOS might require a button click to grant this.
-				// In a real app we might put this behind a "Enable Notifications" button.
+				// If not interactive (auto-poll), we don't prompt on iOS automatically
+				// since iOS requires a direct user interaction.
+				if (!interactive && Notification.permission === 'default') {
+					permissionStatus = 'default';
+					return;
+				}
+
 				const permission = await Notification.requestPermission();
+				permissionStatus = permission;
 				if (permission !== 'granted') return;
+			} else {
+				permissionStatus = Notification.permission;
 			}
 
 			if (!subscription) {
@@ -94,9 +103,15 @@
 	}
 
 	onMount(() => {
+		if (browser && 'Notification' in window) {
+			permissionStatus = Notification.permission;
+		}
+
 		loadNotifications();
-		// Prompt for push implicitly after 3 seconds so we don't block render
-		setTimeout(subscribeToPush, 3000);
+
+		// Attempt silent/auto-subscribe in background - won't prompt if interactive=false
+		// and won't interrupt iOS.
+		setTimeout(() => subscribeToPush(false), 2000);
 
 		// Polling for MVP (Real-time SSE is better but this works for now)
 		const interval = setInterval(loadNotifications, 30000);
@@ -135,6 +150,31 @@
 			{/if}
 		</DropdownMenu.Label>
 		<DropdownMenu.Separator />
+
+		{#if permissionStatus === 'default' || permissionStatus === 'denied'}
+			<div class="m-2 rounded bg-muted/50 p-3 text-xs">
+				<div class="mb-1 font-semibold text-orange-500">
+					{#if permissionStatus === 'default'}
+						⚠️ ยังไม่ได้เปิดการแจ้งเตือน
+					{:else}
+						❌ การแจ้งเตือนถูกปิดกั้น
+					{/if}
+				</div>
+				<span class="text-muted-foreground">เพื่อให้คุณไม่พลาดกิจกรรมและการเช็คอิน กรุณาอนุญาต</span
+				>
+				{#if permissionStatus === 'default'}
+					<Button
+						onclick={() => subscribeToPush(true)}
+						variant="outline"
+						size="sm"
+						class="mt-2 h-7 w-full text-xs"
+					>
+						เปิดการแจ้งเตือน
+					</Button>
+				{/if}
+			</div>
+			<DropdownMenu.Separator />
+		{/if}
 
 		<div class="max-h-[60vh] overflow-y-auto">
 			{#if notifications.length === 0}
