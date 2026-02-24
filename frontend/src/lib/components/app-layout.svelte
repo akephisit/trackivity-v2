@@ -145,7 +145,7 @@
 
 	<div class="flex">
 		<!-- Desktop Sidebar -->
-		<div class="fixed top-0 left-0 hidden h-screen w-64 border-r bg-card lg:block">
+		<div class="fixed top-0 left-0 hidden h-[100dvh] w-64 border-r bg-card lg:block">
 			<aside class="relative flex h-full flex-col overflow-hidden">
 				<!-- Logo -->
 				<div class="border-b p-6">
@@ -218,7 +218,7 @@
 
 				<!-- User Info -->
 				{#if user}
-					<div class="shrink-0 border-t p-4">
+					<div class="shrink-0 border-t p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
 						<div class="space-y-2">
 							<div class="flex items-center space-x-3">
 								<div class="flex-shrink-0">
@@ -266,7 +266,7 @@
 		<!-- Mobile Sidebar -->
 		<aside
 			class={cn(
-				'fixed top-0 left-0 z-50 flex h-screen w-64 transform flex-col overflow-hidden border-r bg-card transition-transform duration-300 lg:hidden',
+				'fixed top-0 left-0 z-50 flex h-[100dvh] w-64 transform flex-col overflow-hidden border-r bg-card transition-transform duration-300 lg:hidden',
 				mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
 			)}
 		>
@@ -341,7 +341,7 @@
 
 			<!-- User Info -->
 			{#if user}
-				<div class="shrink-0 border-t p-4">
+				<div class="shrink-0 border-t p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
 					<div class="space-y-2">
 						<div class="flex items-center space-x-3">
 							<div class="flex-shrink-0">
