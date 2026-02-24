@@ -70,8 +70,8 @@ impl NotificationService {
         Ok(rec.id)
     }
 
-    /// Internal helper to send Web Push
-    async fn send_web_push(
+    /// Internal helper to send Web Push (public for testing)
+    pub async fn send_web_push(
         pool: &PgPool,
         user_id: Uuid,
         title: &str,
@@ -120,6 +120,10 @@ impl NotificationService {
             let mut builder = WebPushMessageBuilder::new(&subscription_info);
             builder.set_payload(ContentEncoding::Aes128Gcm, payload.as_bytes());
             
+            // Required for Apple APNs (iOS Safari)
+            builder.set_ttl(604800); // 1 week
+            builder.set_urgency(web_push::Urgency::High);
+
             let mut sig_builder = VapidSignatureBuilder::from_base64(&vapid_private, &subscription_info)?;
             sig_builder.add_claim("sub", vapid_subject.clone());
             let signature = sig_builder.build()?;

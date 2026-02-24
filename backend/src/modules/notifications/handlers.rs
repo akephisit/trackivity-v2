@@ -148,14 +148,18 @@ pub async fn test_push(
     let user_id = Uuid::parse_str(&claims.sub)
         .map_err(|_| (StatusCode::UNAUTHORIZED, "Invalid user ID".to_string()))?;
 
-    let _ = crate::modules::notifications::service::NotificationService::send(
-        &pool,
-        user_id,
-        "🧪 ทดสอบระบบแจ้งเตือน Trackivity",
-        "หากคุณเห็นข้อความนี้ผ่านแจ้งเตือนหน้าจอ แสดงว่าระบบ Web Push ทำงานได้สมบูรณ์!",
-        crate::modules::notifications::service::NotificationType::Info,
-        Some("/student/activities"),
-    ).await;
+    // Use send_web_push directly so we can see the result synchronously
+    let title = "🧪 ทดสอบระบบแจ้งเตือน Trackivity";
+    let message = "หากคุณเห็นข้อความนี้ผ่านแจ้งเตือนหน้าจอ แสดงว่าระบบ Web Push ทำงานได้สมบูรณ์!";
+    let link = Some("/student/activities");
 
-    Ok(Json(serde_json::json!({ "message": "Test push initiated" })))
+    match crate::modules::notifications::service::NotificationService::send_web_push(
+        &pool, user_id, title, message, link
+    ).await {
+        Ok(_) => Ok(Json(serde_json::json!({ "message": "Test push sent successfully to devices" }))),
+        Err(e) => {
+            tracing::error!("Test push failed: {:?}", e);
+            Err((StatusCode::INTERNAL_SERVER_ERROR, format!("Failed to send push: {}", e)))
+        }
+    }
 }
