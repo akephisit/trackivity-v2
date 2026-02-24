@@ -106,81 +106,93 @@ impl NotificationService {
             "link": link,
         }).to_string();
 
-        let client = IsahcWebPushClient::new()?;
+        let client = std::sync::Arc::new(IsahcWebPushClient::new()?);
+        let mut tasks = Vec::new();
         
         for sub in subs {
-            let subscription_info = SubscriptionInfo {
-                endpoint: sub.endpoint.clone(),
-                keys: SubscriptionKeys {
-                    p256dh: sub.p256dh_key,
-                    auth: sub.auth_key,
-                },
-            };
+            let pool = pool.clone();
+            let payload = payload.clone();
+            let vapid_private = vapid_private.clone();
+            let vapid_subject = vapid_subject.clone();
+            let client = std::sync::Arc::clone(&client);
 
-            let mut builder = WebPushMessageBuilder::new(&subscription_info);
-            builder.set_payload(ContentEncoding::Aes128Gcm, payload.as_bytes());
-            
-            // Required for Apple APNs (iOS Safari)
-            builder.set_ttl(604800); // 1 week
-            builder.set_urgency(web_push::Urgency::High);
+            tasks.push(tokio::spawn(async move {
+                let subscription_info = SubscriptionInfo {
+                    endpoint: sub.endpoint.clone(),
+                    keys: SubscriptionKeys {
+                        p256dh: sub.p256dh_key,
+                        auth: sub.auth_key,
+                    },
+                };
 
-            let sig_builder_result = VapidSignatureBuilder::from_base64(&vapid_private, &subscription_info);
-            if let Err(e) = sig_builder_result {
-                tracing::warn!("Bad subscription endpoint or VAPID error for {}: {:?}", sub.endpoint, e);
-                // Assume bad endpoint and delete
-                let _ = sqlx::query("DELETE FROM push_subscriptions WHERE endpoint = $1").bind(&sub.endpoint).execute(pool).await;
-                continue;
-            }
+                let mut builder = WebPushMessageBuilder::new(&subscription_info);
+                builder.set_payload(ContentEncoding::Aes128Gcm, payload.as_bytes());
+                
+                // Required for Apple APNs (iOS Safari)
+                builder.set_ttl(604800); // 1 week
+                builder.set_urgency(web_push::Urgency::High);
 
-            let mut sig_builder = sig_builder_result.unwrap();
-            sig_builder.add_claim("sub", vapid_subject.clone());
-            
-            let signature = match sig_builder.build() {
-                Ok(sig) => sig,
-                Err(e) => {
-                    tracing::warn!("Failed to build signature for {}: {:?}", sub.endpoint, e);
-                    continue;
+                let sig_builder_result = VapidSignatureBuilder::from_base64(&vapid_private, &subscription_info);
+                if let Err(e) = sig_builder_result {
+                    tracing::warn!("Bad subscription endpoint or VAPID error for {}: {:?}", sub.endpoint, e);
+                    // Assume bad endpoint and delete
+                    let _ = sqlx::query("DELETE FROM push_subscriptions WHERE endpoint = $1").bind(&sub.endpoint).execute(&pool).await;
+                    return;
                 }
-            };
-            builder.set_vapid_signature(signature);
 
-            let message = match builder.build() {
-                Ok(msg) => msg,
-                Err(e) => {
-                    tracing::warn!("Failed to build message for {}: {:?}", sub.endpoint, e);
-                    let _ = sqlx::query("DELETE FROM push_subscriptions WHERE endpoint = $1").bind(&sub.endpoint).execute(pool).await;
-                    continue;
-                }
-            };
+                let mut sig_builder = sig_builder_result.unwrap();
+                sig_builder.add_claim("sub", vapid_subject);
+                
+                let signature = match sig_builder.build() {
+                    Ok(sig) => sig,
+                    Err(e) => {
+                        tracing::warn!("Failed to build signature for {}: {:?}", sub.endpoint, e);
+                        return;
+                    }
+                };
+                builder.set_vapid_signature(signature);
 
-            match client.send(message).await {
-                Ok(_) => {
-                    tracing::info!("Push sent to device endpoint {}", sub.endpoint);
-                },
-                Err(e) => {
-                    tracing::warn!("Push failed for endpoint {}: {}", sub.endpoint, e);
-                    let e_str = e.to_string().to_lowercase();
-                    // 404 Not Found, 410 Gone, 401 Unauthorized, 400 Bad Request
-                    let should_delete = e_str.contains("not found") 
-                        || e_str.contains("gone")
-                        || e_str.contains("unauthorized")
-                        || e_str.contains("bad request")
-                        || e_str.contains("badrequest")
-                        || e_str.contains("404")
-                        || e_str.contains("410")
-                        || e_str.contains("401")
-                        || e_str.contains("400");
+                let message = match builder.build() {
+                    Ok(msg) => msg,
+                    Err(e) => {
+                        tracing::warn!("Failed to build message for {}: {:?}", sub.endpoint, e);
+                        let _ = sqlx::query("DELETE FROM push_subscriptions WHERE endpoint = $1").bind(&sub.endpoint).execute(&pool).await;
+                        return;
+                    }
+                };
 
-                    if should_delete {
-                        tracing::info!("Removing invalid subscription: {}", sub.endpoint);
-                        let _ = sqlx::query("DELETE FROM push_subscriptions WHERE endpoint = $1")
-                            .bind(&sub.endpoint)
-                            .execute(pool)
-                            .await;
+                match client.send(message).await {
+                    Ok(_) => {
+                        tracing::info!("Push sent to device endpoint {}", sub.endpoint);
+                    },
+                    Err(e) => {
+                        tracing::warn!("Push failed for endpoint {}: {}", sub.endpoint, e);
+                        let e_str = e.to_string().to_lowercase();
+                        // 404 Not Found, 410 Gone, 401 Unauthorized, 400 Bad Request
+                        let should_delete = e_str.contains("not found") 
+                            || e_str.contains("gone")
+                            || e_str.contains("unauthorized")
+                            || e_str.contains("bad request")
+                            || e_str.contains("badrequest")
+                            || e_str.contains("404")
+                            || e_str.contains("410")
+                            || e_str.contains("401")
+                            || e_str.contains("400");
+
+                        if should_delete {
+                            tracing::info!("Removing invalid subscription: {}", sub.endpoint);
+                            let _ = sqlx::query("DELETE FROM push_subscriptions WHERE endpoint = $1")
+                                .bind(&sub.endpoint)
+                                .execute(&pool)
+                                .await;
+                        }
                     }
                 }
-            }
+            }));
         }
+
+        // Wait for all send tasks to complete concurrently
+        futures::future::join_all(tasks).await;
 
         Ok(())
     }
