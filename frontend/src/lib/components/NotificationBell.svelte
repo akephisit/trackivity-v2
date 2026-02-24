@@ -128,10 +128,10 @@
 	<DropdownMenu.Trigger>
 		{#snippet child({ props })}
 			<Button {...props} variant="ghost" size="sm" class="relative p-2">
-				<IconBell class="size-5" />
+				<IconBell class="size-4" />
 				{#if unreadCount > 0}
 					<span
-						class="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white"
+						class="text-destructive-foreground absolute top-1 right-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-destructive text-[9px] font-bold"
 					>
 						{unreadCount > 9 ? '9+' : unreadCount}
 					</span>
