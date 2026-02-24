@@ -139,3 +139,23 @@ pub async fn mark_all_read(
 
     Ok(Json(serde_json::json!({ "message": "All marked as read" })))
 }
+
+pub async fn test_push(
+    State(pool): State<PgPool>,
+    headers: HeaderMap,
+) -> Result<Json<serde_json::Value>, (StatusCode, String)> {
+    let claims = get_claims_from_headers(&headers)?;
+    let user_id = Uuid::parse_str(&claims.sub)
+        .map_err(|_| (StatusCode::UNAUTHORIZED, "Invalid user ID".to_string()))?;
+
+    let _ = crate::modules::notifications::service::NotificationService::send(
+        &pool,
+        user_id,
+        "🧪 ทดสอบระบบแจ้งเตือน Trackivity",
+        "หากคุณเห็นข้อความนี้ผ่านแจ้งเตือนหน้าจอ แสดงว่าระบบ Web Push ทำงานได้สมบูรณ์!",
+        crate::modules::notifications::service::NotificationType::Info,
+        Some("/student/activities"),
+    ).await;
+
+    Ok(Json(serde_json::json!({ "message": "Test push initiated" })))
+}
