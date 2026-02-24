@@ -8,7 +8,7 @@
 
 // Version - increment this to force SW update
 // Version - increment this to force SW update
-const VERSION = '1.0.1';
+const VERSION = '1.0.2';
 
 const sw = self as unknown as ServiceWorkerGlobalScope;
 
