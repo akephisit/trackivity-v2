@@ -12,7 +12,7 @@ services:
       FRONTEND_URL: ${FRONTEND_URL}
       VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY}
       VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY}
-      VAPID_SUBJECT: ${VAPID_SUBJECT}
+      VAPID_SUBJECT: ${VAPID_SUBJECT:-mailto:admin@utrackivity.com}
       RUST_LOG: info
     ports:
       - "80:3000"

@@ -7,7 +7,8 @@
 // Perfect for online-only PWA that always needs fresh data
 
 // Version - increment this to force SW update
-const VERSION = '1.0.0';
+// Version - increment this to force SW update
+const VERSION = '1.0.1';
 
 const sw = self as unknown as ServiceWorkerGlobalScope;
 
@@ -122,18 +123,23 @@ sw.addEventListener('push', (event) => {
     try {
         data = event.data?.json();
     } catch (e) {
-        data = { title: 'การแจ้งเตือนจาก Trackivity', body: event.data?.text() };
+        data = { title: 'การแจ้งเตือนจาก Trackivity', body: event.data?.text() || 'ข้อความใหม่จากระบบ' };
     }
 
-    const options = {
+    const options: NotificationOptions = {
         body: data.body,
         icon: '/pwa-192x192.png',
         badge: '/pwa-192x192.png', // Small icon for Android status bar
         data: { url: data.link || '/' },
-        vibrate: [200, 100, 200, 100, 200, 100, 200]
+        // @ts-ignore - TS types for SW vibrate might be missing on some TS configs
+        vibrate: [200, 100, 200, 100, 200, 100, 200],
+        tag: 'trackivity-push',
+        renotify: true,
+        requireInteraction: true,
+        timestamp: Date.now()
     };
 
-    event.waitUntil(sw.registration.showNotification(data.title, options));
+    event.waitUntil(sw.registration.showNotification(data.title || 'การแจ้งเตือน', options));
 });
 
 sw.addEventListener('notificationclick', (event) => {
