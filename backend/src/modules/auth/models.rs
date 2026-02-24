@@ -69,3 +69,14 @@ pub struct Claims {
     pub admin_level: Option<AdminLevel>,
     pub organization_id: Option<Uuid>,
 }
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ForgotPasswordInput {
+    pub email: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ResetPasswordInput {
+    pub token: String,
+    pub new_password: String,
+}

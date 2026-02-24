@@ -3,7 +3,7 @@ use axum::response::{IntoResponse, Response};
 use axum::http::header::{SET_COOKIE, COOKIE};
 use sqlx::PgPool;
 use crate::models::{User, AdminRole, UserStatus};
-use super::models::{AuthInput, AuthResponse, RegisterInput, RegisterResponse, UserResponse, Claims};
+use super::models::{AuthInput, AuthResponse, RegisterInput, RegisterResponse, UserResponse, Claims, ForgotPasswordInput, ResetPasswordInput};
 use argon2::{
     Argon2, PasswordHash, PasswordVerifier,
     password_hash::{rand_core::OsRng, PasswordHasher, SaltString}
@@ -323,4 +323,115 @@ pub async fn register_handler(
         },
         Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, format!("Failed to register: {}", e))),
     }
+}
+
+pub async fn forgot_password_handler(
+    State(pool): State<PgPool>,
+    Json(payload): Json<ForgotPasswordInput>,
+) -> Result<Response, (StatusCode, String)> {
+    let email = payload.email.to_lowercase();
+    
+    let user = sqlx::query_as::<_, User>("SELECT * FROM users WHERE email = $1")
+        .bind(&email)
+        .fetch_optional(&pool)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+
+    let user = match user {
+        Some(u) => u,
+        None => return Ok((StatusCode::OK, Json(serde_json::json!({ "message": "If this email exists, a password reset link has been sent." }))).into_response()),
+    };
+
+    let token = Uuid::new_v4().to_string();
+    let expires_at = Utc::now() + Duration::minutes(30);
+
+    sqlx::query("INSERT INTO password_reset_tokens (user_id, token, expires_at) VALUES ($1, $2, $3)")
+        .bind(user.id)
+        .bind(&token)
+        .bind(expires_at)
+        .execute(&pool)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+
+    let resend_api_key = std::env::var("RESEND_API_KEY").unwrap_or_default();
+    let frontend_url = std::env::var("FRONTEND_URL").unwrap_or_else(|_| "http://localhost:5173".to_string());
+    
+    if !resend_api_key.is_empty() {
+        let reset_link = format!("{}/reset-password?token={}", frontend_url, token);
+        let client = reqwest::Client::new();
+        
+        let html_content = format!(
+            r#"<h2>Reset Your Password</h2>
+            <p>You requested a password reset. Click the link below to set a new password:</p>
+            <p><a href="{}">Reset Password</a></p>
+            <p>This link will expire in 30 minutes. If you did not request this, please ignore this email.</p>"#,
+            reset_link
+        );
+
+        let payload = serde_json::json!({
+            "from": "Trackivity <onboarding@resend.dev>",
+            "to": [email],
+            "subject": "Trackivity - Password Reset",
+            "html": html_content
+        });
+
+        let _ = client.post("https://api.resend.com/emails")
+            .bearer_auth(resend_api_key)
+            .json(&payload)
+            .send()
+            .await;
+    }
+
+    Ok((StatusCode::OK, Json(serde_json::json!({ "message": "If this email exists, a password reset link has been sent." }))).into_response())
+}
+
+pub async fn reset_password_handler(
+    State(pool): State<PgPool>,
+    Json(payload): Json<ResetPasswordInput>,
+) -> Result<Response, (StatusCode, String)> {
+    let record = sqlx::query_as::<_, (Uuid, chrono::DateTime<Utc>)>(
+        "SELECT user_id, expires_at FROM password_reset_tokens WHERE token = $1"
+    )
+    .bind(&payload.token)
+    .fetch_optional(&pool)
+    .await
+    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+
+    let (user_id, expires_at) = match record {
+        Some(r) => r,
+        None => return Err((StatusCode::BAD_REQUEST, "Invalid or expired token".to_string())),
+    };
+
+    if Utc::now() > expires_at {
+        let _ = sqlx::query("DELETE FROM password_reset_tokens WHERE token = $1")
+            .bind(&payload.token)
+            .execute(&pool)
+            .await;
+        return Err((StatusCode::BAD_REQUEST, "Token has expired".to_string()));
+    }
+
+    let salt = SaltString::generate(&mut OsRng);
+    let argon2 = Argon2::default();
+    let password_hash = argon2.hash_password(payload.new_password.as_bytes(), &salt)
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, format!("Failed to hash password: {}", e)))?
+        .to_string();
+
+    sqlx::query("UPDATE users SET password_hash = $1 WHERE id = $2")
+        .bind(password_hash)
+        .bind(user_id)
+        .execute(&pool)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+
+    let _ = sqlx::query("DELETE FROM password_reset_tokens WHERE token = $1")
+        .bind(&payload.token)
+        .execute(&pool)
+        .await;
+
+    let _ = sqlx::query("UPDATE sessions SET is_active = FALSE WHERE user_id = $1")
+        .bind(user_id)
+        .execute(&pool)
+        .await;
+
+    Ok((StatusCode::OK, Json(serde_json::json!({ "message": "Password successfully reset" }))).into_response())
 }

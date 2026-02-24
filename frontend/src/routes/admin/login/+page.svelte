@@ -115,7 +115,15 @@
 					</div>
 
 					<div class="space-y-2">
-						<Label for="password">รหัสผ่าน</Label>
+						<div class="flex items-center justify-between">
+							<Label for="password">รหัสผ่าน</Label>
+							<a
+								href="/forgot-password"
+								class="text-sm font-medium text-blue-600 hover:text-blue-500"
+							>
+								ลืมรหัสผ่าน?
+							</a>
+						</div>
 						<div class="relative">
 							<Input
 								id="password"

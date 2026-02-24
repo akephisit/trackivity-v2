@@ -82,6 +82,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/auth/register", post(auth::register_handler))
         .route("/auth/logout", post(auth::logout_handler))
         .route("/auth/me", get(auth::me_handler))
+        .route("/auth/forgot-password", post(auth::forgot_password_handler))
+        .route("/auth/reset-password", post(auth::reset_password_handler))
         // ─── Activities ───────────────────────────────────
         .route("/activities/dashboard", get(activities::get_dashboard_activities))
         .route("/activities", get(activities::list_activities).post(activities::create_activity))

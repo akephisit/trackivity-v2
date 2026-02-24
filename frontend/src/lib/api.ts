@@ -112,6 +112,16 @@ export const auth = {
             body: JSON.stringify(data),
         }),
 
+    forgotPassword: (email: string) => request<{ message: string }>('/auth/forgot-password', {
+        method: 'POST',
+        body: JSON.stringify({ email })
+    }),
+
+    resetPassword: (token: string, new_password: string) => request<{ message: string }>('/auth/reset-password', {
+        method: 'POST',
+        body: JSON.stringify({ token, new_password })
+    }),
+
     logout: () =>
         request<{ message: string }>('/auth/logout', { method: 'POST' }),
 
