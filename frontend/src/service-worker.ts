@@ -9,7 +9,8 @@
 // Version - increment this to force SW update
 // Version - increment this to force SW update
 // Version - increment this to force SW update
-const VERSION = '1.0.3';
+// Version - increment this to force SW update
+const VERSION = '1.0.4';
 
 const sw = self as unknown as ServiceWorkerGlobalScope;
 
@@ -130,7 +131,7 @@ sw.addEventListener('push', (event) => {
     const options: NotificationOptions = {
         body: data.body,
         icon: '/favicon.svg',
-        badge: '/favicon.svg', // Small icon for Android status bar (needs Alpha channel ideally, but SVG fallback mask might work in newer OS)
+        badge: '/badge.svg', // Small icon for Android status bar (Monochromatic transparent SVG)
         data: { url: data.link || '/' },
         // @ts-ignore - TS types for SW vibrate might be missing on some TS configs
         vibrate: [200, 100, 200, 100, 200, 100, 200],
