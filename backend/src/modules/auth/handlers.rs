@@ -361,17 +361,17 @@ pub async fn forgot_password_handler(
         let client = reqwest::Client::new();
         
         let html_content = format!(
-            r#"<h2>Reset Your Password</h2>
-            <p>You requested a password reset. Click the link below to set a new password:</p>
-            <p><a href="{}">Reset Password</a></p>
-            <p>This link will expire in 30 minutes. If you did not request this, please ignore this email.</p>"#,
+            r#"<h2>คุณได้ขอรีเซ็ตรหัสผ่าน</h2>
+            <p>กรุณาคลิกที่ลิงก์ด้านล่างเพื่อตั้งรหัสผ่านใหม่สำหรับบัญชี Trackivity ของคุณ:</p>
+            <p><a href="{}">เปลี่ยนรหัสผ่าน</a></p>
+            <p>ลิงก์นี้จะหมดอายุภายใน 30 นาที หากคุณไม่ได้ส่งคำขอนี้ หรือเป็นความผิดพลาด คุณสามารถเพิกเฉยต่ออีเมลฉบับนี้ได้เลย</p>"#,
             reset_link
         );
 
         let payload = serde_json::json!({
-            "from": "Trackivity <onboarding@resend.dev>",
+            "from": "Trackivity <admin@utrackivity.com>",
             "to": [email],
-            "subject": "Trackivity - Password Reset",
+            "subject": "Trackivity - คำขอตั้งรหัสผ่านใหม่",
             "html": html_content
         });
 
