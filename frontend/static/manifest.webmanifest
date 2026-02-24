@@ -2,7 +2,7 @@
     "name": "Trackivity",
     "short_name": "Trackivity",
     "description": "ระบบกิจกรรมนักศึกษา Trackivity",
-    "start_url": "/student",
+    "start_url": "/",
     "display": "standalone",
     "background_color": "#ffffff",
     "theme_color": "#ffffff",
