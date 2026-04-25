@@ -56,8 +56,6 @@
 		onToggleMobileMenu={() => (mobileMenuOpen = !mobileMenuOpen)}
 		onCloseMobileMenu={() => (mobileMenuOpen = false)}
 		{bottomNavItems}
-		showAccountSettings={true}
-		accountSettingsHref="/student/profile/settings"
 	>
 		{@render children?.()}
 	</AppLayout>
