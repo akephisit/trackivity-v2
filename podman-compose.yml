@@ -4,7 +4,7 @@ services:
   backend:
     image: ghcr.io/akephisit/trackivity-backend:latest
     container_name: trackivity-backend
-    restart: always
+    restart: unless-stopped
     environment:
       # Database Connection String form Managed Service (e.g. Neon)
       DATABASE_URL: ${DATABASE_URL}
@@ -14,9 +14,12 @@ services:
       VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY}
       VAPID_SUBJECT: ${VAPID_SUBJECT:-mailto:admin@utrackivity.com}
       RESEND_API_KEY: ${RESEND_API_KEY}
-      RUST_LOG: info
+      RUST_LOG: ${RUST_LOG:-info}
     ports:
       - "80:3000"
-    # No dependency on local DB
-
-# Removed volumes section as we don't need persistent storage for DB anymore
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s

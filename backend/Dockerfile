@@ -21,7 +21,6 @@ COPY --from=planner /app/recipe.json recipe.json
 RUN cargo chef cook --release --recipe-path recipe.json
 # Build application
 COPY . .
-ENV SQLX_OFFLINE=true
 RUN cargo build --release --bin backend
 
 # Runtime stage
