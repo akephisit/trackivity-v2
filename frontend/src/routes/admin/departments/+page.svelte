@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { Pencil, Plus, RefreshCw, School, Search, ToggleLeft, ToggleRight, Trash2 } from '@lucide/svelte';
 	import { departmentsApi, organizationsApi, ApiError } from '$lib/api';
 	import type { Department, Organization, CreateDepartmentInput, UpdateDepartmentInput } from '$lib/api';
 	import { onMount } from 'svelte';
@@ -14,17 +15,6 @@
 	import * as Dialog from '$lib/components/ui/dialog';
 	import * as Select from '$lib/components/ui/select';
 	import { Skeleton } from '$lib/components/ui/skeleton';
-	import {
-		IconSchool,
-		IconPlus,
-		IconEdit,
-		IconTrash,
-		IconSearch,
-		IconRefresh,
-		IconToggleLeft,
-		IconToggleRight,
-	} from '@tabler/icons-svelte/icons';
-
 	// ─── State ──────────────────────────────────────────────────────────────
 	let departments = $state<Department[]>([]);
 	let organizations = $state<Organization[]>([]);
@@ -195,11 +185,11 @@
 		</div>
 		<div class="flex gap-2">
 			<Button variant="outline" onclick={fetchData} disabled={loading}>
-				<IconRefresh class="mr-2 size-4 {loading ? 'animate-spin' : ''}" />
+				<RefreshCw class="mr-2 size-4 {loading ? 'animate-spin' : ''}" />
 				รีเฟรช
 			</Button>
 			<Button onclick={openCreate}>
-				<IconPlus class="mr-2 size-4" />
+				<Plus class="mr-2 size-4" />
 				เพิ่มภาควิชา
 			</Button>
 		</div>
@@ -226,7 +216,7 @@
 		<CardHeader>
 			<div class="flex flex-col gap-3 sm:flex-row">
 				<div class="relative flex-1">
-					<IconSearch class="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+					<Search class="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
 					<Input bind:value={searchTerm} placeholder="ค้นหาภาควิชา..." class="pl-9" />
 				</div>
 				<select
@@ -259,7 +249,7 @@
 				<div class="py-8 text-center text-destructive">{error}</div>
 			{:else if filteredDepts.length === 0}
 				<div class="py-12 text-center">
-					<IconSchool class="mx-auto mb-4 size-12 text-muted-foreground/50" />
+					<School class="mx-auto mb-4 size-12 text-muted-foreground/50" />
 					<p class="text-muted-foreground">ไม่พบภาควิชา</p>
 				</div>
 			{:else}
@@ -303,16 +293,16 @@
 									<div class="flex items-center justify-end gap-1">
 										<Button variant="ghost" size="sm" onclick={() => handleToggleStatus(dept)}>
 											{#if dept.status}
-												<IconToggleRight class="size-4 text-green-600" />
+												<ToggleRight class="size-4 text-green-600" />
 											{:else}
-												<IconToggleLeft class="size-4 text-muted-foreground" />
+												<ToggleLeft class="size-4 text-muted-foreground" />
 											{/if}
 										</Button>
 										<Button variant="ghost" size="sm" onclick={() => openEdit(dept)}>
-											<IconEdit class="size-4" />
+											<Pencil class="size-4" />
 										</Button>
 										<Button variant="ghost" size="sm" onclick={() => openDelete(dept)}>
-											<IconTrash class="size-4 text-destructive" />
+											<Trash2 class="size-4 text-destructive" />
 										</Button>
 									</div>
 								</Table.Cell>

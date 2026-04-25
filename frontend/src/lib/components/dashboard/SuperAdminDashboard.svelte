@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { CircleAlert, ChartLine, CalendarDays, ChevronRight, Crown, Database, Plus, School, Shield, UserPlus, Users } from '@lucide/svelte';
 	import { onMount } from 'svelte';
 	import { organizationsApi } from '$lib/api';
 	import type { Organization } from '$lib/types';
@@ -9,21 +10,6 @@
 	import { Skeleton } from '$lib/components/ui/skeleton';
 	import { Alert, AlertDescription } from '$lib/components/ui/alert';
 	import { Progress } from '$lib/components/ui/progress';
-
-	import {
-		IconUsers,
-		IconSchool,
-		IconAnalyze,
-		IconChevronRight,
-		IconAlertCircle,
-		IconCrown,
-		IconShield,
-		IconCalendarEvent,
-		IconDatabase,
-		IconUserPlus,
-		IconPlus
-	} from '@tabler/icons-svelte';
-
 	let faculties = $state<Organization[]>([]);
 	let loadingFaculties = $state(true);
 	let error = $state<string | null>(null);
@@ -65,18 +51,18 @@
 	<div class="flex items-center justify-between">
 		<div>
 			<h1 class="flex items-center gap-2 text-2xl font-bold">
-				<IconCrown class="size-6 text-yellow-600" />
+				<Crown class="size-6 text-yellow-600" />
 				ภาพรวมระบบ
 			</h1>
 			<p class="text-muted-foreground">แดชบอร์ดสำหรับผู้ดูแลระบบสูงสุด</p>
 		</div>
 		<div class="flex gap-2">
 			<Button size="sm" href="/admin/system/users/create">
-				<IconUserPlus class="mr-2 size-4" />
+				<UserPlus class="mr-2 size-4" />
 				เพิ่มผู้ใช้
 			</Button>
 			<Button size="sm" variant="outline" href="/admin/system/organizations/create">
-				<IconPlus class="mr-2 size-4" />
+				<Plus class="mr-2 size-4" />
 				เพิ่มหน่วยงาน
 			</Button>
 		</div>
@@ -85,7 +71,7 @@
 	<!-- Key Metrics -->
 	{#if error}
 		<Alert variant="destructive">
-			<IconAlertCircle class="size-4" />
+			<CircleAlert class="size-4" />
 			<AlertDescription>{error}</AlertDescription>
 		</Alert>
 	{/if}
@@ -94,7 +80,7 @@
 		<Card>
 			<CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
 				<CardTitle class="text-sm font-medium">หน่วยงานทั้งหมด</CardTitle>
-				<IconSchool class="size-4 text-muted-foreground" />
+				<School class="size-4 text-muted-foreground" />
 			</CardHeader>
 			<CardContent>
 				<div class="text-2xl font-bold">
@@ -107,7 +93,7 @@
 		<Card>
 			<CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
 				<CardTitle class="text-sm font-medium">นักศึกษาทั้งหมด</CardTitle>
-				<IconUsers class="size-4 text-muted-foreground" />
+				<Users class="size-4 text-muted-foreground" />
 			</CardHeader>
 			<CardContent>
 				<div class="text-2xl font-bold">
@@ -120,7 +106,7 @@
 		<Card>
 			<CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
 				<CardTitle class="text-sm font-medium">กิจกรรมทั้งหมด</CardTitle>
-				<IconCalendarEvent class="size-4 text-muted-foreground" />
+				<CalendarDays class="size-4 text-muted-foreground" />
 			</CardHeader>
 			<CardContent>
 				<div class="text-2xl font-bold">
@@ -138,12 +124,12 @@
 			<CardHeader>
 				<CardTitle class="flex items-center justify-between">
 					<span class="flex items-center gap-2">
-						<IconSchool class="size-5" />
+						<School class="size-5" />
 						ภาพรวมหน่วยงาน
 					</span>
 					<Button size="sm" variant="outline" href="/admin/system/organizations">
 						จัดการหน่วยงาน
-						<IconChevronRight class="ml-1 size-4" />
+						<ChevronRight class="ml-1 size-4" />
 					</Button>
 				</CardTitle>
 			</CardHeader>
@@ -160,7 +146,7 @@
 					</div>
 				{:else if faculties.length === 0}
 					<div class="py-6 text-center text-muted-foreground">
-						<IconSchool class="mx-auto mb-2 size-8 opacity-50" />
+						<School class="mx-auto mb-2 size-8 opacity-50" />
 						<p>ยังไม่มีหน่วยงานในระบบ</p>
 						<Button size="sm" href="/admin/system/organizations/create" class="mt-2">
 							เพิ่มหน่วยงานแรก
@@ -216,29 +202,29 @@
 		<Card>
 			<CardHeader>
 				<CardTitle class="flex items-center gap-2">
-					<IconShield class="size-5" />
+					<Shield class="size-5" />
 					การดำเนินการระบบ
 				</CardTitle>
 			</CardHeader>
 			<CardContent>
 				<div class="space-y-3">
 					<Button href="/admin/system/users" variant="outline" class="w-full justify-start">
-						<IconUsers class="mr-2 size-4" />
+						<Users class="mr-2 size-4" />
 						จัดการผู้ใช้
 					</Button>
 
 					<Button href="/admin/system/organizations" variant="outline" class="w-full justify-start">
-						<IconSchool class="mr-2 size-4" />
+						<School class="mr-2 size-4" />
 						จัดการหน่วยงาน
 					</Button>
 
 					<Button href="/admin/system/admins" variant="outline" class="w-full justify-start">
-						<IconShield class="mr-2 size-4" />
+						<Shield class="mr-2 size-4" />
 						จัดการผู้ดูแลระบบ
 					</Button>
 
 					<Button href="/admin/system/settings" variant="outline" class="w-full justify-start">
-						<IconDatabase class="mr-2 size-4" />
+						<Database class="mr-2 size-4" />
 						ตั้งค่าระบบ
 					</Button>
 				</div>
@@ -250,7 +236,7 @@
 	<Card>
 		<CardHeader>
 			<CardTitle class="flex items-center gap-2">
-				<IconAnalyze class="size-5" />
+				<ChartLine class="size-5" />
 				สถานะระบบ
 			</CardTitle>
 		</CardHeader>

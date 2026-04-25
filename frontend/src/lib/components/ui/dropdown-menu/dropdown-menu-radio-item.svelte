@@ -1,6 +1,6 @@
 <script lang="ts">
+	import { Circle } from '@lucide/svelte';
 	import { DropdownMenu as DropdownMenuPrimitive } from 'bits-ui';
-	import IconCircle from '@tabler/icons-svelte/icons/circle';
 	import { cn, type WithoutChild } from '$lib/utils.js';
 
 	let {
@@ -23,7 +23,7 @@
 	{#snippet children({ checked })}
 		<span class="pointer-events-none absolute left-2 flex size-3.5 items-center justify-center">
 			{#if checked}
-				<IconCircle class="size-2 fill-current" />
+				<Circle class="size-2 fill-current" />
 			{/if}
 		</span>
 		{@render childrenProp?.({ checked })}

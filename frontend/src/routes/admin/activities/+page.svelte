@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { CalendarDays, Pencil, Eye, MapPin, Plus, RefreshCw, Search, Users } from '@lucide/svelte';
 	import { authStore } from '$lib/stores/auth.svelte';
 	import { activities as activitiesApi, type Activity } from '$lib/api';
 	import { onMount } from 'svelte';
@@ -13,16 +14,6 @@
 	import { Badge } from '$lib/components/ui/badge';
 	import { Input } from '$lib/components/ui/input';
 	import * as Select from '$lib/components/ui/select';
-	import {
-		IconPlus,
-		IconCalendarEvent,
-		IconMapPin,
-		IconUsers,
-		IconEdit,
-		IconEye,
-		IconSearch,
-		IconRefresh
-	} from '@tabler/icons-svelte/icons';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
 	import { toast } from 'svelte-sonner';
@@ -100,22 +91,22 @@
 	<div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 		<div class="min-w-0">
 			<h1 class="admin-page-title flex items-center gap-2">
-				<IconCalendarEvent class="size-6 text-primary" /> จัดการกิจกรรม
+				<CalendarDays class="size-6 text-primary" /> จัดการกิจกรรม
 			</h1>
 			<p class="text-sm text-muted-foreground">จัดการและติดตามกิจกรรมทั้งหมด</p>
 		</div>
 		<Button onclick={() => goto('/admin/activities/create')} class="flex w-full items-center gap-2 sm:w-auto">
-			<IconPlus class="h-4 w-4" />สร้างกิจกรรมใหม่
+			<Plus class="h-4 w-4" />สร้างกิจกรรมใหม่
 		</Button>
 	</div>
 
 	<!-- Stats -->
 	<div class="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
 		{#each [
-			{ label: 'กิจกรรมทั้งหมด', value: stats.total, icon: IconCalendarEvent },
-			{ label: 'วิชาการ', value: stats.academic, icon: IconUsers },
-			{ label: 'กีฬา', value: stats.sports, icon: IconUsers },
-			{ label: 'กำลังดำเนินการ', value: stats.ongoing, icon: IconRefresh }
+			{ label: 'กิจกรรมทั้งหมด', value: stats.total, icon: CalendarDays },
+			{ label: 'วิชาการ', value: stats.academic, icon: Users },
+			{ label: 'กีฬา', value: stats.sports, icon: Users },
+			{ label: 'กำลังดำเนินการ', value: stats.ongoing, icon: RefreshCw }
 		] as s}
 			<Card>
 				<CardContent class="p-4 lg:p-6">
@@ -139,7 +130,7 @@
 			<div class="space-y-4 sm:flex sm:flex-row sm:gap-4 sm:space-y-0">
 				<div class="flex-1">
 					<div class="relative">
-						<IconSearch class="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+						<Search class="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
 						<Input bind:value={searchTerm} placeholder="ค้นหากิจกรรมหรือสถานที่..." class="pl-10" />
 					</div>
 				</div>
@@ -221,7 +212,7 @@
 									<Table.Cell>
 										{#if activity.location}
 											<div class="flex items-center gap-1 text-sm">
-												<IconMapPin class="h-3 w-3 text-muted-foreground" />
+												<MapPin class="h-3 w-3 text-muted-foreground" />
 												<span class="truncate">{activity.location}</span>
 											</div>
 										{:else}
@@ -234,10 +225,10 @@
 									<Table.Cell class="text-right">
 										<div class="flex items-center justify-end gap-2">
 											<Button variant="ghost" size="sm" onclick={() => goto(`/admin/activities/${activity.id}`)}>
-												<IconEye class="h-4 w-4" />
+												<Eye class="h-4 w-4" />
 											</Button>
 											<Button variant="ghost" size="sm" onclick={() => goto(`/admin/activities/${activity.id}/edit`)}>
-												<IconEdit class="h-4 w-4" />
+												<Pencil class="h-4 w-4" />
 											</Button>
 										</div>
 									</Table.Cell>
@@ -248,14 +239,14 @@
 				</div>
 			{:else}
 				<div class="py-12 text-center">
-					<IconCalendarEvent class="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
+					<CalendarDays class="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
 					<h3 class="mb-2 text-lg font-medium">ไม่พบกิจกรรม</h3>
 					<p class="mb-4 text-muted-foreground">
 						{searchTerm || selectedType !== 'all' || selectedStatus !== 'all' ? 'ไม่พบกิจกรรมที่ตรงกับเงื่อนไขการค้นหา' : 'ยังไม่มีกิจกรรมในระบบ'}
 					</p>
 					{#if !searchTerm && selectedType === 'all' && selectedStatus === 'all'}
 						<Button onclick={() => goto('/admin/activities/create')}>
-							<IconPlus class="mr-2 h-4 w-4" />สร้างกิจกรรมแรก
+							<Plus class="mr-2 h-4 w-4" />สร้างกิจกรรมแรก
 						</Button>
 					{/if}
 				</div>

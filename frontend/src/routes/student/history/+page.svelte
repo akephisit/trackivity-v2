@@ -1,28 +1,10 @@
 <script lang="ts">
+	import { CircleAlert, Award, Building as BuildingIcon, Store, CalendarDays, Check, Clock2, History, Hourglass, LogIn, LogOut, MapPin, School, Search, TrendingUp, UserCheck, X } from '@lucide/svelte';
 	import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Skeleton } from '$lib/components/ui/skeleton';
 	import { Alert, AlertDescription } from '$lib/components/ui/alert';
 	import { Input } from '$lib/components/ui/input';
-	import {
-		IconHistory,
-		IconCalendarEvent,
-		IconMapPin,
-		IconSearch,
-		IconAlertCircle,
-		IconTrendingUp,
-		IconAward,
-		IconLogin,
-		IconLogout,
-		IconUserCheck,
-		IconHourglass,
-		IconBuildingStore,
-		IconCheck,
-		IconX,
-		IconClock2,
-		IconSchool,
-		IconBuilding
-	} from '@tabler/icons-svelte';
 	import { getActivityLevelDisplayName, getActivityTypeDisplayName } from '$lib/utils/activity';
 
 	import { activitiesApi, ApiError } from '$lib/api';
@@ -276,11 +258,11 @@
 	function getActivityLevelIcon(level: string) {
 		switch (level) {
 			case 'university':
-				return IconBuilding;
+				return BuildingIcon;
 			case 'faculty':
-				return IconSchool;
+				return School;
 			default:
-				return IconBuildingStore;
+				return Store;
 		}
 	}
 
@@ -317,15 +299,15 @@
 		switch (status) {
 			case 'completed':
 			case 'checked_out':
-				return IconCheck;
+				return Check;
 			case 'checked_in':
-				return IconLogin;
+				return LogIn;
 			case 'registered':
-				return IconUserCheck;
+				return UserCheck;
 			case 'no_show':
-				return IconX;
+				return X;
 			default:
-				return IconClock2;
+				return Clock2;
 		}
 	}
 </script>
@@ -348,7 +330,7 @@
 			class="flex items-center gap-4 rounded-xl border bg-card p-4 shadow-sm transition-all hover:shadow-md"
 		>
 			<div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10">
-				<IconTrendingUp class="size-5 text-primary" />
+				<TrendingUp class="size-5 text-primary" />
 			</div>
 			<div>
 				<p class="text-2xl leading-none font-bold tracking-tight">{stats.total}</p>
@@ -362,7 +344,7 @@
 			<div
 				class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30"
 			>
-				<IconCheck class="size-5 text-green-600 dark:text-green-500" />
+				<Check class="size-5 text-green-600 dark:text-green-500" />
 			</div>
 			<div>
 				<p
@@ -380,7 +362,7 @@
 			<div
 				class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/30"
 			>
-				<IconCalendarEvent class="size-5 text-blue-600 dark:text-blue-500" />
+				<CalendarDays class="size-5 text-blue-600 dark:text-blue-500" />
 			</div>
 			<div>
 				<p class="text-2xl leading-none font-bold tracking-tight text-blue-600 dark:text-blue-500">
@@ -396,7 +378,7 @@
 			<div
 				class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-orange-100 dark:bg-orange-900/30"
 			>
-				<IconHourglass class="size-5 text-orange-600 dark:text-orange-500" />
+				<Hourglass class="size-5 text-orange-600 dark:text-orange-500" />
 			</div>
 			<div>
 				<p
@@ -413,7 +395,7 @@
 	<div class="space-y-4">
 		<!-- Search -->
 		<div class="relative">
-			<IconSearch
+			<Search
 				class="absolute top-1/2 left-3 size-4 -translate-y-1/2 transform text-muted-foreground"
 			/>
 			<Input bind:value={searchQuery} placeholder="ค้นหากิจกรรม..." class="pl-9" />
@@ -449,7 +431,7 @@
 	<div>
 		{#if error}
 			<Alert variant="destructive">
-				<IconAlertCircle class="size-4" />
+				<CircleAlert class="size-4" />
 				<AlertDescription>{error}</AlertDescription>
 			</Alert>
 		{:else if loading}
@@ -471,7 +453,7 @@
 			</div>
 		{:else if filteredHistory.length === 0}
 			<div class="py-12 text-center">
-				<IconHistory class="mx-auto mb-4 size-12 text-muted-foreground/50" />
+				<History class="mx-auto mb-4 size-12 text-muted-foreground/50" />
 				<h3 class="mb-2 text-lg font-medium">ไม่มีประวัติการเข้าร่วม</h3>
 				<p class="mx-auto max-w-md text-muted-foreground">
 					{searchQuery || filterBy !== 'all'
@@ -488,7 +470,7 @@
 						: 'outline'}
 					{@const LevelIcon = participation.activity?.activity_level
 						? getActivityLevelIcon(participation.activity.activity_level)
-						: IconBuildingStore}
+						: Store}
 					{@const borderClasses =
 						levelVariant === 'secondary'
 							? 'border-l-4 border-l-green-500'
@@ -534,7 +516,7 @@
 
 										{#if participation.activity?.organizer_name}
 											<div class="flex items-center gap-1.5 text-sm font-medium text-primary/80">
-												<IconBuildingStore class="size-4" />
+												<Store class="size-4" />
 												<span>{participation.activity.organizer_name}</span>
 											</div>
 										{/if}
@@ -544,7 +526,7 @@
 										<div
 											class="flex shrink-0 items-center gap-1.5 rounded-lg bg-muted/50 px-2.5 py-1.5 text-sm font-semibold text-foreground"
 										>
-											<IconHourglass class="size-4 text-orange-500" />
+											<Hourglass class="size-4 text-orange-500" />
 											<span class="text-base">{participation.activity.hours}</span> ชั่วโมง
 										</div>
 									{/if}
@@ -557,7 +539,7 @@
 									<div class="space-y-1.5">
 										{#if participation.activity?.start_date}
 											<div class="flex items-start gap-2 text-sm">
-												<IconCalendarEvent class="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+												<CalendarDays class="mt-0.5 size-4 shrink-0 text-muted-foreground" />
 												<div class="grid gap-0.5">
 													<span
 														class="text-[11px] font-medium tracking-wide text-muted-foreground uppercase"
@@ -575,7 +557,7 @@
 
 										{#if participation.activity?.location}
 											<div class="flex items-start gap-2 text-sm">
-												<IconMapPin class="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+												<MapPin class="mt-0.5 size-4 shrink-0 text-muted-foreground" />
 												<div class="grid gap-0.5">
 													<span
 														class="text-[11px] font-medium tracking-wide text-muted-foreground uppercase"
@@ -589,7 +571,7 @@
 
 									<div class="space-y-2">
 										<div class="flex items-start gap-2 text-sm">
-											<IconHistory class="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+											<History class="mt-0.5 size-4 shrink-0 text-muted-foreground" />
 											<div class="grid w-full gap-1">
 												<span
 													class="text-[11px] font-medium tracking-wide text-muted-foreground uppercase"
@@ -602,7 +584,7 @@
 															class="flex items-center justify-between rounded-md border bg-background px-2 py-1 text-xs"
 														>
 															<span class="flex items-center gap-1 text-muted-foreground"
-																><IconUserCheck class="size-3" /> ลงทะเบียน</span
+																><UserCheck class="size-3" /> ลงทะเบียน</span
 															>
 															<span class="font-medium"
 																>{formatDateShort(participation.registered_at)}</span
@@ -615,7 +597,7 @@
 														>
 															<span
 																class="flex items-center gap-1 text-green-600 dark:text-green-500"
-																><IconLogin class="size-3" /> เข้าร่วม (เช็คอิน)</span
+																><LogIn class="size-3" /> เข้าร่วม (เช็คอิน)</span
 															>
 															<span class="font-medium"
 																>{formatDateShort(participation.checked_in_at)}</span
@@ -627,7 +609,7 @@
 															class="flex items-center justify-between rounded-md border border-blue-100 bg-blue-50/50 px-2 py-1 text-xs dark:border-blue-900 dark:bg-blue-950/20"
 														>
 															<span class="flex items-center gap-1 text-blue-600 dark:text-blue-500"
-																><IconLogout class="size-3" /> เสร็จสิ้น (เช็คเอาท์)</span
+																><LogOut class="size-3" /> เสร็จสิ้น (เช็คเอาท์)</span
 															>
 															<span class="font-medium"
 																>{formatDateShort(participation.checked_out_at)}</span
@@ -645,7 +627,7 @@
 									<div
 										class="flex gap-2 rounded-lg border border-orange-100 bg-orange-50/50 px-3 py-1.5 text-sm dark:border-orange-900/30 dark:bg-orange-950/20"
 									>
-										<IconAlertCircle class="mt-0.5 size-4 shrink-0 text-orange-500" />
+										<CircleAlert class="mt-0.5 size-4 shrink-0 text-orange-500" />
 										<div>
 											<span class="font-medium text-orange-700 dark:text-orange-400">หมายเหตุ:</span
 											>

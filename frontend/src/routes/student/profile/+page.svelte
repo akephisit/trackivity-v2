@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { CircleAlert, Calendar as CalendarIcon, Check, Pencil, Eye, EyeOff, Key, Mail, MapPin, Phone, School, Shield, User as UserIcon, X } from '@lucide/svelte';
 	import { authStore } from '$lib/stores/auth.svelte';
 	import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
 	import { Button } from '$lib/components/ui/button';
@@ -10,22 +11,6 @@
 	import { Separator } from '$lib/components/ui/separator';
 	import { Textarea } from '$lib/components/ui/textarea';
 	import * as Select from '$lib/components/ui/select';
-	import {
-		IconUser,
-		IconMail,
-		IconSchool,
-		IconEdit,
-		IconCheck,
-		IconX,
-		IconAlertCircle,
-		IconShield,
-		IconCalendar,
-		IconPhone,
-		IconMapPin,
-		IconKey,
-		IconEye,
-		IconEyeOff
-	} from '@tabler/icons-svelte';
 	import { toast } from 'svelte-sonner';
 	import { usersApi, ApiError } from '$lib/api';
 	import {
@@ -312,11 +297,11 @@
 		{#if !editing && !showPasswordForm}
 			<div class="flex gap-2">
 				<Button onclick={startEdit} variant="outline" class="w-full sm:w-auto">
-					<IconEdit class="mr-2 size-4" />
+					<Pencil class="mr-2 size-4" />
 					แก้ไขข้อมูล
 				</Button>
 				<Button onclick={startPasswordChange} variant="secondary" class="w-full sm:w-auto">
-					<IconKey class="mr-2 size-4" />
+					<Key class="mr-2 size-4" />
 					เปลี่ยนรหัสผ่าน
 				</Button>
 			</div>
@@ -330,7 +315,7 @@
 			<Card>
 				<CardHeader>
 					<CardTitle class="flex items-center gap-2">
-						<IconUser class="size-5" />
+						<UserIcon class="size-5" />
 						ข้อมูลพื้นฐาน
 					</CardTitle>
 				</CardHeader>
@@ -431,7 +416,7 @@
 
 							{#if error}
 								<Alert variant="destructive">
-									<IconAlertCircle class="size-4" />
+									<CircleAlert class="size-4" />
 									<AlertDescription>{error}</AlertDescription>
 								</Alert>
 							{/if}
@@ -446,12 +431,12 @@
 									{#if loading}
 										กำลังบันทึก...
 									{:else}
-										<IconCheck class="mr-2 size-4" />
+										<Check class="mr-2 size-4" />
 										บันทึก
 									{/if}
 								</Button>
 								<Button variant="outline" onclick={cancelEdit} disabled={loading} class="flex-1">
-									<IconX class="mr-2 size-4" />
+									<X class="mr-2 size-4" />
 									ยกเลิก
 								</Button>
 							</div>
@@ -483,7 +468,7 @@
 
 							<div>
 								<span class="mb-1 flex items-center gap-1 text-sm text-muted-foreground">
-									<IconMail class="size-3" />
+									<Mail class="size-3" />
 									อีเมล
 								</span>
 								<p class="font-medium">{authStore.user.email}</p>
@@ -491,7 +476,7 @@
 
 							<div>
 								<span class="mb-1 flex items-center gap-1 text-sm text-muted-foreground">
-									<IconPhone class="size-3" />
+									<Phone class="size-3" />
 									เบอร์โทรศัพท์
 								</span>
 								<p class="font-medium">{authStore.user.phone || 'ไม่ได้ระบุ'}</p>
@@ -499,7 +484,7 @@
 
 							<div>
 								<span class="mb-1 flex items-center gap-1 text-sm text-muted-foreground">
-									<IconMapPin class="size-3" />
+									<MapPin class="size-3" />
 									ที่อยู่
 								</span>
 								<p class="font-medium break-words">{authStore.user.address || 'ไม่ได้ระบุ'}</p>
@@ -513,7 +498,7 @@
 			<Card>
 				<CardHeader>
 					<CardTitle class="flex items-center gap-2">
-						<IconSchool class="size-5" />
+						<School class="size-5" />
 						ข้อมูลนักศึกษา
 					</CardTitle>
 				</CardHeader>
@@ -541,7 +526,7 @@
 
 					<div>
 						<span class="mb-1 flex items-center gap-1 text-sm text-muted-foreground">
-							<IconCalendar class="size-3" />
+							<CalendarIcon class="size-3" />
 							วันที่สมัครสมาชิก
 						</span>
 						<p class="font-medium">{formatDate(authStore.user.created_at ?? undefined)}</p>
@@ -562,7 +547,7 @@
 			<Card>
 				<CardHeader>
 					<CardTitle class="flex items-center gap-2">
-						<IconKey class="size-5" />
+						<Key class="size-5" />
 						เปลี่ยนรหัสผ่าน
 					</CardTitle>
 				</CardHeader>
@@ -591,9 +576,9 @@
 									type="button"
 								>
 									{#if showCurrentPassword}
-										<IconEyeOff class="size-4" />
+										<EyeOff class="size-4" />
 									{:else}
-										<IconEye class="size-4" />
+										<Eye class="size-4" />
 									{/if}
 								</Button>
 							</div>
@@ -630,9 +615,9 @@
 									type="button"
 								>
 									{#if showNewPassword}
-										<IconEyeOff class="size-4" />
+										<EyeOff class="size-4" />
 									{:else}
-										<IconEye class="size-4" />
+										<Eye class="size-4" />
 									{/if}
 								</Button>
 							</div>
@@ -675,9 +660,9 @@
 									type="button"
 								>
 									{#if showConfirmPassword}
-										<IconEyeOff class="size-4" />
+										<EyeOff class="size-4" />
 									{:else}
-										<IconEye class="size-4" />
+										<Eye class="size-4" />
 									{/if}
 								</Button>
 							</div>
@@ -694,7 +679,7 @@
 
 						{#if passwordError}
 							<Alert variant="destructive">
-								<IconAlertCircle class="size-4" />
+								<CircleAlert class="size-4" />
 								<AlertDescription>{passwordError}</AlertDescription>
 							</Alert>
 						{/if}
@@ -708,7 +693,7 @@
 								{#if passwordLoading}
 									กำลังเปลี่ยน...
 								{:else}
-									<IconCheck class="mr-2 size-4" />
+									<Check class="mr-2 size-4" />
 									เปลี่ยนรหัสผ่าน
 								{/if}
 							</Button>
@@ -718,7 +703,7 @@
 								disabled={passwordLoading}
 								class="flex-1"
 							>
-								<IconX class="mr-2 size-4" />
+								<X class="mr-2 size-4" />
 								ยกเลิก
 							</Button>
 						</div>
@@ -729,39 +714,39 @@
 								<ul class="space-y-1 text-sm text-muted-foreground">
 									{#if !passwordData.current_password}
 										<li class="flex items-center gap-2">
-											<IconX class="size-3 text-red-500" />
+											<X class="size-3 text-red-500" />
 											กรอกรหัสผ่านปัจจุบัน
 										</li>
 									{/if}
 									{#if !passwordData.new_password}
 										<li class="flex items-center gap-2">
-											<IconX class="size-3 text-red-500" />
+											<X class="size-3 text-red-500" />
 											กรอกรหัสผ่านใหม่
 										</li>
 									{:else if getNewPasswordStrengthError()}
 										<li class="flex items-center gap-2">
-											<IconX class="size-3 text-red-500" />
+											<X class="size-3 text-red-500" />
 											{getNewPasswordStrengthError()}
 										</li>
 									{:else}
 										<li class="flex items-center gap-2">
-											<IconCheck class="size-3 text-green-500" />
+											<Check class="size-3 text-green-500" />
 											รหัสผ่านใหม่ถูกต้อง
 										</li>
 									{/if}
 									{#if !passwordData.confirm_password}
 										<li class="flex items-center gap-2">
-											<IconX class="size-3 text-red-500" />
+											<X class="size-3 text-red-500" />
 											กรอกยืนยันรหัสผ่าน
 										</li>
 									{:else if getPasswordMatchError()}
 										<li class="flex items-center gap-2">
-											<IconX class="size-3 text-red-500" />
+											<X class="size-3 text-red-500" />
 											{getPasswordMatchError()}
 										</li>
 									{:else if passwordData.new_password}
 										<li class="flex items-center gap-2">
-											<IconCheck class="size-3 text-green-500" />
+											<Check class="size-3 text-green-500" />
 											รหัสผ่านยืนยันถูกต้อง
 										</li>
 									{/if}
@@ -777,7 +762,7 @@
 		<Card>
 			<CardHeader>
 				<CardTitle class="flex items-center gap-2">
-					<IconShield class="size-5" />
+					<Shield class="size-5" />
 					สถานะบัญชี
 				</CardTitle>
 			</CardHeader>
@@ -810,7 +795,7 @@
 		<Card class="border-muted bg-muted/30">
 			<CardContent class="p-4">
 				<div class="flex items-start gap-3">
-					<IconShield class="mt-0.5 size-5 flex-shrink-0 text-muted-foreground" />
+					<Shield class="mt-0.5 size-5 flex-shrink-0 text-muted-foreground" />
 					<div class="space-y-1">
 						<h3 class="text-sm font-medium">ข้อมูลส่วนบุคคล</h3>
 						<p class="text-xs text-muted-foreground">

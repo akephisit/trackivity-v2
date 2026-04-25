@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { RefreshCw, Trash2, UserCheck, UserX, Users } from '@lucide/svelte';
 	import {
 		Card,
 		CardContent,
@@ -21,13 +22,6 @@
 	} from '@tanstack/table-core';
 	import { createSvelteTable } from '$lib/components/ui/data-table/data-table.svelte.js';
 	import { FlexRender } from '$lib/components/ui/data-table';
-	import {
-		IconUsers,
-		IconUserCheck,
-		IconUserX,
-		IconRefresh,
-		IconTrash
-	} from '@tabler/icons-svelte/icons';
 	import { usersApi } from '$lib/api';
 	import type { UserListItem } from '$lib/api';
 	import { onMount } from 'svelte';
@@ -96,13 +90,13 @@
 	<div class="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
 		<div>
 			<h1 class="admin-page-title">
-				<IconUsers class="size-6 text-primary" />
+				<Users class="size-6 text-primary" />
 				จัดการผู้ใช้หน่วยงาน
 			</h1>
 			<p class="text-muted-foreground">จัดการข้อมูลผู้ใช้ในระบบ</p>
 		</div>
 		<Button variant="outline" onclick={() => location.reload()} disabled={loading}>
-			<IconRefresh class="mr-2 h-4 w-4 {loading ? 'animate-spin' : ''}" />
+			<RefreshCw class="mr-2 h-4 w-4 {loading ? 'animate-spin' : ''}" />
 			รีเฟรช
 		</Button>
 	</div>
@@ -112,7 +106,7 @@
 		<Card>
 			<CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
 				<CardTitle class="text-sm font-medium">ผู้ใช้ทั้งหมด</CardTitle>
-				<IconUsers class="h-4 w-4 text-muted-foreground" />
+				<Users class="h-4 w-4 text-muted-foreground" />
 			</CardHeader>
 			<CardContent>
 				<div class="text-2xl font-bold">{stats.total.toLocaleString()}</div>
@@ -122,7 +116,7 @@
 		<Card>
 			<CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
 				<CardTitle class="text-sm font-medium">ผู้ใช้ที่เปิดใช้งาน</CardTitle>
-				<IconUserCheck class="h-4 w-4 text-green-600" />
+				<UserCheck class="h-4 w-4 text-green-600" />
 			</CardHeader>
 			<CardContent>
 				<div class="text-2xl font-bold">{stats.active.toLocaleString()}</div>
@@ -143,9 +137,9 @@
 						<span class="text-sm text-muted-foreground">จาก {usersList.length} รายการ</span>
 					</div>
 					<div class="flex gap-2">
-						<Button variant="outline" size="sm"><IconUserCheck class="mr-2 h-4 w-4" />เปิดใช้งาน</Button>
-						<Button variant="outline" size="sm"><IconUserX class="mr-2 h-4 w-4" />ปิดใช้งาน</Button>
-						<Button variant="destructive" size="sm"><IconTrash class="mr-2 h-4 w-4" />ลบ</Button>
+						<Button variant="outline" size="sm"><UserCheck class="mr-2 h-4 w-4" />เปิดใช้งาน</Button>
+						<Button variant="outline" size="sm"><UserX class="mr-2 h-4 w-4" />ปิดใช้งาน</Button>
+						<Button variant="destructive" size="sm"><Trash2 class="mr-2 h-4 w-4" />ลบ</Button>
 					</div>
 				</div>
 			</CardContent>
@@ -205,7 +199,7 @@
 							<Table.Row>
 								<Table.Cell colspan={columns.length} class="h-24 text-center">
 									<div class="flex flex-col items-center gap-2">
-										<IconUsers class="h-8 w-8 text-muted-foreground" />
+										<Users class="h-8 w-8 text-muted-foreground" />
 										<span class="text-muted-foreground">ไม่พบผู้ใช้</span>
 									</div>
 								</Table.Cell>

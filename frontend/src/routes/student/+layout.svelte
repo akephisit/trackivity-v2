@@ -1,36 +1,27 @@
 <script lang="ts">
+	import { CalendarDays, FileText, History, House, QrCode, School, User as UserIcon } from '@lucide/svelte';
 	import { authStore } from '$lib/stores/auth.svelte';
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
 	import AppLayout from '$lib/components/app-layout.svelte';
-	import {
-		IconHome,
-		IconCalendarEvent,
-		IconQrcode,
-		IconUser,
-		IconHistory,
-		IconFileText,
-		IconSchool
-	} from '@tabler/icons-svelte';
-
 	let { children } = $props();
 	let mobileMenuOpen = $state(false);
 
 	const navigationItems = [
-		{ title: 'หน้าหลัก', href: '/student', icon: IconHome, exact: true },
-		{ title: 'กิจกรรม', href: '/student/activities', icon: IconCalendarEvent },
-		{ title: 'QR Code', href: '/student/qr', icon: IconQrcode },
-		{ title: 'ประวัติ', href: '/student/history', icon: IconHistory },
-		{ title: 'สรุปกิจกรรม', href: '/student/summary', icon: IconFileText },
-		{ title: 'โปรไฟล์', href: '/student/profile', icon: IconUser }
+		{ title: 'หน้าหลัก', href: '/student', icon: House, exact: true },
+		{ title: 'กิจกรรม', href: '/student/activities', icon: CalendarDays },
+		{ title: 'QR Code', href: '/student/qr', icon: QrCode },
+		{ title: 'ประวัติ', href: '/student/history', icon: History },
+		{ title: 'สรุปกิจกรรม', href: '/student/summary', icon: FileText },
+		{ title: 'โปรไฟล์', href: '/student/profile', icon: UserIcon }
 	];
 
 	const bottomNavItems = [
-		{ title: 'หน้าหลัก', href: '/student', icon: IconHome, exact: true },
-		{ title: 'กิจกรรม', href: '/student/activities', icon: IconCalendarEvent },
-		{ title: 'QR Code', href: '/student/qr', icon: IconQrcode },
-		{ title: 'โปรไฟล์', href: '/student/profile', icon: IconUser }
+		{ title: 'หน้าหลัก', href: '/student', icon: House, exact: true },
+		{ title: 'กิจกรรม', href: '/student/activities', icon: CalendarDays },
+		{ title: 'QR Code', href: '/student/qr', icon: QrCode },
+		{ title: 'โปรไฟล์', href: '/student/profile', icon: UserIcon }
 	];
 
 	onMount(async () => {
@@ -60,7 +51,7 @@
 		{mobileMenuOpen}
 		appTitle="Trackivity"
 		appSubtitle="Student Portal"
-		logoIcon={IconSchool}
+		logoIcon={School}
 		showLogo={false}
 		onToggleMobileMenu={() => (mobileMenuOpen = !mobileMenuOpen)}
 		onCloseMobileMenu={() => (mobileMenuOpen = false)}

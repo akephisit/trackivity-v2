@@ -1,4 +1,5 @@
 <script lang="ts" module>
+	import { ChevronDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, CircleCheck, EllipsisVertical, GripVertical, Columns3, Loader, Plus } from '@lucide/svelte';
 	export const columns: ColumnDef<Schema>[] = [
 		{
 			id: 'drag',
@@ -121,17 +122,16 @@
 		renderComponent,
 		renderSnippet
 	} from '$lib/components/ui/data-table/index.js';
-	import LayoutColumnsIcon from '@tabler/icons-svelte/icons/layout-columns';
-	import GripVerticalIcon from '@tabler/icons-svelte/icons/grip-vertical';
-	import ChevronDownIcon from '@tabler/icons-svelte/icons/chevron-down';
-	import PlusIcon from '@tabler/icons-svelte/icons/plus';
-	import ChevronsLeftIcon from '@tabler/icons-svelte/icons/chevrons-left';
-	import ChevronLeftIcon from '@tabler/icons-svelte/icons/chevron-left';
-	import ChevronRightIcon from '@tabler/icons-svelte/icons/chevron-right';
-	import ChevronsRightIcon from '@tabler/icons-svelte/icons/chevrons-right';
-	import CircleCheckFilledIcon from '@tabler/icons-svelte/icons/circle-check-filled';
-	import LoaderIcon from '@tabler/icons-svelte/icons/loader';
-	import DotsVerticalIcon from '@tabler/icons-svelte/icons/dots-vertical';
+
+
+
+
+
+
+
+
+
+
 	import { toast } from 'svelte-sonner';
 	import DataTableCheckbox from './data-table-checkbox.svelte';
 	import DataTableCellViewer from './data-table-cell-viewer.svelte';
@@ -289,10 +289,10 @@
 				<DropdownMenu.Trigger>
 					{#snippet child({ props })}
 						<Button variant="outline" size="sm" {...props}>
-							<LayoutColumnsIcon />
+							<Columns3 />
 							<span class="hidden lg:inline">Customize Columns</span>
 							<span class="lg:hidden">Columns</span>
-							<ChevronDownIcon />
+							<ChevronDown />
 						</Button>
 					{/snippet}
 				</DropdownMenu.Trigger>
@@ -311,7 +311,7 @@
 				</DropdownMenu.Content>
 			</DropdownMenu.Root>
 			<Button variant="outline" size="sm">
-				<PlusIcon />
+				<Plus />
 				<span class="hidden lg:inline">Add Section</span>
 			</Button>
 		</div>
@@ -398,7 +398,7 @@
 						disabled={!table.getCanPreviousPage()}
 					>
 						<span class="sr-only">Go to first page</span>
-						<ChevronsLeftIcon />
+						<ChevronsLeft />
 					</Button>
 					<Button
 						variant="outline"
@@ -408,7 +408,7 @@
 						disabled={!table.getCanPreviousPage()}
 					>
 						<span class="sr-only">Go to previous page</span>
-						<ChevronLeftIcon />
+						<ChevronLeft />
 					</Button>
 					<Button
 						variant="outline"
@@ -418,7 +418,7 @@
 						disabled={!table.getCanNextPage()}
 					>
 						<span class="sr-only">Go to next page</span>
-						<ChevronRightIcon />
+						<ChevronRight />
 					</Button>
 					<Button
 						variant="outline"
@@ -428,7 +428,7 @@
 						disabled={!table.getCanNextPage()}
 					>
 						<span class="sr-only">Go to last page</span>
-						<ChevronsRightIcon />
+						<ChevronsRight />
 					</Button>
 				</div>
 			</div>
@@ -496,9 +496,9 @@
 {#snippet DataTableStatus({ row }: { row: Row<Schema> })}
 	<Badge variant="outline" class="px-1.5 text-muted-foreground">
 		{#if row.original.status === 'Done'}
-			<CircleCheckFilledIcon class="fill-green-500 dark:fill-green-400" />
+			<CircleCheck class="fill-green-500 dark:fill-green-400" />
 		{:else}
-			<LoaderIcon />
+			<Loader />
 		{/if}
 		{row.original.status}
 	</Badge>
@@ -509,7 +509,7 @@
 		<DropdownMenu.Trigger class="flex size-8 text-muted-foreground data-[state=open]:bg-muted">
 			{#snippet child({ props })}
 				<Button variant="ghost" size="icon" {...props}>
-					<DotsVerticalIcon />
+					<EllipsisVertical />
 					<span class="sr-only">Open menu</span>
 				</Button>
 			{/snippet}
@@ -554,7 +554,7 @@
 		size="icon"
 		class="size-7 text-muted-foreground hover:bg-transparent"
 	>
-		<GripVerticalIcon class="size-3 text-muted-foreground" />
+		<GripVertical class="size-3 text-muted-foreground" />
 		<span class="sr-only">Drag to reorder</span>
 	</Button>
 {/snippet}

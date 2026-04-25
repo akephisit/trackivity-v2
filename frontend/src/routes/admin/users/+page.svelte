@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { RefreshCw, Search, UserCheck, UserX, Users } from '@lucide/svelte';
 	import { usersApi, organizationsApi, ApiError } from '$lib/api';
 	import type { UserListItem, Organization } from '$lib/api';
 	import { onMount } from 'svelte';
@@ -9,13 +10,6 @@
 	import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
 	import * as Table from '$lib/components/ui/table';
 	import { Skeleton } from '$lib/components/ui/skeleton';
-	import {
-		IconUsers,
-		IconUserCheck,
-		IconUserX,
-		IconSearch,
-		IconRefresh,
-	} from '@tabler/icons-svelte/icons';
 	import { goto } from '$app/navigation';
 
 	// ─── State ──────────────────────────────────────────────────────────────
@@ -111,7 +105,7 @@
 			<p class="text-muted-foreground">รายชื่อผู้ใช้งานทั้งหมดในระบบ</p>
 		</div>
 		<Button variant="outline" onclick={fetchData} disabled={loading}>
-			<IconRefresh class="mr-2 size-4 {loading ? 'animate-spin' : ''}" />
+			<RefreshCw class="mr-2 size-4 {loading ? 'animate-spin' : ''}" />
 			รีเฟรช
 		</Button>
 	</div>
@@ -120,7 +114,7 @@
 	<div class="grid gap-4 sm:grid-cols-3">
 		<Card>
 			<CardContent class="flex items-center gap-3 p-4">
-				<IconUsers class="size-8 text-muted-foreground" />
+				<Users class="size-8 text-muted-foreground" />
 				<div>
 					<p class="text-2xl font-bold">{stats.total}</p>
 					<p class="text-sm text-muted-foreground">ผู้ใช้ทั้งหมด</p>
@@ -129,7 +123,7 @@
 		</Card>
 		<Card>
 			<CardContent class="flex items-center gap-3 p-4">
-				<IconUserCheck class="size-8 text-green-600" />
+				<UserCheck class="size-8 text-green-600" />
 				<div>
 					<p class="text-2xl font-bold">{stats.active}</p>
 					<p class="text-sm text-muted-foreground">เปิดใช้งาน</p>
@@ -138,7 +132,7 @@
 		</Card>
 		<Card>
 			<CardContent class="flex items-center gap-3 p-4">
-				<IconUserX class="size-8 text-muted-foreground" />
+				<UserX class="size-8 text-muted-foreground" />
 				<div>
 					<p class="text-2xl font-bold">{stats.inactive}</p>
 					<p class="text-sm text-muted-foreground">ไม่ใช้งาน</p>
@@ -152,7 +146,7 @@
 		<CardHeader>
 			<div class="flex flex-col gap-3 sm:flex-row">
 				<div class="relative flex-1">
-					<IconSearch class="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+					<Search class="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
 					<Input bind:value={searchTerm} placeholder="ค้นหาผู้ใช้..." class="pl-9" />
 				</div>
 				<select
@@ -186,7 +180,7 @@
 				<div class="py-8 text-center text-destructive">{error}</div>
 			{:else if filteredUsers.length === 0}
 				<div class="py-12 text-center">
-					<IconUsers class="mx-auto mb-4 size-12 text-muted-foreground/50" />
+					<Users class="mx-auto mb-4 size-12 text-muted-foreground/50" />
 					<p class="text-muted-foreground">ไม่พบผู้ใช้</p>
 				</div>
 			{:else}

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { Lock, Mail, User as UserIcon } from '@lucide/svelte';
 	import {
 		Card,
 		CardContent,
@@ -10,7 +11,6 @@
 	import { Input } from '$lib/components/ui/input';
 	import { Button } from '$lib/components/ui/button';
 	import { toast } from 'svelte-sonner';
-	import { IconUser, IconLock, IconMail } from '@tabler/icons-svelte';
 	import { usersApi, auth as authApi, ApiError } from '$lib/api';
 	import { authStore } from '$lib/stores/auth.svelte';
 	import { onMount } from 'svelte';
@@ -78,7 +78,7 @@
 
 <div class="container mx-auto max-w-4xl space-y-6">
 	<div class="flex items-center space-x-2">
-		<IconUser class="size-6" />
+		<UserIcon class="size-6" />
 		<h1 class="text-2xl font-bold">ตั้งค่าบัญชี</h1>
 	</div>
 
@@ -87,7 +87,7 @@
 		<Card>
 			<CardHeader>
 				<CardTitle class="flex items-center gap-2">
-					<IconUser class="size-5" />
+					<UserIcon class="size-5" />
 					ข้อมูลส่วนตัว
 				</CardTitle>
 				<CardDescription>จัดการข้อมูลส่วนตัวของคุณ</CardDescription>
@@ -116,7 +116,7 @@
 					</div>
 					<div class="space-y-2">
 						<Label for="email" class="flex items-center gap-2">
-							<IconMail class="size-4" />
+							<Mail class="size-4" />
 							อีเมล
 						</Label>
 						<Input
@@ -139,7 +139,7 @@
 		<Card>
 			<CardHeader>
 				<CardTitle class="flex items-center gap-2">
-					<IconLock class="size-5" />
+					<Lock class="size-5" />
 					เปลี่ยนรหัสผ่าน
 				</CardTitle>
 				<CardDescription>เปลี่ยนรหัสผ่านสำหรับความปลอดภัย</CardDescription>

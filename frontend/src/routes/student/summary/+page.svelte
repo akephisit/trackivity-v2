@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { Activity as ActivityIcon, Award, Building as BuildingIcon, ChartBar, CircleCheck, Download, FileText, Hourglass, Info, Loader, Printer, School, Target, TrendingUp, User as UserIcon } from '@lucide/svelte';
 	import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
@@ -14,24 +15,6 @@
 		type ActivityRequirements
 	} from '$lib/utils/activity-summary';
 	import { getPrefixLabel } from '$lib/schemas/auth';
-	import {
-		IconFileText,
-		IconPrinter,
-		IconDownload,
-		IconLoader,
-		IconSchool,
-		IconBuilding,
-		IconAward,
-		IconTrendingUp,
-		IconUser,
-		IconHourglass,
-		IconActivity,
-		IconCircleCheck,
-		IconChartBar,
-		IconTarget,
-		IconProgress,
-		IconInfoCircle
-	} from '@tabler/icons-svelte';
 	import { toast } from 'svelte-sonner';
 
 	import { activitiesApi, auth as authApi, organizationsApi, ApiError } from '$lib/api';
@@ -155,10 +138,10 @@
 				class="gap-2"
 			>
 				{#if isExporting}
-					<IconLoader class="size-4 animate-spin" />
+					<Loader class="size-4 animate-spin" />
 					<span>กำลังส่งออก...</span>
 				{:else}
-					<IconDownload class="size-4" />
+					<Download class="size-4" />
 					<span>ส่งออก</span>
 				{/if}
 			</Button>
@@ -234,7 +217,7 @@
 			<Card class="print-break-after border-2">
 				<CardHeader>
 					<div class="flex items-center gap-3">
-						<IconFileText class="size-6 text-primary" />
+						<FileText class="size-6 text-primary" />
 						<div>
 							<CardTitle class="text-xl">รายงานสรุปผลการเข้าร่วมกิจกรรม</CardTitle>
 							<p class="mt-1 text-sm text-muted-foreground">Academic Activity Summary Report</p>
@@ -248,7 +231,7 @@
 							<div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
 								<div class="flex items-start gap-4">
 									<div class="mt-0.5 rounded-full bg-primary/10 p-2 text-primary">
-										<IconUser class="size-5" />
+										<UserIcon class="size-5" />
 									</div>
 									<div>
 										<p class="text-sm font-medium text-muted-foreground">ชื่อ-นามสกุล</p>
@@ -260,7 +243,7 @@
 								</div>
 								<div class="flex items-start gap-4">
 									<div class="mt-0.5 rounded-full bg-primary/10 p-2 text-primary">
-										<IconActivity class="size-5" />
+										<ActivityIcon class="size-5" />
 									</div>
 									<div>
 										<p class="text-sm font-medium text-muted-foreground">รหัสนักศึกษา</p>
@@ -269,7 +252,7 @@
 								</div>
 								<div class="flex items-start gap-4">
 									<div class="mt-0.5 rounded-full bg-primary/10 p-2 text-primary">
-										<IconFileText class="size-5" />
+										<FileText class="size-5" />
 									</div>
 									<div>
 										<p class="text-sm font-medium text-muted-foreground">วันที่รายงาน</p>
@@ -288,7 +271,7 @@
 							class="flex items-center gap-4 rounded-xl border bg-card p-4 shadow-sm transition-all hover:-translate-y-1 hover:shadow-md"
 						>
 							<div class="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-								<IconTrendingUp class="size-6 text-primary" />
+								<TrendingUp class="size-6 text-primary" />
 							</div>
 							<div>
 								<p class="text-3xl leading-none font-bold tracking-tight">
@@ -303,7 +286,7 @@
 							<div
 								class="flex h-12 w-12 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30"
 							>
-								<IconCircleCheck class="size-6 text-green-600 dark:text-green-500" />
+								<CircleCheck class="size-6 text-green-600 dark:text-green-500" />
 							</div>
 							<div>
 								<p
@@ -320,7 +303,7 @@
 							<div
 								class="flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/30"
 							>
-								<IconHourglass class="size-6 text-blue-600 dark:text-blue-500" />
+								<Hourglass class="size-6 text-blue-600 dark:text-blue-500" />
 							</div>
 							<div>
 								<p
@@ -337,7 +320,7 @@
 							<div
 								class="flex h-12 w-12 items-center justify-center rounded-full bg-orange-100 dark:bg-orange-900/30"
 							>
-								<IconChartBar class="size-6 text-orange-600 dark:text-orange-500" />
+								<ChartBar class="size-6 text-orange-600 dark:text-orange-500" />
 							</div>
 							<div>
 								<p
@@ -357,7 +340,7 @@
 				<Card class="border-2 border-primary/20">
 					<CardHeader>
 						<div class="flex items-center gap-3">
-							<IconTarget class="size-6 text-primary" />
+							<Target class="size-6 text-primary" />
 							<div>
 								<CardTitle class="text-xl">ความก้าวหน้าในการเข้าร่วมกิจกรรม</CardTitle>
 								<p class="text-sm text-muted-foreground">
@@ -374,7 +357,7 @@
 								<div class="flex items-center justify-between">
 									<div class="flex items-center gap-3">
 										<div class="rounded-full bg-primary/10 p-2">
-											<IconProgress class="size-4 text-primary" />
+											<Loader class="size-4 text-primary" />
 										</div>
 										<div>
 											<p class="font-medium">ความก้าวหน้าโดยรวม</p>
@@ -415,7 +398,7 @@
 							<!-- Faculty Progress -->
 							<div class="space-y-4">
 								<h4 class="flex items-center gap-2 font-semibold">
-									<IconSchool class="size-4 text-green-600" />
+									<School class="size-4 text-green-600" />
 									ระดับคณะ
 								</h4>
 								<div class="space-y-3">
@@ -456,7 +439,7 @@
 							<!-- University Progress -->
 							<div class="space-y-4">
 								<h4 class="flex items-center gap-2 font-semibold">
-									<IconBuilding class="size-4 text-blue-600" />
+									<BuildingIcon class="size-4 text-blue-600" />
 									ระดับมหาวิทยาลัย
 								</h4>
 								<div class="space-y-3">
@@ -498,7 +481,7 @@
 						<!-- Requirements Info -->
 						<div class="rounded-lg bg-blue-50 p-4 dark:bg-blue-950/20">
 							<div class="flex items-start gap-2 text-blue-700 dark:text-blue-300">
-								<IconInfoCircle class="mt-0.5 size-4" />
+								<Info class="mt-0.5 size-4" />
 								<div>
 									<p class="text-sm font-medium">เกณฑ์การผ่านกิจกรรม</p>
 									<div class="mt-2 text-xs text-blue-600 dark:text-blue-400">
@@ -534,7 +517,7 @@
 				>
 					<CardHeader>
 						<div class="flex items-center gap-3">
-							<IconSchool class={`size-6 ${getActivityLevelColor('faculty').textClass}`} />
+							<School class={`size-6 ${getActivityLevelColor('faculty').textClass}`} />
 							<div>
 								<CardTitle class="text-xl">กิจกรรมระดับคณะ</CardTitle>
 								<p class="text-sm text-muted-foreground">Faculty Level Activities</p>
@@ -590,7 +573,7 @@
 								<div
 									class="mx-auto mb-3 flex size-12 items-center justify-center rounded-full bg-green-100/50 dark:bg-green-900/20"
 								>
-									<IconSchool class="size-6 text-green-600/60 dark:text-green-500/60" />
+									<School class="size-6 text-green-600/60 dark:text-green-500/60" />
 								</div>
 								<p class="font-medium text-foreground/70">ยังไม่มีกิจกรรมระดับคณะที่เสร็จสิ้น</p>
 							</div>
@@ -604,7 +587,7 @@
 				>
 					<CardHeader>
 						<div class="flex items-center gap-3">
-							<IconBuilding class={`size-6 ${getActivityLevelColor('university').textClass}`} />
+							<BuildingIcon class={`size-6 ${getActivityLevelColor('university').textClass}`} />
 							<div>
 								<CardTitle class="text-xl">กิจกรรมระดับมหาวิทยาลัย</CardTitle>
 								<p class="text-sm text-muted-foreground">University Level Activities</p>
@@ -661,7 +644,7 @@
 								<div
 									class="mx-auto mb-3 flex size-12 items-center justify-center rounded-full bg-blue-100/50 dark:bg-blue-900/20"
 								>
-									<IconBuilding class="size-6 text-blue-600/60 dark:text-blue-500/60" />
+									<BuildingIcon class="size-6 text-blue-600/60 dark:text-blue-500/60" />
 								</div>
 								<p class="font-medium text-foreground/70">
 									ยังไม่มีกิจกรรมระดับมหาวิทยาลัยที่เสร็จสิ้น
@@ -676,7 +659,7 @@
 			<Card class="border-2">
 				<CardHeader>
 					<div class="flex items-center gap-3">
-						<IconAward class="size-6 text-primary" />
+						<Award class="size-6 text-primary" />
 						<div>
 							<CardTitle class="text-xl">สัดส่วนกิจกรรมทั้งหมด</CardTitle>
 							<p class="text-sm text-muted-foreground">Overall Activity Distribution</p>

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { CircleAlert, CalendarDays, ChevronRight, Clock, History, MapPin, QrCode, TrendingUp, Users } from '@lucide/svelte';
 	import { authStore } from '$lib/stores/auth.svelte';
 	import { activitiesApi, type Activity, type Participation } from '$lib/api';
 	import { getActivityTypeDisplayName } from '$lib/utils/activity';
@@ -9,19 +10,6 @@
 	import { Badge } from '$lib/components/ui/badge';
 	import { Skeleton } from '$lib/components/ui/skeleton';
 	import { Alert, AlertDescription } from '$lib/components/ui/alert';
-
-	import {
-		IconQrcode,
-		IconCalendarEvent,
-		IconHistory,
-		IconTrendingUp,
-		IconUsers,
-		IconClock,
-		IconMapPin,
-		IconChevronRight,
-		IconAlertCircle
-	} from '@tabler/icons-svelte';
-
 	// Loading states
 	let loadingActivities = $state(true);
 	let loadingParticipations = $state(true);
@@ -133,7 +121,7 @@
 	<Card>
 		<CardHeader>
 			<CardTitle class="flex items-center gap-2">
-				<IconUsers class="size-5" />
+				<Users class="size-5" />
 				ยินดีต้อนรับ, {authStore.user?.first_name}!
 			</CardTitle>
 		</CardHeader>
@@ -147,11 +135,11 @@
 				</p>
 				<div class="flex gap-2 pt-2">
 					<Button size="sm" href="/student/qr">
-						<IconQrcode class="mr-2 size-4" />
+						<QrCode class="mr-2 size-4" />
 						ดู QR Code
 					</Button>
 					<Button size="sm" variant="outline" href="/student/activities">
-						<IconCalendarEvent class="mr-2 size-4" />
+						<CalendarDays class="mr-2 size-4" />
 						กิจกรรมของฉัน
 					</Button>
 				</div>
@@ -164,7 +152,7 @@
 		<Card>
 			<CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
 				<CardTitle class="text-sm font-medium">การเข้าร่วมทั้งหมด</CardTitle>
-				<IconTrendingUp class="size-4 text-muted-foreground" />
+				<TrendingUp class="size-4 text-muted-foreground" />
 			</CardHeader>
 			<CardContent>
 				{#if loadingParticipations}
@@ -179,7 +167,7 @@
 		<Card>
 			<CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
 				<CardTitle class="text-sm font-medium">เดือนนี้</CardTitle>
-				<IconCalendarEvent class="size-4 text-muted-foreground" />
+				<CalendarDays class="size-4 text-muted-foreground" />
 			</CardHeader>
 			<CardContent>
 				{#if loadingParticipations}
@@ -194,7 +182,7 @@
 		<Card class="col-span-2 md:col-span-1">
 			<CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
 				<CardTitle class="text-sm font-medium">กิจกรรมที่กำลังจะมา</CardTitle>
-				<IconClock class="size-4 text-muted-foreground" />
+				<Clock class="size-4 text-muted-foreground" />
 			</CardHeader>
 			<CardContent>
 				{#if loadingActivities}
@@ -214,19 +202,19 @@
 			<CardHeader>
 				<CardTitle class="flex items-center justify-between">
 					<span class="flex items-center gap-2">
-						<IconCalendarEvent class="size-5" />
+						<CalendarDays class="size-5" />
 						กิจกรรมล่าสุด
 					</span>
 					<Button size="sm" variant="outline" href="/student/activities">
 						ดูทั้งหมด
-						<IconChevronRight class="ml-1 size-4" />
+						<ChevronRight class="ml-1 size-4" />
 					</Button>
 				</CardTitle>
 			</CardHeader>
 			<CardContent>
 				{#if error}
 					<Alert variant="destructive">
-						<IconAlertCircle class="size-4" />
+						<CircleAlert class="size-4" />
 						<AlertDescription>{error}</AlertDescription>
 					</Alert>
 				{:else if loadingActivities}
@@ -244,14 +232,14 @@
 						<div
 							class="mx-auto mb-3 flex size-12 items-center justify-center rounded-full bg-muted"
 						>
-							<IconCalendarEvent class="size-6 opacity-60" />
+							<CalendarDays class="size-6 opacity-60" />
 						</div>
 						<p class="font-medium">ยังไม่มีกิจกรรม</p>
 						<p class="mt-1 text-sm text-muted-foreground">
 							กิจกรรมใหม่จะปรากฏที่นี่เมื่อมีการเพิ่ม
 						</p>
 						<Button class="mt-3" size="sm" href="/student/activities">
-							<IconCalendarEvent class="mr-2 size-4" />
+							<CalendarDays class="mr-2 size-4" />
 							ดูกิจกรรมทั้งหมด
 						</Button>
 					</div>
@@ -274,18 +262,18 @@
 
 								<div class="flex items-center gap-4 text-xs text-muted-foreground">
 									<span class="flex items-center gap-1">
-										<IconClock class="size-3" />
+										<Clock class="size-3" />
 										{formatDate(activity.start_date)}
 									</span>
 									{#if activity.location}
 										<span class="flex items-center gap-1">
-											<IconMapPin class="size-3" />
+											<MapPin class="size-3" />
 											{activity.location}
 										</span>
 									{/if}
 									{#if activity.max_participants}
 										<span class="flex items-center gap-1">
-											<IconUsers class="size-3" />
+											<Users class="size-3" />
 											{activity.max_participants} คน
 										</span>
 									{/if}
@@ -302,12 +290,12 @@
 			<CardHeader>
 				<CardTitle class="flex items-center justify-between">
 					<span class="flex items-center gap-2">
-						<IconHistory class="size-5" />
+						<History class="size-5" />
 						ประวัติการเข้าร่วม
 					</span>
 					<Button size="sm" variant="outline" href="/student/history">
 						ดูทั้งหมด
-						<IconChevronRight class="ml-1 size-4" />
+						<ChevronRight class="ml-1 size-4" />
 					</Button>
 				</CardTitle>
 			</CardHeader>
@@ -326,14 +314,14 @@
 						<div
 							class="mx-auto mb-3 flex size-12 items-center justify-center rounded-full bg-muted"
 						>
-							<IconHistory class="size-6 opacity-60" />
+							<History class="size-6 opacity-60" />
 						</div>
 						<p class="font-medium">ยังไม่มีประวัติการเข้าร่วม</p>
 						<p class="mt-1 text-sm text-muted-foreground">
 							เมื่อคุณเข้าร่วมกิจกรรมแล้ว ประวัติจะแสดงที่นี่
 						</p>
 						<Button class="mt-3" size="sm" href="/student/activities">
-							<IconCalendarEvent class="mr-2 size-4" />
+							<CalendarDays class="mr-2 size-4" />
 							ดูกิจกรรม
 						</Button>
 					</div>
@@ -352,13 +340,13 @@
 								<div class="flex items-center gap-4 text-xs text-muted-foreground">
 									{#if participation.registered_at}
 										<span class="flex items-center gap-1">
-											<IconClock class="size-3" />
+											<Clock class="size-3" />
 											{formatDate(participation.registered_at)}
 										</span>
 									{/if}
 									{#if participation.activity?.location}
 										<span class="flex items-center gap-1">
-											<IconMapPin class="size-3" />
+											<MapPin class="size-3" />
 											{participation.activity.location}
 										</span>
 									{/if}
@@ -379,15 +367,15 @@
 		<CardContent>
 			<div class="grid gap-3 md:grid-cols-3">
 				<Button href="/student/qr" class="justify-start">
-					<IconQrcode class="mr-2 size-4" />
+					<QrCode class="mr-2 size-4" />
 					ดู QR Code ของฉัน
 				</Button>
 				<Button href="/student/activities" variant="outline" class="justify-start">
-					<IconCalendarEvent class="mr-2 size-4" />
+					<CalendarDays class="mr-2 size-4" />
 					ดูกิจกรรมทั้งหมด
 				</Button>
 				<Button href="/student/profile" variant="outline" class="justify-start">
-					<IconUsers class="mr-2 size-4" />
+					<Users class="mr-2 size-4" />
 					แก้ไขโปรไฟล์
 				</Button>
 			</div>

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { CircleAlert, ArrowLeft, Calendar as CalendarIcon, Clock, Save, Eye, Info } from '@lucide/svelte';
 	import { activitiesApi, organizationsApi, type Activity } from '$lib/api';
 	import type { ActivityStatus } from '$lib/types/activity';
 	import { getActivityTypeDisplayName } from '$lib/utils/activity';
@@ -13,15 +14,6 @@
 	import * as Popover from '$lib/components/ui/popover';
 	import { Calendar } from '$lib/components/ui/calendar';
 	import { Switch } from '$lib/components/ui/switch';
-	import {
-		IconArrowLeft,
-		IconDeviceFloppy,
-		IconAlertCircle,
-		IconInfoCircle,
-		IconEye,
-		IconCalendar,
-		IconClock
-	} from '@tabler/icons-svelte';
 	import { goto } from '$app/navigation';
 	import { toast } from 'svelte-sonner';
 	import { page } from '$app/state';
@@ -236,15 +228,15 @@
 	<!-- Header -->
 	<div class="flex items-center gap-4">
 		<Button variant="ghost" size="sm" onclick={() => goto(`/admin/activities/${activity!.id}`)}>
-			<IconArrowLeft class="mr-2 size-4" />
+			<ArrowLeft class="mr-2 size-4" />
 			กลับ
 		</Button>
 		<div class="flex-1">
-			<h1 class="admin-page-title"><IconCalendar class="size-6 text-primary" /> แก้ไขกิจกรรม</h1>
+			<h1 class="admin-page-title"><CalendarIcon class="size-6 text-primary" /> แก้ไขกิจกรรม</h1>
 			<p class="text-muted-foreground">{activity.title}</p>
 		</div>
 		<Button variant="outline" size="sm" onclick={() => goto(`/admin/activities/${activity!.id}`)}>
-			<IconEye class="mr-2 size-4" />
+			<Eye class="mr-2 size-4" />
 			ดูตัวอย่าง
 		</Button>
 	</div>
@@ -252,7 +244,7 @@
 	<!-- Participants Warning -->
 	{#if currentParticipants > 0}
 		<Alert>
-			<IconInfoCircle class="size-4" />
+			<Info class="size-4" />
 			<AlertDescription>
 				กิจกรรมนี้มีผู้เข้าร่วมแล้ว {currentParticipants} คน การแก้ไขข้อมูลบางส่วนอาจส่งผลกระทบต่อผู้ที่ลงทะเบียนไว้
 			</AlertDescription>
@@ -360,7 +352,7 @@
 							<Popover.Trigger
 								class={cn(buttonVariants({ variant: 'outline' }), 'w-full justify-start text-left font-normal')}
 							>
-								<IconCalendar class="mr-2 size-4" />
+								<CalendarIcon class="mr-2 size-4" />
 								{formatDateLabel(startDateValue)}
 							</Popover.Trigger>
 							<Popover.Content class="w-auto p-0" align="start">
@@ -381,7 +373,7 @@
 							<Popover.Trigger
 								class={cn(buttonVariants({ variant: 'outline' }), 'w-full justify-start text-left font-normal')}
 							>
-								<IconCalendar class="mr-2 size-4" />
+								<CalendarIcon class="mr-2 size-4" />
 								{formatDateLabel(endDateValue)}
 							</Popover.Trigger>
 							<Popover.Content class="w-auto p-0" align="start">
@@ -401,7 +393,7 @@
 					<!-- Start Time -->
 					<div class="space-y-2">
 						<Label class="flex items-center gap-2">
-							<IconClock class="size-4" />เวลาเริ่มงาน *
+							<Clock class="size-4" />เวลาเริ่มงาน *
 						</Label>
 						<div class="flex gap-2">
 							<Select.Root type="single" bind:value={startTimeHour as any}>
@@ -431,7 +423,7 @@
 					<!-- End Time -->
 					<div class="space-y-2">
 						<Label class="flex items-center gap-2">
-							<IconClock class="size-4" />เวลาสิ้นสุด *
+							<Clock class="size-4" />เวลาสิ้นสุด *
 						</Label>
 						<div class="flex gap-2">
 							<Select.Root type="single" bind:value={endTimeHour as any}>
@@ -565,7 +557,7 @@
 
 				<!-- Admin tips -->
 				<Alert>
-					<IconInfoCircle class="size-4" />
+					<Info class="size-4" />
 					<AlertDescription>
 						<div class="space-y-2">
 							<p>คำแนะนำสำหรับผู้ดูแลระบบ:</p>
@@ -582,7 +574,7 @@
 				<!-- Action Buttons -->
 				<div class="flex flex-col gap-4 pt-4 sm:flex-row">
 					<Button type="submit" disabled={submitting} class="flex-1 sm:flex-none">
-						<IconDeviceFloppy class="mr-2 size-4" />
+						<Save class="mr-2 size-4" />
 						{submitting ? 'กำลังบันทึก...' : 'บันทึกการเปลี่ยนแปลง'}
 					</Button>
 					<Button type="button" variant="outline" onclick={() => goto(`/admin/activities/${activity!.id}`)} disabled={submitting}>

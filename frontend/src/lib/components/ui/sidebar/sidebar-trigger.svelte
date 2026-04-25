@@ -1,7 +1,7 @@
 <script lang="ts">
+	import { PanelLeftClose } from '@lucide/svelte';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { cn } from '$lib/utils.js';
-	import IconLayoutSidebarLeftCollapse from '@tabler/icons-svelte/icons/layout-sidebar-left-collapse';
 	import type { ComponentProps } from 'svelte';
 	import { useSidebar } from './context.svelte.js';
 
@@ -30,6 +30,6 @@
 	}}
 	{...restProps}
 >
-	<IconLayoutSidebarLeftCollapse />
+	<PanelLeftClose />
 	<span class="sr-only">Toggle Sidebar</span>
 </Button>

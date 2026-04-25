@@ -1,24 +1,11 @@
 <script lang="ts">
+	import { ArrowRight, Calendar as CalendarIcon, CalendarDays, Clock, LogOut, MapPin, Moon, Sun, TrendingUp, User as UserIcon, UserPlus, Users } from '@lucide/svelte';
 	import { authStore } from '$lib/stores/auth.svelte';
 	import { activities as activitiesApi, type Activity, type DashboardResponse } from '$lib/api';
 	import { onMount } from 'svelte';
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
 	import { Badge } from '$lib/components/ui/badge';
-	import {
-		IconUser,
-		IconLogout,
-		IconCalendar,
-		IconMapPin,
-		IconUsers,
-		IconClock,
-		IconArrowRight,
-		IconTrendingUp,
-		IconCalendarEvent,
-		IconUserPlus,
-		IconSun,
-		IconMoon
-	} from '@tabler/icons-svelte/icons';
 	import { toast } from 'svelte-sonner';
 	import { goto } from '$app/navigation';
 	import { mode, setMode } from 'mode-watcher';
@@ -89,26 +76,26 @@
 						<div class="flex items-center gap-2">
 							<Button onclick={toggleTheme} variant="outline" size="sm" class="flex items-center gap-2">
 								{#if mode.current === 'light'}
-									<IconMoon class="h-4 w-4" />
+									<Moon class="h-4 w-4" />
 									<span class="hidden sm:inline">โหมดมืด</span>
 								{:else}
-									<IconSun class="h-4 w-4" />
+									<Sun class="h-4 w-4" />
 									<span class="hidden sm:inline">โหมดสว่าง</span>
 								{/if}
 							</Button>
 							{#if authStore.user.admin_role}
 								<Button href="/admin" variant="outline" size="sm" class="flex items-center gap-2">
-									<IconUser class="h-4 w-4" />
+									<UserIcon class="h-4 w-4" />
 									แอดมิน
 								</Button>
 							{:else}
 								<Button href="/student" variant="outline" size="sm" class="flex items-center gap-2">
-									<IconUser class="h-4 w-4" />
+									<UserIcon class="h-4 w-4" />
 									นักศึกษา
 								</Button>
 							{/if}
 							<Button onclick={handleLogout} variant="outline" size="sm" class="flex items-center gap-2">
-								<IconLogout class="h-4 w-4" />
+								<LogOut class="h-4 w-4" />
 								ออกจากระบบ
 							</Button>
 						</div>
@@ -116,13 +103,13 @@
 						<div class="flex items-center gap-2">
 							<Button onclick={toggleTheme} variant="outline" size="sm" class="flex items-center gap-2">
 								{#if mode.current === 'light'}
-									<IconMoon class="h-4 w-4" />
+									<Moon class="h-4 w-4" />
 								{:else}
-									<IconSun class="h-4 w-4" />
+									<Sun class="h-4 w-4" />
 								{/if}
 							</Button>
 							<Button href="/login" variant="outline" size="sm" class="flex items-center gap-2">
-								<IconUser class="h-4 w-4" />
+								<UserIcon class="h-4 w-4" />
 								เข้าสู่ระบบ
 							</Button>
 						</div>
@@ -150,7 +137,7 @@
 								<p class="text-3xl font-bold">{dashboard.recent.length}</p>
 							</div>
 							<div class="bg-opacity-30 rounded-lg bg-blue-400 p-3">
-								<IconCalendarEvent class="h-6 w-6" />
+								<CalendarDays class="h-6 w-6" />
 							</div>
 						</div>
 					</Card.Content>
@@ -163,7 +150,7 @@
 								<p class="text-3xl font-bold">{dashboard.upcoming.length}</p>
 							</div>
 							<div class="bg-opacity-30 rounded-lg bg-purple-400 p-3">
-								<IconCalendar class="h-6 w-6" />
+								<CalendarIcon class="h-6 w-6" />
 							</div>
 						</div>
 					</Card.Content>
@@ -176,7 +163,7 @@
 								<p class="text-3xl font-bold">{dashboard.upcoming.filter(a => a.registration_open).length}</p>
 							</div>
 							<div class="bg-opacity-30 rounded-lg bg-green-400 p-3">
-								<IconUserPlus class="h-6 w-6" />
+								<UserPlus class="h-6 w-6" />
 							</div>
 						</div>
 					</Card.Content>
@@ -189,7 +176,7 @@
 								<p class="text-3xl font-bold">{dashboard.recent.length + dashboard.upcoming.length}</p>
 							</div>
 							<div class="bg-opacity-30 rounded-lg bg-orange-400 p-3">
-								<IconTrendingUp class="h-6 w-6" />
+								<TrendingUp class="h-6 w-6" />
 							</div>
 						</div>
 					</Card.Content>
@@ -205,7 +192,7 @@
 							<p class="mt-1 text-muted-foreground">กิจกรรมที่จะจัดขึ้นในอนาคตอันใกล้</p>
 						</div>
 						<Button variant="outline" href="/student/activities">
-							ดูทั้งหมด <IconArrowRight class="ml-2 h-4 w-4" />
+							ดูทั้งหมด <ArrowRight class="ml-2 h-4 w-4" />
 						</Button>
 					</div>
 					<div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -224,17 +211,17 @@
 										</div>
 										<div class="space-y-2 text-sm text-muted-foreground">
 											<div class="flex items-center gap-2">
-												<IconCalendar class="h-4 w-4" />
+												<CalendarIcon class="h-4 w-4" />
 												<span>{new Date(activity.start_date).toLocaleDateString('th-TH')}</span>
 											</div>
 											{#if activity.location}
 												<div class="flex items-center gap-2">
-													<IconMapPin class="h-4 w-4" />
+													<MapPin class="h-4 w-4" />
 													<span class="line-clamp-1">{activity.location}</span>
 												</div>
 											{/if}
 											<div class="flex items-center gap-2">
-												<IconUsers class="h-4 w-4" />
+												<Users class="h-4 w-4" />
 												<span>{activity.organizer_name}</span>
 											</div>
 										</div>
@@ -259,7 +246,7 @@
 							<p class="mt-1 text-muted-foreground">กิจกรรมที่เพิ่งเผยแพร่ใหม่</p>
 						</div>
 						<Button variant="outline" href="/student/activities">
-							ดูทั้งหมด <IconArrowRight class="ml-2 h-4 w-4" />
+							ดูทั้งหมด <ArrowRight class="ml-2 h-4 w-4" />
 						</Button>
 					</div>
 					<div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -276,17 +263,17 @@
 										</div>
 										<div class="space-y-2 text-sm text-muted-foreground">
 											<div class="flex items-center gap-2">
-												<IconCalendar class="h-4 w-4" />
+												<CalendarIcon class="h-4 w-4" />
 												<span>{new Date(activity.start_date).toLocaleDateString('th-TH')}</span>
 											</div>
 											{#if activity.location}
 												<div class="flex items-center gap-2">
-													<IconMapPin class="h-4 w-4" />
+													<MapPin class="h-4 w-4" />
 													<span class="line-clamp-1">{activity.location}</span>
 												</div>
 											{/if}
 											<div class="flex items-center gap-2">
-												<IconUsers class="h-4 w-4" />
+												<Users class="h-4 w-4" />
 												<span>{activity.organizer_name}</span>
 											</div>
 										</div>
@@ -313,7 +300,7 @@
 				<div class="flex flex-col justify-center gap-4 sm:flex-row">
 					{#if !authStore.user}
 						<Button href="/login" size="lg" class="flex items-center gap-2">
-							<IconUser class="h-5 w-5" />
+							<UserIcon class="h-5 w-5" />
 							เข้าสู่ระบบ
 						</Button>
 						<Button href="/student/activities" variant="outline" size="lg">เรียกดูกิจกรรมทั้งหมด</Button>

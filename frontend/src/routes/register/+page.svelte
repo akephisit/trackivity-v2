@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { TriangleAlert, Eye, EyeOff, Loader, Lock, Mail, User as UserIcon } from '@lucide/svelte';
 	import { auth as authApi, organizationsApi, ApiError } from '$lib/api';
 	import type { Organization, Department } from '$lib/api';
 	import { Button } from '$lib/components/ui/button';
@@ -13,15 +14,6 @@
 	} from '$lib/components/ui/card';
 	import { Alert, AlertDescription } from '$lib/components/ui/alert';
 	import * as Select from '$lib/components/ui/select';
-	import {
-		IconLoader,
-		IconEye,
-		IconEyeOff,
-		IconUser,
-		IconMail,
-		IconLock,
-		IconAlertTriangle,
-	} from '@tabler/icons-svelte/icons';
 	import { toast } from 'svelte-sonner';
 	import MetaTags from '$lib/components/seo/MetaTags.svelte';
 	import { goto } from '$app/navigation';
@@ -191,7 +183,7 @@
 				<div
 					class="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-white/10 lg:mx-0 lg:h-24 lg:w-24"
 				>
-					<IconUser class="h-10 w-10 text-white lg:h-12 lg:w-12" />
+					<UserIcon class="h-10 w-10 text-white lg:h-12 lg:w-12" />
 				</div>
 				<h1 class="mb-4 text-4xl font-bold text-white lg:text-5xl">Trackivity</h1>
 				<p class="mb-6 text-lg text-green-100 lg:text-xl">ระบบจัดการกิจกรรมนักศึกษา</p>
@@ -218,7 +210,7 @@
 						<form onsubmit={handleSubmit} class="space-y-4">
 							{#if globalError}
 								<Alert variant="destructive">
-									<IconAlertTriangle class="h-4 w-4" />
+									<TriangleAlert class="h-4 w-4" />
 									<AlertDescription>
 										<div class="space-y-2">
 											<p class="font-medium">เกิดข้อผิดพลาดในการสมัครสมาชิก</p>
@@ -231,7 +223,7 @@
 							<!-- คำนำหน้า -->
 							<div class="space-y-1">
 								<Label for="prefix" class="flex items-center gap-2">
-									<IconUser class="h-4 w-4" />
+									<UserIcon class="h-4 w-4" />
 									คำนำหน้า
 								</Label>
 								<Select.Root type="single" bind:value={formData.prefix} disabled={submitting}>
@@ -251,7 +243,7 @@
 							<div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
 								<div class="space-y-1">
 									<Label for="first_name" class="flex items-center gap-2">
-										<IconUser class="h-4 w-4" />
+										<UserIcon class="h-4 w-4" />
 										ชื่อจริง
 									</Label>
 									<Input
@@ -265,7 +257,7 @@
 								</div>
 								<div class="space-y-1">
 									<Label for="last_name" class="flex items-center gap-2">
-										<IconUser class="h-4 w-4" />
+										<UserIcon class="h-4 w-4" />
 										นามสกุล
 									</Label>
 									<Input
@@ -283,7 +275,7 @@
 							<div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
 								<div class="space-y-1">
 									<Label for="student_id" class="flex items-center gap-2">
-										<IconUser class="h-4 w-4" />
+										<UserIcon class="h-4 w-4" />
 										รหัสนักศึกษา
 									</Label>
 									<Input
@@ -298,7 +290,7 @@
 								</div>
 								<div class="space-y-1">
 									<Label for="email" class="flex items-center gap-2">
-										<IconMail class="h-4 w-4" />
+										<Mail class="h-4 w-4" />
 										อีเมล
 									</Label>
 									<Input
@@ -316,7 +308,7 @@
 							<div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
 								<div class="space-y-1">
 									<Label for="password" class="flex items-center gap-2">
-										<IconLock class="h-4 w-4" />
+										<Lock class="h-4 w-4" />
 										รหัสผ่าน
 									</Label>
 									<div class="relative">
@@ -335,9 +327,9 @@
 											tabindex="-1"
 										>
 											{#if showPassword}
-												<IconEyeOff class="h-4 w-4 text-gray-400" />
+												<EyeOff class="h-4 w-4 text-gray-400" />
 											{:else}
-												<IconEye class="h-4 w-4 text-gray-400" />
+												<Eye class="h-4 w-4 text-gray-400" />
 											{/if}
 										</button>
 									</div>
@@ -345,7 +337,7 @@
 								</div>
 								<div class="space-y-1">
 									<Label for="confirm_password" class="flex items-center gap-2">
-										<IconLock class="h-4 w-4" />
+										<Lock class="h-4 w-4" />
 										ยืนยันรหัสผ่าน
 									</Label>
 									<div class="relative">
@@ -364,9 +356,9 @@
 											tabindex="-1"
 										>
 											{#if showConfirmPassword}
-												<IconEyeOff class="h-4 w-4 text-gray-400" />
+												<EyeOff class="h-4 w-4 text-gray-400" />
 											{:else}
-												<IconEye class="h-4 w-4 text-gray-400" />
+												<Eye class="h-4 w-4 text-gray-400" />
 											{/if}
 										</button>
 									</div>
@@ -378,7 +370,7 @@
 							<div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
 								<div class="space-y-1">
 									<Label for="faculty" class="flex items-center gap-2">
-										<IconUser class="h-4 w-4" />
+										<UserIcon class="h-4 w-4" />
 										หน่วยงาน
 									</Label>
 									<Select.Root type="single" bind:value={selectedFaculty} disabled={submitting || loadingOrgs}>
@@ -399,7 +391,7 @@
 								</div>
 								<div class="space-y-1">
 									<Label for="department" class="flex items-center gap-2">
-										<IconUser class="h-4 w-4" />
+										<UserIcon class="h-4 w-4" />
 										สาขาวิชา
 									</Label>
 									<Select.Root
@@ -445,7 +437,7 @@
 
 							<Button type="submit" class="w-full" disabled={submitting}>
 								{#if submitting}
-									<IconLoader class="mr-2 h-4 w-4 animate-spin" />
+									<Loader class="mr-2 h-4 w-4 animate-spin" />
 									กำลังสมัครสมาชิก...
 								{:else}
 									สมัครสมาชิก

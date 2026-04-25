@@ -1,21 +1,8 @@
 <script lang="ts">
+	import { Building as BuildingIcon, Store, CalendarDays, LayoutDashboard, Plus, QrCode, Settings, Shield, UserCheck, UserCog, Users } from '@lucide/svelte';
 	import type { Snippet } from 'svelte';
 	import type { UserResponse, AdminRole, Organization } from '$lib/api';
 	import AppLayout from '$lib/components/app-layout.svelte';
-	import {
-		IconLayoutDashboard,
-		IconCalendarEvent,
-		IconUsers,
-		IconBuilding,
-		IconQrcode,
-		IconUserCheck,
-		IconPlus,
-		IconShield,
-		IconBuildingStore,
-		IconUserCog,
-		IconSettings
-	} from '@tabler/icons-svelte';
-
 	type AdminLevel = AdminRole['admin_level'];
 
 	interface Props {
@@ -43,18 +30,18 @@
 			{
 				title: 'แดชบอร์ด',
 				href: '/admin',
-				icon: IconLayoutDashboard,
+				icon: LayoutDashboard,
 				exact: true
 			},
 			{
 				title: 'จัดการกิจกรรม',
 				href: '/admin/activities',
-				icon: IconCalendarEvent
+				icon: CalendarDays
 			},
 			{
 				title: 'สแกน QR Code',
 				href: '/admin/qr-scanner',
-				icon: IconQrcode
+				icon: QrCode
 			}
 		];
 
@@ -64,17 +51,17 @@
 				{
 					title: 'จัดการผู้ใช้',
 					href: '/admin/users',
-					icon: IconUsers
+					icon: Users
 				},
 				{
 					title: 'จัดการหน่วยงาน',
 					href: '/admin/organizations',
-					icon: IconBuilding
+					icon: BuildingIcon
 				},
 				{
 					title: 'จัดการแอดมิน',
 					href: '/admin/admins',
-					icon: IconUserCheck
+					icon: UserCheck
 				}
 			);
 		} else if (adminLevel === 'organization_admin') {
@@ -83,19 +70,19 @@
 				baseItems.push({
 					title: 'จัดการภาควิชา',
 					href: '/admin/departments',
-					icon: IconBuildingStore
+					icon: Store
 				});
 			}
 			baseItems.push(
 				{
 					title: 'จัดการผู้ใช้หน่วยงาน',
 					href: '/admin/organization-users',
-					icon: IconUsers
+					icon: Users
 				},
 				{
 					title: 'จัดการแอดมินหน่วยงาน',
 					href: '/admin/organization-admins',
-					icon: IconUserCog
+					icon: UserCog
 				}
 			);
 		}
@@ -105,7 +92,7 @@
 			baseItems.push({
 				title: 'ตั้งค่า',
 				href: '/admin/settings',
-				icon: IconSettings
+				icon: Settings
 			});
 		}
 
@@ -118,7 +105,7 @@
 				{
 					title: 'สร้างกิจกรรมใหม่',
 					href: '/admin/activities/create',
-					icon: IconPlus
+					icon: Plus
 				}
 			];
 		}
@@ -148,7 +135,7 @@
 	{mobileMenuOpen}
 	appTitle="Trackivity"
 	{appSubtitle}
-	logoIcon={IconShield}
+	logoIcon={Shield}
 	showLogo={true}
 	{onToggleMobileMenu}
 	{onCloseMobileMenu}

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { Eye, EyeOff, Loader, School, User as UserIcon } from '@lucide/svelte';
 	import { auth, ApiError } from '$lib/api';
 	import { authStore } from '$lib/stores/auth.svelte';
 	import { goto } from '$app/navigation';
@@ -14,13 +15,6 @@
 		CardTitle
 	} from '$lib/components/ui/card';
 	import { Checkbox } from '$lib/components/ui/checkbox';
-	import {
-		IconLoader,
-		IconEye,
-		IconEyeOff,
-		IconUser,
-		IconSchool
-	} from '@tabler/icons-svelte/icons';
 	import { toast } from 'svelte-sonner';
 	import MetaTags from '$lib/components/seo/MetaTags.svelte';
 
@@ -77,7 +71,7 @@
 			<div
 				class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-600"
 			>
-				<IconSchool class="h-8 w-8 text-white" />
+				<School class="h-8 w-8 text-white" />
 			</div>
 			<h1 class="text-3xl font-bold text-gray-900 dark:text-white">Trackivity</h1>
 			<p class="mt-2 text-sm text-gray-600 dark:text-gray-400">เข้าสู่ระบบสำหรับนักเรียน</p>
@@ -86,7 +80,7 @@
 		<Card class="w-full">
 			<CardHeader class="space-y-1">
 				<CardTitle class="flex items-center justify-center gap-2 text-center text-2xl">
-					<IconUser class="h-5 w-5" />
+					<UserIcon class="h-5 w-5" />
 					เข้าสู่ระบบ
 				</CardTitle>
 				<CardDescription class="text-center">สำหรับนักเรียนและผู้เข้าร่วมกิจกรรม</CardDescription>
@@ -134,9 +128,9 @@
 								tabindex="-1"
 							>
 								{#if showPassword}
-									<IconEyeOff class="h-4 w-4 text-gray-400" />
+									<EyeOff class="h-4 w-4 text-gray-400" />
 								{:else}
-									<IconEye class="h-4 w-4 text-gray-400" />
+									<Eye class="h-4 w-4 text-gray-400" />
 								{/if}
 							</button>
 						</div>
@@ -149,7 +143,7 @@
 
 					<Button type="submit" class="w-full" disabled={submitting}>
 						{#if submitting}
-							<IconLoader class="mr-2 h-4 w-4 animate-spin" />
+							<Loader class="mr-2 h-4 w-4 animate-spin" />
 							กำลังเข้าสู่ระบบ...
 						{:else}
 							เข้าสู่ระบบ

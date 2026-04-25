@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { ArrowLeft, Calendar as CalendarIcon, Clock, MapPin, Plus } from '@lucide/svelte';
 	import {
 		activities as activitiesApi,
 		organizations as orgsApi,
@@ -15,13 +16,6 @@
 	import * as Select from '$lib/components/ui/select';
 	import * as Popover from '$lib/components/ui/popover';
 	import { Calendar } from '$lib/components/ui/calendar';
-	import {
-		IconArrowLeft,
-		IconCalendar,
-		IconClock,
-		IconMapPin,
-		IconPlus
-	} from '@tabler/icons-svelte/icons';
 	import { toast } from 'svelte-sonner';
 	import { goto } from '$app/navigation';
 	import { type DateValue, parseDate, getLocalTimeZone } from '@internationalized/date';
@@ -153,11 +147,11 @@
 	<!-- Header -->
 	<div class="flex items-center gap-4">
 		<Button variant="ghost" size="sm" onclick={() => goto('/admin/activities')}>
-			<IconArrowLeft class="mr-2 size-4" />กลับ
+			<ArrowLeft class="mr-2 size-4" />กลับ
 		</Button>
 		<div>
 			<h1 class="admin-page-title flex items-center gap-2">
-				<IconCalendar class="size-6 text-primary" /> สร้างกิจกรรมใหม่
+				<CalendarIcon class="size-6 text-primary" /> สร้างกิจกรรมใหม่
 			</h1>
 			<p class="text-sm text-muted-foreground">กรอกข้อมูลกิจกรรมที่ต้องการสร้าง</p>
 		</div>
@@ -272,7 +266,7 @@
 		<Card>
 			<CardHeader>
 				<CardTitle class="flex items-center gap-2">
-					<IconClock class="size-5" />วันที่และเวลา
+					<Clock class="size-5" />วันที่และเวลา
 				</CardTitle>
 			</CardHeader>
 			<CardContent class="space-y-4">
@@ -286,7 +280,7 @@
 							<Popover.Trigger
 								class={cn(buttonVariants({ variant: 'outline' }), 'w-full justify-start text-left font-normal')}
 							>
-								<IconCalendar class="mr-2 size-4" />
+								<CalendarIcon class="mr-2 size-4" />
 								{formatDateLabel(startDateValue)}
 							</Popover.Trigger>
 							<Popover.Content class="w-auto p-0" align="start">
@@ -303,7 +297,7 @@
 							<Popover.Trigger
 								class={cn(buttonVariants({ variant: 'outline' }), 'w-full justify-start text-left font-normal')}
 							>
-								<IconCalendar class="mr-2 size-4" />
+								<CalendarIcon class="mr-2 size-4" />
 								{formatDateLabel(endDateValue)}
 							</Popover.Trigger>
 							<Popover.Content class="w-auto p-0" align="start">
@@ -382,7 +376,7 @@
 		<Card>
 			<CardHeader>
 				<CardTitle class="flex items-center gap-2">
-					<IconMapPin class="size-5" />สถานที่และจำนวนผู้เข้าร่วม
+					<MapPin class="size-5" />สถานที่และจำนวนผู้เข้าร่วม
 				</CardTitle>
 			</CardHeader>
 			<CardContent class="space-y-4">
@@ -420,7 +414,7 @@
 		<!-- ─── Actions ─────────────────────────────────────────────────────── -->
 		<div class="flex gap-4">
 			<Button type="submit" disabled={submitting} class="flex items-center gap-2">
-				<IconPlus class="size-4" />
+				<Plus class="size-4" />
 				{submitting ? 'กำลังสร้าง...' : 'สร้างกิจกรรม'}
 			</Button>
 			<Button type="button" variant="outline" onclick={() => goto('/admin/activities')}>ยกเลิก</Button>

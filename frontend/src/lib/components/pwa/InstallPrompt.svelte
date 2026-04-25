@@ -1,7 +1,7 @@
 <script lang="ts">
+	import { Smartphone, Share2, SquarePlus, X } from '@lucide/svelte';
 	import { onMount } from 'svelte';
 	import { fade, slide } from 'svelte/transition';
-	import { IconDeviceMobile, IconShare, IconSquareRoundedPlus, IconX } from '@tabler/icons-svelte';
 	import { Button } from '$lib/components/ui/button';
 
 	let showPrompt = $state(false);
@@ -80,14 +80,14 @@
 				class="absolute top-3 right-3 rounded-full p-1.5 text-muted-foreground transition hover:bg-muted focus:outline-none"
 				aria-label="Close"
 			>
-				<IconX class="size-4" />
+				<X class="size-4" />
 			</button>
 
 			<div class="flex items-start gap-4">
 				<div
 					class="flex size-[48px] shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-orange-400 to-primary text-white shadow-md"
 				>
-					<IconDeviceMobile class="size-6" />
+					<Smartphone class="size-6" />
 				</div>
 
 				<div class="flex-1 space-y-1">
@@ -100,11 +100,11 @@
 							<span
 								class="inline-flex size-[22px] items-center justify-center rounded border bg-background align-middle shadow-sm"
 							>
-								<IconShare class="size-3.5 text-blue-500" />
+								<Share2 class="size-3.5 text-blue-500" />
 							</span>
 							ด้านล่างแล้วเลือก <br />
 							<span class="mt-1 flex items-center gap-1 font-medium text-foreground">
-								<IconSquareRoundedPlus class="size-3.5" /> <strong>เพิ่มลงหน้าจอโฮม</strong>
+								<SquarePlus class="size-3.5" /> <strong>เพิ่มลงหน้าจอโฮม</strong>
 							</span>
 						</p>
 					{:else}

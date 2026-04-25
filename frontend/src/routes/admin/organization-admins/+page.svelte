@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { Building as BuildingIcon, Calendar as CalendarIcon, Pencil, Eye, Filter, Loader, Mail, Plus, School, Search, Shield, ToggleLeft, ToggleRight, Trash2, UserCheck, Users } from '@lucide/svelte';
 	import { z } from 'zod';
 	import { untrack } from 'svelte';
 	import { Button } from '$lib/components/ui/button';
@@ -18,24 +19,6 @@
 	import * as Select from '$lib/components/ui/select';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Switch } from '$lib/components/ui/switch';
-	import {
-		IconLoader,
-		IconPlus,
-		IconEdit,
-		IconTrash,
-		IconShield,
-		IconToggleLeft,
-		IconToggleRight,
-		IconUsers,
-		IconSearch,
-		IconFilter,
-		IconUserCheck,
-		IconSchool,
-		IconEye,
-		IconCalendar,
-		IconMail,
-		IconBuilding
-	} from '@tabler/icons-svelte/icons';
 	import { toast } from 'svelte-sonner';
 	import type { ExtendedAdminRole } from '$lib/types/admin';
 	import { AdminLevel, ADMIN_PERMISSIONS } from '$lib/types/admin';
@@ -398,7 +381,7 @@
 	<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
 		<div>
 			<h1 id="faculty-admin-management-heading" class="admin-page-title">
-				<IconShield class="size-6 text-primary" />
+				<Shield class="size-6 text-primary" />
 				{pageTitle}
 			</h1>
 			<p class="mt-3 text-lg text-gray-600 dark:text-gray-400">
@@ -415,7 +398,7 @@
 					onclick={openCreateDialog}
 					class="bg-blue-600 px-6 py-3 text-base font-medium text-white hover:bg-blue-700"
 				>
-					<IconPlus class="mr-2 h-5 w-5" />
+					<Plus class="mr-2 h-5 w-5" />
 					เพิ่มแอดมินหน่วยงาน
 				</Button>
 			{:else}
@@ -423,7 +406,7 @@
 					onclick={openCreateGeneralAdminDialog}
 					class="bg-green-600 px-6 py-3 text-base font-medium text-white hover:bg-green-700"
 				>
-					<IconPlus class="mr-2 h-5 w-5" />
+					<Plus class="mr-2 h-5 w-5" />
 					เพิ่มแอดมินทั่วไป
 				</Button>
 			{/if}
@@ -435,7 +418,7 @@
 		<Card>
 			<CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
 				<CardTitle class="text-sm font-medium">แอดมินทั้งหมด</CardTitle>
-				<IconShield class="h-4 w-4 text-muted-foreground" />
+				<Shield class="h-4 w-4 text-muted-foreground" />
 			</CardHeader>
 			<CardContent>
 				<div class="text-2xl font-bold">{stats.total_admins}</div>
@@ -450,7 +433,7 @@
 		<Card>
 			<CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
 				<CardTitle class="text-sm font-medium">เปิดใช้งาน</CardTitle>
-				<IconUserCheck class="h-4 w-4 text-green-500" />
+				<UserCheck class="h-4 w-4 text-green-500" />
 			</CardHeader>
 			<CardContent>
 				<div class="text-2xl font-bold text-green-600">
@@ -466,7 +449,7 @@
 		<Card>
 			<CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
 				<CardTitle class="text-sm font-medium">ปิดใช้งาน</CardTitle>
-				<IconUsers class="h-4 w-4 text-red-500" />
+				<Users class="h-4 w-4 text-red-500" />
 			</CardHeader>
 			<CardContent>
 				<div class="text-2xl font-bold text-red-600">
@@ -483,7 +466,7 @@
 		<Card>
 			<CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
 				<CardTitle class="text-sm font-medium">เข้าใช้ล่าสุด</CardTitle>
-				<IconCalendar class="h-4 w-4 text-blue-500" />
+				<CalendarIcon class="h-4 w-4 text-blue-500" />
 			</CardHeader>
 			<CardContent>
 				<div class="text-2xl font-bold text-blue-600">
@@ -498,7 +481,7 @@
 	<Card>
 		<CardHeader>
 			<CardTitle class="flex items-center gap-3">
-				<IconFilter class="h-6 w-6 text-blue-600" />
+				<Filter class="h-6 w-6 text-blue-600" />
 				ค้นหาและกรอง
 			</CardTitle>
 		</CardHeader>
@@ -506,7 +489,7 @@
 			<div class="flex flex-col gap-4 sm:flex-row">
 				<div class="flex-1">
 					<div class="relative">
-						<IconSearch
+						<Search
 							class="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform text-gray-400"
 						/>
 						<Input
@@ -580,18 +563,18 @@
 	<div class="space-y-6" role="main" aria-labelledby="faculty-admin-management-heading">
 		{#if refreshing}
 			<div class="flex items-center justify-center py-12" role="status" aria-live="polite">
-				<IconLoader class="mr-3 h-8 w-8 animate-spin text-blue-500" />
+				<Loader class="mr-3 h-8 w-8 animate-spin text-blue-500" />
 				<span class="text-lg text-gray-600 dark:text-gray-300">กำลังรีเฟรชข้อมูล...</span>
 			</div>
 		{:else if filteredAdmins().length === 0}
 			<div class="py-16 text-center text-gray-500 dark:text-gray-400">
 				{#if searchQuery || statusFilter !== 'all'}
-					<IconSearch class="mx-auto mb-6 h-16 w-16 opacity-50" />
+					<Search class="mx-auto mb-6 h-16 w-16 opacity-50" />
 					<h3 class="mb-2 text-xl font-semibold">ไม่พบข้อมูลที่ตรงกับการค้นหา</h3>
 					<p class="mb-6 text-gray-400">ลองเปลี่ยนคำค้นหาหรือตัวกรองใหม่</p>
 					<Button onclick={clearSearch} variant="outline">ล้างการค้นหา</Button>
 				{:else}
-					<IconShield class="mx-auto mb-6 h-16 w-16 opacity-50" />
+					<Shield class="mx-auto mb-6 h-16 w-16 opacity-50" />
 					<h3 class="mb-2 text-xl font-semibold">
 						{#if data.isSuperAdmin}
 							ยังไม่มีแอดมินหน่วยงานในระบบ
@@ -611,7 +594,7 @@
 							onclick={openCreateDialog}
 							class="bg-blue-600 px-6 py-3 text-white hover:bg-blue-700"
 						>
-							<IconPlus class="mr-2 h-5 w-5" />
+							<Plus class="mr-2 h-5 w-5" />
 							เพิ่มแอดมินหน่วยงานแรก
 						</Button>
 					{:else}
@@ -619,7 +602,7 @@
 							onclick={openCreateGeneralAdminDialog}
 							class="bg-green-600 px-6 py-3 text-white hover:bg-green-700"
 						>
-							<IconPlus class="mr-2 h-5 w-5" />
+							<Plus class="mr-2 h-5 w-5" />
 							เพิ่มแอดมินทั่วไปแรก
 						</Button>
 					{/if}
@@ -629,7 +612,7 @@
 			<Card>
 				<CardHeader>
 					<CardTitle class="flex items-center gap-3">
-						<IconShield class="h-6 w-6 text-blue-600" />
+						<Shield class="h-6 w-6 text-blue-600" />
 						รายการแอดมินหน่วยงาน
 						<Badge variant="secondary" class="ml-2">
 							{filteredAdmins().length} รายการ
@@ -664,7 +647,7 @@
 												<div
 													class="flex h-12 w-12 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-900"
 												>
-													<IconShield class="h-6 w-6 text-blue-600 dark:text-blue-400" />
+													<Shield class="h-6 w-6 text-blue-600 dark:text-blue-400" />
 												</div>
 												<div>
 													<div class="font-semibold text-gray-900 dark:text-gray-100">
@@ -673,7 +656,7 @@
 													<div
 														class="flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400"
 													>
-														<IconMail class="h-3 w-3" />
+														<Mail class="h-3 w-3" />
 														{admin.user?.email}
 													</div>
 													<div class="text-xs text-gray-400">
@@ -686,7 +669,7 @@
 											<Table.Cell class="py-4">
 												{#if admin.organization}
 													<Badge variant="outline" class="flex items-center gap-1">
-														<IconSchool class="h-3 w-3" />
+														<School class="h-3 w-3" />
 														{admin.organization.name}
 													</Badge>
 												{:else}
@@ -702,14 +685,14 @@
 														: 'secondary'}
 													class="flex items-center gap-1 text-xs"
 												>
-													<IconShield class="h-3 w-3" />
+													<Shield class="h-3 w-3" />
 													{admin.admin_level === AdminLevel.OrganizationAdmin
 														? 'แอดมินหน่วยงาน'
 														: 'แอดมินทั่วไป'}
 												</Badge>
 												{#if admin.assigned_departments && admin.assigned_departments.length > 0}
 													<Badge variant="secondary" class="flex items-center gap-1 text-xs">
-														<IconBuilding class="h-3 w-3" />
+														<BuildingIcon class="h-3 w-3" />
 														แอดมินภาควิชา
 													</Badge>
 												{/if}
@@ -783,7 +766,7 @@
 													class="text-blue-600 hover:bg-blue-50 hover:text-blue-700"
 													title="ดูรายละเอียด"
 												>
-													<IconEye class="h-4 w-4" />
+													<Eye class="h-4 w-4" />
 												</Button>
 
 												{#if data.isSuperAdmin}
@@ -798,11 +781,11 @@
 														title="{admin.is_active ? 'ปิดใช้งาน' : 'เปิดใช้งาน'}แอดมิน"
 													>
 														{#if toggleLoading[admin.id]}
-															<IconLoader class="h-4 w-4 animate-spin" />
+															<Loader class="h-4 w-4 animate-spin" />
 														{:else if admin.is_active}
-															<IconToggleLeft class="h-4 w-4" />
+															<ToggleLeft class="h-4 w-4" />
 														{:else}
-															<IconToggleRight class="h-4 w-4" />
+															<ToggleRight class="h-4 w-4" />
 														{/if}
 													</Button>
 													<Button
@@ -812,7 +795,7 @@
 														class="text-blue-600 hover:bg-blue-50 hover:text-blue-700"
 														title="แก้ไขข้อมูล"
 													>
-														<IconEdit class="h-4 w-4" />
+														<Pencil class="h-4 w-4" />
 													</Button>
 													<Button
 														variant="ghost"
@@ -822,7 +805,7 @@
 														class="text-red-600 hover:bg-red-50 hover:text-red-700"
 														title="ลบแอดมิน"
 													>
-														<IconTrash class="h-4 w-4" />
+														<Trash2 class="h-4 w-4" />
 													</Button>
 												{/if}
 											</div>
@@ -920,7 +903,7 @@
 					<Button type="button" variant="outline" onclick={() => (createDialogOpen = false)} disabled={createSubmitting}>ยกเลิก</Button>
 					<Button type="submit" disabled={createSubmitting}>
 						{#if createSubmitting}
-							<IconLoader class="mr-2 h-4 w-4 animate-spin" />
+							<Loader class="mr-2 h-4 w-4 animate-spin" />
 							กำลังสร้าง...
 						{:else}
 							สร้างแอดมินหน่วยงาน
@@ -976,7 +959,7 @@
 
 				<div class="rounded-lg bg-blue-50 p-3 dark:bg-blue-900/20">
 					<div class="flex items-center gap-2">
-						<IconUsers class="h-4 w-4 text-blue-600" />
+						<Users class="h-4 w-4 text-blue-600" />
 						<p class="text-sm font-medium text-blue-700 dark:text-blue-300">
 							แอดมินทั่วไปจะได้รับสิทธิ์พื้นฐาน
 						</p>
@@ -1003,7 +986,7 @@
 							!generalAdminFormData.email ||
 							!generalAdminFormData.password}
 					>
-						<IconPlus class="mr-2 h-4 w-4" />
+						<Plus class="mr-2 h-4 w-4" />
 						สร้างแอดมินทั่วไป
 					</Button>
 				</Dialog.Footer>
@@ -1017,7 +1000,7 @@
 	<Dialog.Content class="sm:max-w-2xl">
 		<Dialog.Header>
 			<Dialog.Title class="flex items-center gap-2">
-				<IconShield class="h-5 w-5 text-blue-600" />
+				<Shield class="h-5 w-5 text-blue-600" />
 				รายละเอียดแอดมินหน่วยงาน
 			</Dialog.Title>
 			<Dialog.Description>ข้อมูลและสิทธิ์การเข้าถึงของแอดมินหน่วยงาน</Dialog.Description>
@@ -1034,14 +1017,14 @@
 					<div class="space-y-2">
 						<Label class="text-sm font-medium text-gray-500">อีเมล</Label>
 						<p class="flex items-center gap-1 text-gray-700">
-							<IconMail class="h-4 w-4" />
+							<Mail class="h-4 w-4" />
 							{viewingAdmin.user?.email}
 						</p>
 					</div>
 					<div class="space-y-2">
 						<Label class="text-sm font-medium text-gray-500">หน่วยงาน</Label>
 						<p class="flex items-center gap-1 text-gray-700">
-							<IconSchool class="h-4 w-4" />
+							<School class="h-4 w-4" />
 							{viewingAdmin.organization?.name || 'ไม่ระบุ'}
 						</p>
 					</div>
@@ -1063,7 +1046,7 @@
 					<div class="space-y-2">
 						<Label class="text-sm font-medium text-gray-500">เข้าใช้ครั้งล่าสุด</Label>
 						<p class="flex items-center gap-1 text-gray-700">
-							<IconCalendar class="h-4 w-4" />
+							<CalendarIcon class="h-4 w-4" />
 							{viewingAdmin.last_login_formatted}
 						</p>
 						{#if viewingAdmin.days_since_last_login !== null}
@@ -1089,7 +1072,7 @@
 								<div
 									class="flex items-center gap-2 rounded-lg border bg-purple-50 p-3 dark:bg-purple-900/20"
 								>
-									<IconBuilding class="h-4 w-4 text-purple-600" />
+									<BuildingIcon class="h-4 w-4 text-purple-600" />
 									<div class="flex-1">
 										<span class="text-sm font-medium text-purple-800 dark:text-purple-200">
 											{department.name}
@@ -1110,7 +1093,7 @@
 						</p>
 					{:else}
 						<div class="py-8 text-center text-gray-500">
-							<IconBuilding class="mx-auto mb-3 h-12 w-12 opacity-50" />
+							<BuildingIcon class="mx-auto mb-3 h-12 w-12 opacity-50" />
 							<p class="text-sm">ไม่ได้รับมอบหมายให้ดูแลภาควิชาใดๆ</p>
 							<p class="mt-1 text-xs text-gray-400">ทำหน้าที่เป็นแอดมินหน่วยงานเท่านั้น</p>
 						</div>
@@ -1123,7 +1106,7 @@
 					<div class="grid grid-cols-1 gap-2 md:grid-cols-2">
 						{#each viewingAdmin.permissions as permission}
 							<div class="flex items-center gap-2 rounded-lg bg-blue-50 p-2 dark:bg-blue-900/20">
-								<IconUserCheck class="h-4 w-4 text-blue-600" />
+								<UserCheck class="h-4 w-4 text-blue-600" />
 								<span class="text-sm text-blue-800 dark:text-blue-200">
 									{formatPermissionName(permission)}
 								</span>
@@ -1148,7 +1131,7 @@
 							if (viewingAdmin) openEditDialog(viewingAdmin);
 						}}
 					>
-						<IconEdit class="mr-2 h-4 w-4" />
+						<Pencil class="mr-2 h-4 w-4" />
 						แก้ไขข้อมูล
 					</Button>
 				{/if}
@@ -1243,7 +1226,7 @@
 							ยกเลิก
 						</Button>
 						<Button type="button" onclick={handleUpdate}>
-							<IconEdit class="mr-2 h-4 w-4" />
+							<Pencil class="mr-2 h-4 w-4" />
 							บันทึกการแก้ไข
 						</Button>
 					</Dialog.Footer>

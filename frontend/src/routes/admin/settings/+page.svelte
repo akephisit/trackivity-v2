@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { CircleAlert, Building as BuildingIcon, Check, Hourglass, Info, School, Settings } from '@lucide/svelte';
 	import { enhance } from '$app/forms';
 	import {
 		Card,
@@ -12,15 +13,6 @@
 	import { Button } from '$lib/components/ui/button';
 	import { Alert, AlertDescription } from '$lib/components/ui/alert';
 	import { Separator } from '$lib/components/ui/separator';
-	import {
-		IconSettings,
-		IconHourglass,
-		IconSchool,
-		IconBuilding,
-		IconCheck,
-		IconAlertCircle,
-		IconInfoCircle
-	} from '@tabler/icons-svelte';
 	import { toast } from 'svelte-sonner';
 	import { authStore } from '$lib/stores/auth.svelte';
 	import { organizationsApi, type Organization } from '$lib/api';
@@ -81,7 +73,7 @@
 	<!-- Header -->
 	<div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 		<div class="min-w-0 space-y-1">
-			<h1 class="admin-page-title"><IconSettings class="size-6 text-primary" /> ตั้งค่าระบบ</h1>
+			<h1 class="admin-page-title"><Settings class="size-6 text-primary" /> ตั้งค่าระบบ</h1>
 			<p class="text-muted-foreground">จัดการการตั้งค่าองค์กรและระบบกิจกรรม</p>
 		</div>
 	</div>
@@ -90,7 +82,7 @@
 	<Card>
 		<CardHeader>
 			<CardTitle class="flex items-center gap-2">
-				<IconBuilding class="h-5 w-5" />
+				<BuildingIcon class="h-5 w-5" />
 				ข้อมูลองค์กร
 			</CardTitle>
 			<CardDescription>ข้อมูลพื้นฐานขององค์กร</CardDescription>
@@ -129,7 +121,7 @@
 	<Card>
 		<CardHeader>
 			<CardTitle class="flex items-center gap-2">
-				<IconHourglass class="h-5 w-5" />
+				<Hourglass class="h-5 w-5" />
 				การตั้งค่าจำนวนชั่วโมงสะสมการผ่านกิจกรรม
 			</CardTitle>
 			<CardDescription>
@@ -139,7 +131,7 @@
 		<CardContent class="space-y-4 p-4 lg:space-y-6 lg:p-6">
 			<!-- Info Alert -->
 			<Alert>
-				<IconInfoCircle class="size-4" />
+				<Info class="size-4" />
 				<AlertDescription>
 					การตั้งค่านี้จะใช้สำหรับคำนวณความก้าวหน้าของนักศึกษาในการสะสมชั่วโมงกิจกรรมตลอดการศึกษา
 					และแสดงผลใน Progress Bar ในหน้าสรุปกิจกรรมของนักศึกษา
@@ -152,7 +144,7 @@
 				<div class="grid gap-4 sm:grid-cols-2">
 					<div class="flex items-center gap-3">
 						<div class="rounded-full bg-green-100 p-2">
-							<IconSchool class="h-4 w-4 text-green-600" />
+							<School class="h-4 w-4 text-green-600" />
 						</div>
 						<div>
 							<p class="text-sm font-medium">กิจกรรมระดับคณะ</p>
@@ -163,7 +155,7 @@
 					</div>
 					<div class="flex items-center gap-3">
 						<div class="rounded-full bg-blue-100 p-2">
-							<IconBuilding class="h-4 w-4 text-blue-600" />
+							<BuildingIcon class="h-4 w-4 text-blue-600" />
 						</div>
 						<div>
 							<p class="text-sm font-medium">กิจกรรมระดับมหาวิทยาลัย</p>
@@ -184,7 +176,7 @@
 						<!-- Faculty Hours -->
 						<div class="space-y-2">
 							<Label for="requiredFacultyHours" class="flex items-center gap-2">
-								<IconSchool class="h-4 w-4 text-green-600" />
+								<School class="h-4 w-4 text-green-600" />
 								จำนวนชั่วโมงขั้นต่ำ - กิจกรรมระดับคณะ
 							</Label>
 							<Input
@@ -205,7 +197,7 @@
 						<!-- University Hours -->
 						<div class="space-y-2">
 							<Label for="requiredUniversityHours" class="flex items-center gap-2">
-								<IconBuilding class="h-4 w-4 text-blue-600" />
+								<BuildingIcon class="h-4 w-4 text-blue-600" />
 								จำนวนชั่วโมงขั้นต่ำ - กิจกรรมระดับมหาวิทยาลัย
 							</Label>
 							<Input
@@ -233,7 +225,7 @@
 									class="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"
 								></div>
 							{:else}
-								<IconCheck class="h-4 w-4" />
+								<Check class="h-4 w-4" />
 							{/if}
 							{isSubmitting ? 'กำลังบันทึก...' : 'บันทึกการตั้งค่า'}
 						</Button>
@@ -252,7 +244,7 @@
 					<!-- Total Hours Info -->
 					<div class="rounded-lg bg-blue-50 p-4">
 						<div class="flex items-center gap-2 text-blue-700">
-							<IconInfoCircle class="h-4 w-4" />
+							<Info class="h-4 w-4" />
 							<p class="text-sm font-medium">ข้อมูลสรุป</p>
 						</div>
 						<p class="mt-2 text-sm text-blue-600">
@@ -269,7 +261,7 @@
 			<!-- Form Messages -->
 			{#if form?.success}
 				<Alert>
-					<IconCheck class="h-4 w-4" />
+					<Check class="h-4 w-4" />
 					<AlertDescription class="text-green-700">
 						{form.message}
 					</AlertDescription>
@@ -278,7 +270,7 @@
 
 			{#if form?.error}
 				<Alert variant="destructive">
-					<IconAlertCircle class="h-4 w-4" />
+					<CircleAlert class="h-4 w-4" />
 					<AlertDescription>
 						{form.error}
 					</AlertDescription>

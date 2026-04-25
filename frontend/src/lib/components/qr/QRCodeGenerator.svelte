@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { TriangleAlert, Check, Clock, Download, QrCode, RefreshCw, X } from '@lucide/svelte';
 	import { onMount, onDestroy } from 'svelte';
 	import { authStore } from '$lib/stores/auth.svelte';
 	import { useQRCode } from '$lib/qr/client';
@@ -10,17 +11,6 @@
 	import { Skeleton } from '$lib/components/ui/skeleton';
 	import { Alert, AlertDescription } from '$lib/components/ui/alert';
 	import { Progress } from '$lib/components/ui/progress';
-
-	import {
-		IconRefresh,
-		IconDownload,
-		IconClock,
-		IconCheck,
-		IconX,
-		IconQrcode,
-		IconAlertTriangle
-	} from '@tabler/icons-svelte';
-
 	// QR Code functionality
 	const { qrCode, qrDataURL, status, error, generate, download } = useQRCode();
 
@@ -58,11 +48,11 @@
 		QRStatus,
 		{ color: 'secondary' | 'default' | 'destructive' | 'outline'; icon: any; text: string }
 	> = {
-		idle: { color: 'secondary', icon: IconClock, text: 'พร้อมสร้าง' },
-		generating: { color: 'secondary', icon: IconRefresh, text: 'กำลังสร้าง...' },
-		ready: { color: 'default', icon: IconCheck, text: 'พร้อมใช้งาน' },
-		expired: { color: 'destructive', icon: IconX, text: 'หมดอายุ' },
-		error: { color: 'destructive', icon: IconAlertTriangle, text: 'เกิดข้อผิดพลาด' }
+		idle: { color: 'secondary', icon: Clock, text: 'พร้อมสร้าง' },
+		generating: { color: 'secondary', icon: RefreshCw, text: 'กำลังสร้าง...' },
+		ready: { color: 'default', icon: Check, text: 'พร้อมใช้งาน' },
+		expired: { color: 'destructive', icon: X, text: 'หมดอายุ' },
+		error: { color: 'destructive', icon: TriangleAlert, text: 'เกิดข้อผิดพลาด' }
 	};
 
 	// Initialize QR code
@@ -166,7 +156,7 @@
 <Card class="mx-auto w-full max-w-sm md:max-w-md">
 	<CardHeader class="text-center">
 		<CardTitle class="flex items-center justify-center gap-2">
-			<IconQrcode class="size-5" />
+			<QrCode class="size-5" />
 			QR Code ของฉัน
 		</CardTitle>
 
@@ -202,17 +192,17 @@
 					/>
 				{:else if $status === 'error'}
 					<div class="space-y-2 text-center text-muted-foreground">
-						<IconAlertTriangle class="mx-auto size-8 text-destructive" />
+						<TriangleAlert class="mx-auto size-8 text-destructive" />
 						<p class="text-sm">ไม่สามารถสร้าง QR Code ได้</p>
 					</div>
 				{:else if $status === 'expired'}
 					<div class="space-y-2 text-center text-muted-foreground">
-						<IconX class="mx-auto size-8 text-muted-foreground" />
+						<X class="mx-auto size-8 text-muted-foreground" />
 						<p class="text-sm">QR Code หมดอายุแล้ว</p>
 					</div>
 				{:else}
 					<div class="space-y-2 text-center text-muted-foreground">
-						<IconQrcode class="mx-auto size-8" />
+						<QrCode class="mx-auto size-8" />
 						<p class="text-sm">กดปุ่มเพื่อสร้าง QR Code</p>
 					</div>
 				{/if}
@@ -222,7 +212,7 @@
 		<!-- Error Alert -->
 		{#if $error}
 			<Alert variant="destructive">
-				<IconAlertTriangle class="h-4 w-4" />
+				<TriangleAlert class="h-4 w-4" />
 				<AlertDescription>{$error}</AlertDescription>
 			</Alert>
 		{/if}
@@ -269,7 +259,7 @@
 				class="flex-1"
 				disabled={$status === 'generating'}
 			>
-				<IconRefresh class="mr-2 size-4 {$status === 'generating' ? 'animate-spin' : ''}" />
+				<RefreshCw class="mr-2 size-4 {$status === 'generating' ? 'animate-spin' : ''}" />
 				{$status === 'generating' ? 'กำลังสร้าง...' : 'สร้างใหม่'}
 			</Button>
 
@@ -280,7 +270,7 @@
 					size="sm"
 					disabled={!$qrDataURL || $status !== 'ready'}
 				>
-					<IconDownload class="mr-2 size-4" />
+					<Download class="mr-2 size-4" />
 					ดาวน์โหลด
 				</Button>
 			{/if}

@@ -1,19 +1,11 @@
 <script lang="ts">
+	import { CircleAlert, Check, Clock, Copy, QrCode, RefreshCw } from '@lucide/svelte';
 	import { onMount } from 'svelte';
 	import { authStore } from '$lib/stores/auth.svelte';
 	import { useQRCode } from '$lib/qr/client';
 	import { getPrefixLabel } from '$lib/schemas/auth';
 	import { Button } from '$lib/components/ui/button';
 	import { toast } from 'svelte-sonner';
-	import {
-		IconQrcode,
-		IconRefresh,
-		IconCopy,
-		IconCheck,
-		IconAlertCircle,
-		IconClock
-	} from '@tabler/icons-svelte';
-
 	const { qrCode, qrDataURL, status: qrStatus, generate } = useQRCode();
 
 	const user = $derived(authStore.user);
@@ -108,7 +100,7 @@
 			<!-- White curve at bottom -->
 			<div class="absolute inset-x-0 -bottom-1 h-6 rounded-t-[1.5rem] border-none bg-white"></div>
 			<div class="mb-5 flex items-center justify-center gap-2">
-				<IconQrcode class="size-6" />
+				<QrCode class="size-6" />
 				<h2 class="flex items-center gap-1.5 text-[17px] font-bold tracking-wide">
 					TRACKIVITY <span
 						class="rounded-full bg-white px-2 py-0.5 text-[10px] font-extrabold tracking-widest text-primary uppercase shadow-sm"
@@ -150,14 +142,14 @@
 					<div
 						class="flex h-48 w-48 flex-col items-center justify-center rounded-[2rem] border-4 border-slate-100 bg-slate-50 sm:h-56 sm:w-56"
 					>
-						<IconQrcode class="size-12 animate-pulse text-slate-300" />
+						<QrCode class="size-12 animate-pulse text-slate-300" />
 						<p class="mt-4 animate-pulse text-sm font-medium text-slate-400">กำลังโหลด...</p>
 					</div>
 				{:else}
 					<div
 						class="flex h-48 w-48 flex-col items-center justify-center rounded-[2rem] border-4 border-red-100 bg-red-50 p-4 text-red-500 sm:h-56 sm:w-56"
 					>
-						<IconAlertCircle class="mb-3 size-12" />
+						<CircleAlert class="mb-3 size-12" />
 						<p class="text-sm font-bold">QR ไม่พร้อมใช้งาน</p>
 						<Button
 							onclick={handleRefreshQR}
@@ -182,10 +174,10 @@
 						class="h-[52px] flex-1 rounded-2xl border-2 border-slate-100 font-medium text-slate-500 transition-all hover:bg-slate-50 hover:text-slate-800 active:scale-[0.98]"
 					>
 						{#if copied}
-							<IconCheck class="mr-2 size-5 text-green-500" />
+							<Check class="mr-2 size-5 text-green-500" />
 							<span class="text-green-600">คัดลอกสำเร็จ</span>
 						{:else}
-							<IconCopy class="mr-2 size-5" /> คัดลอกรหัสประจำตัว
+							<Copy class="mr-2 size-5" /> คัดลอกรหัสประจำตัว
 						{/if}
 					</Button>
 
@@ -197,7 +189,7 @@
 						class="h-[52px] w-[52px] shrink-0 rounded-2xl border-2 border-slate-100 text-slate-500 transition-all hover:bg-slate-50 hover:text-primary active:scale-[0.98]"
 						title="โหลด QR ใหม่"
 					>
-						<IconRefresh class="size-6 {refreshing ? 'animate-spin' : ''}" />
+						<RefreshCw class="size-6 {refreshing ? 'animate-spin' : ''}" />
 					</Button>
 				</div>
 			{/if}

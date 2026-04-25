@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { TriangleAlert, Eye, EyeOff, Key, Loader, Shield } from '@lucide/svelte';
 	import { auth, ApiError } from '$lib/api';
 	import { authStore } from '$lib/stores/auth.svelte';
 	import { goto } from '$app/navigation';
@@ -15,14 +16,6 @@
 	} from '$lib/components/ui/card';
 	import { Alert, AlertDescription } from '$lib/components/ui/alert';
 	import { Checkbox } from '$lib/components/ui/checkbox';
-	import {
-		IconLoader,
-		IconEye,
-		IconEyeOff,
-		IconShield,
-		IconAlertTriangle,
-		IconKey
-	} from '@tabler/icons-svelte/icons';
 	import { toast } from 'svelte-sonner';
 	import MetaTags from '$lib/components/seo/MetaTags.svelte';
 
@@ -83,7 +76,7 @@
 	<div class="w-full max-w-md space-y-8">
 		<div class="text-center">
 			<div class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-blue-600">
-				<IconShield class="h-8 w-8 text-white" />
+				<Shield class="h-8 w-8 text-white" />
 			</div>
 			<h1 class="text-3xl font-bold text-gray-900 dark:text-white">Admin Portal</h1>
 			<p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
@@ -94,7 +87,7 @@
 		<Card class="w-full">
 			<CardHeader class="space-y-1">
 				<CardTitle class="flex items-center justify-center gap-2 text-center text-2xl">
-					<IconKey class="h-5 w-5" />
+					<Key class="h-5 w-5" />
 					Admin Login
 				</CardTitle>
 				<CardDescription class="text-center">สำหรับผู้ดูแลระบบเท่านั้น</CardDescription>
@@ -141,9 +134,9 @@
 								tabindex="-1"
 							>
 								{#if showPassword}
-									<IconEyeOff class="h-4 w-4 text-gray-400" />
+									<EyeOff class="h-4 w-4 text-gray-400" />
 								{:else}
-									<IconEye class="h-4 w-4 text-gray-400" />
+									<Eye class="h-4 w-4 text-gray-400" />
 								{/if}
 							</button>
 						</div>
@@ -156,10 +149,10 @@
 
 					<Button type="submit" class="w-full bg-blue-600 hover:bg-blue-700" disabled={submitting}>
 						{#if submitting}
-							<IconLoader class="mr-2 h-4 w-4 animate-spin" />
+							<Loader class="mr-2 h-4 w-4 animate-spin" />
 							กำลังเข้าสู่ระบบ...
 						{:else}
-							<IconShield class="mr-2 h-4 w-4" />
+							<Shield class="mr-2 h-4 w-4" />
 							เข้าสู่ระบบ Admin
 						{/if}
 					</Button>
@@ -189,7 +182,7 @@
 
 				{#if isDevelopment}
 					<Alert>
-						<IconAlertTriangle class="h-4 w-4" />
+						<TriangleAlert class="h-4 w-4" />
 						<AlertDescription>
 							<div class="space-y-2">
 								<p class="text-sm font-medium">Development Mode - Default Admin:</p>

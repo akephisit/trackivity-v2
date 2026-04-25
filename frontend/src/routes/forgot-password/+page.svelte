@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { ArrowLeft, Loader, Mail } from '@lucide/svelte';
 	import { auth, ApiError } from '$lib/api';
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
@@ -10,7 +11,6 @@
 		CardHeader,
 		CardTitle
 	} from '$lib/components/ui/card';
-	import { IconLoader, IconMail, IconArrowLeft } from '@tabler/icons-svelte/icons';
 	import { toast } from 'svelte-sonner';
 	import MetaTags from '$lib/components/seo/MetaTags.svelte';
 
@@ -49,7 +49,7 @@
 			<div
 				class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-600"
 			>
-				<IconMail class="h-8 w-8 text-white" />
+				<Mail class="h-8 w-8 text-white" />
 			</div>
 			<h1 class="text-3xl font-bold text-gray-900 dark:text-white">Trackivity</h1>
 			<p class="mt-2 text-sm text-gray-600 dark:text-gray-400">ลืมรหัสผ่าน</p>
@@ -109,7 +109,7 @@
 							disabled={submitting}
 						>
 							{#if submitting}
-								<IconLoader class="mr-2 h-4 w-4 animate-spin" />
+								<Loader class="mr-2 h-4 w-4 animate-spin" />
 								กำลังส่ง...
 							{:else}
 								ส่งลิงก์รีเซ็ตรหัสผ่าน
@@ -123,7 +123,7 @@
 						href="/login"
 						class="flex items-center text-sm font-medium text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
 					>
-						<IconArrowLeft class="mr-1 h-4 w-4" />
+						<ArrowLeft class="mr-1 h-4 w-4" />
 						กลับไปหน้าเข้าสู่ระบบ
 					</a>
 				</div>

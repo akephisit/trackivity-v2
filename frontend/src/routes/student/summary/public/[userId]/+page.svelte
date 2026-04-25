@@ -1,8 +1,8 @@
 <script lang="ts">
+	import { Activity as ActivityIcon, CircleCheck, Hourglass, TrendingUp, User as UserIcon } from '@lucide/svelte';
 	import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
 	import { Separator } from '$lib/components/ui/separator';
 	import { Skeleton } from '$lib/components/ui/skeleton';
-	import { IconTrendingUp, IconHourglass, IconCircleCheck, IconActivity, IconUser } from '@tabler/icons-svelte';
 	import { activitiesApi, usersApi, ApiError } from '$lib/api';
 	import type { Participation } from '$lib/api';
 	import { onMount } from 'svelte';
@@ -54,22 +54,22 @@
 			{:else}
 				<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
 					<div class="rounded-lg bg-muted/40 p-4 text-center">
-						<IconActivity class="mx-auto mb-2 size-5 text-primary" />
+						<ActivityIcon class="mx-auto mb-2 size-5 text-primary" />
 						<p class="text-2xl font-bold">{participations.length}</p>
 						<p class="text-xs text-muted-foreground">จำนวนกิจกรรมทั้งหมด</p>
 					</div>
 					<div class="rounded-lg bg-muted/40 p-4 text-center">
-						<IconHourglass class="mx-auto mb-2 size-5 text-primary" />
+						<Hourglass class="mx-auto mb-2 size-5 text-primary" />
 						<p class="text-2xl font-bold">{totalHours.toFixed(2)}</p>
 						<p class="text-xs text-muted-foreground">ชั่วโมงรวม</p>
 					</div>
 					<div class="rounded-lg bg-muted/40 p-4 text-center">
-						<IconCircleCheck class="mx-auto mb-2 size-5 text-primary" />
+						<CircleCheck class="mx-auto mb-2 size-5 text-primary" />
 						<p class="text-2xl font-bold">{facultyActivities.length}</p>
 						<p class="text-xs text-muted-foreground">กิจกรรมระดับคณะ</p>
 					</div>
 					<div class="rounded-lg bg-muted/40 p-4 text-center">
-						<IconTrendingUp class="mx-auto mb-2 size-5 text-primary" />
+						<TrendingUp class="mx-auto mb-2 size-5 text-primary" />
 						<p class="text-2xl font-bold">{universityActivities.length}</p>
 						<p class="text-xs text-muted-foreground">กิจกรรมระดับมหาวิทยาลัย</p>
 					</div>

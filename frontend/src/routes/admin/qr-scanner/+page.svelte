@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { Activity as ActivityIcon, Undo2, Building as BuildingIcon, Calendar as CalendarIcon, Check, MapPin, QrCode, Settings, Users, X } from '@lucide/svelte';
 	import { onMount, untrack } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { browser } from '$app/environment';
@@ -12,20 +13,6 @@
 	import { Alert, AlertDescription } from '$lib/components/ui/alert';
 	import * as Select from '$lib/components/ui/select';
 	import { Label } from '$lib/components/ui/label';
-
-	import {
-		IconQrcode,
-		IconActivity,
-		IconUsers,
-		IconMapPin,
-		IconCalendar,
-		IconCheck,
-		IconX,
-		IconSettings,
-		IconArrowBack,
-		IconBuilding
-	} from '@tabler/icons-svelte';
-
 	import { authStore } from '$lib/stores/auth.svelte';
 	import { activities as activitiesApi, type Activity } from '$lib/api';
 
@@ -171,14 +158,14 @@
 	<div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 		<div class="min-w-0 space-y-1">
 			<h1 class="admin-page-title flex items-center gap-2">
-				<IconQrcode class="h-6 w-6" />
+				<QrCode class="h-6 w-6" />
 				ระบบสแกน QR Code
 			</h1>
 			<p class="text-muted-foreground">สแกน QR Code เพื่อบันทึกการเข้าร่วมกิจกรรม</p>
 		</div>
 
 		<Button variant="outline" onclick={() => goto('/admin')} class="w-full gap-2 sm:w-auto">
-			<IconArrowBack class="h-4 w-4" />
+			<Undo2 class="h-4 w-4" />
 			กลับหน้าหลัก
 		</Button>
 	</div>
@@ -187,7 +174,7 @@
 	<Card>
 		<CardHeader>
 			<CardTitle class="flex items-center gap-2">
-				<IconSettings class="h-5 w-5" />
+				<Settings class="h-5 w-5" />
 				ข้อมูลผู้ดูแลระบบ
 			</CardTitle>
 		</CardHeader>
@@ -219,7 +206,7 @@
 	<Card>
 		<CardHeader>
 			<CardTitle class="flex items-center gap-2">
-				<IconActivity class="h-5 w-5" />
+				<ActivityIcon class="h-5 w-5" />
 				เลือกกิจกรรม
 			</CardTitle>
 		</CardHeader>
@@ -232,7 +219,7 @@
 				</div>
 			{:else if activities.length === 0}
 				<Alert>
-					<IconX class="h-4 w-4" />
+					<X class="h-4 w-4" />
 					<AlertDescription>
 						ไม่พบกิจกรรมที่กำลังดำเนินการ (ongoing) ที่สามารถสแกน QR Code ได้ กรุณาติดต่อผู้ดูแลระบบ
 					</AlertDescription>
@@ -269,23 +256,23 @@
 				{#if selectedActivity}
 					<div class="space-y-3 rounded-lg bg-muted/50 p-4">
 						<h3 class="flex items-center gap-2 font-semibold">
-							<IconActivity class="h-5 w-5" />
+							<ActivityIcon class="h-5 w-5" />
 							{selectedActivity.title}
 						</h3>
 
 						<div class="grid grid-cols-1 gap-4 text-sm md:grid-cols-2">
 							<div class="flex items-center gap-2">
-								<IconBuilding class="h-4 w-4 text-muted-foreground" />
+								<BuildingIcon class="h-4 w-4 text-muted-foreground" />
 								<span>หน่วยงานผู้จัด: {selectedActivity.organizer_name || 'ไม่ระบุ'}</span>
 							</div>
 
 							<div class="flex items-center gap-2">
-								<IconMapPin class="h-4 w-4 text-muted-foreground" />
+								<MapPin class="h-4 w-4 text-muted-foreground" />
 								<span>{selectedActivity.location}</span>
 							</div>
 
 							<div class="flex items-center gap-2">
-								<IconUsers class="h-4 w-4 text-muted-foreground" />
+								<Users class="h-4 w-4 text-muted-foreground" />
 								<span>
 									ผู้เข้าร่วม: {(selectedActivity as any).participant_count || 0}
 									{#if selectedActivity.max_participants}
@@ -298,7 +285,7 @@
 							</div>
 
 							<div class="flex items-center gap-2">
-								<IconCalendar class="h-4 w-4 text-muted-foreground" />
+								<CalendarIcon class="h-4 w-4 text-muted-foreground" />
 								<span>
 									{formatDate(selectedActivity.start_date)}
 									{formatTime(selectedActivity.start_time_only || undefined)}
@@ -332,7 +319,7 @@
 		<Card>
 			<CardHeader>
 				<CardTitle class="flex items-center gap-2">
-					<IconUsers class="h-5 w-5" />
+					<Users class="h-5 w-5" />
 					สถิติกิจกรรม
 				</CardTitle>
 			</CardHeader>
@@ -382,12 +369,12 @@
 				disabled={!selectedActivityId}
 				class="flex items-center gap-2"
 			>
-				<IconQrcode class="h-5 w-5" />
+				<QrCode class="h-5 w-5" />
 				เริ่มสแกน QR Code
 			</Button>
 		{:else if scannerActive}
 			<Button onclick={stopScanning} variant="outline" class="flex items-center gap-2">
-				<IconX class="h-5 w-5" />
+				<X class="h-5 w-5" />
 				หยุดสแกน
 			</Button>
 		{:else}
@@ -424,33 +411,33 @@
 		<CardContent>
 			<div class="space-y-3 text-sm text-muted-foreground">
 				<div class="flex items-start gap-2">
-					<IconCheck class="mt-0.5 h-4 w-4 text-green-600" />
+					<Check class="mt-0.5 h-4 w-4 text-green-600" />
 					<span>เลือกกิจกรรมที่มีสถานะ "กำลังดำเนินการ" เท่านั้น</span>
 				</div>
 				<div class="flex items-start gap-2">
-					<IconCheck class="mt-0.5 h-4 w-4 text-green-600" />
+					<Check class="mt-0.5 h-4 w-4 text-green-600" />
 					<span
 						>เลือกโหมดการสแกน: <strong>เช็คอิน</strong> สำหรับเข้าร่วม หรือ
 						<strong>เช็คเอาท์</strong> สำหรับออกจากกิจกรรม (รองรับการเริ่มต้นด้วยโหมดใดก็ได้)</span
 					>
 				</div>
 				<div class="flex items-start gap-2">
-					<IconCheck class="mt-0.5 h-4 w-4 text-green-600" />
+					<Check class="mt-0.5 h-4 w-4 text-green-600" />
 					<span>กดปุ่ม "เริ่มสแกน" เพื่อเปิดกล้อง</span>
 				</div>
 				<div class="flex items-start gap-2">
-					<IconCheck class="mt-0.5 h-4 w-4 text-green-600" />
+					<Check class="mt-0.5 h-4 w-4 text-green-600" />
 					<span>วาง QR Code ของนักศึกษาในกรอบที่กำหนด</span>
 				</div>
 				<div class="flex items-start gap-2">
-					<IconCheck class="mt-0.5 h-4 w-4 text-green-600" />
+					<Check class="mt-0.5 h-4 w-4 text-green-600" />
 					<span>ระบบจะบันทึกและแสดงผลการสแกนอัตโนมัติ พร้อมการแจ้งเตือนแบบเรียบง่าย</span>
 				</div>
 
 				<!-- New flexible flow control info -->
 				<div class="mt-4 rounded-lg border border-blue-200 bg-blue-50 p-3">
 					<div class="mb-2 flex items-center gap-2 font-medium text-blue-800">
-						<IconCheck class="size-4" />
+						<Check class="size-4" />
 						ระบบใหม่: การสแกนที่ยืดหยุ่นและใช้งานง่าย
 					</div>
 					<div class="space-y-2 text-xs text-blue-700">

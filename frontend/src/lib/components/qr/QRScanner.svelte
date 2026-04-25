@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { TriangleAlert, Building as BuildingIcon, Camera, CameraOff, Check, Clock, Info, QrCode, RotateCw, ShieldAlert, ShieldX, User as UserIcon, UserCheck, UserX, Users, X } from '@lucide/svelte';
 	import { onMount, onDestroy } from 'svelte';
 	import { browser } from '$app/environment';
 	import { request } from '$lib/api';
@@ -24,28 +25,6 @@
 	import { Badge } from '$lib/components/ui/badge';
 	import { Alert, AlertDescription } from '$lib/components/ui/alert';
 	import { Separator } from '$lib/components/ui/separator';
-
-	import {
-		IconCamera,
-		IconCameraOff,
-		IconReload,
-		IconAlertTriangle,
-		IconCheck,
-		IconQrcode,
-		IconX,
-		IconUser,
-		IconClock,
-		IconShieldExclamation,
-		IconUserX,
-		IconUsers,
-		IconQrcodeOff,
-		IconShieldX,
-		IconBuilding,
-		IconClockX,
-		IconUserCheck,
-		IconInfoCircle
-	} from '@tabler/icons-svelte';
-
 	import {
 		type QRScanResult,
 		type StatusCode,
@@ -495,32 +474,32 @@
 
 	function getStatusIcon(statusCode: StatusCode) {
 		const iconMap: Record<StatusCode, any> = {
-			CHECKIN_SUCCESS: IconCheck,
-			CHECKOUT_SUCCESS: IconCheck,
-			ALREADY_CHECKED_IN: IconInfoCircle,
-			ALREADY_CHECKED_OUT: IconInfoCircle,
-			ALREADY_COMPLETED: IconInfoCircle,
-			REPEATED_DUPLICATE_ATTEMPT: IconAlertTriangle,
-			FACULTY_RESTRICTION: IconShieldExclamation,
-			ACTIVITY_NOT_ONGOING: IconClock,
-			ACTIVITY_EXPIRED: IconClockX,
-			ACTIVITY_NOT_STARTED: IconClock,
-			MAX_PARTICIPANTS_REACHED: IconUsers,
-			NOT_CHECKED_IN: IconUserCheck,
-			NOT_CHECKED_IN_YET: IconUserCheck,
-			STUDENT_ACCOUNT_INACTIVE: IconUserX,
-			QR_EXPIRED: IconQrcodeOff,
-			INVALID_CHECKOUT_STATUS: IconX,
-			ACTIVITY_NOT_FOUND: IconAlertTriangle,
-			STUDENT_NOT_FOUND: IconUserX,
-			QR_INVALID: IconQrcodeOff,
-			DEPARTMENT_NOT_FOUND: IconBuilding,
-			NO_DEPARTMENT: IconBuilding,
-			AUTH_ERROR: IconShieldX,
-			VALIDATION_ERROR: IconAlertTriangle,
-			INTERNAL_ERROR: IconAlertTriangle
+			CHECKIN_SUCCESS: Check,
+			CHECKOUT_SUCCESS: Check,
+			ALREADY_CHECKED_IN: Info,
+			ALREADY_CHECKED_OUT: Info,
+			ALREADY_COMPLETED: Info,
+			REPEATED_DUPLICATE_ATTEMPT: TriangleAlert,
+			FACULTY_RESTRICTION: ShieldAlert,
+			ACTIVITY_NOT_ONGOING: Clock,
+			ACTIVITY_EXPIRED: Clock,
+			ACTIVITY_NOT_STARTED: Clock,
+			MAX_PARTICIPANTS_REACHED: Users,
+			NOT_CHECKED_IN: UserCheck,
+			NOT_CHECKED_IN_YET: UserCheck,
+			STUDENT_ACCOUNT_INACTIVE: UserX,
+			QR_EXPIRED: QrCode,
+			INVALID_CHECKOUT_STATUS: X,
+			ACTIVITY_NOT_FOUND: TriangleAlert,
+			STUDENT_NOT_FOUND: UserX,
+			QR_INVALID: QrCode,
+			DEPARTMENT_NOT_FOUND: BuildingIcon,
+			NO_DEPARTMENT: BuildingIcon,
+			AUTH_ERROR: ShieldX,
+			VALIDATION_ERROR: TriangleAlert,
+			INTERNAL_ERROR: TriangleAlert
 		};
-		return iconMap[statusCode] || IconAlertTriangle;
+		return iconMap[statusCode] || TriangleAlert;
 	}
 
 	// ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -588,7 +567,7 @@
 		<CardHeader>
 			<CardTitle class="flex items-center justify-between">
 				<div class="flex items-center gap-2">
-					<IconQrcode class="size-5" />
+					<QrCode class="size-5" />
 					QR Scanner
 				</div>
 
@@ -601,23 +580,23 @@
 								: 'secondary'}
 					>
 						{#if cameraStatus === 'requesting'}
-							<IconCamera class="mr-1 size-3 animate-pulse" />
+							<Camera class="mr-1 size-3 animate-pulse" />
 							กำลังเชื่อมต่อ...
 						{:else if cameraStatus === 'active'}
 							<div class="mr-1 h-2 w-2 animate-pulse rounded-full bg-green-400"></div>
 							พร้อมสแกน
 						{:else if cameraStatus === 'error'}
-							<IconCameraOff class="mr-1 size-3" />
+							<CameraOff class="mr-1 size-3" />
 							ข้อผิดพลาด
 						{:else}
-							<IconCameraOff class="mr-1 size-3" />
+							<CameraOff class="mr-1 size-3" />
 							ปิด
 						{/if}
 					</Badge>
 
 					{#if isProcessingScan}
 						<Badge variant="secondary">
-							<IconReload class="mr-1 size-3 animate-spin" />
+							<RotateCw class="mr-1 size-3 animate-spin" />
 							กำลังประมวลผล...
 						</Badge>
 					{/if}
@@ -647,10 +626,10 @@
 						<div class="absolute inset-0 flex items-center justify-center bg-black/70">
 							<div class="space-y-3 text-center text-white">
 								{#if cameraStatus === 'error'}
-									<IconCameraOff class="mx-auto size-14 text-red-400" />
+									<CameraOff class="mx-auto size-14 text-red-400" />
 									<p class="text-sm font-medium text-red-300">ไม่สามารถเข้าถึงกล้องได้</p>
 								{:else}
-									<IconCamera class="mx-auto size-14 text-gray-400" />
+									<Camera class="mx-auto size-14 text-gray-400" />
 									<p class="text-sm text-gray-300">กดปุ่มเริ่มสแกนเพื่อเปิดกล้อง</p>
 								{/if}
 							</div>
@@ -674,13 +653,13 @@
 			<!-- Error Alert -->
 			{#if error}
 				<Alert variant={cameraStatus === 'error' ? 'destructive' : 'default'}>
-					<IconAlertTriangle class="h-4 w-4" />
+					<TriangleAlert class="h-4 w-4" />
 					<AlertDescription class="space-y-3">
 						<div>{error}</div>
 						{#if cameraStatus === 'error'}
 							<div class="space-y-2">
 								<Button size="sm" onclick={() => startScanner()}>
-									<IconReload class="mr-2 h-3 w-3" />
+									<RotateCw class="mr-2 h-3 w-3" />
 									ลองใหม่
 								</Button>
 								<div class="mt-2 text-sm text-muted-foreground">
@@ -735,7 +714,7 @@
 								<div class="text-sm {config.color.replace('700', '600')} space-y-1">
 									{#if currentStatus.data.user_name}
 										<div class="flex items-center gap-2">
-											<IconUser class="size-4" />
+											<UserIcon class="size-4" />
 											<span>{currentStatus.data.user_name}</span>
 											{#if currentStatus.data.student_id}
 												<span class="text-xs opacity-75">({currentStatus.data.student_id})</span>
@@ -744,7 +723,7 @@
 									{/if}
 									{#if currentStatus.data.checked_in_at || currentStatus.data.checked_out_at}
 										<div class="flex items-center gap-2">
-											<IconClock class="size-4" />
+											<Clock class="size-4" />
 											<span class="text-xs">
 												{new Date(
 													currentStatus.data.checked_in_at ||
@@ -779,7 +758,7 @@
 							class="flex-shrink-0 {config.color.replace('700', '400')} transition-colors"
 							type="button"
 						>
-							<IconX class="size-4" />
+							<X class="size-4" />
 						</button>
 					</div>
 				</div>
@@ -838,17 +817,17 @@
 							disabled={!activity_id}
 							class="px-6 py-2 font-medium"
 						>
-							<IconCamera class="mr-2 size-4" />
+							<Camera class="mr-2 size-4" />
 							เริ่มสแกน
 						</Button>
 					{:else if cameraStatus === 'active' || cameraStatus === 'requesting'}
 						<Button onclick={handleStopClick} variant="outline" class="px-6 py-2 font-medium">
-							<IconCameraOff class="mr-2 size-4" />
+							<CameraOff class="mr-2 size-4" />
 							หยุดสแกน
 						</Button>
 
 						<Button onclick={toggleCamera} variant="outline" class="px-4 py-2 font-medium">
-							<IconReload class="mr-2 size-4" />
+							<RotateCw class="mr-2 size-4" />
 							สลับกล้อง
 						</Button>
 
@@ -863,7 +842,7 @@
 								size="sm"
 								class="text-orange-600 hover:text-orange-800"
 							>
-								<IconReload class="mr-1 size-3" />
+								<RotateCw class="mr-1 size-3" />
 								รีเซ็ตการแจ้งเตือน
 							</Button>
 						{/if}
@@ -895,12 +874,12 @@
 			<CardHeader>
 				<div class="flex items-center justify-between">
 					<CardTitle class="flex items-center gap-2">
-						<IconUser class="size-5" />
+						<UserIcon class="size-5" />
 						ประวัติการสแกน
 						<Badge variant="outline">{scanHistory.length}</Badge>
 					</CardTitle>
 					<Button onclick={clearHistory} variant="outline" size="sm">
-						<IconX class="mr-2 size-4" />
+						<X class="mr-2 size-4" />
 						ล้างประวัติ
 					</Button>
 				</div>
@@ -911,7 +890,7 @@
 						<div class="flex items-center justify-between rounded-lg bg-muted/50 p-3">
 							<div class="flex-1">
 								<div class="mb-1 flex items-center gap-2">
-									<IconCheck class="size-4 text-green-600" />
+									<Check class="size-4 text-green-600" />
 									<span class="font-medium">{item.user_name}</span>
 									<Badge variant={getStatusBadgeVariant(item.participation_status)} class="text-xs">
 										{getStatusText(item.participation_status)}
@@ -920,7 +899,7 @@
 								<div class="flex items-center gap-4 text-sm text-muted-foreground">
 									<span>รหัส: {item.student_id}</span>
 									<div class="flex items-center gap-1">
-										<IconClock class="size-3" />
+										<Clock class="size-3" />
 										{formatDateTime(item.checked_in_at)}
 									</div>
 								</div>

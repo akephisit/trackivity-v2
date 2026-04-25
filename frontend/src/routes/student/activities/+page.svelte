@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { CircleAlert, CalendarDays, ChevronRight, CircleCheck, Clock, Hourglass, MapPin, Search, Users } from '@lucide/svelte';
 	import { activitiesApi, type Activity } from '$lib/api';
 	import { onMount } from 'svelte';
 	import { getActivityTypeDisplayName } from '$lib/utils/activity';
@@ -10,17 +11,6 @@
 	import { Tabs, TabsList, TabsTrigger, TabsContent } from '$lib/components/ui/tabs';
 	import { Input } from '$lib/components/ui/input';
 	import MetaTags from '$lib/components/seo/MetaTags.svelte';
-	import {
-		IconCalendarEvent,
-		IconClock,
-		IconUsers,
-		IconMapPin,
-		IconSearch,
-		IconAlertCircle,
-		IconChevronRight,
-		IconHourglassHigh,
-		IconCircleCheck
-	} from '@tabler/icons-svelte';
 	import { goto } from '$app/navigation';
 
 	let allActivities = $state<Activity[]>([]);
@@ -126,7 +116,7 @@
 
 	<!-- Search -->
 	<div class="relative">
-		<IconSearch class="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+		<Search class="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
 		<Input bind:value={searchQuery} placeholder="ค้นหากิจกรรม..." class="pl-9" />
 	</div>
 
@@ -135,7 +125,7 @@
 		<div class="mt-6">
 			{#if error}
 				<Alert variant="destructive">
-					<IconAlertCircle class="size-4" />
+					<CircleAlert class="size-4" />
 					<AlertDescription>{error}</AlertDescription>
 				</Alert>
 			{:else if loading}
@@ -160,7 +150,7 @@
 				</div>
 			{:else if filteredActivities.length === 0}
 				<div class="py-16 text-center">
-					<IconCalendarEvent class="mx-auto mb-4 size-14 text-muted-foreground/40" />
+					<CalendarDays class="mx-auto mb-4 size-14 text-muted-foreground/40" />
 					<h3 class="mb-2 text-lg font-medium">ไม่พบกิจกรรม</h3>
 					<p class="text-muted-foreground">
 						{searchQuery ? 'ลองเปลี่ยนคำค้นหา' : 'ยังไม่มีกิจกรรมในหมวดนี้'}
@@ -204,7 +194,7 @@
 								<div class="space-y-2">
 									<!-- Date -->
 									<div class="flex items-center gap-2 text-sm text-muted-foreground">
-										<IconClock class="size-3.5 shrink-0" />
+										<Clock class="size-3.5 shrink-0" />
 										<span>
 											{formatDate(activity.start_date)}
 											{#if activity.end_date !== activity.start_date}
@@ -216,7 +206,7 @@
 									<!-- Location -->
 									{#if activity.location}
 										<div class="flex items-center gap-2 text-sm text-muted-foreground">
-											<IconMapPin class="size-3.5 shrink-0" />
+											<MapPin class="size-3.5 shrink-0" />
 											<span class="line-clamp-1">{activity.location}</span>
 										</div>
 									{/if}
@@ -225,13 +215,13 @@
 									<div class="flex items-center gap-4 text-sm text-muted-foreground">
 										{#if activity.hours}
 											<div class="flex items-center gap-1">
-												<IconHourglassHigh class="size-3.5" />
+												<Hourglass class="size-3.5" />
 												<span>{activity.hours} ชม.</span>
 											</div>
 										{/if}
 										{#if activity.max_participants}
 											<div class="flex items-center gap-1">
-												<IconUsers class="size-3.5" />
+												<Users class="size-3.5" />
 												<span>ไม่เกิน {activity.max_participants} คน</span>
 											</div>
 										{/if}
@@ -242,7 +232,7 @@
 								<div class="flex items-center justify-between border-t pt-3">
 									{#if openReg}
 										<Badge variant="default" class="gap-1 text-xs">
-											<IconCircleCheck class="size-3" />
+											<CircleCheck class="size-3" />
 											เปิดลงทะเบียน
 										</Badge>
 									{:else}
@@ -254,7 +244,7 @@
 										class="gap-1 transition-colors group-hover:bg-primary group-hover:text-primary-foreground"
 									>
 										ดูรายละเอียด
-										<IconChevronRight class="size-4" />
+										<ChevronRight class="size-4" />
 									</Button>
 								</div>
 							</CardContent>

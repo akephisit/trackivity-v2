@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { ArrowLeft, Landmark, Calendar as CalendarIcon, LayoutGrid, Clock, Clock3, Pencil, Info, MapPin, Settings, Trash2, User as UserIcon, Users } from '@lucide/svelte';
 	import { activities as activitiesApi, type Activity } from '$lib/api';
 	import { getActivityTypeDisplayName } from '$lib/utils/activity';
 	import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
@@ -12,22 +13,6 @@
 	import { page } from '$app/state';
 	import { goto } from '$app/navigation';
 	import { toast } from 'svelte-sonner';
-	import {
-		IconClock,
-		IconUsers,
-		IconMapPin,
-		IconArrowLeft,
-		IconEdit,
-		IconTrash,
-		IconInfoCircle,
-		IconBuildingBank,
-		IconUser,
-		IconSettings,
-		IconCategory,
-		IconCalendar,
-		IconClockHour3
-	} from '@tabler/icons-svelte';
-
 	let activity = $state<Activity | null>(null);
 	let loading = $state(true);
 	let notFound = $state(false);
@@ -144,20 +129,20 @@
 		<!-- Header -->
 		<div class="flex items-center gap-4">
 			<Button variant="ghost" size="sm" onclick={() => goto('/admin/activities')}>
-				<IconArrowLeft class="mr-2 size-4" />กลับ
+				<ArrowLeft class="mr-2 size-4" />กลับ
 			</Button>
 			<div class="flex-1">
 				<h1 class="admin-page-title flex items-center gap-2">
-					<IconCalendar class="size-6 text-primary" />
+					<CalendarIcon class="size-6 text-primary" />
 					{activity.title}
 				</h1>
 			</div>
 			<div class="flex gap-2">
 				<Button variant="outline" size="sm" onclick={() => goto(`/admin/activities/${activity!.id}/edit`)}>
-					<IconEdit class="mr-2 size-4" />แก้ไข
+					<Pencil class="mr-2 size-4" />แก้ไข
 				</Button>
 				<Button variant="outline" size="sm" class="text-red-600 hover:text-red-700" onclick={() => deleteActivityDialogOpen = true}>
-					<IconTrash class="mr-2 size-4" />ลบ
+					<Trash2 class="mr-2 size-4" />ลบ
 				</Button>
 			</div>
 		</div>
@@ -196,14 +181,14 @@
 			<CardContent class="space-y-6">
 				<div class="grid gap-4 md:grid-cols-2">
 					<div class="flex items-start gap-3">
-						<IconClock class="mt-0.5 size-5 flex-shrink-0 text-muted-foreground" />
+						<Clock class="mt-0.5 size-5 flex-shrink-0 text-muted-foreground" />
 						<div>
 							<p class="font-medium">วันที่เริ่มต้น</p>
 							<p class="text-sm text-muted-foreground">{formatDateTime(activity.start_date)}</p>
 						</div>
 					</div>
 					<div class="flex items-start gap-3">
-						<IconClock class="mt-0.5 size-5 flex-shrink-0 text-muted-foreground" />
+						<Clock class="mt-0.5 size-5 flex-shrink-0 text-muted-foreground" />
 						<div>
 							<p class="font-medium">วันที่สิ้นสุด</p>
 							<p class="text-sm text-muted-foreground">{formatDateTime(activity.end_date)}</p>
@@ -211,7 +196,7 @@
 					</div>
 					{#if activity.location}
 						<div class="flex items-start gap-3">
-							<IconMapPin class="mt-0.5 size-5 flex-shrink-0 text-muted-foreground" />
+							<MapPin class="mt-0.5 size-5 flex-shrink-0 text-muted-foreground" />
 							<div>
 								<p class="font-medium">สถานที่</p>
 								<p class="text-sm text-muted-foreground">{activity.location}</p>
@@ -219,7 +204,7 @@
 						</div>
 					{/if}
 					<div class="flex items-start gap-3">
-						<IconCategory class="mt-0.5 size-5 flex-shrink-0 text-muted-foreground" />
+						<LayoutGrid class="mt-0.5 size-5 flex-shrink-0 text-muted-foreground" />
 						<div>
 							<p class="font-medium">ประเภทกิจกรรม</p>
 							<p class="text-sm text-muted-foreground">{getActivityTypeDisplayName(activity.activity_type)}</p>
@@ -227,7 +212,7 @@
 					</div>
 					{#if activity.hours}
 						<div class="flex items-start gap-3">
-							<IconClockHour3 class="mt-0.5 size-5 flex-shrink-0 text-muted-foreground" />
+							<Clock3 class="mt-0.5 size-5 flex-shrink-0 text-muted-foreground" />
 							<div>
 								<p class="font-medium">ชั่วโมงกิจกรรม</p>
 								<p class="text-sm text-muted-foreground">{activity.hours}</p>
@@ -236,7 +221,7 @@
 					{/if}
 					{#if activity.max_participants}
 						<div class="flex items-start gap-3">
-							<IconUsers class="mt-0.5 size-5 flex-shrink-0 text-muted-foreground" />
+							<Users class="mt-0.5 size-5 flex-shrink-0 text-muted-foreground" />
 							<div>
 								<p class="font-medium">จำนวนที่รับได้</p>
 								<p class="text-sm text-muted-foreground">{activity.max_participants} คน</p>
@@ -244,21 +229,21 @@
 						</div>
 					{/if}
 					<div class="flex items-start gap-3">
-						<IconBuildingBank class="mt-0.5 size-5 flex-shrink-0 text-muted-foreground" />
+						<Landmark class="mt-0.5 size-5 flex-shrink-0 text-muted-foreground" />
 						<div>
 							<p class="font-medium">หน่วยงานผู้จัด</p>
 							<p class="text-sm text-muted-foreground">{activity.organizer_name}</p>
 						</div>
 					</div>
 					<div class="flex items-start gap-3">
-						<IconUser class="mt-0.5 size-5 flex-shrink-0 text-muted-foreground" />
+						<UserIcon class="mt-0.5 size-5 flex-shrink-0 text-muted-foreground" />
 						<div>
 							<p class="font-medium">ผู้สร้าง</p>
 							<p class="text-sm text-muted-foreground">{activity.creator_name}</p>
 						</div>
 					</div>
 					<div class="flex items-start gap-3">
-						<IconInfoCircle class="mt-0.5 size-5 flex-shrink-0 text-muted-foreground" />
+						<Info class="mt-0.5 size-5 flex-shrink-0 text-muted-foreground" />
 						<div>
 							<p class="font-medium">สร้างเมื่อ</p>
 							<p class="text-sm text-muted-foreground">{formatDateTime(activity.created_at)}</p>
@@ -271,7 +256,7 @@
 				<!-- Quick Status Update -->
 				<div class="space-y-4">
 					<h3 class="flex items-center gap-2 text-lg font-semibold">
-						<IconSettings class="size-5" />จัดการสถานะกิจกรรม
+						<Settings class="size-5" />จัดการสถานะกิจกรรม
 					</h3>
 					<div class="flex items-center gap-4">
 						<div class="flex-1">

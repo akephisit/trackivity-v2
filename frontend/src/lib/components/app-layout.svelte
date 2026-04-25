@@ -1,25 +1,16 @@
 <script lang="ts">
+	import type { Component } from 'svelte';
 	import type { Snippet } from 'svelte';
+	import { LogOut, Menu, Moon, Settings, Shield, Sun, X, type IconProps } from '@lucide/svelte';
 	import { Button } from '$lib/components/ui/button';
 	import { cn } from '$lib/utils';
-	import {
-		IconLogout,
-		IconSun,
-		IconMoon,
-		IconMenu,
-		IconX,
-		IconShield,
-		IconSettings
-	} from '@tabler/icons-svelte';
 	import { mode, setMode } from 'mode-watcher';
 	import { toast } from 'svelte-sonner';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
 	import NotificationBell from './NotificationBell.svelte';
 
-	// Tabler icons are still Svelte 4-style components; use a permissive type.
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	type IconComponent = any;
+	type IconComponent = Component<IconProps>;
 
 	interface NavigationItem {
 		title: string;
@@ -65,7 +56,7 @@
 		mobileMenuOpen,
 		appTitle,
 		appSubtitle,
-		logoIcon = IconShield,
+		logoIcon = Shield,
 		showLogo = true,
 		children,
 		onToggleMobileMenu,
@@ -107,9 +98,9 @@
 			<div class="flex items-center gap-3">
 				<Button variant="ghost" size="sm" onclick={onToggleMobileMenu} class="p-2">
 					{#if mobileMenuOpen}
-						<IconX class="size-5" />
+						<X class="size-5" />
 					{:else}
-						<IconMenu class="size-5" />
+						<Menu class="size-5" />
 					{/if}
 				</Button>
 				<h1 class="text-lg font-semibold">{appTitle}</h1>
@@ -123,13 +114,13 @@
 					<NotificationBell />
 					<Button variant="ghost" size="sm" onclick={toggleTheme} class="p-2">
 						{#if mode.current === 'light'}
-							<IconMoon class="size-4" />
+							<Moon class="size-4" />
 						{:else}
-							<IconSun class="size-4" />
+							<Sun class="size-4" />
 						{/if}
 					</Button>
 					<Button variant="ghost" size="sm" onclick={handleLogout} class="p-2">
-						<IconLogout class="size-4" />
+						<LogOut class="size-4" />
 					</Button>
 				</div>
 			{/if}
@@ -244,22 +235,22 @@
 							{#if showAccountSettings}
 								<Button variant="ghost" size="sm" class="w-full justify-start">
 									<a href={accountSettingsHref} class="flex w-full items-center">
-										<IconSettings class="mr-2 size-4" />
+										<Settings class="mr-2 size-4" />
 										ตั้งค่าบัญชี
 									</a>
 								</Button>
 							{/if}
 							<Button variant="ghost" size="sm" onclick={toggleTheme} class="w-full justify-start">
 								{#if mode.current === 'light'}
-									<IconMoon class="mr-2 size-4" />
+									<Moon class="mr-2 size-4" />
 									โหมดมืด
 								{:else}
-									<IconSun class="mr-2 size-4" />
+									<Sun class="mr-2 size-4" />
 									โหมดสว่าง
 								{/if}
 							</Button>
 							<Button variant="ghost" size="sm" onclick={handleLogout} class="w-full justify-start">
-								<IconLogout class="mr-2 size-4" />
+								<LogOut class="mr-2 size-4" />
 								ออกจากระบบ
 							</Button>
 						</div>
@@ -294,7 +285,7 @@
 					</div>
 				</div>
 				<Button variant="ghost" size="sm" onclick={onCloseMobileMenu} class="p-2">
-					<IconX class="size-5" />
+					<X class="size-5" />
 				</Button>
 			</div>
 
@@ -367,22 +358,22 @@
 						{#if showAccountSettings}
 							<Button variant="ghost" size="sm" class="w-full justify-start">
 								<a href={accountSettingsHref} class="flex w-full items-center">
-									<IconSettings class="mr-2 size-4" />
+									<Settings class="mr-2 size-4" />
 									ตั้งค่าบัญชี
 								</a>
 							</Button>
 						{/if}
 						<Button variant="ghost" size="sm" onclick={toggleTheme} class="w-full justify-start">
 							{#if mode.current === 'light'}
-								<IconMoon class="mr-2 size-4" />
+								<Moon class="mr-2 size-4" />
 								โหมดมืด
 							{:else}
-								<IconSun class="mr-2 size-4" />
+								<Sun class="mr-2 size-4" />
 								โหมดสว่าง
 							{/if}
 						</Button>
 						<Button variant="ghost" size="sm" onclick={handleLogout} class="w-full justify-start">
-							<IconLogout class="mr-2 size-4" />
+							<LogOut class="mr-2 size-4" />
 							ออกจากระบบ
 						</Button>
 					</div>
@@ -403,13 +394,13 @@
 						<NotificationBell />
 						<Button variant="ghost" size="sm" onclick={toggleTheme} class="p-2">
 							{#if mode.current === 'light'}
-								<IconMoon class="size-4" />
+								<Moon class="size-4" />
 							{:else}
-								<IconSun class="size-4" />
+								<Sun class="size-4" />
 							{/if}
 						</Button>
 						<Button variant="ghost" size="sm" onclick={handleLogout} class="p-2">
-							<IconLogout class="size-4" />
+							<LogOut class="size-4" />
 						</Button>
 					</div>
 				</div>

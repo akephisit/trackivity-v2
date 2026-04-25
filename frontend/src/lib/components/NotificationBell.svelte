@@ -1,6 +1,6 @@
 <script lang="ts">
+	import { Bell } from '@lucide/svelte';
 	import { onMount } from 'svelte';
-	import { IconBell } from '@tabler/icons-svelte';
 	import { Button } from '$lib/components/ui/button';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 	import { notificationsApi, type NotificationItem } from '$lib/api';
@@ -128,7 +128,7 @@
 	<DropdownMenu.Trigger>
 		{#snippet child({ props })}
 			<Button {...props} variant="ghost" size="sm" class="relative p-2">
-				<IconBell class="size-4" />
+				<Bell class="size-4" />
 				{#if unreadCount > 0}
 					<span
 						class="text-destructive-foreground absolute top-1 right-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-destructive text-[9px] font-bold"

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Plus, Search } from '@lucide/svelte';
 	import {
 		getCoreRowModel,
 		getFilteredRowModel,
@@ -18,12 +19,9 @@
 	import { activityColumns } from './activities-table-columns.js';
 	import type { Activity } from '$lib/types/activity.js';
 
-	import ChevronLeftIcon from '@tabler/icons-svelte/icons/chevron-left';
-	import ChevronRightIcon from '@tabler/icons-svelte/icons/chevron-right';
-	import ChevronsLeftIcon from '@tabler/icons-svelte/icons/chevrons-left';
-	import ChevronsRightIcon from '@tabler/icons-svelte/icons/chevrons-right';
-	import PlusIcon from '@tabler/icons-svelte/icons/plus';
-	import SearchIcon from '@tabler/icons-svelte/icons/search';
+
+
+
 
 	let { activities }: { activities: Activity[] } = $props();
 
@@ -129,7 +127,7 @@
 					<Card.Description>จัดการและติดตามกิจกรรมทั้งหมดของมหาวิทยาลัย</Card.Description>
 				</div>
 				<Button class="flex items-center gap-2">
-					<PlusIcon class="h-4 w-4" />
+					<Plus class="h-4 w-4" />
 					เพิ่มกิจกรรมใหม่
 				</Button>
 			</div>
@@ -139,7 +137,7 @@
 			<!-- แถบค้นหาและฟิลเตอร์ -->
 			<div class="flex flex-col gap-4 sm:flex-row">
 				<div class="relative flex-1">
-					<SearchIcon
+					<Search
 						class="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform text-muted-foreground"
 					/>
 					<Input placeholder="ค้นหากิจกรรม..." bind:value={globalFilter} class="pl-10" />
@@ -212,7 +210,7 @@
 						onclick={() => table.setPageIndex(0)}
 						disabled={!table.getCanPreviousPage()}
 					>
-						<ChevronsLeftIcon class="h-4 w-4" />
+						<ChevronsLeft class="h-4 w-4" />
 					</Button>
 
 					<Button
@@ -221,7 +219,7 @@
 						onclick={() => table.previousPage()}
 						disabled={!table.getCanPreviousPage()}
 					>
-						<ChevronLeftIcon class="h-4 w-4" />
+						<ChevronLeft class="h-4 w-4" />
 					</Button>
 
 					<div class="flex items-center gap-1 text-sm">
@@ -237,7 +235,7 @@
 						onclick={() => table.nextPage()}
 						disabled={!table.getCanNextPage()}
 					>
-						<ChevronRightIcon class="h-4 w-4" />
+						<ChevronRight class="h-4 w-4" />
 					</Button>
 
 					<Button
@@ -246,7 +244,7 @@
 						onclick={() => table.setPageIndex(table.getPageCount() - 1)}
 						disabled={!table.getCanNextPage()}
 					>
-						<ChevronsRightIcon class="h-4 w-4" />
+						<ChevronsRight class="h-4 w-4" />
 					</Button>
 				</div>
 			</div>

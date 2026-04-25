@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { ChevronDown, Pencil, Filter, Loader, Mail, Plus, Search, Shield, ToggleLeft, ToggleRight, Trash2, Users } from '@lucide/svelte';
 	import { PrefixOptions } from '$lib/schemas/auth';
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
@@ -17,20 +18,6 @@
 	import * as Table from '$lib/components/ui/table';
 	import * as Collapsible from '$lib/components/ui/collapsible';
 	import { Badge } from '$lib/components/ui/badge';
-	import {
-		IconLoader,
-		IconPlus,
-		IconEdit,
-		IconTrash,
-		IconShield,
-		IconUsers,
-		IconMail,
-		IconToggleLeft,
-		IconToggleRight,
-		IconChevronDown,
-		IconSearch,
-		IconFilter
-	} from '@tabler/icons-svelte/icons';
 	import { toast } from 'svelte-sonner';
 	import { AdminLevel, type AdminRole } from '$lib/types/admin';
 	import { request } from '$lib/api';
@@ -460,13 +447,13 @@
 	<!-- Header -->
 	<div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 		<div class="min-w-0 space-y-1">
-			<h1 class="admin-page-title"><IconShield class="size-6 text-primary" /> จัดการแอดมิน</h1>
+			<h1 class="admin-page-title"><Shield class="size-6 text-primary" /> จัดการแอดมิน</h1>
 			<p class="text-muted-foreground">
 				จัดการผู้ดูแลระบบและกำหนดสิทธิ์การเข้าถึง แยกตามระดับและหน่วยงาน
 			</p>
 		</div>
 		<Button onclick={openDialog} class="w-full gap-2 sm:w-auto">
-			<IconPlus class="h-4 w-4" />
+			<Plus class="h-4 w-4" />
 			เพิ่มแอดมิน
 		</Button>
 	</div>
@@ -476,7 +463,7 @@
 		<Card>
 			<CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
 				<CardTitle class="truncate text-xs font-medium lg:text-sm">แอดมินทั้งหมด</CardTitle>
-				<IconUsers class="h-4 w-4 flex-shrink-0 text-muted-foreground lg:h-5 lg:w-5" />
+				<Users class="h-4 w-4 flex-shrink-0 text-muted-foreground lg:h-5 lg:w-5" />
 			</CardHeader>
 			<CardContent class="p-4 lg:p-6">
 				<div class="text-lg font-bold lg:text-2xl">
@@ -489,7 +476,7 @@
 		<Card>
 			<CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
 				<CardTitle class="truncate text-xs font-medium lg:text-sm">ซุปเปอร์แอดมิน</CardTitle>
-				<IconShield class="h-4 w-4 flex-shrink-0 text-red-500 lg:h-5 lg:w-5" />
+				<Shield class="h-4 w-4 flex-shrink-0 text-red-500 lg:h-5 lg:w-5" />
 			</CardHeader>
 			<CardContent class="p-4 lg:p-6">
 				<div class="text-lg font-bold text-red-600 lg:text-2xl">
@@ -501,7 +488,7 @@
 		<Card>
 			<CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
 				<CardTitle class="truncate text-xs font-medium lg:text-sm">แอดมินหน่วยงาน</CardTitle>
-				<IconShield class="h-4 w-4 flex-shrink-0 text-blue-500 lg:h-5 lg:w-5" />
+				<Shield class="h-4 w-4 flex-shrink-0 text-blue-500 lg:h-5 lg:w-5" />
 			</CardHeader>
 			<CardContent class="p-4 lg:p-6">
 				<div class="text-lg font-bold text-blue-600 lg:text-2xl">
@@ -515,7 +502,7 @@
 				<CardTitle class="truncate text-xs font-medium lg:text-sm"
 					>แอดมินหน่วยงานและทั่วไป</CardTitle
 				>
-				<IconUsers class="h-4 w-4 flex-shrink-0 text-gray-500 lg:h-5 lg:w-5" />
+				<Users class="h-4 w-4 flex-shrink-0 text-gray-500 lg:h-5 lg:w-5" />
 			</CardHeader>
 			<CardContent class="p-4 lg:p-6">
 				<div class="text-lg font-bold text-gray-600 lg:text-2xl">
@@ -530,7 +517,7 @@
 	<Card>
 		<CardHeader>
 			<CardTitle class="flex items-center gap-2">
-				<IconFilter class="h-5 w-5" />
+				<Filter class="h-5 w-5" />
 				ค้นหาและกรอง
 			</CardTitle>
 		</CardHeader>
@@ -538,7 +525,7 @@
 			<div class="space-y-4 sm:flex sm:flex-col sm:space-y-0 lg:flex-row lg:gap-4">
 				<div class="flex-1">
 					<div class="relative">
-						<IconSearch
+						<Search
 							class="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground"
 						/>
 						<Input bind:value={searchQuery} placeholder="ค้นหาชื่อแอดมิน อีเมล..." class="pl-10" />
@@ -592,22 +579,22 @@
 	<div class="space-y-8">
 		{#if refreshing}
 			<div class="flex items-center justify-center py-12">
-				<IconLoader class="mr-3 h-8 w-8 animate-spin text-muted-foreground" />
+				<Loader class="mr-3 h-8 w-8 animate-spin text-muted-foreground" />
 				<span class="text-muted-foreground">กำลังรีเฟรชข้อมูล...</span>
 			</div>
 		{:else if filteredAdmins.length === 0}
 			<div class="flex flex-col items-center justify-center py-16 text-center">
 				{#if searchQuery || levelFilter !== 'all'}
-					<IconSearch class="mb-4 h-12 w-12 text-muted-foreground/50" />
+					<Search class="mb-4 h-12 w-12 text-muted-foreground/50" />
 					<h3 class="mb-2 text-lg font-semibold">ไม่พบข้อมูลที่ตรงกับการค้นหา</h3>
 					<p class="mb-4 text-muted-foreground">ลองเปลี่ยนคำค้นหาหรือตัวกรองใหม่</p>
 					<Button onclick={clearSearch} variant="outline">ล้างการค้นหา</Button>
 				{:else}
-					<IconShield class="mb-4 h-12 w-12 text-muted-foreground/50" />
+					<Shield class="mb-4 h-12 w-12 text-muted-foreground/50" />
 					<h3 class="mb-2 text-lg font-semibold">ยังไม่มีแอดมินในระบบ</h3>
 					<p class="mb-4 text-muted-foreground">เริ่มต้นด้วยการเพิ่มผู้ดูแลระบบคนแรก</p>
 					<Button onclick={openDialog} class="gap-2">
-						<IconPlus class="h-4 w-4" />
+						<Plus class="h-4 w-4" />
 						เพิ่มแอดมินคนแรก
 					</Button>
 				{/if}
@@ -619,7 +606,7 @@
 					<Card>
 						<CardHeader class="bg-red-50/50">
 							<CardTitle class="flex items-center gap-2">
-								<IconShield class="h-5 w-5 text-red-600" />
+								<Shield class="h-5 w-5 text-red-600" />
 								<span class="text-red-700">ซุปเปอร์แอดมิน</span>
 								<Badge variant="destructive" class="ml-2">
 									{groupedAdmins.superAdmins.length} คน
@@ -664,7 +651,7 @@
 														<div
 															class="flex h-8 w-8 items-center justify-center rounded-full bg-red-100"
 														>
-															<IconShield class="h-4 w-4 text-red-600" />
+															<Shield class="h-4 w-4 text-red-600" />
 														</div>
 														<span>
 															{formatFullName(admin.user)}
@@ -673,7 +660,7 @@
 												</Table.Cell>
 												<Table.Cell class="py-4">
 													<div class="flex items-center gap-2 text-muted-foreground">
-														<IconMail class="h-4 w-4" />
+														<Mail class="h-4 w-4" />
 														<span class="text-sm">{admin.user?.email || 'ไม่ระบุอีเมล'}</span>
 													</div>
 												</Table.Cell>
@@ -725,11 +712,11 @@
 																: 'เปิดการใช้งานบัญชี'}แอดมิน"
 														>
 															{#if toggleLoading[admin.id]}
-																<IconLoader class="h-4 w-4 animate-spin" aria-hidden="true" />
+																<Loader class="h-4 w-4 animate-spin" aria-hidden="true" />
 															{:else if getAdminEnabledStatus(admin)}
-																<IconToggleLeft class="h-4 w-4" aria-hidden="true" />
+																<ToggleLeft class="h-4 w-4" aria-hidden="true" />
 															{:else}
-																<IconToggleRight class="h-4 w-4" aria-hidden="true" />
+																<ToggleRight class="h-4 w-4" aria-hidden="true" />
 															{/if}
 														</Button>
 														<Button
@@ -740,7 +727,7 @@
 															aria-label={`แก้ไข ${formatFullName(admin.user)}`}
 															title="แก้ไขแอดมิน"
 														>
-															<IconEdit class="h-4 w-4" aria-hidden="true" />
+															<Pencil class="h-4 w-4" aria-hidden="true" />
 														</Button>
 														<Button
 															variant="ghost"
@@ -755,7 +742,7 @@
 															aria-label={`ลบ ${formatFullName(admin.user)}`}
 															title="ลบแอดมิน"
 														>
-															<IconTrash class="h-4 w-4" aria-hidden="true" />
+															<Trash2 class="h-4 w-4" aria-hidden="true" />
 														</Button>
 													</div>
 												</Table.Cell>
@@ -799,7 +786,7 @@
 												<div
 													class="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-900"
 												>
-													<IconShield
+													<Shield
 														class="h-5 w-5 text-blue-600 dark:text-blue-400"
 														aria-hidden="true"
 													/>
@@ -833,7 +820,7 @@
 												: 'ขยาย/หดแอดมินที่ไม่ได้มอบหมายหน่วยงาน'}
 											title="คลิกเพื่อขยาย/หดรายการแอดมิน"
 										>
-											<IconChevronDown
+											<ChevronDown
 												class="h-4 w-4 text-blue-600 transition-transform duration-200 dark:text-blue-400"
 												aria-hidden="true"
 											/>
@@ -886,7 +873,7 @@
 																	<div
 																		class="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900"
 																	>
-																		<IconUsers
+																		<Users
 																			class="h-4 w-4 text-blue-600 dark:text-blue-400"
 																			aria-hidden="true"
 																		/>
@@ -900,7 +887,7 @@
 																<div
 																	class="flex items-center gap-2 text-gray-600 dark:text-gray-300"
 																>
-																	<IconMail class="h-4 w-4 text-gray-400" aria-hidden="true" />
+																	<Mail class="h-4 w-4 text-gray-400" aria-hidden="true" />
 																	<span class="text-sm">{admin.user?.email || 'ไม่ระบุอีเมล'}</span>
 																</div>
 															</Table.Cell>
@@ -955,11 +942,11 @@
 																			: 'เปิดการใช้งานบัญชี'}แอดมิน"
 																	>
 																		{#if toggleLoading[admin.id]}
-																			<IconLoader class="h-4 w-4 animate-spin" aria-hidden="true" />
+																			<Loader class="h-4 w-4 animate-spin" aria-hidden="true" />
 																		{:else if getAdminEnabledStatus(admin)}
-																			<IconToggleLeft class="h-4 w-4" aria-hidden="true" />
+																			<ToggleLeft class="h-4 w-4" aria-hidden="true" />
 																		{:else}
-																			<IconToggleRight class="h-4 w-4" aria-hidden="true" />
+																			<ToggleRight class="h-4 w-4" aria-hidden="true" />
 																		{/if}
 																	</Button>
 																	<Button
@@ -970,7 +957,7 @@
 																		aria-label="แก้ไข {admin.user?.first_name || 'แอดมิน'}"
 																		title="แก้ไขแอดมิน"
 																	>
-																		<IconEdit class="h-4 w-4" aria-hidden="true" />
+																		<Pencil class="h-4 w-4" aria-hidden="true" />
 																	</Button>
 																	<Button
 																		variant="ghost"
@@ -985,7 +972,7 @@
 																		aria-label="ลบ {admin.user?.first_name || 'แอดมิน'}"
 																		title="ลบแอดมิน"
 																	>
-																		<IconTrash class="h-4 w-4" aria-hidden="true" />
+																		<Trash2 class="h-4 w-4" aria-hidden="true" />
 																	</Button>
 																</div>
 															</Table.Cell>
@@ -1087,14 +1074,14 @@
 			{:else if selectedAdminLevel === AdminLevel.SuperAdmin}
 				<div class="rounded-md bg-blue-50 p-3 dark:bg-blue-950/20">
 					<div class="flex items-center">
-						<IconShield class="mr-2 h-5 w-5 text-blue-500" />
+						<Shield class="mr-2 h-5 w-5 text-blue-500" />
 						<p class="text-sm text-blue-700 dark:text-blue-300">ซุปเปอร์แอดมินมีสิทธิ์เข้าถึงทุกหน่วยงาน ไม่จำเป็นต้องระบุหน่วยงานเฉพาะ</p>
 					</div>
 				</div>
 			{:else if selectedAdminLevel === AdminLevel.RegularAdmin}
 				<div class="rounded-md bg-gray-50 p-3 dark:bg-gray-800/50">
 					<div class="flex items-center">
-						<IconUsers class="mr-2 h-5 w-5 text-gray-500" />
+						<Users class="mr-2 h-5 w-5 text-gray-500" />
 						<p class="text-sm text-gray-600 dark:text-gray-300">แอดมินทั่วไปจะได้รับสิทธิ์พื้นฐานในการจัดการระบบ</p>
 					</div>
 				</div>
@@ -1108,7 +1095,7 @@
 					class="order-1 sm:order-2"
 				>
 					{#if submitting}
-						<IconLoader class="mr-2 h-4 w-4 animate-spin" />
+						<Loader class="mr-2 h-4 w-4 animate-spin" />
 						กำลังสร้าง...
 					{:else}
 						สร้างแอดมิน
