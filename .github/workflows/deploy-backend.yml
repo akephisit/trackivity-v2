@@ -8,6 +8,10 @@ on:
       - '.github/workflows/deploy-backend.yml'
   workflow_dispatch:
 
+concurrency:
+  group: deploy-backend-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: akephisit/trackivity-backend
@@ -53,6 +57,8 @@ jobs:
         with:
           context: ./backend
           push: true
+          platforms: linux/amd64
+          provenance: false
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
