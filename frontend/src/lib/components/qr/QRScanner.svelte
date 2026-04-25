@@ -769,7 +769,7 @@
 				<!-- Mode toggle -->
 				<div class="inline-flex overflow-hidden rounded-md border bg-background">
 					<button
-						class={`px-4 py-2 text-sm font-medium transition-all duration-200 ${scanMode === 'checkin' ? 'bg-green-600 text-white shadow-md' : 'text-muted-foreground hover:bg-muted'}`}
+						class={`px-4 py-2 text-sm font-medium transition-all duration-200 ${scanMode === 'checkin' ? 'bg-green-600 dark:bg-green-700 text-white shadow-md' : 'text-muted-foreground hover:bg-muted'}`}
 						onclick={() => {
 							scanMode = 'checkin';
 							duplicateAttemptCount = 0;
@@ -784,7 +784,7 @@
 						</div>
 					</button>
 					<button
-						class={`px-4 py-2 text-sm font-medium transition-all duration-200 ${scanMode === 'checkout' ? 'bg-orange-600 text-white shadow-md' : 'text-muted-foreground hover:bg-muted'}`}
+						class={`px-4 py-2 text-sm font-medium transition-all duration-200 ${scanMode === 'checkout' ? 'bg-orange-600 dark:bg-orange-700 text-white shadow-md' : 'text-muted-foreground hover:bg-muted'}`}
 						onclick={() => {
 							scanMode = 'checkout';
 							duplicateAttemptCount = 0;
@@ -803,9 +803,9 @@
 				<!-- Mode indicator -->
 				<div class="text-center text-xs text-muted-foreground">
 					{#if scanMode === 'checkin'}
-						<span class="text-green-600">โหมดเช็คอิน - สำหรับการเข้าร่วมกิจกรรม</span>
+						<span class="text-green-600 dark:text-green-400">โหมดเช็คอิน - สำหรับการเข้าร่วมกิจกรรม</span>
 					{:else}
-						<span class="text-orange-600">โหมดเช็คเอาท์ - สำหรับการออกจากกิจกรรม</span>
+						<span class="text-orange-600 dark:text-orange-400">โหมดเช็คเอาท์ - สำหรับการออกจากกิจกรรม</span>
 					{/if}
 				</div>
 
@@ -840,7 +840,7 @@
 								}}
 								variant="ghost"
 								size="sm"
-								class="text-orange-600 hover:text-orange-800"
+								class="text-orange-600 dark:text-orange-400 hover:text-orange-800 dark:hover:text-orange-200"
 							>
 								<RotateCw class="mr-1 size-3" />
 								รีเซ็ตการแจ้งเตือน
@@ -857,8 +857,8 @@
 				{:else if cameraStatus === 'active'}
 					<p>วาง QR Code ของนักศึกษาให้อยู่ในกรอบสีน้ำเงินเพื่อสแกน</p>
 					{#if recentlyScannedUsers.size > 0}
-						<div class="rounded-md border border-green-200 bg-green-50 p-2">
-							<div class="text-xs text-green-700">
+						<div class="rounded-md border border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-950/30 p-2">
+							<div class="text-xs text-green-700 dark:text-green-300">
 								✅ สแกนล่าสุด: {recentlyScannedUsers.size} คน
 							</div>
 						</div>
@@ -890,7 +890,7 @@
 						<div class="flex items-center justify-between rounded-lg bg-muted/50 p-3">
 							<div class="flex-1">
 								<div class="mb-1 flex items-center gap-2">
-									<Check class="size-4 text-green-600" />
+									<Check class="size-4 text-green-600 dark:text-green-400" />
 									<span class="font-medium">{item.user_name}</span>
 									<Badge variant={getStatusBadgeVariant(item.participation_status)} class="text-xs">
 										{getStatusText(item.participation_status)}

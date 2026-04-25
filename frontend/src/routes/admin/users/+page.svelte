@@ -160,7 +160,7 @@
 		</Card>
 		<Card>
 			<CardContent class="flex items-center gap-3 p-4">
-				<UserCheck class="size-8 text-green-600" />
+				<UserCheck class="size-8 text-green-600 dark:text-green-400" />
 				<div>
 					<p class="text-2xl font-bold">
 						{loading ? '--' : (stats?.users_active ?? 0).toLocaleString()}

@@ -347,16 +347,16 @@
 
 	if (!isEnabled) {
 		statusText = 'ปิดใช้งาน';
-		badgeClass = 'bg-red-100 text-red-800 hover:bg-red-100';
-		dotClass = 'bg-red-500';
+		badgeClass = 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200 hover:bg-red-100 dark:hover:bg-red-900/30';
+		dotClass = 'bg-red-500 dark:bg-red-600';
 	} else if (isActive) {
 		statusText = 'ใช้งานอยู่';
-		badgeClass = 'bg-green-100 text-green-800 hover:bg-green-100';
-		dotClass = 'bg-green-500';
+		badgeClass = 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 hover:bg-green-100 dark:hover:bg-green-900/30';
+		dotClass = 'bg-green-500 dark:bg-green-600';
 	} else {
 		statusText = 'ไม่ออนไลน์';
-		badgeClass = 'bg-slate-100 text-slate-700 hover:bg-slate-100';
-		dotClass = 'bg-gray-400';
+		badgeClass = 'bg-slate-100 dark:bg-slate-900/30 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-900/30';
+		dotClass = 'bg-gray-400 dark:bg-gray-500';
 	}
 
 		return {
@@ -416,7 +416,7 @@
 			<div class="flex gap-2">
 				<Button
 					onclick={openCreateDialog}
-					class="bg-blue-600 px-6 py-3 text-base font-medium text-white hover:bg-blue-700"
+					class="bg-blue-600 dark:bg-blue-700 px-6 py-3 text-base font-medium text-white hover:bg-blue-700 dark:hover:bg-blue-800"
 				>
 					<Plus class="mr-2 h-5 w-5" />
 					เพิ่มแอดมินหน่วยงาน
@@ -445,10 +445,10 @@
 		<Card>
 			<CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
 				<CardTitle class="text-sm font-medium">เปิดใช้งาน</CardTitle>
-				<UserCheck class="h-4 w-4 text-green-500" />
+				<UserCheck class="h-4 w-4 text-green-500 dark:text-green-400" />
 			</CardHeader>
 			<CardContent>
-				<div class="text-2xl font-bold text-green-600">
+				<div class="text-2xl font-bold text-green-600 dark:text-green-400">
 					{stats?.active_admins ?? 0}
 				</div>
 				<p class="text-xs text-muted-foreground">
@@ -461,16 +461,16 @@
 		<Card>
 			<CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
 				<CardTitle class="text-sm font-medium">ปิดใช้งาน</CardTitle>
-				<Users class="h-4 w-4 text-red-500" />
+				<Users class="h-4 w-4 text-red-500 dark:text-red-400" />
 			</CardHeader>
 			<CardContent>
-				<div class="text-2xl font-bold text-red-600">
+				<div class="text-2xl font-bold text-red-600 dark:text-red-400">
 					{stats?.inactive_admins ?? 0}
 				</div>
 				{#if (stats?.inactive_admins ?? 0) > 0}
 					<p class="text-xs text-muted-foreground">ต้องการการตรวจสอบ</p>
 				{:else}
-					<p class="text-xs text-green-600">ทุกคนใช้งานได้</p>
+					<p class="text-xs text-green-600 dark:text-green-400">ทุกคนใช้งานได้</p>
 				{/if}
 			</CardContent>
 		</Card>
@@ -478,10 +478,10 @@
 		<Card>
 			<CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
 				<CardTitle class="text-sm font-medium">เข้าใช้ล่าสุด</CardTitle>
-				<CalendarIcon class="h-4 w-4 text-blue-500" />
+				<CalendarIcon class="h-4 w-4 text-blue-500 dark:text-blue-400" />
 			</CardHeader>
 			<CardContent>
-				<div class="text-2xl font-bold text-blue-600">
+				<div class="text-2xl font-bold text-blue-600 dark:text-blue-400">
 					{stats.recent_logins}
 				</div>
 				<p class="text-xs text-muted-foreground">ใน 7 วันที่ผ่านมา</p>
@@ -493,7 +493,7 @@
 	<Card>
 		<CardHeader>
 			<CardTitle class="flex items-center gap-3">
-				<Filter class="h-6 w-6 text-blue-600" />
+				<Filter class="h-6 w-6 text-blue-600 dark:text-blue-400" />
 				ค้นหาและกรอง
 			</CardTitle>
 		</CardHeader>
@@ -502,7 +502,7 @@
 				<div class="flex-1">
 					<div class="relative">
 						<Search
-							class="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform text-gray-400"
+							class="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform text-gray-400 dark:text-gray-500"
 						/>
 						<Input
 							bind:value={searchQuery}
@@ -534,7 +534,7 @@
 						variant={statusFilter === 'active' ? 'default' : 'outline'}
 						size="sm"
 						onclick={() => (statusFilter = 'active')}
-						class="border-green-600 text-green-600 hover:bg-green-50"
+						class="border-green-600 dark:border-green-500 text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-950/40"
 					>
 						เปิดใช้งาน ({stats.active_admins})
 					</Button>
@@ -542,7 +542,7 @@
 						variant={statusFilter === 'inactive' ? 'default' : 'outline'}
 						size="sm"
 						onclick={() => (statusFilter = 'inactive')}
-						class="border-red-600 text-red-600 hover:bg-red-50"
+						class="border-red-600 dark:border-red-500 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40"
 					>
 						ปิดใช้งาน ({stats.inactive_admins})
 					</Button>
@@ -602,7 +602,7 @@
 			</Alert>
 		{:else if refreshing}
 			<div class="flex items-center justify-center py-12" role="status" aria-live="polite">
-				<Loader class="mr-3 h-8 w-8 animate-spin text-blue-500" />
+				<Loader class="mr-3 h-8 w-8 animate-spin text-blue-500 dark:text-blue-400" />
 				<span class="text-lg text-gray-600 dark:text-gray-300">กำลังรีเฟรชข้อมูล...</span>
 			</div>
 		{:else if filteredAdmins().length === 0}
@@ -610,7 +610,7 @@
 				{#if searchQuery || statusFilter !== 'all'}
 					<Search class="mx-auto mb-6 h-16 w-16 opacity-50" />
 					<h3 class="mb-2 text-xl font-semibold">ไม่พบข้อมูลที่ตรงกับการค้นหา</h3>
-					<p class="mb-6 text-gray-400">ลองเปลี่ยนคำค้นหาหรือตัวกรองใหม่</p>
+					<p class="mb-6 text-gray-400 dark:text-gray-500">ลองเปลี่ยนคำค้นหาหรือตัวกรองใหม่</p>
 					<Button onclick={clearSearch} variant="outline">ล้างการค้นหา</Button>
 				{:else}
 					<Shield class="mx-auto mb-6 h-16 w-16 opacity-50" />
@@ -621,7 +621,7 @@
 							ยังไม่มีแอดมินหน่วยงานในหน่วยงานนี้
 						{/if}
 					</h3>
-					<p class="mb-6 text-gray-400">
+					<p class="mb-6 text-gray-400 dark:text-gray-500">
 						{#if data.isSuperAdmin}
 							เริ่มต้นด้วยการเพิ่มแอดมินหน่วยงานคนแรก
 						{:else}
@@ -631,7 +631,7 @@
 					{#if data.isSuperAdmin}
 						<Button
 							onclick={openCreateDialog}
-							class="bg-blue-600 px-6 py-3 text-white hover:bg-blue-700"
+							class="bg-blue-600 dark:bg-blue-700 px-6 py-3 text-white hover:bg-blue-700 dark:hover:bg-blue-800"
 						>
 							<Plus class="mr-2 h-5 w-5" />
 							เพิ่มแอดมินหน่วยงานแรก
@@ -643,7 +643,7 @@
 			<Card>
 				<CardHeader>
 					<CardTitle class="flex items-center gap-3">
-						<Shield class="h-6 w-6 text-blue-600" />
+						<Shield class="h-6 w-6 text-blue-600 dark:text-blue-400" />
 						รายการแอดมินหน่วยงาน
 						<Badge variant="secondary" class="ml-2">
 							{filteredAdmins().length} รายการ
@@ -690,7 +690,7 @@
 														<Mail class="h-3 w-3" />
 														{admin.user?.email}
 													</div>
-													<div class="text-xs text-gray-400">
+													<div class="text-xs text-gray-400 dark:text-gray-500">
 														สร้างเมื่อ: {admin.created_at_formatted}
 													</div>
 												</div>
@@ -704,7 +704,7 @@
 														{admin.organization.name}
 													</Badge>
 												{:else}
-													<span class="text-gray-400">-</span>
+													<span class="text-gray-400 dark:text-gray-500">-</span>
 												{/if}
 											</Table.Cell>
 										{/if}
@@ -742,12 +742,12 @@
 															+{admin.assigned_departments.length - 2} อื่นๆ
 														</Badge>
 													{/if}
-													<div class="mt-1 text-xs text-gray-400">
+													<div class="mt-1 text-xs text-gray-400 dark:text-gray-500">
 														{admin.department_count || admin.assigned_departments.length} ภาควิชา
 													</div>
 												</div>
 											{:else}
-												<span class="text-sm text-gray-400">ไม่ได้ดูแลภาควิชา</span>
+												<span class="text-sm text-gray-400 dark:text-gray-500">ไม่ได้ดูแลภาควิชา</span>
 											{/if}
 										</Table.Cell>
 										<Table.Cell class="py-4">
@@ -763,10 +763,10 @@
 													</Badge>
 												{/if}
 												{#if admin.permissions.length === 0}
-													<span class="text-sm text-gray-400">ไม่มีสิทธิ์</span>
+													<span class="text-sm text-gray-400 dark:text-gray-500">ไม่มีสิทธิ์</span>
 												{/if}
 											</div>
-											<div class="mt-1 text-xs text-gray-400">
+											<div class="mt-1 text-xs text-gray-400 dark:text-gray-500">
 												{admin.permission_count} สิทธิ์
 											</div>
 										</Table.Cell>
@@ -783,7 +783,7 @@
 												{admin.last_login_formatted}
 											</div>
 											{#if admin.days_since_last_login !== null}
-												<div class="text-xs text-gray-400">
+												<div class="text-xs text-gray-400 dark:text-gray-500">
 													{admin.days_since_last_login} วันที่แล้ว
 												</div>
 											{/if}
@@ -794,7 +794,7 @@
 													variant="ghost"
 													size="sm"
 													onclick={() => openViewDialog(admin)}
-													class="text-blue-600 hover:bg-blue-50 hover:text-blue-700"
+													class="text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/40 hover:text-blue-700 dark:hover:text-blue-300"
 													title="ดูรายละเอียด"
 												>
 													<Eye class="h-4 w-4" />
@@ -807,8 +807,8 @@
 														onclick={() => handleToggleStatus(admin.id, admin.is_active ?? false)}
 														disabled={toggleLoading[admin.id] || false}
 														class="{admin.is_active
-															? 'text-orange-600 hover:bg-orange-50 hover:text-orange-700'
-															: 'text-green-600 hover:bg-green-50 hover:text-green-700'} transition-colors"
+															? 'text-orange-600 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-950/40 hover:text-orange-700 dark:hover:text-orange-300'
+															: 'text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-950/40 hover:text-green-700 dark:hover:text-green-300'} transition-colors"
 														title="{admin.is_active ? 'ปิดใช้งาน' : 'เปิดใช้งาน'}แอดมิน"
 													>
 														{#if toggleLoading[admin.id]}
@@ -823,7 +823,7 @@
 														variant="ghost"
 														size="sm"
 														onclick={() => openEditDialog(admin)}
-														class="text-blue-600 hover:bg-blue-50 hover:text-blue-700"
+														class="text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/40 hover:text-blue-700 dark:hover:text-blue-300"
 														title="แก้ไขข้อมูล"
 													>
 														<Pencil class="h-4 w-4" />
@@ -833,7 +833,7 @@
 														size="sm"
 														onclick={() =>
 															openDeleteDialog(admin.id, admin.full_name || 'แอดมิน')}
-														class="text-red-600 hover:bg-red-50 hover:text-red-700"
+														class="text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 hover:text-red-700 dark:hover:text-red-300"
 														title="ลบแอดมิน"
 													>
 														<Trash2 class="h-4 w-4" />
@@ -921,7 +921,7 @@
 									id="permission-{permission.value}"
 									bind:group={selectedPermissions}
 									value={permission.value}
-									class="focus:ring-opacity-50 rounded border-gray-300 text-blue-600 focus:border-blue-300 focus:ring focus:ring-blue-200"
+									class="focus:ring-opacity-50 rounded border-gray-300 dark:border-gray-700 text-blue-600 dark:text-blue-400 focus:border-blue-300 focus:ring focus:ring-blue-200"
 									disabled={createSubmitting}
 								/>
 								<Label for="permission-{permission.value}" class="cursor-pointer text-sm font-normal">{permission.label}</Label>
@@ -985,12 +985,12 @@
 						bind:value={generalAdminFormData.password}
 						placeholder="กรุณาใส่รหัสผ่าน"
 					/>
-					<p class="text-xs text-gray-500">รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร</p>
+					<p class="text-xs text-gray-500 dark:text-gray-400">รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร</p>
 				</div>
 
 				<div class="rounded-lg bg-blue-50 p-3 dark:bg-blue-900/20">
 					<div class="flex items-center gap-2">
-						<Users class="h-4 w-4 text-blue-600" />
+						<Users class="h-4 w-4 text-blue-600 dark:text-blue-400" />
 						<p class="text-sm font-medium text-blue-700 dark:text-blue-300">
 							แอดมินทั่วไปจะได้รับสิทธิ์พื้นฐาน
 						</p>
@@ -1031,7 +1031,7 @@
 	<Dialog.Content class="sm:max-w-2xl">
 		<Dialog.Header>
 			<Dialog.Title class="flex items-center gap-2">
-				<Shield class="h-5 w-5 text-blue-600" />
+				<Shield class="h-5 w-5 text-blue-600 dark:text-blue-400" />
 				รายละเอียดแอดมินหน่วยงาน
 			</Dialog.Title>
 			<Dialog.Description>ข้อมูลและสิทธิ์การเข้าถึงของแอดมินหน่วยงาน</Dialog.Description>
@@ -1042,25 +1042,25 @@
 				<!-- Basic Info -->
 				<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
 					<div class="space-y-2">
-						<Label class="text-sm font-medium text-gray-500">ชื่อ-นามสกุล</Label>
-						<p class="font-semibold text-gray-900">{viewingAdmin.full_name}</p>
+						<Label class="text-sm font-medium text-gray-500 dark:text-gray-400">ชื่อ-นามสกุล</Label>
+						<p class="font-semibold text-gray-900 dark:text-gray-100">{viewingAdmin.full_name}</p>
 					</div>
 					<div class="space-y-2">
-						<Label class="text-sm font-medium text-gray-500">อีเมล</Label>
-						<p class="flex items-center gap-1 text-gray-700">
+						<Label class="text-sm font-medium text-gray-500 dark:text-gray-400">อีเมล</Label>
+						<p class="flex items-center gap-1 text-gray-700 dark:text-gray-300">
 							<Mail class="h-4 w-4" />
 							{viewingAdmin.user?.email}
 						</p>
 					</div>
 					<div class="space-y-2">
-						<Label class="text-sm font-medium text-gray-500">หน่วยงาน</Label>
-						<p class="flex items-center gap-1 text-gray-700">
+						<Label class="text-sm font-medium text-gray-500 dark:text-gray-400">หน่วยงาน</Label>
+						<p class="flex items-center gap-1 text-gray-700 dark:text-gray-300">
 							<School class="h-4 w-4" />
 							{viewingAdmin.organization?.name || 'ไม่ระบุ'}
 						</p>
 					</div>
 					<div class="space-y-2">
-						<Label class="text-sm font-medium text-gray-500">สถานะ</Label>
+						<Label class="text-sm font-medium text-gray-500 dark:text-gray-400">สถานะ</Label>
 						{#if viewingAdmin}
 							{@const viewStatus = getAdminCombinedStatus(viewingAdmin)}
 							<Badge variant="default" class={viewStatus.badgeClass}>
@@ -1075,20 +1075,20 @@
 				<!-- Activity Info -->
 				<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
 					<div class="space-y-2">
-						<Label class="text-sm font-medium text-gray-500">เข้าใช้ครั้งล่าสุด</Label>
-						<p class="flex items-center gap-1 text-gray-700">
+						<Label class="text-sm font-medium text-gray-500 dark:text-gray-400">เข้าใช้ครั้งล่าสุด</Label>
+						<p class="flex items-center gap-1 text-gray-700 dark:text-gray-300">
 							<CalendarIcon class="h-4 w-4" />
 							{viewingAdmin.last_login_formatted}
 						</p>
 						{#if viewingAdmin.days_since_last_login !== null}
-							<p class="text-xs text-gray-400">
+							<p class="text-xs text-gray-400 dark:text-gray-500">
 								{viewingAdmin.days_since_last_login} วันที่แล้ว
 							</p>
 						{/if}
 					</div>
 					<div class="space-y-2">
-						<Label class="text-sm font-medium text-gray-500">วันที่สร้าง</Label>
-						<p class="text-gray-700">
+						<Label class="text-sm font-medium text-gray-500 dark:text-gray-400">วันที่สร้าง</Label>
+						<p class="text-gray-700 dark:text-gray-300">
 							{viewingAdmin.created_at_formatted}
 						</p>
 					</div>
@@ -1103,7 +1103,7 @@
 								<div
 									class="flex items-center gap-2 rounded-lg border bg-purple-50 p-3 dark:bg-purple-900/20"
 								>
-									<BuildingIcon class="h-4 w-4 text-purple-600" />
+									<BuildingIcon class="h-4 w-4 text-purple-600 dark:text-purple-400" />
 									<div class="flex-1">
 										<span class="text-sm font-medium text-purple-800 dark:text-purple-200">
 											{department.name}
@@ -1118,15 +1118,15 @@
 								</div>
 							{/each}
 						</div>
-						<p class="text-xs text-gray-500">
+						<p class="text-xs text-gray-500 dark:text-gray-400">
 							รับผิดชอบทั้งหมด {viewingAdmin.department_count ||
 								viewingAdmin.assigned_departments.length} ภาควิชา
 						</p>
 					{:else}
-						<div class="py-8 text-center text-gray-500">
+						<div class="py-8 text-center text-gray-500 dark:text-gray-400">
 							<BuildingIcon class="mx-auto mb-3 h-12 w-12 opacity-50" />
 							<p class="text-sm">ไม่ได้รับมอบหมายให้ดูแลภาควิชาใดๆ</p>
-							<p class="mt-1 text-xs text-gray-400">ทำหน้าที่เป็นแอดมินหน่วยงานเท่านั้น</p>
+							<p class="mt-1 text-xs text-gray-400 dark:text-gray-500">ทำหน้าที่เป็นแอดมินหน่วยงานเท่านั้น</p>
 						</div>
 					{/if}
 				</div>
@@ -1137,17 +1137,17 @@
 					<div class="grid grid-cols-1 gap-2 md:grid-cols-2">
 						{#each viewingAdmin.permissions as permission}
 							<div class="flex items-center gap-2 rounded-lg bg-blue-50 p-2 dark:bg-blue-900/20">
-								<UserCheck class="h-4 w-4 text-blue-600" />
+								<UserCheck class="h-4 w-4 text-blue-600 dark:text-blue-400" />
 								<span class="text-sm text-blue-800 dark:text-blue-200">
 									{formatPermissionName(permission)}
 								</span>
 							</div>
 						{/each}
 						{#if viewingAdmin.permissions.length === 0}
-							<p class="col-span-2 text-gray-400 italic">ไม่มีสิทธิ์การเข้าถึงเพิ่มเติม</p>
+							<p class="col-span-2 text-gray-400 dark:text-gray-500 italic">ไม่มีสิทธิ์การเข้าถึงเพิ่มเติม</p>
 						{/if}
 					</div>
-					<p class="text-xs text-gray-500">
+					<p class="text-xs text-gray-500 dark:text-gray-400">
 						รวม {viewingAdmin.permission_count} สิทธิ์การเข้าถึง
 					</p>
 				</div>
@@ -1230,7 +1230,7 @@
 										id="edit-permission-{permission.value}"
 										bind:group={editFormData.permissions}
 										value={permission.value}
-										class="focus:ring-opacity-50 rounded border-gray-300 text-blue-600 focus:border-blue-300 focus:ring focus:ring-blue-200"
+										class="focus:ring-opacity-50 rounded border-gray-300 dark:border-gray-700 text-blue-600 dark:text-blue-400 focus:border-blue-300 focus:ring focus:ring-blue-200"
 									/>
 									<Label
 										for="edit-permission-{permission.value}"
@@ -1276,7 +1276,7 @@
 				<AlertDialog.Description>
 					{#if adminToDelete}
 						คุณแน่ใจหรือไม่ที่จะลบแอดมินหน่วยงาน "{adminToDelete.name}"?<br />
-						<strong class="text-red-600">การดำเนินการนี้จะลบบัญชีและสิทธิ์การเข้าถึงทั้งหมด</strong
+						<strong class="text-red-600 dark:text-red-400">การดำเนินการนี้จะลบบัญชีและสิทธิ์การเข้าถึงทั้งหมด</strong
 						><br />
 						การดำเนินการนี้ไม่สามารถยกเลิกได้
 					{:else}
@@ -1293,7 +1293,7 @@
 				>
 					ยกเลิก
 				</AlertDialog.Cancel>
-				<AlertDialog.Action onclick={handleDelete} class="bg-red-600 text-white hover:bg-red-700">
+				<AlertDialog.Action onclick={handleDelete} class="bg-red-600 dark:bg-red-700 text-white hover:bg-red-700 dark:hover:bg-red-800">
 					ลบแอดมินหน่วยงาน
 				</AlertDialog.Action>
 			</AlertDialog.Footer>

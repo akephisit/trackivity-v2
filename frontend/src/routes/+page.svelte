@@ -129,53 +129,53 @@
 		{:else if dashboard}
 			<!-- Summary Stats -->
 			<section class="grid grid-cols-2 gap-6 lg:grid-cols-4">
-				<Card.Root class="border-0 bg-gradient-to-r from-blue-500 to-blue-600 text-white">
+				<Card.Root class="border-0 bg-gradient-to-r from-blue-500 dark:from-blue-600 to-blue-600 dark:to-blue-700 text-white">
 					<Card.Content class="p-6">
 						<div class="flex items-center justify-between">
 							<div>
-								<p class="text-sm font-medium text-blue-100">กิจกรรมใหม่</p>
+								<p class="text-sm font-medium text-blue-100 dark:text-blue-200">กิจกรรมใหม่</p>
 								<p class="text-3xl font-bold">{dashboard.recent.length}</p>
 							</div>
-							<div class="bg-opacity-30 rounded-lg bg-blue-400 p-3">
+							<div class="bg-opacity-30 rounded-lg bg-blue-400 dark:bg-blue-500 p-3">
 								<CalendarDays class="h-6 w-6" />
 							</div>
 						</div>
 					</Card.Content>
 				</Card.Root>
-				<Card.Root class="border-0 bg-gradient-to-r from-purple-500 to-purple-600 text-white">
+				<Card.Root class="border-0 bg-gradient-to-r from-purple-500 dark:from-purple-600 to-purple-600 dark:to-purple-700 text-white">
 					<Card.Content class="p-6">
 						<div class="flex items-center justify-between">
 							<div>
-								<p class="text-sm font-medium text-purple-100">กำลังจะมาถึง</p>
+								<p class="text-sm font-medium text-purple-100 dark:text-purple-200">กำลังจะมาถึง</p>
 								<p class="text-3xl font-bold">{dashboard.upcoming.length}</p>
 							</div>
-							<div class="bg-opacity-30 rounded-lg bg-purple-400 p-3">
+							<div class="bg-opacity-30 rounded-lg bg-purple-400 dark:bg-purple-500 p-3">
 								<CalendarIcon class="h-6 w-6" />
 							</div>
 						</div>
 					</Card.Content>
 				</Card.Root>
-				<Card.Root class="border-0 bg-gradient-to-r from-green-500 to-green-600 text-white">
+				<Card.Root class="border-0 bg-gradient-to-r from-green-500 dark:from-green-600 to-green-600 dark:to-green-700 text-white">
 					<Card.Content class="p-6">
 						<div class="flex items-center justify-between">
 							<div>
-								<p class="text-sm font-medium text-green-100">เปิดรับสมัคร</p>
+								<p class="text-sm font-medium text-green-100 dark:text-green-200">เปิดรับสมัคร</p>
 								<p class="text-3xl font-bold">{dashboard.upcoming.filter(a => a.registration_open).length}</p>
 							</div>
-							<div class="bg-opacity-30 rounded-lg bg-green-400 p-3">
+							<div class="bg-opacity-30 rounded-lg bg-green-400 dark:bg-green-500 p-3">
 								<UserPlus class="h-6 w-6" />
 							</div>
 						</div>
 					</Card.Content>
 				</Card.Root>
-				<Card.Root class="border-0 bg-gradient-to-r from-orange-500 to-orange-600 text-white">
+				<Card.Root class="border-0 bg-gradient-to-r from-orange-500 dark:from-orange-600 to-orange-600 dark:to-orange-700 text-white">
 					<Card.Content class="p-6">
 						<div class="flex items-center justify-between">
 							<div>
-								<p class="text-sm font-medium text-orange-100">รวมทั้งหมด</p>
+								<p class="text-sm font-medium text-orange-100 dark:text-orange-200">รวมทั้งหมด</p>
 								<p class="text-3xl font-bold">{dashboard.recent.length + dashboard.upcoming.length}</p>
 							</div>
-							<div class="bg-opacity-30 rounded-lg bg-orange-400 p-3">
+							<div class="bg-opacity-30 rounded-lg bg-orange-400 dark:bg-orange-500 p-3">
 								<TrendingUp class="h-6 w-6" />
 							</div>
 						</div>
@@ -253,13 +253,13 @@
 						{#each dashboard.recent as activity}
 							<Card.Root
 								onclick={() => goto(`/student/activities/${activity.id}`)}
-								class="cursor-pointer border-blue-200 bg-blue-50/50 transition-shadow hover:shadow-lg"
+								class="cursor-pointer border-blue-200 dark:border-blue-800 bg-blue-50/50 dark:bg-blue-950/30 transition-shadow hover:shadow-lg"
 							>
 								<Card.Content class="p-6">
 									<div class="space-y-4">
 										<div class="flex items-start justify-between">
 											<h3 class="line-clamp-2 text-lg leading-tight font-semibold">{activity.title}</h3>
-											<Badge variant="default" class="ml-2 shrink-0 bg-blue-500 text-white">ใหม่</Badge>
+											<Badge variant="default" class="ml-2 shrink-0 bg-blue-500 dark:bg-blue-600 text-white">ใหม่</Badge>
 										</div>
 										<div class="space-y-2 text-sm text-muted-foreground">
 											<div class="flex items-center gap-2">

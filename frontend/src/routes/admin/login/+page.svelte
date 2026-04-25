@@ -75,7 +75,7 @@
 >
 	<div class="w-full max-w-md space-y-8">
 		<div class="text-center">
-			<div class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-blue-600">
+			<div class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-blue-600 dark:bg-blue-700">
 				<Shield class="h-8 w-8 text-white" />
 			</div>
 			<h1 class="text-3xl font-bold text-gray-900 dark:text-white">Admin Portal</h1>
@@ -112,7 +112,7 @@
 							<Label for="password">รหัสผ่าน</Label>
 							<a
 								href="/forgot-password"
-								class="text-sm font-medium text-blue-600 hover:text-blue-500"
+								class="text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-400"
 							>
 								ลืมรหัสผ่าน?
 							</a>
@@ -134,9 +134,9 @@
 								tabindex="-1"
 							>
 								{#if showPassword}
-									<EyeOff class="h-4 w-4 text-gray-400" />
+									<EyeOff class="h-4 w-4 text-gray-400 dark:text-gray-400" />
 								{:else}
-									<Eye class="h-4 w-4 text-gray-400" />
+									<Eye class="h-4 w-4 text-gray-400 dark:text-gray-400" />
 								{/if}
 							</button>
 						</div>
@@ -147,7 +147,7 @@
 						<Label for="remember_me" class="text-sm">จดจำการเข้าสู่ระบบ (30 วัน)</Label>
 					</div>
 
-					<Button type="submit" class="w-full bg-blue-600 hover:bg-blue-700" disabled={submitting}>
+					<Button type="submit" class="w-full bg-blue-600 dark:bg-blue-700 hover:bg-blue-700 dark:hover:bg-blue-800" disabled={submitting}>
 						{#if submitting}
 							<Loader class="mr-2 h-4 w-4 animate-spin" />
 							กำลังเข้าสู่ระบบ...
@@ -172,7 +172,7 @@
 							นักเรียน?
 							<a
 								href="/login"
-								class="font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400"
+								class="font-medium text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-400"
 							>
 								เข้าสู่ระบบนักเรียน
 							</a>
@@ -188,7 +188,7 @@
 								<p class="text-sm font-medium">Development Mode - Default Admin:</p>
 								<p class="font-mono text-xs">Email: admin@trackivity.local</p>
 								<p class="font-mono text-xs">Password: admin123!</p>
-								<p class="text-xs text-orange-600">⚠️ Change password after first login!</p>
+								<p class="text-xs text-orange-600 dark:text-orange-400">⚠️ Change password after first login!</p>
 							</div>
 						</AlertDescription>
 					</Alert>

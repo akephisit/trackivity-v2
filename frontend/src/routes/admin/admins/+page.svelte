@@ -345,16 +345,16 @@
 
 		if (!isEnabled) {
 			statusText = 'ปิดใช้งาน';
-			badgeClass = 'bg-red-100 text-red-800 hover:bg-red-100';
-			dotClass = 'bg-red-500';
+			badgeClass = 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200 hover:bg-red-100 dark:hover:bg-red-900/30';
+			dotClass = 'bg-red-500 dark:bg-red-600';
 		} else if (isActive) {
 			statusText = 'เปิดใช้งาน';
-			badgeClass = 'bg-green-100 text-green-800 hover:bg-green-100';
-			dotClass = 'bg-green-500';
+			badgeClass = 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 hover:bg-green-100 dark:hover:bg-green-900/30';
+			dotClass = 'bg-green-500 dark:bg-green-600';
 		} else {
 			statusText = 'เปิดใช้งาน';
-			badgeClass = 'bg-green-50 text-green-700 hover:bg-green-50';
-			dotClass = 'bg-green-400';
+			badgeClass = 'bg-green-50 dark:bg-green-950/30 text-green-700 dark:text-green-300 hover:bg-green-50 dark:hover:bg-green-950/40';
+			dotClass = 'bg-green-400 dark:bg-green-500';
 		}
 
 		return {
@@ -493,10 +493,10 @@
 		<Card>
 			<CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
 				<CardTitle class="truncate text-xs font-medium lg:text-sm">ซุปเปอร์แอดมิน</CardTitle>
-				<Shield class="h-4 w-4 flex-shrink-0 text-red-500 lg:h-5 lg:w-5" />
+				<Shield class="h-4 w-4 flex-shrink-0 text-red-500 dark:text-red-400 lg:h-5 lg:w-5" />
 			</CardHeader>
 			<CardContent class="p-4 lg:p-6">
-				<div class="text-lg font-bold text-red-600 lg:text-2xl">
+				<div class="text-lg font-bold text-red-600 dark:text-red-400 lg:text-2xl">
 					{groupedAdmins.superAdmins.length}
 				</div>
 			</CardContent>
@@ -505,10 +505,10 @@
 		<Card>
 			<CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
 				<CardTitle class="truncate text-xs font-medium lg:text-sm">แอดมินหน่วยงาน</CardTitle>
-				<Shield class="h-4 w-4 flex-shrink-0 text-blue-500 lg:h-5 lg:w-5" />
+				<Shield class="h-4 w-4 flex-shrink-0 text-blue-500 dark:text-blue-400 lg:h-5 lg:w-5" />
 			</CardHeader>
 			<CardContent class="p-4 lg:p-6">
-				<div class="text-lg font-bold text-blue-600 lg:text-2xl">
+				<div class="text-lg font-bold text-blue-600 dark:text-blue-400 lg:text-2xl">
 					{filteredAdmins.filter((a) => a.admin_level === AdminLevel.OrganizationAdmin).length}
 				</div>
 			</CardContent>
@@ -517,10 +517,10 @@
 		<Card>
 			<CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
 				<CardTitle class="truncate text-xs font-medium lg:text-sm">แอดมินทั่วไป</CardTitle>
-				<Users class="h-4 w-4 flex-shrink-0 text-gray-500 lg:h-5 lg:w-5" />
+				<Users class="h-4 w-4 flex-shrink-0 text-gray-500 dark:text-gray-400 lg:h-5 lg:w-5" />
 			</CardHeader>
 			<CardContent class="p-4 lg:p-6">
-				<div class="text-lg font-bold text-gray-600 lg:text-2xl">
+				<div class="text-lg font-bold text-gray-600 dark:text-gray-400 lg:text-2xl">
 					{filteredAdmins.filter((a) => a.admin_level === AdminLevel.RegularAdmin).length}
 				</div>
 			</CardContent>
@@ -559,7 +559,7 @@
 						size="sm"
 						class="w-full sm:w-auto {levelFilter === AdminLevel.SuperAdmin
 							? ''
-							: 'border-red-600 text-red-600 hover:bg-red-50'}"
+							: 'border-red-600 dark:border-red-500 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40'}"
 						onclick={() => (levelFilter = AdminLevel.SuperAdmin)}
 					>
 						ซุปเปอร์แอดมิน
@@ -569,7 +569,7 @@
 						size="sm"
 						class="w-full sm:w-auto {levelFilter === AdminLevel.OrganizationAdmin
 							? ''
-							: 'border-blue-600 text-blue-600 hover:bg-blue-50'}"
+							: 'border-blue-600 dark:border-blue-500 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/40'}"
 						onclick={() => (levelFilter = AdminLevel.OrganizationAdmin)}
 					>
 						แอดมินหน่วยงาน
@@ -579,7 +579,7 @@
 						size="sm"
 						class="w-full sm:w-auto {levelFilter === AdminLevel.RegularAdmin
 							? ''
-							: 'border-gray-600 text-gray-600 hover:bg-gray-50'}"
+							: 'border-gray-600 dark:border-gray-500 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-950/40'}"
 						onclick={() => (levelFilter = AdminLevel.RegularAdmin)}
 					>
 						แอดมินทั่วไป
@@ -645,15 +645,15 @@
 			{#if groupedAdmins.superAdmins.length > 0}
 				<section aria-labelledby="super-admin-heading">
 					<Card>
-						<CardHeader class="bg-red-50/50">
+						<CardHeader class="bg-red-50/50 dark:bg-red-950/30">
 							<CardTitle class="flex items-center gap-2">
-								<Shield class="h-5 w-5 text-red-600" />
-								<span class="text-red-700">ซุปเปอร์แอดมิน</span>
+								<Shield class="h-5 w-5 text-red-600 dark:text-red-400" />
+								<span class="text-red-700 dark:text-red-300">ซุปเปอร์แอดมิน</span>
 								<Badge variant="destructive" class="ml-2">
 									{groupedAdmins.superAdmins.length} คน
 								</Badge>
 							</CardTitle>
-							<CardDescription class="mt-2 text-red-600">
+							<CardDescription class="mt-2 text-red-600 dark:text-red-400">
 								ผู้ดูแลระบบระดับสูงสุดที่มีสิทธิ์เข้าถึงและจัดการทุกส่วนของระบบ
 							</CardDescription>
 						</CardHeader>
@@ -686,13 +686,13 @@
 									</Table.Header>
 									<Table.Body>
 										{#each groupedAdmins.superAdmins as admin (`super-${admin.id}-${admin.user_id}`)}
-											<Table.Row class="hover:bg-red-50/50">
+											<Table.Row class="hover:bg-red-50/50 dark:hover:bg-red-950/30">
 												<Table.Cell class="py-4 font-medium">
 													<div class="flex items-center gap-3">
 														<div
-															class="flex h-8 w-8 items-center justify-center rounded-full bg-red-100"
+															class="flex h-8 w-8 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30"
 														>
-															<Shield class="h-4 w-4 text-red-600" />
+															<Shield class="h-4 w-4 text-red-600 dark:text-red-400" />
 														</div>
 														<span>
 															{formatFullName(admin.user)}
@@ -708,7 +708,7 @@
 												<Table.Cell class="py-4">
 													<Badge
 														variant="destructive"
-														class="bg-red-100 text-red-800 hover:bg-red-100"
+														class="bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200 hover:bg-red-100 dark:hover:bg-red-900/30"
 													>
 														{getRoleDisplayName(admin.admin_level)}
 													</Badge>
@@ -745,8 +745,8 @@
 																)}
 															disabled={toggleLoading[admin.id] || false}
 															class="{getAdminEnabledStatus(admin)
-																? 'text-orange-600 hover:bg-orange-50 hover:text-orange-700'
-																: 'text-green-600 hover:bg-green-50 hover:text-green-700'} transition-colors"
+																? 'text-orange-600 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-950/40 hover:text-orange-700 dark:hover:text-orange-300'
+																: 'text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-950/40 hover:text-green-700 dark:hover:text-green-300'} transition-colors"
 															aria-label={`${getAdminEnabledStatus(admin) ? 'ปิดการใช้งานบัญชี' : 'เปิดการใช้งานบัญชี'} ${formatFullName(admin.user)}`}
 															title="{getAdminEnabledStatus(admin)
 																? 'ปิดการใช้งานบัญชี'
@@ -764,7 +764,7 @@
 															variant="ghost"
 															size="sm"
 															onclick={() => openEditDialog(admin)}
-															class="text-blue-600 transition-colors hover:bg-blue-50 hover:text-blue-700"
+															class="text-blue-600 dark:text-blue-400 transition-colors hover:bg-blue-50 dark:hover:bg-blue-950/40 hover:text-blue-700 dark:hover:text-blue-300"
 															aria-label={`แก้ไข ${formatFullName(admin.user)}`}
 															title="แก้ไขแอดมิน"
 														>
@@ -779,7 +779,7 @@
 																	admin.user_id || admin.user?.id || '',
 																	formatFullName(admin.user)
 																)}
-															class="text-red-600 transition-colors hover:bg-red-50 hover:text-red-700"
+															class="text-red-600 dark:text-red-400 transition-colors hover:bg-red-50 dark:hover:bg-red-950/40 hover:text-red-700 dark:hover:text-red-300"
 															aria-label={`ลบ ${formatFullName(admin.user)}`}
 															title="ลบแอดมิน"
 														>
@@ -819,7 +819,7 @@
 					</h2>
 					{#each groupedAdmins.facultyGroups as [facultyId, facultyGroup] (facultyId)}
 						<Collapsible.Root open class="group">
-							<Card class="border-blue-200 shadow-sm transition-shadow hover:shadow-md">
+							<Card class="border-blue-200 dark:border-blue-800 shadow-sm transition-shadow hover:shadow-md">
 								<CardHeader class="bg-blue-50/50 pb-4 dark:bg-blue-950/20">
 									<div class="flex items-center justify-between">
 										<CardTitle class="flex items-center gap-3">
@@ -839,7 +839,7 @@
 													<div class="mt-1 flex items-center gap-2">
 														<Badge
 															variant="default"
-															class="bg-blue-100 px-2 py-1 text-blue-800 hover:bg-blue-100"
+															class="bg-blue-100 dark:bg-blue-900/30 px-2 py-1 text-blue-800 dark:text-blue-200 hover:bg-blue-100 dark:hover:bg-blue-900/30"
 														>
 															{facultyGroup.admins.length} คน
 														</Badge>
@@ -928,14 +928,14 @@
 																<div
 																	class="flex items-center gap-2 text-gray-600 dark:text-gray-300"
 																>
-																	<Mail class="h-4 w-4 text-gray-400" aria-hidden="true" />
+																	<Mail class="h-4 w-4 text-gray-400 dark:text-gray-500" aria-hidden="true" />
 																	<span class="text-sm">{admin.user?.email || 'ไม่ระบุอีเมล'}</span>
 																</div>
 															</Table.Cell>
 															<Table.Cell class="py-4">
 																<Badge
 																	variant="default"
-																	class="bg-blue-100 text-blue-800 hover:bg-blue-100"
+																	class="bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 hover:bg-blue-100 dark:hover:bg-blue-900/30"
 																>
 																	{getRoleDisplayName(admin.admin_level)}
 																</Badge>
@@ -973,8 +973,8 @@
 																			)}
 																		disabled={toggleLoading[admin.id] || false}
 																		class="{getAdminEnabledStatus(admin)
-																			? 'text-orange-600 hover:bg-orange-50 hover:text-orange-700'
-																			: 'text-green-600 hover:bg-green-50 hover:text-green-700'} transition-colors"
+																			? 'text-orange-600 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-950/40 hover:text-orange-700 dark:hover:text-orange-300'
+																			: 'text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-950/40 hover:text-green-700 dark:hover:text-green-300'} transition-colors"
 																		aria-label="{getAdminEnabledStatus(admin)
 																			? 'ปิดการใช้งานบัญชี'
 																			: 'เปิดการใช้งานบัญชี'} {admin.user?.first_name || 'แอดมิน'}"
@@ -994,7 +994,7 @@
 																		variant="ghost"
 																		size="sm"
 																		onclick={() => openEditDialog(admin)}
-																		class="text-blue-600 transition-colors hover:bg-blue-50 hover:text-blue-700"
+																		class="text-blue-600 dark:text-blue-400 transition-colors hover:bg-blue-50 dark:hover:bg-blue-950/40 hover:text-blue-700 dark:hover:text-blue-300"
 																		aria-label="แก้ไข {admin.user?.first_name || 'แอดมิน'}"
 																		title="แก้ไขแอดมิน"
 																	>
@@ -1009,7 +1009,7 @@
 																				admin.user_id || admin.user?.id || '',
 																				formatFullName(admin.user)
 																			)}
-																		class="text-red-600 transition-colors hover:bg-red-50 hover:text-red-700"
+																		class="text-red-600 dark:text-red-400 transition-colors hover:bg-red-50 dark:hover:bg-red-950/40 hover:text-red-700 dark:hover:text-red-300"
 																		aria-label="ลบ {admin.user?.first_name || 'แอดมิน'}"
 																		title="ลบแอดมิน"
 																	>
@@ -1097,9 +1097,9 @@
 
 			{#if selectedAdminLevel === AdminLevel.OrganizationAdmin}
 				<div class="space-y-2">
-					<Label>หน่วยงาน <span class="text-red-500">*</span></Label>
+					<Label>หน่วยงาน <span class="text-red-500 dark:text-red-400">*</span></Label>
 					<Select.Root type="single" bind:value={selectedFaculty} disabled={submitting}>
-						<Select.Trigger class={!selectedFaculty ? 'border-red-300' : ''}>
+						<Select.Trigger class={!selectedFaculty ? 'border-red-300 dark:border-red-700' : ''}>
 							{facultyOptions.find((opt) => opt.value === selectedFaculty)?.label ?? 'เลือกหน่วยงานที่รับผิดชอบ'}
 						</Select.Trigger>
 						<Select.Content>
@@ -1109,20 +1109,20 @@
 						</Select.Content>
 					</Select.Root>
 					{#if !selectedFaculty}
-						<p class="mt-1 text-sm text-red-600">กรุณาเลือกหน่วยงานสำหรับแอดมินระดับหน่วยงาน</p>
+						<p class="mt-1 text-sm text-red-600 dark:text-red-400">กรุณาเลือกหน่วยงานสำหรับแอดมินระดับหน่วยงาน</p>
 					{/if}
 				</div>
 			{:else if selectedAdminLevel === AdminLevel.SuperAdmin}
 				<div class="rounded-md bg-blue-50 p-3 dark:bg-blue-950/20">
 					<div class="flex items-center">
-						<Shield class="mr-2 h-5 w-5 text-blue-500" />
+						<Shield class="mr-2 h-5 w-5 text-blue-500 dark:text-blue-400" />
 						<p class="text-sm text-blue-700 dark:text-blue-300">ซุปเปอร์แอดมินมีสิทธิ์เข้าถึงทุกหน่วยงาน ไม่จำเป็นต้องระบุหน่วยงานเฉพาะ</p>
 					</div>
 				</div>
 			{:else if selectedAdminLevel === AdminLevel.RegularAdmin}
 				<div class="rounded-md bg-gray-50 p-3 dark:bg-gray-800/50">
 					<div class="flex items-center">
-						<Users class="mr-2 h-5 w-5 text-gray-500" />
+						<Users class="mr-2 h-5 w-5 text-gray-500 dark:text-gray-400" />
 						<p class="text-sm text-gray-600 dark:text-gray-300">แอดมินทั่วไปจะได้รับสิทธิ์พื้นฐานในการจัดการระบบ</p>
 					</div>
 				</div>
@@ -1277,7 +1277,7 @@
 			>
 				ยกเลิก
 			</AlertDialog.Cancel>
-			<AlertDialog.Action onclick={handleDelete} class="bg-red-600 text-white hover:bg-red-700">
+			<AlertDialog.Action onclick={handleDelete} class="bg-red-600 dark:bg-red-700 text-white hover:bg-red-700 dark:hover:bg-red-800">
 				ลบแอดมิน
 			</AlertDialog.Action>
 		</AlertDialog.Footer>

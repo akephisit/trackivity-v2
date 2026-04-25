@@ -190,7 +190,7 @@
 				<div class="space-y-2">
 					<Label for="title">ชื่อกิจกรรม *</Label>
 					<Input id="title" bind:value={title} placeholder="กรอกชื่อกิจกรรม" />
-					{#if errors.title}<p class="text-sm text-red-500">{errors.title}</p>{/if}
+					{#if errors.title}<p class="text-sm text-red-500 dark:text-red-400">{errors.title}</p>{/if}
 				</div>
 
 				<!-- รายละเอียด -->
@@ -213,7 +213,7 @@
 								{/each}
 							</Select.Content>
 						</Select.Root>
-						{#if errors.activity_type}<p class="text-sm text-red-500">{errors.activity_type}</p>{/if}
+						{#if errors.activity_type}<p class="text-sm text-red-500 dark:text-red-400">{errors.activity_type}</p>{/if}
 					</div>
 
 					<div class="space-y-2">
@@ -260,7 +260,7 @@
 							</Select.Content>
 						</Select.Root>
 					{/if}
-					{#if errors.organizer_id}<p class="text-sm text-red-500">{errors.organizer_id}</p>{/if}
+					{#if errors.organizer_id}<p class="text-sm text-red-500 dark:text-red-400">{errors.organizer_id}</p>{/if}
 					{#if loadError}
 						<Alert variant="destructive">
 							<CircleAlert class="size-4" />
@@ -331,7 +331,7 @@
 								<Calendar locale="th-TH" type="single" bind:value={startDateValue} calendarLabel="วันที่เริ่ม" />
 							</Popover.Content>
 						</Popover.Root>
-						{#if errors.start_date}<p class="text-sm text-red-500">{errors.start_date}</p>{/if}
+						{#if errors.start_date}<p class="text-sm text-red-500 dark:text-red-400">{errors.start_date}</p>{/if}
 					</div>
 
 					<!-- วันที่สิ้นสุด -->
@@ -348,7 +348,7 @@
 								<Calendar locale="th-TH" type="single" bind:value={endDateValue} calendarLabel="วันที่สิ้นสุด" />
 							</Popover.Content>
 						</Popover.Root>
-						{#if errors.end_date}<p class="text-sm text-red-500">{errors.end_date}</p>{/if}
+						{#if errors.end_date}<p class="text-sm text-red-500 dark:text-red-400">{errors.end_date}</p>{/if}
 					</div>
 				</div>
 
@@ -380,7 +380,7 @@
 								</Select.Content>
 							</Select.Root>
 						</div>
-						{#if errors.start_time}<p class="text-sm text-red-500">{errors.start_time}</p>{/if}
+						{#if errors.start_time}<p class="text-sm text-red-500 dark:text-red-400">{errors.start_time}</p>{/if}
 					</div>
 
 					<!-- เวลาสิ้นสุด -->
@@ -409,7 +409,7 @@
 								</Select.Content>
 							</Select.Root>
 						</div>
-						{#if errors.end_time}<p class="text-sm text-red-500">{errors.end_time}</p>{/if}
+						{#if errors.end_time}<p class="text-sm text-red-500 dark:text-red-400">{errors.end_time}</p>{/if}
 					</div>
 				</div>
 
@@ -428,14 +428,14 @@
 				<div class="space-y-2">
 					<Label for="location">สถานที่จัดกิจกรรม *</Label>
 					<Input id="location" bind:value={location} placeholder="ระบุสถานที่จัดกิจกรรม" />
-					{#if errors.location}<p class="text-sm text-red-500">{errors.location}</p>{/if}
+					{#if errors.location}<p class="text-sm text-red-500 dark:text-red-400">{errors.location}</p>{/if}
 				</div>
 
 				<div class="grid gap-4 sm:grid-cols-2">
 					<div class="space-y-2">
 						<Label for="hours">ชั่วโมงกิจกรรม *</Label>
 						<Input id="hours" type="number" min="1" bind:value={hours} placeholder="จำนวนชั่วโมง" />
-						{#if errors.hours}<p class="text-sm text-red-500">{errors.hours}</p>{/if}
+						{#if errors.hours}<p class="text-sm text-red-500 dark:text-red-400">{errors.hours}</p>{/if}
 					</div>
 					<div class="space-y-2">
 						<Label for="max_participants">จำนวนที่รับได้สูงสุด</Label>

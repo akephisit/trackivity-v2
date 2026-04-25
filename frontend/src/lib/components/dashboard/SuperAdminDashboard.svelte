@@ -51,7 +51,7 @@
 	<div class="flex items-center justify-between">
 		<div>
 			<h1 class="flex items-center gap-2 text-2xl font-bold">
-				<Crown class="size-6 text-yellow-600" />
+				<Crown class="size-6 text-yellow-600 dark:text-yellow-400" />
 				ภาพรวมระบบ
 			</h1>
 			<p class="text-muted-foreground">แดชบอร์ดสำหรับผู้ดูแลระบบสูงสุด</p>

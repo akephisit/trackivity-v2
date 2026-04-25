@@ -153,7 +153,7 @@
 
 		{#if permissionStatus === 'default' || permissionStatus === 'denied'}
 			<div class="m-2 rounded bg-muted/50 p-3 text-xs">
-				<div class="mb-1 font-semibold text-orange-500">
+				<div class="mb-1 font-semibold text-orange-500 dark:text-orange-400">
 					{#if permissionStatus === 'default'}
 						⚠️ ยังไม่ได้เปิดการแจ้งเตือน
 					{:else}

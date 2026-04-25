@@ -69,7 +69,7 @@
 	<div class="w-full max-w-md space-y-8">
 		<div class="text-center">
 			<div
-				class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-600"
+				class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-600 dark:bg-green-700"
 			>
 				<School class="h-8 w-8 text-white" />
 			</div>
@@ -106,7 +106,7 @@
 							<Label for="password">รหัสผ่าน</Label>
 							<a
 								href="/forgot-password"
-								class="text-sm font-medium text-green-600 hover:text-green-500"
+								class="text-sm font-medium text-green-600 dark:text-green-400 hover:text-green-500 dark:hover:text-green-400"
 							>
 								ลืมรหัสผ่าน?
 							</a>
@@ -128,9 +128,9 @@
 								tabindex="-1"
 							>
 								{#if showPassword}
-									<EyeOff class="h-4 w-4 text-gray-400" />
+									<EyeOff class="h-4 w-4 text-gray-400 dark:text-gray-500" />
 								{:else}
-									<Eye class="h-4 w-4 text-gray-400" />
+									<Eye class="h-4 w-4 text-gray-400 dark:text-gray-500" />
 								{/if}
 							</button>
 						</div>
@@ -164,13 +164,13 @@
 					<div class="space-y-2 text-center">
 						<p class="text-sm text-gray-600 dark:text-gray-400">
 							ยังไม่มีบัญชี?
-							<a href="/register" class="font-medium text-green-600 hover:text-green-500">
+							<a href="/register" class="font-medium text-green-600 dark:text-green-400 hover:text-green-500 dark:hover:text-green-400">
 								สมัครสมาชิก
 							</a>
 						</p>
 						<p class="text-sm text-gray-600 dark:text-gray-400">
 							ผู้ดูแลระบบ?
-							<a href="/admin/login" class="font-medium text-blue-600 hover:text-blue-500">
+							<a href="/admin/login" class="font-medium text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-400">
 								เข้าสู่ระบบ Admin
 							</a>
 						</p>

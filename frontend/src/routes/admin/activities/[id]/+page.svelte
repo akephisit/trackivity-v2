@@ -312,7 +312,7 @@
 			<AlertDialog.Footer>
 				<AlertDialog.Cancel onclick={() => deleteActivityDialogOpen = false}>ยกเลิก</AlertDialog.Cancel>
 				<AlertDialog.Action
-					class="bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
+					class="bg-red-600 dark:bg-red-700 text-white hover:bg-red-700 dark:hover:bg-red-800 disabled:opacity-50"
 					onclick={(e) => { e.preventDefault(); handleDeleteActivity(); }}
 					disabled={deleting}
 				>

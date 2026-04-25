@@ -473,9 +473,9 @@
 						: Store}
 					{@const borderClasses =
 						levelVariant === 'secondary'
-							? 'border-l-4 border-l-green-500'
+							? 'border-l-4 border-l-green-500 dark:border-l-green-600'
 							: levelVariant === 'default'
-								? 'border-l-4 border-l-blue-500'
+								? 'border-l-4 border-l-blue-500 dark:border-l-blue-600'
 								: 'border-l-4 border-l-muted'}
 
 					<Card class={`transition-all hover:-translate-y-0.5 hover:shadow-md ${borderClasses}`}>
@@ -526,7 +526,7 @@
 										<div
 											class="flex shrink-0 items-center gap-1.5 rounded-lg bg-muted/50 px-2.5 py-1.5 text-sm font-semibold text-foreground"
 										>
-											<Hourglass class="size-4 text-orange-500" />
+											<Hourglass class="size-4 text-orange-500 dark:text-orange-400" />
 											<span class="text-base">{participation.activity.hours}</span> ชั่วโมง
 										</div>
 									{/if}
@@ -627,7 +627,7 @@
 									<div
 										class="flex gap-2 rounded-lg border border-orange-100 bg-orange-50/50 px-3 py-1.5 text-sm dark:border-orange-900/30 dark:bg-orange-950/20"
 									>
-										<CircleAlert class="mt-0.5 size-4 shrink-0 text-orange-500" />
+										<CircleAlert class="mt-0.5 size-4 shrink-0 text-orange-500 dark:text-orange-400" />
 										<div>
 											<span class="font-medium text-orange-700 dark:text-orange-400">หมายเหตุ:</span
 											>

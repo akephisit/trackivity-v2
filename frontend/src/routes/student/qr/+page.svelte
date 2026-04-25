@@ -93,17 +93,17 @@
 >
 	<!-- Main Card (Bank App Slip Style) -->
 	<div
-		class="w-full max-w-[360px] overflow-hidden rounded-[2rem] border border-border/50 bg-white shadow-xl"
+		class="w-full max-w-[360px] overflow-hidden rounded-[2rem] border border-border/50 bg-white dark:bg-neutral-900 shadow-xl"
 	>
 		<!-- Brand Header -->
 		<div class="relative bg-primary px-6 py-5 text-center text-primary-foreground">
 			<!-- White curve at bottom -->
-			<div class="absolute inset-x-0 -bottom-1 h-6 rounded-t-[1.5rem] border-none bg-white"></div>
+			<div class="absolute inset-x-0 -bottom-1 h-6 rounded-t-[1.5rem] border-none bg-white dark:bg-neutral-900"></div>
 			<div class="mb-5 flex items-center justify-center gap-2">
 				<QrCode class="size-6" />
 				<h2 class="flex items-center gap-1.5 text-[17px] font-bold tracking-wide">
 					TRACKIVITY <span
-						class="rounded-full bg-white px-2 py-0.5 text-[10px] font-extrabold tracking-widest text-primary uppercase shadow-sm"
+						class="rounded-full bg-white dark:bg-neutral-900 px-2 py-0.5 text-[10px] font-extrabold tracking-widest text-primary uppercase shadow-sm"
 						>Pass</span
 					>
 				</h2>
@@ -111,18 +111,18 @@
 		</div>
 
 		<!-- Card Content -->
-		<div class="relative z-10 bg-white px-6 pb-8 text-center">
+		<div class="relative z-10 bg-white dark:bg-neutral-900 px-6 pb-8 text-center">
 			<!-- User Info -->
 			<div class="mb-7 space-y-1">
-				<h3 class="text-[22px] leading-tight font-bold text-slate-800">
+				<h3 class="text-[22px] leading-tight font-bold text-slate-800 dark:text-slate-200">
 					{#if user}
 						{getPrefixLabel(user.prefix)}{user.first_name} {user.last_name}
 					{:else}
 						ชื่อ-นามสกุล
 					{/if}
 				</h3>
-				<p class="text-[15px] font-semibold text-slate-500">
-					<span class="mr-2 text-sm text-slate-400">รหัสนักศึกษา</span>{user?.student_id || '-'}
+				<p class="text-[15px] font-semibold text-slate-500 dark:text-slate-400">
+					<span class="mr-2 text-sm text-slate-400 dark:text-slate-500">รหัสนักศึกษา</span>{user?.student_id || '-'}
 				</p>
 			</div>
 
@@ -130,7 +130,7 @@
 			<div class="relative mx-auto mb-7 flex justify-center">
 				{#if $qrStatus === 'ready' && $qrDataURL}
 					<div
-						class="relative rounded-[2rem] border-4 border-slate-100 bg-white p-3 shadow-sm transition-colors duration-500"
+						class="relative rounded-[2rem] border-4 border-slate-100 dark:border-slate-900 bg-white dark:bg-neutral-900 p-3 shadow-sm transition-colors duration-500"
 					>
 						<img
 							src={$qrDataURL}
@@ -140,14 +140,14 @@
 					</div>
 				{:else if $qrStatus === 'generating' || $qrStatus === 'idle'}
 					<div
-						class="flex h-48 w-48 flex-col items-center justify-center rounded-[2rem] border-4 border-slate-100 bg-slate-50 sm:h-56 sm:w-56"
+						class="flex h-48 w-48 flex-col items-center justify-center rounded-[2rem] border-4 border-slate-100 dark:border-slate-900 bg-slate-50 dark:bg-slate-950/30 sm:h-56 sm:w-56"
 					>
-						<QrCode class="size-12 animate-pulse text-slate-300" />
-						<p class="mt-4 animate-pulse text-sm font-medium text-slate-400">กำลังโหลด...</p>
+						<QrCode class="size-12 animate-pulse text-slate-300 dark:text-slate-600" />
+						<p class="mt-4 animate-pulse text-sm font-medium text-slate-400 dark:text-slate-500">กำลังโหลด...</p>
 					</div>
 				{:else}
 					<div
-						class="flex h-48 w-48 flex-col items-center justify-center rounded-[2rem] border-4 border-red-100 bg-red-50 p-4 text-red-500 sm:h-56 sm:w-56"
+						class="flex h-48 w-48 flex-col items-center justify-center rounded-[2rem] border-4 border-red-100 dark:border-red-900 bg-red-50 dark:bg-red-950/30 p-4 text-red-500 dark:text-red-400 sm:h-56 sm:w-56"
 					>
 						<CircleAlert class="mb-3 size-12" />
 						<p class="text-sm font-bold">QR ไม่พร้อมใช้งาน</p>
@@ -155,7 +155,7 @@
 							onclick={handleRefreshQR}
 							disabled={refreshing}
 							variant="outline"
-							class="mt-4 rounded-full border-red-200 bg-white text-red-600 hover:bg-red-50"
+							class="mt-4 rounded-full border-red-200 dark:border-red-800 bg-white dark:bg-neutral-900 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40"
 							size="sm"
 						>
 							กดเพื่อโหลดใหม่
@@ -171,11 +171,11 @@
 					<Button
 						onclick={copyQRData}
 						variant="ghost"
-						class="h-[52px] flex-1 rounded-2xl border-2 border-slate-100 font-medium text-slate-500 transition-all hover:bg-slate-50 hover:text-slate-800 active:scale-[0.98]"
+						class="h-[52px] flex-1 rounded-2xl border-2 border-slate-100 dark:border-slate-900 font-medium text-slate-500 dark:text-slate-400 transition-all hover:bg-slate-50 dark:hover:bg-slate-950/40 hover:text-slate-800 dark:hover:text-slate-200 active:scale-[0.98]"
 					>
 						{#if copied}
-							<Check class="mr-2 size-5 text-green-500" />
-							<span class="text-green-600">คัดลอกสำเร็จ</span>
+							<Check class="mr-2 size-5 text-green-500 dark:text-green-400" />
+							<span class="text-green-600 dark:text-green-400">คัดลอกสำเร็จ</span>
 						{:else}
 							<Copy class="mr-2 size-5" /> คัดลอกรหัสประจำตัว
 						{/if}
@@ -186,7 +186,7 @@
 						onclick={handleRefreshQR}
 						disabled={refreshing}
 						variant="ghost"
-						class="h-[52px] w-[52px] shrink-0 rounded-2xl border-2 border-slate-100 text-slate-500 transition-all hover:bg-slate-50 hover:text-primary active:scale-[0.98]"
+						class="h-[52px] w-[52px] shrink-0 rounded-2xl border-2 border-slate-100 dark:border-slate-900 text-slate-500 dark:text-slate-400 transition-all hover:bg-slate-50 dark:hover:bg-slate-950/40 hover:text-primary active:scale-[0.98]"
 						title="โหลด QR ใหม่"
 					>
 						<RefreshCw class="size-6 {refreshing ? 'animate-spin' : ''}" />
@@ -194,7 +194,7 @@
 				</div>
 			{/if}
 
-			<p class="mt-6 text-[13px] leading-relaxed font-medium text-slate-400">
+			<p class="mt-6 text-[13px] leading-relaxed font-medium text-slate-400 dark:text-slate-500">
 				แสดง QR Code เพื่อเข้าร่วมกิจกรรม
 			</p>
 		</div>

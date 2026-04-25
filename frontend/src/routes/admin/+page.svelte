@@ -43,13 +43,13 @@
 						title: 'นักศึกษาในคณะ',
 						value: stats?.users_total ?? 0,
 						icon: Users,
-						color: 'text-blue-600'
+						color: 'text-blue-600 dark:text-blue-400'
 					},
 					{
 						title: 'ใช้งานอยู่',
 						value: stats?.users_active ?? 0,
 						icon: UserCheck,
-						color: 'text-green-600'
+						color: 'text-green-600 dark:text-green-400'
 					},
 					{
 						title: 'ภาควิชา',
@@ -61,7 +61,7 @@
 						title: 'กิจกรรมทั้งหมด',
 						value: stats?.activities_total ?? 0,
 						icon: CalendarDays,
-						color: 'text-orange-600'
+						color: 'text-orange-600 dark:text-orange-400'
 					}
 				]
 			: [
@@ -69,19 +69,19 @@
 						title: 'ผู้ใช้ทั้งหมด',
 						value: stats?.users_total ?? 0,
 						icon: Users,
-						color: 'text-blue-600'
+						color: 'text-blue-600 dark:text-blue-400'
 					},
 					{
 						title: 'ใช้งานอยู่',
 						value: stats?.users_active ?? 0,
 						icon: UserCheck,
-						color: 'text-green-600'
+						color: 'text-green-600 dark:text-green-400'
 					},
 					{
 						title: 'กิจกรรมทั้งหมด',
 						value: stats?.activities_total ?? 0,
 						icon: CalendarDays,
-						color: 'text-orange-600'
+						color: 'text-orange-600 dark:text-orange-400'
 					},
 					{
 						title: 'ภาควิชา',
@@ -327,7 +327,7 @@
 							สร้างกิจกรรมใหม่
 						</Button>
 						<Button variant="outline" class="w-full justify-start gap-3" href="/admin/activities">
-							<CalendarDays class="h-4 w-4 text-orange-500" />
+							<CalendarDays class="h-4 w-4 text-orange-500 dark:text-orange-400" />
 							จัดการกิจกรรม
 						</Button>
 						<Button
@@ -335,7 +335,7 @@
 							class="w-full justify-start gap-3"
 							href="/admin/users"
 						>
-							<Users class="h-4 w-4 text-blue-500" />
+							<Users class="h-4 w-4 text-blue-500 dark:text-blue-400" />
 							ดูนักศึกษาในคณะ
 						</Button>
 						<Button variant="outline" class="w-full justify-start gap-3" href="/admin/departments">

@@ -68,7 +68,7 @@
 >
 	<div class="w-full max-w-md space-y-8">
 		<div class="text-center">
-			<div class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-blue-600">
+			<div class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-blue-600 dark:bg-blue-700">
 				<Lock class="h-8 w-8 text-white" />
 			</div>
 			<h1 class="text-3xl font-bold text-gray-900 dark:text-white">Trackivity</h1>
@@ -87,7 +87,7 @@
 					<div class="rounded-md bg-green-50 p-4 dark:bg-green-900/30">
 						<div class="flex">
 							<div class="flex-shrink-0">
-								<Check class="h-5 w-5 text-green-400" />
+								<Check class="h-5 w-5 text-green-400 dark:text-green-500" />
 							</div>
 							<div class="ml-3 text-center">
 								<p class="text-sm font-medium text-green-800 dark:text-green-200">
@@ -97,7 +97,7 @@
 						</div>
 					</div>
 					<div class="mt-4 text-center">
-						<Button class="w-full bg-blue-600 hover:bg-blue-700" href="/login">
+						<Button class="w-full bg-blue-600 dark:bg-blue-700 hover:bg-blue-700 dark:hover:bg-blue-800" href="/login">
 							ไปที่หน้าเข้าสู่ระบบ
 						</Button>
 					</div>
@@ -137,9 +137,9 @@
 									tabindex="-1"
 								>
 									{#if showPassword}
-										<EyeOff class="h-4 w-4 text-gray-400" />
+										<EyeOff class="h-4 w-4 text-gray-400 dark:text-gray-500" />
 									{:else}
-										<Eye class="h-4 w-4 text-gray-400" />
+										<Eye class="h-4 w-4 text-gray-400 dark:text-gray-500" />
 									{/if}
 								</button>
 							</div>
@@ -164,9 +164,9 @@
 									tabindex="-1"
 								>
 									{#if showConfirmPassword}
-										<EyeOff class="h-4 w-4 text-gray-400" />
+										<EyeOff class="h-4 w-4 text-gray-400 dark:text-gray-500" />
 									{:else}
-										<Eye class="h-4 w-4 text-gray-400" />
+										<Eye class="h-4 w-4 text-gray-400 dark:text-gray-500" />
 									{/if}
 								</button>
 							</div>
@@ -174,7 +174,7 @@
 
 						<Button
 							type="submit"
-							class="w-full bg-blue-600 text-white hover:bg-blue-700"
+							class="w-full bg-blue-600 dark:bg-blue-700 text-white hover:bg-blue-700 dark:hover:bg-blue-800"
 							disabled={submitting}
 						>
 							{#if submitting}

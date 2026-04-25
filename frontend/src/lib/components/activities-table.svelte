@@ -89,28 +89,28 @@
 
 		<Card.Root>
 			<Card.Content class="p-4">
-				<div class="text-2xl font-bold text-green-600">{stats.completed}</div>
+				<div class="text-2xl font-bold text-green-600 dark:text-green-400">{stats.completed}</div>
 				<div class="text-sm text-muted-foreground">เสร็จสิ้นแล้ว</div>
 			</Card.Content>
 		</Card.Root>
 
 		<Card.Root>
 			<Card.Content class="p-4">
-				<div class="text-2xl font-bold text-yellow-600">{stats.inProgress}</div>
+				<div class="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{stats.inProgress}</div>
 				<div class="text-sm text-muted-foreground">กำลังดำเนินการ</div>
 			</Card.Content>
 		</Card.Root>
 
 		<Card.Root>
 			<Card.Content class="p-4">
-				<div class="text-2xl font-bold text-gray-600">{stats.pending}</div>
+				<div class="text-2xl font-bold text-gray-600 dark:text-gray-400">{stats.pending}</div>
 				<div class="text-sm text-muted-foreground">รอดำเนินการ</div>
 			</Card.Content>
 		</Card.Root>
 
 		<Card.Root>
 			<Card.Content class="p-4">
-				<div class="text-2xl font-bold text-blue-600">
+				<div class="text-2xl font-bold text-blue-600 dark:text-blue-400">
 					{stats.totalParticipants.toLocaleString('th-TH')}
 				</div>
 				<div class="text-sm text-muted-foreground">ผู้เข้าร่วมทั้งหมด</div>

@@ -100,7 +100,7 @@
 							<span
 								class="inline-flex size-[22px] items-center justify-center rounded border bg-background align-middle shadow-sm"
 							>
-								<Share2 class="size-3.5 text-blue-500" />
+								<Share2 class="size-3.5 text-blue-500 dark:text-blue-400" />
 							</span>
 							ด้านล่างแล้วเลือก <br />
 							<span class="mt-1 flex items-center gap-1 font-medium text-foreground">

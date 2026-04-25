@@ -188,30 +188,30 @@
 				<h4 class="mb-3 font-semibold">การตั้งค่าปัจจุบัน</h4>
 				<div class="grid gap-4 sm:grid-cols-2">
 					<div class="flex items-center gap-3">
-						<div class="rounded-full bg-green-100 p-2">
-							<School class="h-4 w-4 text-green-600" />
+						<div class="rounded-full bg-green-100 dark:bg-green-900/30 p-2">
+							<School class="h-4 w-4 text-green-600 dark:text-green-400" />
 						</div>
 						<div>
 							<p class="text-sm font-medium">กิจกรรมระดับคณะ</p>
 							{#if isLoadingOrg}
 								<Skeleton class="mt-1 h-6 w-24" />
 							{:else}
-								<p class="text-lg font-bold text-green-600">
+								<p class="text-lg font-bold text-green-600 dark:text-green-400">
 									{initialFacultyHours ?? '-'} ชั่วโมง
 								</p>
 							{/if}
 						</div>
 					</div>
 					<div class="flex items-center gap-3">
-						<div class="rounded-full bg-blue-100 p-2">
-							<BuildingIcon class="h-4 w-4 text-blue-600" />
+						<div class="rounded-full bg-blue-100 dark:bg-blue-900/30 p-2">
+							<BuildingIcon class="h-4 w-4 text-blue-600 dark:text-blue-400" />
 						</div>
 						<div>
 							<p class="text-sm font-medium">กิจกรรมระดับมหาวิทยาลัย</p>
 							{#if isLoadingOrg}
 								<Skeleton class="mt-1 h-6 w-24" />
 							{:else}
-								<p class="text-lg font-bold text-blue-600">
+								<p class="text-lg font-bold text-blue-600 dark:text-blue-400">
 									{initialUniversityHours ?? '-'} ชั่วโมง
 								</p>
 							{/if}
@@ -229,7 +229,7 @@
 						<!-- Faculty Hours -->
 						<div class="space-y-2">
 							<Label for="requiredFacultyHours" class="flex items-center gap-2">
-								<School class="h-4 w-4 text-green-600" />
+								<School class="h-4 w-4 text-green-600 dark:text-green-400" />
 								จำนวนชั่วโมงขั้นต่ำ - กิจกรรมระดับคณะ
 							</Label>
 							<Input
@@ -251,7 +251,7 @@
 						<!-- University Hours -->
 						<div class="space-y-2">
 							<Label for="requiredUniversityHours" class="flex items-center gap-2">
-								<BuildingIcon class="h-4 w-4 text-blue-600" />
+								<BuildingIcon class="h-4 w-4 text-blue-600 dark:text-blue-400" />
 								จำนวนชั่วโมงขั้นต่ำ - กิจกรรมระดับมหาวิทยาลัย
 							</Label>
 							<Input
@@ -299,12 +299,12 @@
 					</div>
 
 					<!-- Total Hours Info -->
-					<div class="rounded-lg bg-blue-50 p-4">
-						<div class="flex items-center gap-2 text-blue-700">
+					<div class="rounded-lg bg-blue-50 dark:bg-blue-950/30 p-4">
+						<div class="flex items-center gap-2 text-blue-700 dark:text-blue-300">
 							<Info class="h-4 w-4" />
 							<p class="text-sm font-medium">ข้อมูลสรุป</p>
 						</div>
-						<p class="mt-2 text-sm text-blue-600">
+						<p class="mt-2 text-sm text-blue-600 dark:text-blue-400">
 							นักศึกษาจะต้องสะสมชั่วโมงกิจกรรมรวมทั้งหมดอย่างน้อย
 							<span class="font-semibold">{totalHours} ชั่วโมง</span>
 							ตลอดการศึกษาเพื่อผ่านเกณฑ์การสำเร็จการศึกษา

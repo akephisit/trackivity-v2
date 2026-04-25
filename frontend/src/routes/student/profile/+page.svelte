@@ -325,10 +325,10 @@
 						<div class="space-y-4">
 							<!-- Prefix Selection -->
 							<div class="space-y-2">
-								<Label for="prefix">คำนำหน้า <span class="text-red-500">*</span></Label>
+								<Label for="prefix">คำนำหน้า <span class="text-red-500 dark:text-red-400">*</span></Label>
 								<Select.Root type="single" bind:value={formData.prefix}>
 									<Select.Trigger
-										class={getFieldError('prefix', fieldErrors) ? 'border-red-500' : ''}
+										class={getFieldError('prefix', fieldErrors) ? 'border-red-500 dark:border-red-500' : ''}
 									>
 										{getPrefixLabel(formData.prefix) || 'เลือกคำนำหน้า'}
 									</Select.Trigger>
@@ -341,48 +341,48 @@
 									</Select.Content>
 								</Select.Root>
 								{#if getFieldError('prefix', fieldErrors)}
-									<p class="text-sm text-red-500">{getFieldError('prefix', fieldErrors)}</p>
+									<p class="text-sm text-red-500 dark:text-red-400">{getFieldError('prefix', fieldErrors)}</p>
 								{/if}
 							</div>
 
 							<div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
 								<div class="space-y-2">
-									<Label for="first_name">ชื่อ <span class="text-red-500">*</span></Label>
+									<Label for="first_name">ชื่อ <span class="text-red-500 dark:text-red-400">*</span></Label>
 									<Input
 										id="first_name"
 										bind:value={formData.first_name}
 										placeholder="กรอกชื่อ"
-										class={getFieldError('first_name', fieldErrors) ? 'border-red-500' : ''}
+										class={getFieldError('first_name', fieldErrors) ? 'border-red-500 dark:border-red-500' : ''}
 									/>
 									{#if getFieldError('first_name', fieldErrors)}
-										<p class="text-sm text-red-500">{getFieldError('first_name', fieldErrors)}</p>
+										<p class="text-sm text-red-500 dark:text-red-400">{getFieldError('first_name', fieldErrors)}</p>
 									{/if}
 								</div>
 								<div class="space-y-2">
-									<Label for="last_name">นามสกุล <span class="text-red-500">*</span></Label>
+									<Label for="last_name">นามสกุล <span class="text-red-500 dark:text-red-400">*</span></Label>
 									<Input
 										id="last_name"
 										bind:value={formData.last_name}
 										placeholder="กรอกนามสกุล"
-										class={getFieldError('last_name', fieldErrors) ? 'border-red-500' : ''}
+										class={getFieldError('last_name', fieldErrors) ? 'border-red-500 dark:border-red-500' : ''}
 									/>
 									{#if getFieldError('last_name', fieldErrors)}
-										<p class="text-sm text-red-500">{getFieldError('last_name', fieldErrors)}</p>
+										<p class="text-sm text-red-500 dark:text-red-400">{getFieldError('last_name', fieldErrors)}</p>
 									{/if}
 								</div>
 							</div>
 
 							<div class="space-y-2">
-								<Label for="email">อีเมล <span class="text-red-500">*</span></Label>
+								<Label for="email">อีเมล <span class="text-red-500 dark:text-red-400">*</span></Label>
 								<Input
 									id="email"
 									type="email"
 									bind:value={formData.email}
 									placeholder="กรอกอีเมล"
-									class={getFieldError('email', fieldErrors) ? 'border-red-500' : ''}
+									class={getFieldError('email', fieldErrors) ? 'border-red-500 dark:border-red-500' : ''}
 								/>
 								{#if getFieldError('email', fieldErrors)}
-									<p class="text-sm text-red-500">{getFieldError('email', fieldErrors)}</p>
+									<p class="text-sm text-red-500 dark:text-red-400">{getFieldError('email', fieldErrors)}</p>
 								{/if}
 							</div>
 
@@ -393,10 +393,10 @@
 									type="tel"
 									bind:value={formData.phone}
 									placeholder="กรอกเบอร์โทรศัพท์ (ไม่บังคับ) เช่น 0812345678"
-									class={getFieldError('phone', fieldErrors) ? 'border-red-500' : ''}
+									class={getFieldError('phone', fieldErrors) ? 'border-red-500 dark:border-red-500' : ''}
 								/>
 								{#if getFieldError('phone', fieldErrors)}
-									<p class="text-sm text-red-500">{getFieldError('phone', fieldErrors)}</p>
+									<p class="text-sm text-red-500 dark:text-red-400">{getFieldError('phone', fieldErrors)}</p>
 								{/if}
 							</div>
 
@@ -407,10 +407,10 @@
 									bind:value={formData.address}
 									placeholder="กรอกที่อยู่ (ไม่บังคับ)"
 									rows={3}
-									class={getFieldError('address', fieldErrors) ? 'border-red-500' : ''}
+									class={getFieldError('address', fieldErrors) ? 'border-red-500 dark:border-red-500' : ''}
 								/>
 								{#if getFieldError('address', fieldErrors)}
-									<p class="text-sm text-red-500">{getFieldError('address', fieldErrors)}</p>
+									<p class="text-sm text-red-500 dark:text-red-400">{getFieldError('address', fieldErrors)}</p>
 								{/if}
 							</div>
 
@@ -444,7 +444,7 @@
 								<p class="text-center text-sm text-muted-foreground">ไม่มีการเปลี่ยนแปลงข้อมูล</p>
 							{/if}
 							{#if !isFormValid()}
-								<p class="text-center text-sm text-red-500">กรุณากรอกข้อมูลที่จำเป็นให้ครบถ้วน</p>
+								<p class="text-center text-sm text-red-500 dark:text-red-400">กรุณากรอกข้อมูลที่จำเป็นให้ครบถ้วน</p>
 							{/if}
 						</div>
 					{:else}
@@ -555,7 +555,7 @@
 					<div class="space-y-4">
 						<div class="space-y-2">
 							<Label for="current_password"
-								>รหัสผ่านปัจจุบัน <span class="text-red-500">*</span></Label
+								>รหัสผ่านปัจจุบัน <span class="text-red-500 dark:text-red-400">*</span></Label
 							>
 							<div class="relative">
 								<Input
@@ -565,7 +565,7 @@
 									placeholder="กรอกรหัสผ่านปัจจุบัน"
 									autocomplete="current-password"
 									class={getFieldError('current_password', passwordFieldErrors)
-										? 'border-red-500'
+										? 'border-red-500 dark:border-red-500'
 										: ''}
 								/>
 								<Button
@@ -583,14 +583,14 @@
 								</Button>
 							</div>
 							{#if getFieldError('current_password', passwordFieldErrors)}
-								<p class="text-sm text-red-500">
+								<p class="text-sm text-red-500 dark:text-red-400">
 									{getFieldError('current_password', passwordFieldErrors)}
 								</p>
 							{/if}
 						</div>
 
 						<div class="space-y-2">
-							<Label for="new_password">รหัสผ่านใหม่ <span class="text-red-500">*</span></Label>
+							<Label for="new_password">รหัสผ่านใหม่ <span class="text-red-500 dark:text-red-400">*</span></Label>
 							<div class="relative">
 								<Input
 									id="new_password"
@@ -600,11 +600,11 @@
 									autocomplete="new-password"
 									class={getFieldError('new_password', passwordFieldErrors) ||
 									getNewPasswordStrengthError()
-										? 'border-red-500'
+										? 'border-red-500 dark:border-red-500'
 										: passwordData.new_password &&
 											  passwordData.new_password.length >= 8 &&
 											  /^(?=.*[A-Za-z])(?=.*\d).{8,}$/.test(passwordData.new_password)
-											? 'border-green-500'
+											? 'border-green-500 dark:border-green-500'
 											: ''}
 								/>
 								<Button
@@ -622,19 +622,19 @@
 								</Button>
 							</div>
 							{#if getFieldError('new_password', passwordFieldErrors)}
-								<p class="text-sm text-red-500">
+								<p class="text-sm text-red-500 dark:text-red-400">
 									{getFieldError('new_password', passwordFieldErrors)}
 								</p>
 							{:else if getNewPasswordStrengthError()}
-								<p class="text-sm text-red-500">{getNewPasswordStrengthError()}</p>
+								<p class="text-sm text-red-500 dark:text-red-400">{getNewPasswordStrengthError()}</p>
 							{:else if passwordData.new_password && passwordData.new_password.length >= 8 && /^(?=.*[A-Za-z])(?=.*\d).{8,}$/.test(passwordData.new_password)}
-								<p class="text-sm text-green-600">รหัสผ่านแข็งแรง</p>
+								<p class="text-sm text-green-600 dark:text-green-400">รหัสผ่านแข็งแรง</p>
 							{/if}
 						</div>
 
 						<div class="space-y-2">
 							<Label for="confirm_password"
-								>ยืนยันรหัสผ่านใหม่ <span class="text-red-500">*</span></Label
+								>ยืนยันรหัสผ่านใหม่ <span class="text-red-500 dark:text-red-400">*</span></Label
 							>
 							<div class="relative">
 								<Input
@@ -645,11 +645,11 @@
 									autocomplete="new-password"
 									class={getFieldError('confirm_password', passwordFieldErrors) ||
 									getPasswordMatchError()
-										? 'border-red-500'
+										? 'border-red-500 dark:border-red-500'
 										: passwordData.confirm_password &&
 											  passwordData.new_password &&
 											  passwordData.new_password === passwordData.confirm_password
-											? 'border-green-500'
+											? 'border-green-500 dark:border-green-500'
 											: ''}
 								/>
 								<Button
@@ -667,13 +667,13 @@
 								</Button>
 							</div>
 							{#if getFieldError('confirm_password', passwordFieldErrors)}
-								<p class="text-sm text-red-500">
+								<p class="text-sm text-red-500 dark:text-red-400">
 									{getFieldError('confirm_password', passwordFieldErrors)}
 								</p>
 							{:else if getPasswordMatchError()}
-								<p class="text-sm text-red-500">{getPasswordMatchError()}</p>
+								<p class="text-sm text-red-500 dark:text-red-400">{getPasswordMatchError()}</p>
 							{:else if passwordData.confirm_password && passwordData.new_password && passwordData.new_password === passwordData.confirm_password}
-								<p class="text-sm text-green-600">รหัสผ่านตรงกัน</p>
+								<p class="text-sm text-green-600 dark:text-green-400">รหัสผ่านตรงกัน</p>
 							{/if}
 						</div>
 
@@ -714,39 +714,39 @@
 								<ul class="space-y-1 text-sm text-muted-foreground">
 									{#if !passwordData.current_password}
 										<li class="flex items-center gap-2">
-											<X class="size-3 text-red-500" />
+											<X class="size-3 text-red-500 dark:text-red-400" />
 											กรอกรหัสผ่านปัจจุบัน
 										</li>
 									{/if}
 									{#if !passwordData.new_password}
 										<li class="flex items-center gap-2">
-											<X class="size-3 text-red-500" />
+											<X class="size-3 text-red-500 dark:text-red-400" />
 											กรอกรหัสผ่านใหม่
 										</li>
 									{:else if getNewPasswordStrengthError()}
 										<li class="flex items-center gap-2">
-											<X class="size-3 text-red-500" />
+											<X class="size-3 text-red-500 dark:text-red-400" />
 											{getNewPasswordStrengthError()}
 										</li>
 									{:else}
 										<li class="flex items-center gap-2">
-											<Check class="size-3 text-green-500" />
+											<Check class="size-3 text-green-500 dark:text-green-400" />
 											รหัสผ่านใหม่ถูกต้อง
 										</li>
 									{/if}
 									{#if !passwordData.confirm_password}
 										<li class="flex items-center gap-2">
-											<X class="size-3 text-red-500" />
+											<X class="size-3 text-red-500 dark:text-red-400" />
 											กรอกยืนยันรหัสผ่าน
 										</li>
 									{:else if getPasswordMatchError()}
 										<li class="flex items-center gap-2">
-											<X class="size-3 text-red-500" />
+											<X class="size-3 text-red-500 dark:text-red-400" />
 											{getPasswordMatchError()}
 										</li>
 									{:else if passwordData.new_password}
 										<li class="flex items-center gap-2">
-											<Check class="size-3 text-green-500" />
+											<Check class="size-3 text-green-500 dark:text-green-400" />
 											รหัสผ่านยืนยันถูกต้อง
 										</li>
 									{/if}

@@ -398,7 +398,7 @@
 							<!-- Faculty Progress -->
 							<div class="space-y-4">
 								<h4 class="flex items-center gap-2 font-semibold">
-									<School class="size-4 text-green-600" />
+									<School class="size-4 text-green-600 dark:text-green-400" />
 									ระดับคณะ
 								</h4>
 								<div class="space-y-3">
@@ -439,7 +439,7 @@
 							<!-- University Progress -->
 							<div class="space-y-4">
 								<h4 class="flex items-center gap-2 font-semibold">
-									<BuildingIcon class="size-4 text-blue-600" />
+									<BuildingIcon class="size-4 text-blue-600 dark:text-blue-400" />
 									ระดับมหาวิทยาลัย
 								</h4>
 								<div class="space-y-3">
@@ -674,7 +674,7 @@
 							<div class="space-y-4">
 								<div class="flex items-center justify-between">
 									<div class="flex items-center gap-2">
-										<div class="size-3.5 rounded-sm bg-green-500 shadow-sm"></div>
+										<div class="size-3.5 rounded-sm bg-green-500 dark:bg-green-600 shadow-sm"></div>
 										<span class="text-sm font-medium">ระดับคณะ</span>
 									</div>
 									<div class="text-right">
@@ -689,7 +689,7 @@
 								</div>
 								<div class="h-2.5 w-full overflow-hidden rounded-full bg-secondary">
 									<div
-										class="h-full rounded-full bg-green-500 transition-all duration-500 ease-in-out"
+										class="h-full rounded-full bg-green-500 dark:bg-green-600 transition-all duration-500 ease-in-out"
 										style="width: {calculatePercentage(
 											stats.facultyLevel.hours,
 											stats.totalHours
@@ -699,7 +699,7 @@
 
 								<div class="flex items-center justify-between pt-2">
 									<div class="flex items-center gap-2">
-										<div class="size-3.5 rounded-sm bg-blue-500 shadow-sm"></div>
+										<div class="size-3.5 rounded-sm bg-blue-500 dark:bg-blue-600 shadow-sm"></div>
 										<span class="text-sm font-medium">ระดับมหาวิทยาลัย</span>
 									</div>
 									<div class="text-right">
@@ -714,7 +714,7 @@
 								</div>
 								<div class="h-2.5 w-full overflow-hidden rounded-full bg-secondary">
 									<div
-										class="h-full rounded-full bg-blue-500 transition-all duration-500 ease-in-out"
+										class="h-full rounded-full bg-blue-500 dark:bg-blue-600 transition-all duration-500 ease-in-out"
 										style="width: {calculatePercentage(
 											stats.universityLevel.hours,
 											stats.totalHours
@@ -730,7 +730,7 @@
 							<div class="space-y-4">
 								<div class="flex items-center justify-between">
 									<div class="flex items-center gap-2">
-										<div class="size-3.5 rounded-sm bg-green-500 shadow-sm"></div>
+										<div class="size-3.5 rounded-sm bg-green-500 dark:bg-green-600 shadow-sm"></div>
 										<span class="text-sm font-medium">ระดับคณะ</span>
 									</div>
 									<div class="text-right">
@@ -748,7 +748,7 @@
 								</div>
 								<div class="h-2.5 w-full overflow-hidden rounded-full bg-secondary">
 									<div
-										class="h-full rounded-full bg-green-500 transition-all duration-500 ease-in-out"
+										class="h-full rounded-full bg-green-500 dark:bg-green-600 transition-all duration-500 ease-in-out"
 										style="width: {calculatePercentage(
 											stats.facultyLevel.activities,
 											stats.completedActivities
@@ -758,7 +758,7 @@
 
 								<div class="flex items-center justify-between pt-2">
 									<div class="flex items-center gap-2">
-										<div class="size-3.5 rounded-sm bg-blue-500 shadow-sm"></div>
+										<div class="size-3.5 rounded-sm bg-blue-500 dark:bg-blue-600 shadow-sm"></div>
 										<span class="text-sm font-medium">ระดับมหาวิทยาลัย</span>
 									</div>
 									<div class="text-right">
@@ -776,7 +776,7 @@
 								</div>
 								<div class="h-2.5 w-full overflow-hidden rounded-full bg-secondary">
 									<div
-										class="h-full rounded-full bg-blue-500 transition-all duration-500 ease-in-out"
+										class="h-full rounded-full bg-blue-500 dark:bg-blue-600 transition-all duration-500 ease-in-out"
 										style="width: {calculatePercentage(
 											stats.universityLevel.activities,
 											stats.completedActivities

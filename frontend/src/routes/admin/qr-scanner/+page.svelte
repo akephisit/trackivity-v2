@@ -386,13 +386,13 @@
 							</div>
 
 							<div class="flex items-center gap-2 md:col-span-2">
-								<Badge variant="default" class="bg-green-600 hover:bg-green-700">
+								<Badge variant="default" class="bg-green-600 dark:bg-green-700 hover:bg-green-700 dark:hover:bg-green-800">
 									<div class="flex items-center gap-1">
 										<div class="h-2 w-2 animate-pulse rounded-full bg-white"></div>
 										กำลังดำเนินการ
 									</div>
 								</Badge>
-								<Badge variant="outline" class="border-green-600 text-green-600">สแกน QR ได้</Badge>
+								<Badge variant="outline" class="border-green-600 dark:border-green-500 text-green-600 dark:text-green-400">สแกน QR ได้</Badge>
 							</div>
 						</div>
 
@@ -417,11 +417,11 @@
 			<CardContent>
 				<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
 					<div class="text-center">
-						<div class="text-3xl font-bold text-blue-600">{currentParticipantCount}</div>
+						<div class="text-3xl font-bold text-blue-600 dark:text-blue-400">{currentParticipantCount}</div>
 						<div class="text-sm text-muted-foreground">จำนวนผู้เข้าร่วม</div>
 					</div>
 					<div class="text-center">
-						<div class="text-3xl font-bold text-gray-600">
+						<div class="text-3xl font-bold text-gray-600 dark:text-gray-400">
 							{selectedActivity.max_participants || 'ไม่จำกัด'}
 						</div>
 						<div class="text-sm text-muted-foreground">จำนวนสูงสุด</div>
@@ -439,7 +439,7 @@
 						</div>
 						<div class="h-2 w-full rounded-full bg-muted">
 							<div
-								class="h-2 rounded-full bg-blue-600 transition-all duration-300"
+								class="h-2 rounded-full bg-blue-600 dark:bg-blue-700 transition-all duration-300"
 								style="width: {Math.min(
 									(currentParticipantCount / selectedActivity.max_participants) * 100,
 									100
@@ -502,37 +502,37 @@
 		<CardContent>
 			<div class="space-y-3 text-sm text-muted-foreground">
 				<div class="flex items-start gap-2">
-					<Check class="mt-0.5 h-4 w-4 text-green-600" />
+					<Check class="mt-0.5 h-4 w-4 text-green-600 dark:text-green-400" />
 					<span>เลือกกิจกรรมที่มีสถานะ "กำลังดำเนินการ" เท่านั้น</span>
 				</div>
 				<div class="flex items-start gap-2">
-					<Check class="mt-0.5 h-4 w-4 text-green-600" />
+					<Check class="mt-0.5 h-4 w-4 text-green-600 dark:text-green-400" />
 					<span
 						>เลือกโหมดการสแกน: <strong>เช็คอิน</strong> สำหรับเข้าร่วม หรือ
 						<strong>เช็คเอาท์</strong> สำหรับออกจากกิจกรรม (รองรับการเริ่มต้นด้วยโหมดใดก็ได้)</span
 					>
 				</div>
 				<div class="flex items-start gap-2">
-					<Check class="mt-0.5 h-4 w-4 text-green-600" />
+					<Check class="mt-0.5 h-4 w-4 text-green-600 dark:text-green-400" />
 					<span>กดปุ่ม "เริ่มสแกน" เพื่อเปิดกล้อง</span>
 				</div>
 				<div class="flex items-start gap-2">
-					<Check class="mt-0.5 h-4 w-4 text-green-600" />
+					<Check class="mt-0.5 h-4 w-4 text-green-600 dark:text-green-400" />
 					<span>วาง QR Code ของนักศึกษาในกรอบที่กำหนด</span>
 				</div>
 				<div class="flex items-start gap-2">
-					<Check class="mt-0.5 h-4 w-4 text-green-600" />
+					<Check class="mt-0.5 h-4 w-4 text-green-600 dark:text-green-400" />
 					<span>ระบบจะบันทึกและแสดงผลการสแกนอัตโนมัติ พร้อมการแจ้งเตือนแบบเรียบง่าย</span>
 				</div>
 
 				<!-- New flexible flow control info -->
-				<div class="mt-4 rounded-lg border border-blue-200 bg-blue-50 p-3">
-					<div class="mb-2 flex items-center gap-2 font-medium text-blue-800">
+				<div class="mt-4 rounded-lg border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/30 p-3">
+					<div class="mb-2 flex items-center gap-2 font-medium text-blue-800 dark:text-blue-200">
 						<Check class="size-4" />
 						ระบบใหม่: การสแกนที่ยืดหยุ่นและใช้งานง่าย
 					</div>
-					<div class="space-y-2 text-xs text-blue-700">
-						<div class="mb-1 font-medium text-blue-800">✅ สิ่งที่สามารถทำได้:</div>
+					<div class="space-y-2 text-xs text-blue-700 dark:text-blue-300">
+						<div class="mb-1 font-medium text-blue-800 dark:text-blue-200">✅ สิ่งที่สามารถทำได้:</div>
 						<p>• <strong>เริ่มต้นด้วยเช็คอิน:</strong> ยังไม่เริ่ม → เช็คอิน → เช็คเอาท์</p>
 						<p>
 							• <strong>เริ่มต้นด้วยเช็คเอาท์:</strong> ยังไม่เริ่ม → เช็คเอาท์ (สำหรับกิจกรรมที่ไม่ต้องการเช็คอิน)
@@ -540,12 +540,12 @@
 						<p>• <strong>เช็คอินซ้ำ:</strong> อนุญาตให้สแกนเช็คอินหลายครั้ง (แสดงผลสำเร็จ)</p>
 						<p>• <strong>เช็คเอาท์ซ้ำ:</strong> อนุญาตให้สแกนเช็คเอาท์หลายครั้ง (แสดงผลสำเร็จ)</p>
 
-						<div class="mt-2 mb-1 font-medium text-red-800">❌ ข้อจำกัดเดียว:</div>
+						<div class="mt-2 mb-1 font-medium text-red-800 dark:text-red-200">❌ ข้อจำกัดเดียว:</div>
 						<p>
 							• <strong>ห้ามย้อนกลับ:</strong> หลังเช็คเอาท์แล้วไม่สามารถเช็คอินอีกได้ (ป้องกันการไหลย้อนกลับ)
 						</p>
 
-						<div class="mt-2 mb-1 font-medium text-green-800">🎯 เป้าหมาย:</div>
+						<div class="mt-2 mb-1 font-medium text-green-800 dark:text-green-200">🎯 เป้าหมาย:</div>
 						<p>• ลดการแจ้งเตือนที่น่ารำคาญ และทำให้ระบบใช้งานได้ง่ายขึ้น</p>
 						<p>• รองรับกิจกรรมหลากหลายประเภท (บางกิจกรรมไม่ต้องการเช็คอิน)</p>
 					</div>

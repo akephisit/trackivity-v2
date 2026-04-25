@@ -186,8 +186,8 @@
 					<UserIcon class="h-10 w-10 text-white lg:h-12 lg:w-12" />
 				</div>
 				<h1 class="mb-4 text-4xl font-bold text-white lg:text-5xl">Trackivity</h1>
-				<p class="mb-6 text-lg text-green-100 lg:text-xl">ระบบจัดการกิจกรรมนักศึกษา</p>
-				<p class="text-green-100/80">
+				<p class="mb-6 text-lg text-green-100 dark:text-green-200 lg:text-xl">ระบบจัดการกิจกรรมนักศึกษา</p>
+				<p class="text-green-100/80 dark:text-green-200/80">
 					สมัครสมาชิกเพื่อเริ่มต้นใช้งานระบบและเข้าร่วมกิจกรรมต่างๆ ของมหาวิทยาลัย
 				</p>
 			</div>
@@ -327,9 +327,9 @@
 											tabindex="-1"
 										>
 											{#if showPassword}
-												<EyeOff class="h-4 w-4 text-gray-400" />
+												<EyeOff class="h-4 w-4 text-gray-400 dark:text-gray-500" />
 											{:else}
-												<Eye class="h-4 w-4 text-gray-400" />
+												<Eye class="h-4 w-4 text-gray-400 dark:text-gray-500" />
 											{/if}
 										</button>
 									</div>
@@ -356,9 +356,9 @@
 											tabindex="-1"
 										>
 											{#if showConfirmPassword}
-												<EyeOff class="h-4 w-4 text-gray-400" />
+												<EyeOff class="h-4 w-4 text-gray-400 dark:text-gray-500" />
 											{:else}
-												<Eye class="h-4 w-4 text-gray-400" />
+												<Eye class="h-4 w-4 text-gray-400 dark:text-gray-500" />
 											{/if}
 										</button>
 									</div>

@@ -304,7 +304,7 @@
 											aria-label={org.status ? 'ปิดการใช้งาน' : 'เปิดการใช้งาน'}
 										>
 											{#if org.status}
-												<ToggleRight class="size-4 text-green-600" />
+												<ToggleRight class="size-4 text-green-600 dark:text-green-400" />
 											{:else}
 												<ToggleLeft class="size-4 text-muted-foreground" />
 											{/if}

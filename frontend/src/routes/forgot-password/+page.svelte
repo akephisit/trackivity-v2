@@ -47,7 +47,7 @@
 	<div class="w-full max-w-md space-y-8">
 		<div class="text-center">
 			<div
-				class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-600"
+				class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-600 dark:bg-green-700"
 			>
 				<Mail class="h-8 w-8 text-white" />
 			</div>
@@ -69,7 +69,7 @@
 					<div class="rounded-md bg-green-50 p-4 dark:bg-green-900/30">
 						<div class="flex">
 							<div class="flex-shrink-0">
-								<svg class="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
+								<svg class="h-5 w-5 text-green-400 dark:text-green-500" viewBox="0 0 20 20" fill="currentColor">
 									<path
 										fill-rule="evenodd"
 										d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
@@ -105,7 +105,7 @@
 
 						<Button
 							type="submit"
-							class="w-full bg-green-600 text-white hover:bg-green-700"
+							class="w-full bg-green-600 dark:bg-green-700 text-white hover:bg-green-700 dark:hover:bg-green-800"
 							disabled={submitting}
 						>
 							{#if submitting}
