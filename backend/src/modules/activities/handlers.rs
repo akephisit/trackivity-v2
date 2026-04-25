@@ -444,6 +444,52 @@ pub async fn join_activity(
     let user_id = Uuid::parse_str(&claims.sub)
         .map_err(|_| (StatusCode::UNAUTHORIZED, "Invalid user ID".to_string()))?;
 
+    // Lock the activity row so concurrent joins serialize on capacity check.
+    let mut tx = pool.begin().await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, format!("DB tx error: {}", e)))?;
+
+    #[derive(sqlx::FromRow)]
+    struct ActivityCheckRow {
+        status: String,
+        registration_open: bool,
+        max_participants: Option<i32>,
+        end_date: chrono::NaiveDate,
+    }
+
+    let activity = sqlx::query_as::<_, ActivityCheckRow>(r#"
+        SELECT status::text AS status, registration_open, max_participants, end_date
+        FROM activities
+        WHERE id = $1 AND deleted_at IS NULL
+        FOR UPDATE
+    "#)
+    .bind(activity_id)
+    .fetch_optional(&mut *tx)
+    .await
+    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, format!("DB error: {}", e)))?
+    .ok_or((StatusCode::NOT_FOUND, "Activity not found".to_string()))?;
+
+    if activity.status != "published" {
+        return Err((StatusCode::CONFLICT, "ไม่สามารถลงทะเบียนได้ (กิจกรรมยังไม่เผยแพร่หรือถูกยกเลิก)".to_string()));
+    }
+    if !activity.registration_open {
+        return Err((StatusCode::CONFLICT, "การลงทะเบียนปิดแล้ว".to_string()));
+    }
+    if activity.end_date < chrono::Utc::now().date_naive() {
+        return Err((StatusCode::CONFLICT, "กิจกรรมสิ้นสุดแล้ว ไม่สามารถลงทะเบียนได้".to_string()));
+    }
+    if let Some(max) = activity.max_participants {
+        let current: i64 = sqlx::query_scalar(
+            "SELECT COUNT(*) FROM participations WHERE activity_id = $1 AND status::text != 'no_show'"
+        )
+        .bind(activity_id)
+        .fetch_one(&mut *tx)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, format!("DB error: {}", e)))?;
+        if current >= max as i64 {
+            return Err((StatusCode::CONFLICT, "กิจกรรมเต็มแล้ว".to_string()));
+        }
+    }
+
     let participation_id = Uuid::new_v4();
     let result = sqlx::query(r#"
         INSERT INTO participations (id, user_id, activity_id, status, registered_at)
@@ -452,23 +498,26 @@ pub async fn join_activity(
     .bind(participation_id)
     .bind(user_id)
     .bind(activity_id)
-    .execute(&pool)
+    .execute(&mut *tx)
     .await;
 
     match result {
-        Ok(_) => Ok(Json(serde_json::json!({
-            "message": "Successfully registered for activity",
-            "participation_id": participation_id
-        }))),
-        Err(sqlx::Error::Database(db_err)) => {
-            if db_err.is_unique_violation() {
-                Err((StatusCode::CONFLICT, "Already registered for this activity".to_string()))
-            } else {
-                Err((StatusCode::INTERNAL_SERVER_ERROR, format!("Database error: {}", db_err)))
-            }
-        },
-        Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, format!("Failed to register: {}", e))),
+        Ok(_) => {}
+        Err(sqlx::Error::Database(db_err)) if db_err.is_unique_violation() => {
+            return Err((StatusCode::CONFLICT, "ลงทะเบียนกิจกรรมนี้แล้ว".to_string()));
+        }
+        Err(e) => {
+            return Err((StatusCode::INTERNAL_SERVER_ERROR, format!("Failed to register: {}", e)));
+        }
     }
+
+    tx.commit().await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, format!("DB commit error: {}", e)))?;
+
+    Ok(Json(serde_json::json!({
+        "message": "Successfully registered for activity",
+        "participation_id": participation_id
+    })))
 }
 
 pub async fn get_my_participations(

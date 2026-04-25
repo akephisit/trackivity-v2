@@ -77,7 +77,8 @@ pub async fn generate_qr_handler(
         jti: jti.clone(),
     };
 
-    let secret = std::env::var("JWT_SECRET").unwrap_or_else(|_| "secret".to_string());
+    let secret = std::env::var("JWT_SECRET")
+        .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, "JWT_SECRET not configured".to_string()))?;
 
     let token = encode(
         &Header::default(),
@@ -101,9 +102,11 @@ pub async fn checkin_handler(
     Path(activity_id): Path<Uuid>,
     Json(payload): Json<ScanQRRequest>,
 ) -> Result<Json<ScanQRResponse>, (StatusCode, String)> {
-    // Must be admin to scan
-    let _claims = get_claims_from_headers(&headers)
+    let claims = get_claims_from_headers(&headers)
         .map_err(|_| (StatusCode::UNAUTHORIZED, "Unauthorized".to_string()))?;
+    if !claims.is_admin {
+        return Err((StatusCode::FORBIDDEN, "Only admins may scan QR".to_string()));
+    }
 
     scan_qr(&pool, activity_id, &payload.qr_data, "checkin").await
 }
@@ -116,8 +119,11 @@ pub async fn checkout_handler(
     Path(activity_id): Path<Uuid>,
     Json(payload): Json<ScanQRRequest>,
 ) -> Result<Json<ScanQRResponse>, (StatusCode, String)> {
-    let _claims = get_claims_from_headers(&headers)
+    let claims = get_claims_from_headers(&headers)
         .map_err(|_| (StatusCode::UNAUTHORIZED, "Unauthorized".to_string()))?;
+    if !claims.is_admin {
+        return Err((StatusCode::FORBIDDEN, "Only admins may scan QR".to_string()));
+    }
 
     scan_qr(&pool, activity_id, &payload.qr_data, "checkout").await
 }
@@ -131,7 +137,8 @@ async fn scan_qr(
     mode: &str,
 ) -> Result<Json<ScanQRResponse>, (StatusCode, String)> {
     // 1. Verify QR JWT token
-    let secret = std::env::var("JWT_SECRET").unwrap_or_else(|_| "secret".to_string());
+    let secret = std::env::var("JWT_SECRET")
+        .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, "JWT_SECRET not configured".to_string()))?;
     let token_data = decode::<QRTokenClaims>(
         qr_data,
         &DecodingKey::from_secret(secret.as_bytes()),
