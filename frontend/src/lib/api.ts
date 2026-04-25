@@ -429,10 +429,12 @@ export interface UpdateProfileInput {
 }
 
 export const usersApi = {
-    list: (params?: { page?: number; per_page?: number }) => {
+    list: (params?: { page?: number; per_page?: number; search?: string; status?: string }) => {
         const qs = new URLSearchParams();
         if (params?.page) qs.set('page', String(params.page));
         if (params?.per_page) qs.set('per_page', String(params.per_page));
+        if (params?.search) qs.set('search', params.search);
+        if (params?.status && params.status !== 'all') qs.set('status', params.status);
         const suffix = qs.toString() ? `?${qs.toString()}` : '';
         return request<UserListResponse>(`/users${suffix}`);
     },

@@ -11,6 +11,10 @@ use argon2::{Argon2, PasswordHash, PasswordVerifier, password_hash::{rand_core::
 pub struct ListUsersQuery {
     pub page: Option<i64>,
     pub per_page: Option<i64>,
+    /// Free-text match against first_name, last_name, email, student_id (ILIKE).
+    pub search: Option<String>,
+    /// Filter by user status (active / inactive / suspended).
+    pub status: Option<String>,
 }
 
 pub async fn list_users(
@@ -35,15 +39,37 @@ pub async fn list_users(
     let per_page = params.per_page.unwrap_or(50).clamp(1, 200);
     let offset = (page - 1) * per_page;
 
+    // Normalise filters: empty string → None so SQL can short-circuit.
+    let search_pattern = params
+        .search
+        .as_deref()
+        .map(str::trim)
+        .filter(|s| !s.is_empty())
+        .map(|s| format!("%{}%", s));
+    let status_filter = params
+        .status
+        .as_deref()
+        .map(str::trim)
+        .filter(|s| !s.is_empty() && *s != "all");
+
     let total: i64 = sqlx::query_scalar(
         r#"
         SELECT COUNT(*) FROM users u
         LEFT JOIN departments d ON u.department_id = d.id
         WHERE u.deleted_at IS NULL
           AND ($1::uuid IS NULL OR d.organization_id = $1)
+          AND ($2::text IS NULL OR u.status::text = $2)
+          AND ($3::text IS NULL OR (
+              u.first_name ILIKE $3
+              OR u.last_name ILIKE $3
+              OR u.email ILIKE $3
+              OR u.student_id ILIKE $3
+          ))
         "#,
     )
     .bind(scope_org_id)
+    .bind(status_filter)
+    .bind(search_pattern.as_deref())
     .fetch_one(&pool)
     .await
     .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, format!("Failed to count users: {}", e)))?;
@@ -59,10 +85,19 @@ pub async fn list_users(
         LEFT JOIN organizations o ON d.organization_id = o.id
         WHERE u.deleted_at IS NULL
           AND ($1::uuid IS NULL OR d.organization_id = $1)
+          AND ($2::text IS NULL OR u.status::text = $2)
+          AND ($3::text IS NULL OR (
+              u.first_name ILIKE $3
+              OR u.last_name ILIKE $3
+              OR u.email ILIKE $3
+              OR u.student_id ILIKE $3
+          ))
         ORDER BY u.created_at DESC
-        LIMIT $2 OFFSET $3
+        LIMIT $4 OFFSET $5
     "#)
     .bind(scope_org_id)
+    .bind(status_filter)
+    .bind(search_pattern.as_deref())
     .bind(per_page)
     .bind(offset)
     .fetch_all(&pool)

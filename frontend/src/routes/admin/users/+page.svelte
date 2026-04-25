@@ -1,8 +1,8 @@
 <script lang="ts">
-	import { CircleAlert, RefreshCw, Search, UserCheck, UserX, Users } from '@lucide/svelte';
-	import { usersApi, organizationsApi, adminApi, ApiError } from '$lib/api';
-	import type { UserListItem, Organization, DashboardStats } from '$lib/api';
-	import { onMount } from 'svelte';
+	import { ChevronLeft, ChevronRight, CircleAlert, RefreshCw, Search, UserCheck, UserX, Users } from '@lucide/svelte';
+	import { usersApi, adminApi, ApiError } from '$lib/api';
+	import type { UserListItem, DashboardStats } from '$lib/api';
+	import { onMount, untrack } from 'svelte';
 	import { authStore } from '$lib/stores/auth.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
@@ -14,61 +14,66 @@
 	import { Skeleton } from '$lib/components/ui/skeleton';
 	import { goto } from '$app/navigation';
 
-	// We pull up to 200 users per page from the backend, which is its
-	// hard cap. If totalUsers exceeds this we surface a warning so admins
-	// know they need to narrow with search/status before making decisions
-	// based on the visible data.
-	const PER_PAGE = 200;
+	const PER_PAGE = 50;
 
 	// ─── State ──────────────────────────────────────────────────────────────
 	let users = $state<UserListItem[]>([]);
 	let totalUsers = $state(0);
 	let stats = $state<DashboardStats | null>(null);
-	let organizations = $state<Organization[]>([]);
 	let loading = $state(true);
 	let error = $state<string | null>(null);
 
-	// Filters
-	let searchTerm = $state('');
+	// Filters (drive server-side queries)
+	let searchInput = $state('');
+	let searchTerm = $state(''); // debounced
 	let selectedStatus = $state('all');
-	let selectedOrg = $state('all');
+	let currentPage = $state(1);
 
 	const isSuperAdmin = $derived(authStore.user?.admin_role?.admin_level === 'super_admin');
+	const totalPages = $derived(Math.max(1, Math.ceil(totalUsers / PER_PAGE)));
 
-	// ─── Derived ────────────────────────────────────────────────────────────
-	let filteredUsers = $derived(
-		users.filter((user) => {
-			const q = searchTerm.toLowerCase();
-			const matchesSearch =
-				q === '' ||
-				user.first_name?.toLowerCase().includes(q) ||
-				user.last_name?.toLowerCase().includes(q) ||
-				user.email?.toLowerCase().includes(q) ||
-				user.student_id?.toLowerCase().includes(q);
+	// Debounce free-text search → 300ms after the user stops typing.
+	let searchDebouncer: ReturnType<typeof setTimeout> | null = null;
+	$effect(() => {
+		const next = searchInput;
+		if (searchDebouncer) clearTimeout(searchDebouncer);
+		searchDebouncer = setTimeout(() => {
+			searchTerm = next;
+		}, 300);
+		return () => {
+			if (searchDebouncer) clearTimeout(searchDebouncer);
+		};
+	});
 
-			const matchesStatus = selectedStatus === 'all' || user.status === selectedStatus;
-			const matchesOrg = selectedOrg === 'all' || user.organization_name === selectedOrg;
+	// Fetch when search/status/page changes. Reset to page 1 whenever the
+	// filters change so the user doesn't end up on a now-empty page.
+	$effect(() => {
+		searchTerm;
+		selectedStatus;
+		untrack(() => {
+			if (currentPage !== 1) currentPage = 1;
+		});
+		fetchUsers();
+	});
 
-			return matchesSearch && matchesStatus && matchesOrg;
-		})
-	);
-
-	const usersTruncated = $derived(totalUsers > users.length);
+	$effect(() => {
+		currentPage;
+		fetchUsers();
+	});
 
 	// ─── Data Fetching ──────────────────────────────────────────────────────
-	async function fetchData() {
+	async function fetchUsers() {
 		loading = true;
 		error = null;
 		try {
-			const [userResult, orgData, dashStats] = await Promise.all([
-				usersApi.list({ per_page: PER_PAGE }),
-				organizationsApi.listAdmin().catch(() => [] as Organization[]),
-				adminApi.dashboardStats().catch(() => null)
-			]);
+			const userResult = await usersApi.list({
+				page: currentPage,
+				per_page: PER_PAGE,
+				search: searchTerm || undefined,
+				status: selectedStatus
+			});
 			users = userResult.users;
 			totalUsers = userResult.total;
-			organizations = orgData;
-			stats = dashStats;
 		} catch (e) {
 			error = e instanceof ApiError ? e.message : 'ไม่สามารถโหลดข้อมูลได้';
 		} finally {
@@ -76,7 +81,25 @@
 		}
 	}
 
-	onMount(fetchData);
+	async function fetchStats() {
+		try {
+			stats = await adminApi.dashboardStats();
+		} catch {
+			// non-critical — leave stats null and the cards will fall back to
+			// the totals from the user list response.
+		}
+	}
+
+	async function refreshAll() {
+		await Promise.all([fetchUsers(), fetchStats()]);
+	}
+
+	function gotoPage(p: number) {
+		const next = Math.min(Math.max(1, p), totalPages);
+		if (next !== currentPage) currentPage = next;
+	}
+
+	onMount(fetchStats);
 
 	function getStatusBadgeVariant(status: string): 'default' | 'secondary' | 'destructive' | 'outline' {
 		switch (status) {
@@ -115,7 +138,7 @@
 			<h1 class="text-2xl font-bold lg:text-3xl">จัดการผู้ใช้</h1>
 			<p class="text-muted-foreground">รายชื่อผู้ใช้งานทั้งหมดในระบบ</p>
 		</div>
-		<Button variant="outline" onclick={fetchData} disabled={loading}>
+		<Button variant="outline" onclick={refreshAll} disabled={loading}>
 			<RefreshCw class="mr-2 size-4 {loading ? 'animate-spin' : ''}" />
 			รีเฟรช
 		</Button>
@@ -170,7 +193,11 @@
 			<div class="flex flex-col gap-3 sm:flex-row">
 				<div class="relative flex-1">
 					<Search class="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
-					<Input bind:value={searchTerm} placeholder="ค้นหาผู้ใช้..." class="pl-9" />
+					<Input
+						bind:value={searchInput}
+						placeholder="ค้นหา ชื่อ / อีเมล / รหัสนักศึกษา..."
+						class="pl-9"
+					/>
 				</div>
 				<Select.Root type="single" bind:value={selectedStatus}>
 					<Select.Trigger class="sm:w-40">
@@ -187,19 +214,6 @@
 						<Select.Item value="suspended">ระงับ</Select.Item>
 					</Select.Content>
 				</Select.Root>
-				{#if isSuperAdmin}
-					<Select.Root type="single" bind:value={selectedOrg}>
-						<Select.Trigger class="sm:w-48">
-							{selectedOrg === 'all' ? 'หน่วยงานทั้งหมด' : selectedOrg}
-						</Select.Trigger>
-						<Select.Content>
-							<Select.Item value="all">หน่วยงานทั้งหมด</Select.Item>
-							{#each organizations as org}
-								<Select.Item value={org.name}>{org.name}</Select.Item>
-							{/each}
-						</Select.Content>
-					</Select.Root>
-				{/if}
 			</div>
 		</CardHeader>
 		<CardContent>
@@ -233,12 +247,12 @@
 					<CircleAlert class="size-4" />
 					<AlertDescription class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
 						<span>{error}</span>
-						<Button size="sm" variant="outline" onclick={fetchData}>
+						<Button size="sm" variant="outline" onclick={fetchUsers}>
 							<RefreshCw class="mr-2 size-4" />ลองใหม่
 						</Button>
 					</AlertDescription>
 				</Alert>
-			{:else if filteredUsers.length === 0}
+			{:else if users.length === 0}
 				<div class="py-12 text-center">
 					<Users class="mx-auto mb-4 size-12 text-muted-foreground/50" />
 					<p class="text-muted-foreground">ไม่พบผู้ใช้</p>
@@ -258,7 +272,7 @@
 						</Table.Row>
 					</Table.Header>
 					<Table.Body>
-						{#each filteredUsers as user}
+						{#each users as user}
 							<Table.Row class="cursor-pointer hover:bg-muted/50" onclick={() => goto(`/admin/users/${user.id}`)}>
 								<Table.Cell>
 									<div>
@@ -289,19 +303,41 @@
 						{/each}
 					</Table.Body>
 				</Table.Root>
-				<div class="mt-4 space-y-2">
-					<p class="text-center text-sm text-muted-foreground">
-						แสดง {filteredUsers.length.toLocaleString()} จากทั้งหมด {totalUsers.toLocaleString()} คน
+
+				<!-- Pagination footer -->
+				<div class="mt-4 flex flex-col items-center gap-3 sm:flex-row sm:justify-between">
+					<p class="text-sm text-muted-foreground">
+						{#if totalUsers === 0}
+							ไม่มีผู้ใช้
+						{:else}
+							{@const from = (currentPage - 1) * PER_PAGE + 1}
+							{@const to = Math.min(currentPage * PER_PAGE, totalUsers)}
+							แสดง {from.toLocaleString()}–{to.toLocaleString()} จาก {totalUsers.toLocaleString()} คน
+						{/if}
 					</p>
-					{#if usersTruncated}
-						<Alert>
-							<CircleAlert class="size-4" />
-							<AlertDescription>
-								โหลดมาแล้ว {users.length.toLocaleString()} คนแรกจากทั้งหมด {totalUsers.toLocaleString()} คน —
-								ใช้ตัวกรองเพื่อค้นหาคนที่ต้องการให้แม่นยำขึ้น
-							</AlertDescription>
-						</Alert>
-					{/if}
+					<div class="flex items-center gap-2">
+						<Button
+							variant="outline"
+							size="sm"
+							onclick={() => gotoPage(currentPage - 1)}
+							disabled={currentPage <= 1 || loading}
+						>
+							<ChevronLeft class="size-4" />
+							ก่อนหน้า
+						</Button>
+						<span class="text-sm text-muted-foreground">
+							หน้า {currentPage} / {totalPages}
+						</span>
+						<Button
+							variant="outline"
+							size="sm"
+							onclick={() => gotoPage(currentPage + 1)}
+							disabled={currentPage >= totalPages || loading}
+						>
+							ถัดไป
+							<ChevronRight class="size-4" />
+						</Button>
+					</div>
 				</div>
 			{/if}
 		</CardContent>
