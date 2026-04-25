@@ -1,6 +1,5 @@
 <script lang="ts">
-	import { CircleAlert, Building as BuildingIcon, Check, Hourglass, Info, School, Settings } from '@lucide/svelte';
-	import { enhance } from '$app/forms';
+	import { CircleAlert, Building as BuildingIcon, Check, Hourglass, Info, RefreshCw, School, Settings } from '@lucide/svelte';
 	import {
 		Card,
 		CardContent,
@@ -13,56 +12,90 @@
 	import { Button } from '$lib/components/ui/button';
 	import { Alert, AlertDescription } from '$lib/components/ui/alert';
 	import { Separator } from '$lib/components/ui/separator';
+	import { Skeleton } from '$lib/components/ui/skeleton';
 	import { toast } from 'svelte-sonner';
 	import { authStore } from '$lib/stores/auth.svelte';
 	import { organizationsApi, type Organization } from '$lib/api';
 	import { onMount } from 'svelte';
 
-	let { form } = $props();
-
 	// CSR state — org info from authStore
 	const user = $derived(authStore.user);
 	let organization = $state<Organization | null>(null);
 	let isLoadingOrg = $state(true);
+	let loadError = $state<string | null>(null);
 
 	let isSubmitting = $state(false);
-	let requiredFacultyHours = $state(6);
-	let requiredUniversityHours = $state(12);
+	// Form values; null until loaded so we don't display fake defaults.
+	let requiredFacultyHours = $state<number | null>(null);
+	let requiredUniversityHours = $state<number | null>(null);
+	// Original values from the server, used by the reset button so it
+	// reverts to the last saved values instead of hard-coded 6/12.
+	let initialFacultyHours = $state<number | null>(null);
+	let initialUniversityHours = $state<number | null>(null);
 
 	async function handleSubmit(e: Event) {
 		e.preventDefault();
-		if (!organization) return;
+		if (!organization || requiredFacultyHours === null || requiredUniversityHours === null) return;
 		isSubmitting = true;
 
 		try {
-			const res = await organizationsApi.updateRequirements(organization.id, {
+			await organizationsApi.updateRequirements(organization.id, {
 				required_faculty_hours: requiredFacultyHours,
 				required_university_hours: requiredUniversityHours
 			});
+			initialFacultyHours = requiredFacultyHours;
+			initialUniversityHours = requiredUniversityHours;
 			toast.success('การตั้งค่าได้รับการอัพเดทเรียบร้อยแล้ว');
-		} catch (e: any) {
-			toast.error(e.message || 'เกิดข้อผิดพลาดในการบันทึกการตั้งค่า');
+		} catch (err: any) {
+			toast.error(err.message || 'เกิดข้อผิดพลาดในการบันทึกการตั้งค่า');
 		} finally {
 			isSubmitting = false;
 		}
 	}
 
-	onMount(async () => {
-		if (user?.admin_role?.organization_id) {
-			try {
-				const orgId = user.admin_role.organization_id;
-				const response = await organizationsApi.list();
-				organization = response.all.find((o) => o.id === orgId) || null;
+	function resetToInitial() {
+		requiredFacultyHours = initialFacultyHours;
+		requiredUniversityHours = initialUniversityHours;
+	}
 
-				const reqs = await organizationsApi.getRequirements(orgId);
-				requiredFacultyHours = reqs.required_faculty_hours;
-				requiredUniversityHours = reqs.required_university_hours;
-			} catch (e) {
-				console.error('Failed to load organization details', e);
-			}
+	async function fetchSettings() {
+		const orgId = user?.admin_role?.organization_id;
+		if (!orgId) {
+			isLoadingOrg = false;
+			return;
 		}
-		isLoadingOrg = false;
-	});
+		isLoadingOrg = true;
+		loadError = null;
+		try {
+			// Fetch org metadata and per-org requirements in parallel.
+			// list() returns all orgs (the existing API doesn't expose a
+			// single-org GET); we tolerate that for now and just pick ours.
+			const [orgList, reqs] = await Promise.all([
+				organizationsApi.list(),
+				organizationsApi.getRequirements(orgId)
+			]);
+			organization = orgList.all.find((o) => o.id === orgId) || null;
+			requiredFacultyHours = reqs.required_faculty_hours;
+			requiredUniversityHours = reqs.required_university_hours;
+			initialFacultyHours = reqs.required_faculty_hours;
+			initialUniversityHours = reqs.required_university_hours;
+		} catch (e: any) {
+			loadError = e?.message ?? 'ไม่สามารถโหลดการตั้งค่าได้';
+			console.error('Failed to load organization settings', e);
+		} finally {
+			isLoadingOrg = false;
+		}
+	}
+
+	onMount(fetchSettings);
+
+	const totalHours = $derived(
+		(requiredFacultyHours ?? 0) + (requiredUniversityHours ?? 0)
+	);
+	const isDirty = $derived(
+		requiredFacultyHours !== initialFacultyHours ||
+			requiredUniversityHours !== initialUniversityHours
+	);
 </script>
 
 <svelte:head>
@@ -138,6 +171,18 @@
 				</AlertDescription>
 			</Alert>
 
+			{#if loadError}
+				<Alert variant="destructive">
+					<CircleAlert class="size-4" />
+					<AlertDescription class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+						<span>{loadError}</span>
+						<Button size="sm" variant="outline" onclick={fetchSettings}>
+							<RefreshCw class="mr-2 size-4" />ลองใหม่
+						</Button>
+					</AlertDescription>
+				</Alert>
+			{/if}
+
 			<!-- Current Settings Display -->
 			<div class="rounded-lg border bg-muted/30 p-4">
 				<h4 class="mb-3 font-semibold">การตั้งค่าปัจจุบัน</h4>
@@ -148,9 +193,13 @@
 						</div>
 						<div>
 							<p class="text-sm font-medium">กิจกรรมระดับคณะ</p>
-							<p class="text-lg font-bold text-green-600">
-								{requiredFacultyHours} ชั่วโมง
-							</p>
+							{#if isLoadingOrg}
+								<Skeleton class="mt-1 h-6 w-24" />
+							{:else}
+								<p class="text-lg font-bold text-green-600">
+									{initialFacultyHours ?? '-'} ชั่วโมง
+								</p>
+							{/if}
 						</div>
 					</div>
 					<div class="flex items-center gap-3">
@@ -159,9 +208,13 @@
 						</div>
 						<div>
 							<p class="text-sm font-medium">กิจกรรมระดับมหาวิทยาลัย</p>
-							<p class="text-lg font-bold text-blue-600">
-								{requiredUniversityHours} ชั่วโมง
-							</p>
+							{#if isLoadingOrg}
+								<Skeleton class="mt-1 h-6 w-24" />
+							{:else}
+								<p class="text-lg font-bold text-blue-600">
+									{initialUniversityHours ?? '-'} ชั่วโมง
+								</p>
+							{/if}
 						</div>
 					</div>
 				</div>
@@ -187,10 +240,11 @@
 								max="1000"
 								bind:value={requiredFacultyHours}
 								placeholder="กรอกจำนวนชั่วโมง"
+								disabled={isLoadingOrg || isSubmitting}
 								required
 							/>
 							<p class="text-xs text-muted-foreground">
-								นักศึกษาต้องสะสมชั่วโมงจากกิจกรรมระดับคณะอย่างน้อย {requiredFacultyHours} ชั่วโมง
+								นักศึกษาต้องสะสมชั่วโมงจากกิจกรรมระดับคณะอย่างน้อย {requiredFacultyHours ?? 0} ชั่วโมง
 							</p>
 						</div>
 
@@ -208,10 +262,11 @@
 								max="1000"
 								bind:value={requiredUniversityHours}
 								placeholder="กรอกจำนวนชั่วโมง"
+								disabled={isLoadingOrg || isSubmitting}
 								required
 							/>
 							<p class="text-xs text-muted-foreground">
-								นักศึกษาต้องสะสมชั่วโมงจากกิจกรรมระดับมหาวิทยาลัยอย่างน้อย {requiredUniversityHours}
+								นักศึกษาต้องสะสมชั่วโมงจากกิจกรรมระดับมหาวิทยาลัยอย่างน้อย {requiredUniversityHours ?? 0}
 								ชั่วโมง
 							</p>
 						</div>
@@ -219,7 +274,11 @@
 
 					<!-- Action Buttons -->
 					<div class="flex flex-col gap-3 sm:flex-row">
-						<Button type="submit" disabled={isSubmitting} class="w-full gap-2 sm:w-auto">
+						<Button
+							type="submit"
+							disabled={isSubmitting || isLoadingOrg || !isDirty}
+							class="w-full gap-2 sm:w-auto"
+						>
 							{#if isSubmitting}
 								<div
 									class="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"
@@ -232,12 +291,10 @@
 						<Button
 							type="button"
 							variant="outline"
-							onclick={() => {
-								requiredFacultyHours = 6;
-								requiredUniversityHours = 12;
-							}}
+							onclick={resetToInitial}
+							disabled={isLoadingOrg || isSubmitting || !isDirty}
 						>
-							รีเซ็ต
+							ย้อนกลับเป็นค่าเดิม
 						</Button>
 					</div>
 
@@ -249,33 +306,12 @@
 						</div>
 						<p class="mt-2 text-sm text-blue-600">
 							นักศึกษาจะต้องสะสมชั่วโมงกิจกรรมรวมทั้งหมดอย่างน้อย
-							<span class="font-semibold"
-								>{requiredFacultyHours + requiredUniversityHours} ชั่วโมง</span
-							>
+							<span class="font-semibold">{totalHours} ชั่วโมง</span>
 							ตลอดการศึกษาเพื่อผ่านเกณฑ์การสำเร็จการศึกษา
 						</p>
 					</div>
 				</div>
 			</form>
-
-			<!-- Form Messages -->
-			{#if form?.success}
-				<Alert>
-					<Check class="h-4 w-4" />
-					<AlertDescription class="text-green-700">
-						{form.message}
-					</AlertDescription>
-				</Alert>
-			{/if}
-
-			{#if form?.error}
-				<Alert variant="destructive">
-					<CircleAlert class="h-4 w-4" />
-					<AlertDescription>
-						{form.error}
-					</AlertDescription>
-				</Alert>
-			{/if}
 		</CardContent>
 	</Card>
 </div>
