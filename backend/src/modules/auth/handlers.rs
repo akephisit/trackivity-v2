@@ -196,6 +196,69 @@ pub async fn logout_handler(
     Ok(response)
 }
 
+/// Flat row produced by the single LEFT-JOIN query in `me_handler`.
+/// Admin-role columns are all Option because the join may not match.
+/// `organization_id` / `organization_name` come from a CASE WHEN that
+/// preserves the old precedence: admin_role.organization_id wins; if
+/// the user has no admin_role, fall back to their department's org.
+#[derive(sqlx::FromRow, Debug)]
+struct MeRow {
+    id: Uuid,
+    student_id: String,
+    email: String,
+    first_name: String,
+    last_name: String,
+    prefix: String,
+    department_id: Option<Uuid>,
+    ar_id: Option<Uuid>,
+    ar_user_id: Option<Uuid>,
+    ar_admin_level: Option<crate::models::AdminLevel>,
+    ar_organization_id: Option<Uuid>,
+    ar_permissions: Option<Vec<String>>,
+    ar_is_enabled: Option<bool>,
+    ar_created_at: Option<chrono::DateTime<chrono::Utc>>,
+    ar_updated_at: Option<chrono::DateTime<chrono::Utc>>,
+    organization_id: Option<Uuid>,
+    organization_name: Option<String>,
+    department_name: Option<String>,
+}
+
+/// Pure transformation. Kept pure so the four user-shape branches
+/// (super admin, org admin, student-with-dept, student-no-dept) can
+/// be unit-tested without a DB.
+fn me_row_to_response(row: MeRow, session_id: String, expires_at: chrono::DateTime<chrono::Utc>) -> UserResponse {
+    let admin_role = row.ar_id.map(|id| AdminRole {
+        id,
+        // The columns below are NOT NULL in the schema, so when ar_id
+        // is Some they are guaranteed Some too. Use unwrap_or_default
+        // / unwrap_or to avoid panicking on unexpected NULL — the
+        // semantics match a row that exists but is empty/disabled.
+        user_id: row.ar_user_id.unwrap_or(Uuid::nil()),
+        admin_level: row.ar_admin_level.unwrap_or(crate::models::AdminLevel::RegularAdmin),
+        organization_id: row.ar_organization_id,
+        permissions: row.ar_permissions.unwrap_or_default(),
+        is_enabled: row.ar_is_enabled.unwrap_or(false),
+        created_at: row.ar_created_at,
+        updated_at: row.ar_updated_at,
+    });
+
+    UserResponse {
+        id: row.id,
+        student_id: row.student_id,
+        email: row.email,
+        first_name: row.first_name,
+        last_name: row.last_name,
+        prefix: row.prefix,
+        admin_role,
+        organization_id: row.organization_id,
+        organization_name: row.organization_name,
+        department_id: row.department_id,
+        department_name: row.department_name,
+        session_id,
+        expires_at,
+    }
+}
+
 pub async fn me_handler(
     headers: HeaderMap,
     State(pool): State<PgPool>,
@@ -204,81 +267,41 @@ pub async fn me_handler(
     let user_id = Uuid::parse_str(&claims.sub)
         .map_err(|_| (StatusCode::UNAUTHORIZED, "Invalid user ID in token".to_string()))?;
 
-    let user = sqlx::query_as::<_, User>("SELECT * FROM users WHERE id = $1")
-        .bind(user_id)
-        .fetch_optional(&pool)
-        .await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
-        .ok_or((StatusCode::NOT_FOUND, "User not found".to_string()))?;
-
-    let admin_role = sqlx::query_as::<_, AdminRole>("SELECT * FROM admin_roles WHERE user_id = $1 AND is_enabled = TRUE")
-        .bind(user.id)
-        .fetch_optional(&pool)
-        .await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
-
-    // Fetch organization_name from admin_role's organization_id
-    let (organization_id, organization_name): (Option<Uuid>, Option<String>) = if let Some(ref role) = admin_role {
-        if let Some(org_id) = role.organization_id {
-            let name = sqlx::query_scalar::<_, String>("SELECT name FROM organizations WHERE id = $1")
-                .bind(org_id)
-                .fetch_optional(&pool)
-                .await
-                .unwrap_or(None);
-            (Some(org_id), name)
-        } else {
-            (None, None)
-        }
-    } else if let Some(dept_id) = user.department_id {
-        let org_details = sqlx::query_as::<_, (Uuid, String)>("
-            SELECT o.id, o.name 
-            FROM organizations o
-            JOIN departments d ON o.id = d.organization_id
-            WHERE d.id = $1
-        ")
-        .bind(dept_id)
-        .fetch_optional(&pool)
-        .await
-        .unwrap_or(None);
-        
-        if let Some((org_id, name)) = org_details {
-            (Some(org_id), Some(name))
-        } else {
-            (None, None)
-        }
-    } else {
-        (None, None)
-    };
-
-    // Fetch department_name from user's department_id
-    let department_name: Option<String> = if let Some(dept_id) = user.department_id {
-        sqlx::query_scalar::<_, String>("SELECT name FROM departments WHERE id = $1")
-            .bind(dept_id)
-            .fetch_optional(&pool)
-            .await
-            .unwrap_or(None)
-    } else {
-        None
-    };
+    // Single JOIN replaces the previous 3-4 sequential queries.
+    // Precedence rule for organization is encoded in CASE WHEN:
+    //   - if user has an enabled admin_role  -> use admin_role.organization_id (may be NULL for super admin)
+    //   - else                               -> fall back to department's organization
+    let row = sqlx::query_as::<_, MeRow>(r#"
+        SELECT
+            u.id, u.student_id, u.email, u.first_name, u.last_name, u.prefix, u.department_id,
+            ar.id              AS ar_id,
+            ar.user_id         AS ar_user_id,
+            ar.admin_level     AS ar_admin_level,
+            ar.organization_id AS ar_organization_id,
+            ar.permissions     AS ar_permissions,
+            ar.is_enabled      AS ar_is_enabled,
+            ar.created_at      AS ar_created_at,
+            ar.updated_at      AS ar_updated_at,
+            CASE WHEN ar.id IS NOT NULL THEN ao.id   ELSE dept_org.id   END AS organization_id,
+            CASE WHEN ar.id IS NOT NULL THEN ao.name ELSE dept_org.name END AS organization_name,
+            d.name AS department_name
+        FROM users u
+        LEFT JOIN admin_roles  ar       ON ar.user_id = u.id AND ar.is_enabled = TRUE
+        LEFT JOIN organizations ao      ON ao.id = ar.organization_id
+        LEFT JOIN departments   d       ON d.id  = u.department_id
+        LEFT JOIN organizations dept_org ON dept_org.id = d.organization_id
+        WHERE u.id = $1
+    "#)
+    .bind(user_id)
+    .fetch_optional(&pool)
+    .await
+    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
+    .ok_or((StatusCode::NOT_FOUND, "User not found".to_string()))?;
 
     let expires_at = chrono::DateTime::from_timestamp(claims.exp as i64, 0)
         .unwrap_or_else(Utc::now);
 
-    Ok(Json(UserResponse {
-        id: user.id,
-        student_id: user.student_id,
-        email: user.email,
-        first_name: user.first_name,
-        last_name: user.last_name,
-        prefix: user.prefix,
-        admin_role,
-        organization_id,
-        organization_name,
-        department_id: user.department_id,
-        department_name,
-        session_id: claims.session_id,
-        expires_at,
-    }))
+    Ok(Json(me_row_to_response(row, claims.session_id, expires_at)))
 }
 
 pub async fn register_handler(
@@ -475,4 +498,120 @@ pub async fn reset_password_handler(
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
 
     Ok((StatusCode::OK, Json(serde_json::json!({ "message": "Password successfully reset" }))).into_response())
+}
+
+#[cfg(test)]
+mod me_handler_tests {
+    use super::*;
+    use crate::models::AdminLevel;
+    use chrono::TimeZone;
+
+    fn fixture_row() -> MeRow {
+        MeRow {
+            id: Uuid::nil(),
+            student_id: "6500001".into(),
+            email: "u@example.com".into(),
+            first_name: "U".into(),
+            last_name: "Test".into(),
+            prefix: "Mr.".into(),
+            department_id: None,
+            ar_id: None,
+            ar_user_id: None,
+            ar_admin_level: None,
+            ar_organization_id: None,
+            ar_permissions: None,
+            ar_is_enabled: None,
+            ar_created_at: None,
+            ar_updated_at: None,
+            organization_id: None,
+            organization_name: None,
+            department_name: None,
+        }
+    }
+
+    fn ts() -> chrono::DateTime<chrono::Utc> {
+        chrono::Utc.with_ymd_and_hms(2026, 1, 1, 0, 0, 0).unwrap()
+    }
+
+    /// Super admin: admin_role exists, organization_id NULL → org info should be None
+    /// (matches old behaviour where the inner `if let Some(org_id)` branch returned None.)
+    #[test]
+    fn super_admin_no_org() {
+        let row = MeRow {
+            ar_id: Some(Uuid::nil()),
+            ar_user_id: Some(Uuid::nil()),
+            ar_admin_level: Some(AdminLevel::SuperAdmin),
+            ar_organization_id: None,
+            ar_permissions: Some(vec![]),
+            ar_is_enabled: Some(true),
+            ar_created_at: Some(ts()),
+            ar_updated_at: Some(ts()),
+            organization_id: None,
+            organization_name: None,
+            ..fixture_row()
+        };
+        let r = me_row_to_response(row, "s".into(), ts());
+        assert!(r.admin_role.is_some());
+        assert_eq!(r.admin_role.as_ref().unwrap().admin_level, AdminLevel::SuperAdmin);
+        assert_eq!(r.organization_id, None);
+        assert_eq!(r.organization_name, None);
+    }
+
+    /// Org admin with department: admin_role.organization_id wins over department's org.
+    #[test]
+    fn org_admin_uses_admin_org_not_dept_org() {
+        let admin_org = Uuid::new_v4();
+        let dept = Uuid::new_v4();
+        let row = MeRow {
+            department_id: Some(dept),
+            department_name: Some("CS".into()),
+            ar_id: Some(Uuid::nil()),
+            ar_user_id: Some(Uuid::nil()),
+            ar_admin_level: Some(AdminLevel::OrganizationAdmin),
+            ar_organization_id: Some(admin_org),
+            ar_permissions: Some(vec![]),
+            ar_is_enabled: Some(true),
+            ar_created_at: Some(ts()),
+            ar_updated_at: Some(ts()),
+            // SQL CASE WHEN ar.id IS NOT NULL → uses admin_role's org, not dept_org
+            organization_id: Some(admin_org),
+            organization_name: Some("Admin Org".into()),
+            ..fixture_row()
+        };
+        let r = me_row_to_response(row, "s".into(), ts());
+        assert_eq!(r.organization_id, Some(admin_org));
+        assert_eq!(r.organization_name.as_deref(), Some("Admin Org"));
+        assert_eq!(r.department_id, Some(dept));
+        assert_eq!(r.department_name.as_deref(), Some("CS"));
+    }
+
+    /// Student with department: no admin_role → org derived from department's org.
+    #[test]
+    fn student_with_dept_uses_dept_org() {
+        let dept_org = Uuid::new_v4();
+        let dept = Uuid::new_v4();
+        let row = MeRow {
+            department_id: Some(dept),
+            department_name: Some("CS".into()),
+            organization_id: Some(dept_org),
+            organization_name: Some("Faculty of Science".into()),
+            ..fixture_row()
+        };
+        let r = me_row_to_response(row, "s".into(), ts());
+        assert!(r.admin_role.is_none());
+        assert_eq!(r.organization_id, Some(dept_org));
+        assert_eq!(r.organization_name.as_deref(), Some("Faculty of Science"));
+        assert_eq!(r.department_name.as_deref(), Some("CS"));
+    }
+
+    /// Student with no department, no admin_role → all org/dept fields None.
+    #[test]
+    fn student_no_dept_returns_nulls() {
+        let r = me_row_to_response(fixture_row(), "s".into(), ts());
+        assert!(r.admin_role.is_none());
+        assert_eq!(r.organization_id, None);
+        assert_eq!(r.organization_name, None);
+        assert_eq!(r.department_id, None);
+        assert_eq!(r.department_name, None);
+    }
 }
