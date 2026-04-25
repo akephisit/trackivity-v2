@@ -1,9 +1,8 @@
 <script lang="ts">
-	import { Activity as ActivityIcon, Undo2, Building as BuildingIcon, Calendar as CalendarIcon, Check, MapPin, QrCode, Settings, Users, X } from '@lucide/svelte';
-	import { onMount, untrack } from 'svelte';
+	import { Activity as ActivityIcon, Undo2, Building as BuildingIcon, Calendar as CalendarIcon, Check, CircleAlert, MapPin, QrCode, RefreshCw, Settings, Users, X } from '@lucide/svelte';
+	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { browser } from '$app/environment';
-	// Removed toast import - QRScanner component handles all notifications
 
 	import QRScanner from '$lib/components/qr/QRScanner.svelte';
 	import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
@@ -16,75 +15,70 @@
 	import { authStore } from '$lib/stores/auth.svelte';
 	import { activities as activitiesApi, type Activity } from '$lib/api';
 
+	const ADMIN_LEVEL_LABEL: Record<string, string> = {
+		super_admin: 'ซุปเปอร์แอดมิน',
+		organization_admin: 'แอดมินหน่วยงาน',
+		regular_admin: 'แอดมินทั่วไป'
+	};
+
 	// Component state
 	let activities = $state<Activity[]>([]);
 	let selectedActivityId = $state('');
 	let scannerActive = $state(false);
 	let scannerMounted = $state(false);
 	let scannerStatus = $state<'idle' | 'requesting' | 'active' | 'error'>('idle');
+	let isLoading = $state(true);
+	let loadError = $state<string | null>(null);
 
 	// Derived — no manual counter needed; backend sends real counts
 	const selectedActivity = $derived(
 		selectedActivityId ? activities.find((a) => a.id === selectedActivityId) || null : null
 	);
 	const currentParticipantCount = $derived(selectedActivity?.checked_in_count ?? 0);
+	const isSuperAdmin = $derived(authStore.user?.admin_role?.admin_level === 'super_admin');
 
-	// Track URL updates separately to prevent infinite loops
-	let isUpdatingUrl = $state(false);
-	let lastUrlActivityId = $state('');
-
+	// Sync activity_id with the URL via history.replaceState — simpler and
+	// avoids the goto()/untrack/guard-flag dance that the previous version
+	// needed to dodge SvelteKit's own re-navigations.
 	$effect(() => {
-		// Only update URL if we're in browser and not currently updating URL
-		if (browser && !isUpdatingUrl && selectedActivityId !== lastUrlActivityId) {
-			// Use untrack to read current URL without creating reactive dependencies
-			const currentUrlActivityId = untrack(() => {
-				const url = new URL(window.location.href);
-				return url.searchParams.get('activity_id') || '';
-			});
-
-			if (selectedActivityId !== currentUrlActivityId) {
-				isUpdatingUrl = true;
-				const url = new URL(window.location.href);
-
-				if (selectedActivityId) {
-					url.searchParams.set('activity_id', selectedActivityId);
-				} else {
-					url.searchParams.delete('activity_id');
-				}
-
-				goto(url.toString(), { replaceState: true, noScroll: true }).finally(() => {
-					isUpdatingUrl = false;
-				});
-			}
-
-			lastUrlActivityId = selectedActivityId;
+		if (!browser) return;
+		const url = new URL(window.location.href);
+		const current = url.searchParams.get('activity_id') ?? '';
+		if (current === selectedActivityId) return;
+		if (selectedActivityId) {
+			url.searchParams.set('activity_id', selectedActivityId);
+		} else {
+			url.searchParams.delete('activity_id');
 		}
+		history.replaceState(history.state, '', url);
 	});
 
-	let isLoading = $state(true);
-
-	onMount(async () => {
-		// Initialize URL tracking state first to prevent URL updates during initialization
-		const url = new URL(window.location.href);
-		const urlActivityId = url.searchParams.get('activity_id') || '';
-		lastUrlActivityId = urlActivityId;
-
+	async function loadActivities() {
+		isLoading = true;
+		loadError = null;
 		try {
-			const allActivites = await activitiesApi.list();
-			activities = allActivites.filter((a) => a.status === 'ongoing');
-			isLoading = false;
+			const allActivities = await activitiesApi.list();
+			activities = allActivities.filter((a) => a.status === 'ongoing');
+
+			const urlActivityId = browser
+				? new URL(window.location.href).searchParams.get('activity_id') ?? ''
+				: '';
 
 			if (urlActivityId && activities.some((a) => a.id === urlActivityId)) {
 				selectedActivityId = urlActivityId;
 			} else if (activities.length === 1) {
-				// Auto-select if only one activity
+				// Auto-select if only one ongoing activity
 				selectedActivityId = activities[0].id;
 			}
-		} catch (error) {
-			console.error('Failed to load activities:', error);
+		} catch (e: any) {
+			loadError = e?.message ?? 'ไม่สามารถโหลดรายการกิจกรรมได้';
+			console.error('Failed to load activities:', e);
+		} finally {
 			isLoading = false;
 		}
-	});
+	}
+
+	onMount(loadActivities);
 
 	function handleActivityChange(activityId: string) {
 		selectedActivityId = activityId;
@@ -186,15 +180,19 @@
 				</div>
 				<div>
 					<p class="text-sm text-muted-foreground">ระดับสิทธิ์</p>
-					<Badge variant="outline">{authStore.user?.admin_role?.admin_level || 'General'}</Badge>
+					<Badge variant="outline">
+						{ADMIN_LEVEL_LABEL[authStore.user?.admin_role?.admin_level ?? ''] ?? 'ไม่ระบุ'}
+					</Badge>
 				</div>
 				<div>
 					<p class="text-sm text-muted-foreground">หน่วยงาน</p>
 					<p class="font-medium">
-						{#if authStore.user?.organization_name || authStore.user?.department_name}
+						{#if isSuperAdmin}
+							<span class="text-muted-foreground italic">ทั้งหมด (ซุปเปอร์แอดมิน)</span>
+						{:else if authStore.user?.organization_name || authStore.user?.department_name}
 							{authStore.user?.organization_name || authStore.user?.department_name}
 						{:else}
-							<span class="text-muted-foreground italic">ทั้งหมด (Super Admin)</span>
+							<span class="text-muted-foreground italic">ไม่ระบุ</span>
 						{/if}
 					</p>
 				</div>
@@ -218,6 +216,16 @@
 					></div>
 					<p class="text-sm text-muted-foreground">กำลังโหลดกิจกรรม...</p>
 				</div>
+			{:else if loadError}
+				<Alert variant="destructive">
+					<CircleAlert class="h-4 w-4" />
+					<AlertDescription class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+						<span>{loadError}</span>
+						<Button size="sm" variant="outline" onclick={loadActivities}>
+							<RefreshCw class="mr-2 size-4" />ลองใหม่
+						</Button>
+					</AlertDescription>
+				</Alert>
 			{:else if activities.length === 0}
 				<Alert>
 					<X class="h-4 w-4" />
@@ -232,15 +240,15 @@
 					</Label>
 					<Select.Root
 						type="single"
-						bind:value={selectedActivityId as any}
+						value={selectedActivityId}
 						onValueChange={(value) => {
-							if (value && typeof value === 'string' && value !== selectedActivityId) {
+							if (value && value !== selectedActivityId) {
 								handleActivityChange(value);
 							}
 						}}
 					>
 						<Select.Trigger class="w-full">
-							{activities.find((a: any) => a.id === selectedActivityId)?.title ?? 'เลือกกิจกรรม...'}
+							{activities.find((a) => a.id === selectedActivityId)?.title ?? 'เลือกกิจกรรม...'}
 						</Select.Trigger>
 						<Select.Content>
 							{#each activities as activity}
@@ -274,12 +282,11 @@
 							<div class="flex items-center gap-2">
 								<Users class="h-4 w-4 text-muted-foreground" />
 								<span>
-									ผู้เข้าร่วม: {(selectedActivity as any).participant_count || 0}
+									ผู้เข้าร่วม: {selectedActivity.participant_count ?? 0}
 									{#if selectedActivity.max_participants}
-										/ {selectedActivity.max_participants}
-									{/if} คน
-									{#if !selectedActivity.max_participants}
-										(ไม่จำกัด)
+										/ {selectedActivity.max_participants} คน
+									{:else}
+										คน (ไม่จำกัด)
 									{/if}
 								</span>
 							</div>
