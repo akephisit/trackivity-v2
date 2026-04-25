@@ -1,39 +1,50 @@
 <script lang="ts">
-	import { RefreshCw, Search, UserCheck, UserX, Users } from '@lucide/svelte';
-	import { usersApi, organizationsApi, ApiError } from '$lib/api';
-	import type { UserListItem, Organization } from '$lib/api';
+	import { CircleAlert, RefreshCw, Search, UserCheck, UserX, Users } from '@lucide/svelte';
+	import { usersApi, organizationsApi, adminApi, ApiError } from '$lib/api';
+	import type { UserListItem, Organization, DashboardStats } from '$lib/api';
 	import { onMount } from 'svelte';
-	import { toast } from 'svelte-sonner';
+	import { authStore } from '$lib/stores/auth.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
 	import { Badge } from '$lib/components/ui/badge';
+	import { Alert, AlertDescription } from '$lib/components/ui/alert';
 	import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
 	import * as Table from '$lib/components/ui/table';
 	import * as Select from '$lib/components/ui/select';
 	import { Skeleton } from '$lib/components/ui/skeleton';
 	import { goto } from '$app/navigation';
 
+	// We pull up to 200 users per page from the backend, which is its
+	// hard cap. If totalUsers exceeds this we surface a warning so admins
+	// know they need to narrow with search/status before making decisions
+	// based on the visible data.
+	const PER_PAGE = 200;
+
 	// ─── State ──────────────────────────────────────────────────────────────
 	let users = $state<UserListItem[]>([]);
+	let totalUsers = $state(0);
+	let stats = $state<DashboardStats | null>(null);
 	let organizations = $state<Organization[]>([]);
 	let loading = $state(true);
 	let error = $state<string | null>(null);
 
 	// Filters
 	let searchTerm = $state('');
-	let selectedRole = $state('all');
 	let selectedStatus = $state('all');
 	let selectedOrg = $state('all');
+
+	const isSuperAdmin = $derived(authStore.user?.admin_role?.admin_level === 'super_admin');
 
 	// ─── Derived ────────────────────────────────────────────────────────────
 	let filteredUsers = $derived(
 		users.filter((user) => {
+			const q = searchTerm.toLowerCase();
 			const matchesSearch =
-				searchTerm === '' ||
-				user.first_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-				user.last_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-				user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-				user.student_id?.toLowerCase().includes(searchTerm.toLowerCase());
+				q === '' ||
+				user.first_name?.toLowerCase().includes(q) ||
+				user.last_name?.toLowerCase().includes(q) ||
+				user.email?.toLowerCase().includes(q) ||
+				user.student_id?.toLowerCase().includes(q);
 
 			const matchesStatus = selectedStatus === 'all' || user.status === selectedStatus;
 			const matchesOrg = selectedOrg === 'all' || user.organization_name === selectedOrg;
@@ -42,23 +53,22 @@
 		})
 	);
 
-	let stats = $derived({
-		total: users.length,
-		active: users.filter((u) => u.status === 'active').length,
-		inactive: users.filter((u) => u.status !== 'active').length,
-	});
+	const usersTruncated = $derived(totalUsers > users.length);
 
 	// ─── Data Fetching ──────────────────────────────────────────────────────
 	async function fetchData() {
 		loading = true;
 		error = null;
 		try {
-			const [userResult, orgData] = await Promise.all([
-				usersApi.list(),
+			const [userResult, orgData, dashStats] = await Promise.all([
+				usersApi.list({ per_page: PER_PAGE }),
 				organizationsApi.listAdmin().catch(() => [] as Organization[]),
+				adminApi.dashboardStats().catch(() => null)
 			]);
 			users = userResult.users;
+			totalUsers = userResult.total;
 			organizations = orgData;
+			stats = dashStats;
 		} catch (e) {
 			error = e instanceof ApiError ? e.message : 'ไม่สามารถโหลดข้อมูลได้';
 		} finally {
@@ -111,13 +121,16 @@
 		</Button>
 	</div>
 
-	<!-- Stats -->
+	<!-- Stats — backed by /admin/dashboard-stats so they stay accurate
+	     past the 200-user page cap and respect the admin's org scope. -->
 	<div class="grid gap-4 sm:grid-cols-3">
 		<Card>
 			<CardContent class="flex items-center gap-3 p-4">
 				<Users class="size-8 text-muted-foreground" />
 				<div>
-					<p class="text-2xl font-bold">{stats.total}</p>
+					<p class="text-2xl font-bold">
+						{loading ? '--' : (stats?.users_total ?? totalUsers).toLocaleString()}
+					</p>
 					<p class="text-sm text-muted-foreground">ผู้ใช้ทั้งหมด</p>
 				</div>
 			</CardContent>
@@ -126,7 +139,9 @@
 			<CardContent class="flex items-center gap-3 p-4">
 				<UserCheck class="size-8 text-green-600" />
 				<div>
-					<p class="text-2xl font-bold">{stats.active}</p>
+					<p class="text-2xl font-bold">
+						{loading ? '--' : (stats?.users_active ?? 0).toLocaleString()}
+					</p>
 					<p class="text-sm text-muted-foreground">เปิดใช้งาน</p>
 				</div>
 			</CardContent>
@@ -135,7 +150,14 @@
 			<CardContent class="flex items-center gap-3 p-4">
 				<UserX class="size-8 text-muted-foreground" />
 				<div>
-					<p class="text-2xl font-bold">{stats.inactive}</p>
+					<p class="text-2xl font-bold">
+						{loading
+							? '--'
+							: Math.max(
+									0,
+									(stats?.users_total ?? totalUsers) - (stats?.users_active ?? 0)
+								).toLocaleString()}
+					</p>
 					<p class="text-sm text-muted-foreground">ไม่ใช้งาน</p>
 				</div>
 			</CardContent>
@@ -165,27 +187,32 @@
 						<Select.Item value="suspended">ระงับ</Select.Item>
 					</Select.Content>
 				</Select.Root>
-				<Select.Root type="single" bind:value={selectedOrg}>
-					<Select.Trigger class="sm:w-48">
-						{selectedOrg === 'all' ? 'หน่วยงานทั้งหมด' : selectedOrg}
-					</Select.Trigger>
-					<Select.Content>
-						<Select.Item value="all">หน่วยงานทั้งหมด</Select.Item>
-						{#each organizations as org}
-							<Select.Item value={org.name}>{org.name}</Select.Item>
-						{/each}
-					</Select.Content>
-				</Select.Root>
+				{#if isSuperAdmin}
+					<Select.Root type="single" bind:value={selectedOrg}>
+						<Select.Trigger class="sm:w-48">
+							{selectedOrg === 'all' ? 'หน่วยงานทั้งหมด' : selectedOrg}
+						</Select.Trigger>
+						<Select.Content>
+							<Select.Item value="all">หน่วยงานทั้งหมด</Select.Item>
+							{#each organizations as org}
+								<Select.Item value={org.name}>{org.name}</Select.Item>
+							{/each}
+						</Select.Content>
+					</Select.Root>
+				{/if}
 			</div>
 		</CardHeader>
 		<CardContent>
 			{#if loading}
+				{@const cols = isSuperAdmin ? 6 : 5}
 				<Table.Root>
 					<Table.Header>
 						<Table.Row>
 							<Table.Head>ผู้ใช้</Table.Head>
 							<Table.Head>รหัสนักศึกษา</Table.Head>
-							<Table.Head>หน่วยงาน</Table.Head>
+							{#if isSuperAdmin}
+								<Table.Head>หน่วยงาน</Table.Head>
+							{/if}
 							<Table.Head>ภาควิชา</Table.Head>
 							<Table.Head>สถานะ</Table.Head>
 							<Table.Head>เข้าสู่ระบบล่าสุด</Table.Head>
@@ -194,7 +221,7 @@
 					<Table.Body>
 						{#each Array(6) as _}
 							<Table.Row>
-								{#each Array(6) as _}
+								{#each Array(cols) as _}
 									<Table.Cell><Skeleton class="h-4 w-full" /></Table.Cell>
 								{/each}
 							</Table.Row>
@@ -202,7 +229,15 @@
 					</Table.Body>
 				</Table.Root>
 			{:else if error}
-				<div class="py-8 text-center text-destructive">{error}</div>
+				<Alert variant="destructive">
+					<CircleAlert class="size-4" />
+					<AlertDescription class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+						<span>{error}</span>
+						<Button size="sm" variant="outline" onclick={fetchData}>
+							<RefreshCw class="mr-2 size-4" />ลองใหม่
+						</Button>
+					</AlertDescription>
+				</Alert>
 			{:else if filteredUsers.length === 0}
 				<div class="py-12 text-center">
 					<Users class="mx-auto mb-4 size-12 text-muted-foreground/50" />
@@ -214,7 +249,9 @@
 						<Table.Row>
 							<Table.Head>ผู้ใช้</Table.Head>
 							<Table.Head>รหัสนักศึกษา</Table.Head>
-							<Table.Head>หน่วยงาน</Table.Head>
+							{#if isSuperAdmin}
+								<Table.Head>หน่วยงาน</Table.Head>
+							{/if}
 							<Table.Head>ภาควิชา</Table.Head>
 							<Table.Head>สถานะ</Table.Head>
 							<Table.Head>เข้าสู่ระบบล่าสุด</Table.Head>
@@ -232,9 +269,11 @@
 								<Table.Cell>
 									<code class="text-sm">{user.student_id}</code>
 								</Table.Cell>
-								<Table.Cell>
-									<span class="text-sm">{user.organization_name ?? '-'}</span>
-								</Table.Cell>
+								{#if isSuperAdmin}
+									<Table.Cell>
+										<span class="text-sm">{user.organization_name ?? '-'}</span>
+									</Table.Cell>
+								{/if}
 								<Table.Cell>
 									<span class="text-sm">{user.department_name ?? '-'}</span>
 								</Table.Cell>
@@ -250,9 +289,20 @@
 						{/each}
 					</Table.Body>
 				</Table.Root>
-				<p class="mt-4 text-center text-sm text-muted-foreground">
-					แสดง {filteredUsers.length} จากทั้งหมด {users.length} คน
-				</p>
+				<div class="mt-4 space-y-2">
+					<p class="text-center text-sm text-muted-foreground">
+						แสดง {filteredUsers.length.toLocaleString()} จากทั้งหมด {totalUsers.toLocaleString()} คน
+					</p>
+					{#if usersTruncated}
+						<Alert>
+							<CircleAlert class="size-4" />
+							<AlertDescription>
+								โหลดมาแล้ว {users.length.toLocaleString()} คนแรกจากทั้งหมด {totalUsers.toLocaleString()} คน —
+								ใช้ตัวกรองเพื่อค้นหาคนที่ต้องการให้แม่นยำขึ้น
+							</AlertDescription>
+						</Alert>
+					{/if}
+				</div>
 			{/if}
 		</CardContent>
 	</Card>
