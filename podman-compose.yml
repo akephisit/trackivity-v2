@@ -18,7 +18,9 @@ services:
     ports:
       - "80:3000"
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/"]
+      # Hits /health which actually pings the DB; / is a static string and
+      # would mask a broken Neon connection.
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
       interval: 30s
       timeout: 10s
       retries: 3

@@ -1,8 +1,11 @@
 use axum::{
+    extract::State,
+    http::StatusCode,
+    response::IntoResponse,
     routing::{get, post, put},
-    Router,
+    Json, Router,
 };
-use sqlx::postgres::{PgPoolOptions, PgConnectOptions};
+use sqlx::postgres::{PgPool, PgPoolOptions, PgConnectOptions};
 use std::net::SocketAddr;
 use std::str::FromStr;
 use std::time::Duration;
@@ -39,14 +42,46 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         // to prevent "prepared statement does not exist" errors:
         .statement_cache_capacity(0);
 
-    let pool = PgPoolOptions::new()
-        .max_connections(10)
+    let pool_options = PgPoolOptions::new()
+        .max_connections(20)
         .min_connections(0) // Let pool scale down completely to allow Neon to sleep
+        .acquire_timeout(Duration::from_secs(15)) // Fail fast instead of blocking 30s default
         .idle_timeout(Duration::from_secs(30)) // Close idle connections quickly
-        .max_lifetime(Duration::from_secs(1800)) // 30 mins max lifetime
-        .connect_with(connect_options)
-        .await
-        .expect("Failed to connect to database");
+        .max_lifetime(Duration::from_secs(1800)); // 30 mins max lifetime
+
+    // Retry on startup so a cold Neon compute (auto-suspended) doesn't crash-loop
+    // the container — give it a few attempts to wake up before giving up.
+    let pool = {
+        let mut last_err = None;
+        let mut pool = None;
+        for attempt in 1..=5 {
+            match pool_options
+                .clone()
+                .connect_with(connect_options.clone())
+                .await
+            {
+                Ok(p) => {
+                    pool = Some(p);
+                    break;
+                }
+                Err(e) => {
+                    tracing::warn!(
+                        "DB connect attempt {}/5 failed: {} — retrying in 2s",
+                        attempt,
+                        e
+                    );
+                    last_err = Some(e);
+                    tokio::time::sleep(Duration::from_secs(2)).await;
+                }
+            }
+        }
+        pool.unwrap_or_else(|| {
+            panic!(
+                "Failed to connect to database after 5 attempts: {}",
+                last_err.expect("at least one error must have been recorded")
+            )
+        })
+    };
 
     tracing::info!("✅ Connected to database successfully!");
 
@@ -77,6 +112,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let app = Router::new()
         .route("/", get(|| async { "Trackivity Backend is running! 🚀" }))
+        .route("/health", get(health_check))
         // ─── Auth ─────────────────────────────────────────
         .route("/auth/login", post(auth::login_handler))
         .route("/auth/register", post(auth::register_handler))
@@ -132,4 +168,20 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     axum::serve(listener, app).await.unwrap();
 
     Ok(())
+}
+
+/// Readiness probe: returns 200 only when the DB pool can serve a SELECT 1
+/// within the acquire_timeout. Use this from Cockpit / Cloudflare healthchecks
+/// instead of `GET /` so a stuck DB doesn't read as healthy.
+async fn health_check(State(pool): State<PgPool>) -> impl IntoResponse {
+    match sqlx::query_scalar::<_, i32>("SELECT 1").fetch_one(&pool).await {
+        Ok(_) => (
+            StatusCode::OK,
+            Json(serde_json::json!({ "status": "ok" })),
+        ),
+        Err(e) => (
+            StatusCode::SERVICE_UNAVAILABLE,
+            Json(serde_json::json!({ "status": "down", "error": e.to_string() })),
+        ),
+    }
 }
