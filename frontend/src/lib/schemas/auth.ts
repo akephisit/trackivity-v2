@@ -171,11 +171,11 @@ export const profileUpdateSchema = z.object({
 		.min(1, 'กรุณาใส่นามสกุล')
 		.min(2, 'นามสกุลต้องมีอย่างน้อย 2 ตัวอักษร')
 		.max(100, 'นามสกุลต้องไม่เกิน 100 ตัวอักษร'),
-	email: z
-		.string()
-		.min(1, 'กรุณาใส่อีเมล')
-		.email('รูปแบบอีเมลไม่ถูกต้อง')
-		.max(255, 'อีเมลยาวเกินไป'),
+	// Note: email is intentionally NOT in this schema. The backend
+	// update_profile endpoint does not accept an email field, so
+	// allowing the UI to send one would silently no-op. The email
+	// is shown read-only in the profile page; changing it requires
+	// an admin.
 	phone: z
 		.string()
 		.optional()

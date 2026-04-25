@@ -33,12 +33,13 @@
 	let fieldErrors: Record<string, string[]> = $state({});
 	let passwordFieldErrors: Record<string, string[]> = $state({});
 
-	// Form data
+	// Form data — email intentionally absent. The backend doesn't
+	// accept an email field on profile update; binding it here would
+	// give the misleading impression a save changed the email.
 	let formData: ProfileUpdateFormData = $state({
 		prefix: '',
 		first_name: '',
 		last_name: '',
-		email: '',
 		phone: '',
 		address: ''
 	});
@@ -67,7 +68,6 @@
 				formData.prefix !== (authStore.user.prefix || '') ||
 				formData.first_name !== (authStore.user.first_name || '') ||
 				formData.last_name !== (authStore.user.last_name || '') ||
-				formData.email !== (authStore.user.email || '') ||
 				formData.phone !== (authStore.user.phone || '') ||
 				formData.address !== (authStore.user.address || '');
 		} else {
@@ -81,7 +81,6 @@
 				prefix: authStore.user.prefix || '',
 				first_name: authStore.user.first_name || '',
 				last_name: authStore.user.last_name || '',
-				email: authStore.user.email || '',
 				phone: authStore.user.phone || '',
 				address: authStore.user.address || ''
 			};
@@ -220,19 +219,13 @@
 	}
 
 	function isFormValid(): boolean {
-		// Check required fields - prefix is optional in validation but required fields must have values
 		const hasRequiredFields = !!(
 			formData.first_name &&
 			formData.first_name.trim() !== '' &&
 			formData.last_name &&
-			formData.last_name.trim() !== '' &&
-			formData.email &&
-			formData.email.trim() !== ''
+			formData.last_name.trim() !== ''
 		);
-
-		// If prefix is provided, it must not be empty
 		const prefixValid = !formData.prefix || formData.prefix.trim() !== '';
-
 		return hasRequiredFields && prefixValid;
 	}
 
@@ -373,17 +366,20 @@
 							</div>
 
 							<div class="space-y-2">
-								<Label for="email">อีเมล <span class="text-red-500 dark:text-red-400">*</span></Label>
+								<Label for="email" class="flex items-center gap-2">
+									<Mail class="size-4" />
+									อีเมล
+								</Label>
 								<Input
 									id="email"
 									type="email"
-									bind:value={formData.email}
-									placeholder="กรอกอีเมล"
-									class={getFieldError('email', fieldErrors) ? 'border-red-500 dark:border-red-500' : ''}
+									value={authStore.user?.email ?? ''}
+									readonly
+									disabled
 								/>
-								{#if getFieldError('email', fieldErrors)}
-									<p class="text-sm text-red-500 dark:text-red-400">{getFieldError('email', fieldErrors)}</p>
-								{/if}
+								<p class="text-xs text-muted-foreground">
+									ไม่สามารถแก้ไขอีเมลได้ หากต้องการเปลี่ยนกรุณาติดต่อผู้ดูแลระบบ
+								</p>
 							</div>
 
 							<div class="space-y-2">
