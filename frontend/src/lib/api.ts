@@ -219,8 +219,12 @@ export const activitiesApi = {
     dashboard: () =>
         request<DashboardResponse>('/activities/dashboard'),
 
-    list: () =>
-        request<Activity[]>('/activities'),
+    list: (params?: { status?: string }) => {
+        const qs = new URLSearchParams();
+        if (params?.status) qs.set('status', params.status);
+        const suffix = qs.toString() ? `?${qs.toString()}` : '';
+        return request<Activity[]>(`/activities${suffix}`);
+    },
 
     get: (id: string) =>
         request<Activity>(`/activities/${id}`),

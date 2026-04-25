@@ -1,9 +1,16 @@
-use axum::{Json, extract::{State, Path}, http::{StatusCode, HeaderMap}};
+use axum::{Json, extract::{Query, State, Path}, http::{StatusCode, HeaderMap}};
+use serde::Deserialize;
 use sqlx::PgPool;
-use crate::models::ActivityStatus;
+use crate::models::{ActivityStatus, AdminLevel};
 use crate::modules::auth::get_claims_from_headers;
 use super::models::{ActivityPublic, CreateActivityInput, CreateActivityResponse, DashboardResponse, UpdateActivityInput};
 use uuid::Uuid;
+
+#[derive(Debug, Deserialize)]
+pub struct ListActivitiesQuery {
+    /// Filter by status (e.g. "ongoing"). When omitted, no status filter.
+    pub status: Option<String>,
+}
 
 // Aggregates participations once via LEFT JOIN instead of running two
 // correlated subqueries per row, which used to scale O(n) per result row
@@ -105,16 +112,32 @@ pub async fn get_dashboard_activities(
 pub async fn list_activities(
     State(pool): State<PgPool>,
     headers: HeaderMap,
+    Query(params): Query<ListActivitiesQuery>,
 ) -> Result<Json<Vec<ActivityPublic>>, (StatusCode, String)> {
     let claims = get_claims_from_headers(&headers);
     let is_admin = claims.as_ref().map(|c| c.is_admin).unwrap_or(false);
 
     if is_admin {
-        // Admins see everything
+        // Super admin sees everything; organization/regular admin only see
+        // activities organized by their own organization. The frontend QR
+        // scanner used to receive every activity (including drafts and other
+        // orgs') and filter client-side; this scopes server-side instead.
+        let admin_org: Option<Uuid> = claims.as_ref().ok().and_then(|c| match c.admin_level {
+            Some(AdminLevel::SuperAdmin) => None,
+            _ => c.organization_id,
+        });
+
         let activities = sqlx::query_as::<_, ActivityPublic>(&format!(
-            "{} ORDER BY a.created_at DESC",
+            r#"
+            {}
+            WHERE ($1::uuid IS NULL OR a.organizer_id = $1)
+              AND ($2::text IS NULL OR a.status::text = $2)
+            ORDER BY a.created_at DESC
+            "#,
             ACTIVITY_SELECT
         ))
+        .bind(admin_org)
+        .bind(params.status.as_deref())
         .fetch_all(&pool)
         .await
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, format!("Failed to fetch activities: {}", e)))?;

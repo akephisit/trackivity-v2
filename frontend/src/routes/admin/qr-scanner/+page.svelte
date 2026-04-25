@@ -57,8 +57,7 @@
 		isLoading = true;
 		loadError = null;
 		try {
-			const allActivities = await activitiesApi.list();
-			activities = allActivities.filter((a) => a.status === 'ongoing');
+			activities = await activitiesApi.list({ status: 'ongoing' });
 
 			const urlActivityId = browser
 				? new URL(window.location.href).searchParams.get('activity_id') ?? ''
