@@ -1,9 +1,11 @@
 import { writable, derived } from 'svelte/store';
+import { dev } from '$app/environment';
+import type { Notification } from '$lib/types';
 
 // Placeholder SSE store - SSE functionality disabled in v2
 interface SSEState {
 	isConnected: boolean;
-	notifications: any[];
+	notifications: Notification[];
 	unreadCount: number;
 }
 
@@ -23,7 +25,7 @@ function createSSEStore() {
 
 		connect: () => {
 			// SSE disabled in v2 - placeholder
-			console.log('[SSE] SSE functionality disabled in trackivity-v2');
+			if (dev) console.log('[SSE] SSE functionality disabled in trackivity-v2');
 		},
 
 		disconnect: () => {

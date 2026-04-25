@@ -1,4 +1,6 @@
 <script lang="ts">
+	import type { Snippet } from 'svelte';
+	import type { UserResponse, AdminRole, Organization } from '$lib/api';
 	import AppLayout from '$lib/components/app-layout.svelte';
 	import {
 		IconLayoutDashboard,
@@ -14,16 +16,16 @@
 		IconSettings
 	} from '@tabler/icons-svelte';
 
-	type AdminLevel = 'super_admin' | 'organization_admin';
+	type AdminLevel = AdminRole['admin_level'];
 
 	interface Props {
-		user: any;
-		admin_role: any;
-		organization: any;
+		user: UserResponse | null;
+		admin_role: AdminRole | null;
+		organization: Organization | null;
 		mobileMenuOpen: boolean;
 		onToggleMobileMenu: () => void;
 		onCloseMobileMenu: () => void;
-		children: any;
+		children: Snippet;
 	}
 
 	let {
@@ -99,10 +101,7 @@
 		}
 
 		// Show settings menu only for faculty-type organizations
-		if (
-			organization?.organization_type === 'faculty' ||
-			organization?.organizationType === 'faculty'
-		) {
+		if (organization?.organization_type === 'faculty') {
 			baseItems.push({
 				title: 'ตั้งค่า',
 				href: '/admin/settings',

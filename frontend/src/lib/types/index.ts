@@ -109,6 +109,7 @@ export interface Organization {
 	code: string;
 	description?: string;
 	is_active: boolean;
+	organization_type?: 'faculty' | 'office';
 	created_at: Timestamp;
 	updated_at: Timestamp;
 	departments?: Department[];

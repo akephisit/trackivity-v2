@@ -3,28 +3,25 @@
 /// <reference lib="webworker" />
 /// <reference types="@sveltejs/kit" />
 
+import { dev } from '$app/environment';
+
 // This service worker uses a Network-Only strategy (no caching)
 // Perfect for online-only PWA that always needs fresh data
 
-// Version - increment this to force SW update
-// Version - increment this to force SW update
-// Version - increment this to force SW update
-// Version - increment this to force SW update
-// Version - increment this to force SW update
 const VERSION = '1.0.5';
 
 const sw = self as unknown as ServiceWorkerGlobalScope;
 
 // Listen for install event
 sw.addEventListener('install', (event) => {
-    console.log(`[ServiceWorker] Installing v${VERSION}...`);
+    if (dev) console.log(`[ServiceWorker] Installing v${VERSION}...`);
     // Skip waiting to activate immediately
     event.waitUntil(sw.skipWaiting());
 });
 
 // Listen for activate event
 sw.addEventListener('activate', (event) => {
-    console.log(`[ServiceWorker] Activating v${VERSION}...`);
+    if (dev) console.log(`[ServiceWorker] Activating v${VERSION}...`);
 
     // Clean up any old caches explicitly just in case
     event.waitUntil(
@@ -33,7 +30,7 @@ sw.addEventListener('activate', (event) => {
             .then((cacheNames) => {
                 return Promise.all(
                     cacheNames.map((cacheName) => {
-                        console.log('[ServiceWorker] Deleting old cache:', cacheName);
+                        if (dev) console.log('[ServiceWorker] Deleting old cache:', cacheName);
                         return caches.delete(cacheName);
                     })
                 );
@@ -120,7 +117,7 @@ sw.addEventListener('fetch', (event) => {
 // ─── Web Push Notifications ───────────────────────────────────────────────
 
 sw.addEventListener('push', (event) => {
-    console.log('[ServiceWorker] Push event received:', event);
+    if (dev) console.log('[ServiceWorker] Push event received:', event);
 
     let data;
     try {
@@ -146,7 +143,7 @@ sw.addEventListener('push', (event) => {
 });
 
 sw.addEventListener('notificationclick', (event) => {
-    console.log('[ServiceWorker] Notification click received.', event);
+    if (dev) console.log('[ServiceWorker] Notification click received.', event);
     event.notification.close();
 
     const urlToOpen = event.notification.data?.url || '/';
@@ -171,4 +168,4 @@ sw.addEventListener('notificationclick', (event) => {
     );
 });
 
-console.log(`[ServiceWorker] Script loaded - Network-Only mode (v${VERSION})`);
+if (dev) console.log(`[ServiceWorker] Script loaded - Network-Only mode (v${VERSION})`);

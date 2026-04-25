@@ -1,4 +1,5 @@
 <script lang="ts">
+	import type { Snippet } from 'svelte';
 	import { Button } from '$lib/components/ui/button';
 	import { cn } from '$lib/utils';
 	import {
@@ -16,17 +17,21 @@
 	import { page } from '$app/stores';
 	import NotificationBell from './NotificationBell.svelte';
 
+	// Tabler icons are still Svelte 4-style components; use a permissive type.
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	type IconComponent = any;
+
 	interface NavigationItem {
 		title: string;
 		href: string;
-		icon: any;
+		icon: IconComponent;
 		exact?: boolean;
 	}
 
 	interface QuickAction {
 		title: string;
 		href: string;
-		icon: any;
+		icon: IconComponent;
 		exact?: boolean;
 	}
 
@@ -43,9 +48,9 @@
 		mobileMenuOpen: boolean;
 		appTitle: string;
 		appSubtitle: string;
-		logoIcon?: any;
+		logoIcon?: IconComponent;
 		showLogo?: boolean;
-		children: any;
+		children: Snippet;
 		onToggleMobileMenu: () => void;
 		onCloseMobileMenu: () => void;
 		bottomNavItems?: NavigationItem[];

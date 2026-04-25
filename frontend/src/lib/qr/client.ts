@@ -3,7 +3,7 @@
  * รองรับ offline generation และ Web Crypto API signature
  */
 
-import { browser } from '$app/environment';
+import { browser, dev } from '$app/environment';
 import { writable, type Writable, get } from 'svelte/store';
 import { qrApi } from '$lib/api';
 import type { QRCode, QRScanResult, SessionUser } from '$lib/types';
@@ -280,7 +280,7 @@ export class QRClient {
 					device_fingerprint: payload.device_fingerprint || generateDeviceFingerprint()
 				};
 
-				console.log('[QR] Successfully parsed API response:', qrCode);
+				if (dev) console.log('[QR] Successfully parsed API response:', qrCode);
 
 				// If backend supplies SVG, prefer it over client-generated QR code
 				if (payload.qr_svg && typeof payload.qr_svg === 'string') {
@@ -289,10 +289,10 @@ export class QRClient {
 					this.qrDataURL.set(svgDataUrl);
 					this.status.set('ready');
 					this.scheduleRefresh();
-					console.log('[QR] Using server-generated SVG QR code');
+					if (dev) console.log('[QR] Using server-generated SVG QR code');
 					return;
 				} else {
-					console.log('[QR] Server did not provide SVG, generating client-side');
+					if (dev) console.log('[QR] Server did not provide SVG, generating client-side');
 				}
 			} catch (apiError: any) {
 				console.error('[QR] API generation failed:', apiError);
@@ -310,7 +310,7 @@ export class QRClient {
 			// Schedule automatic refresh
 			this.scheduleRefresh();
 
-			console.log('[QR] QR Code generated successfully (online mode)');
+			if (dev) console.log('[QR] QR Code generated successfully (online mode)');
 		} catch (error) {
 			console.error('[QR] QR generation failed:', error);
 			this.error.set(error instanceof Error ? error.message : 'QR generation failed');
@@ -512,7 +512,7 @@ export function useQRCode() {
 			// Defer initialization to avoid issues during SSR
 			setTimeout(() => {
 				if (get(status) === 'idle' && !get(qrCode)) {
-					console.log('[QR] Auto-initializing QR client');
+					if (dev) console.log('[QR] Auto-initializing QR client');
 					qrClient.generateQRCode(authStore.user as unknown as SessionUser).catch((error) => {
 						console.warn('[QR] Auto-initialization failed:', error);
 					});
