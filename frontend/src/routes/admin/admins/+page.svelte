@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { ChevronDown, Pencil, Filter, Loader, Mail, Plus, Search, Shield, ToggleLeft, ToggleRight, Trash2, Users } from '@lucide/svelte';
+	import { ChevronDown, CircleAlert, Pencil, Filter, Loader, Mail, Plus, RefreshCw, Search, Shield, ToggleLeft, ToggleRight, Trash2, Users } from '@lucide/svelte';
 	import { PrefixOptions } from '$lib/schemas/auth';
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
@@ -12,6 +12,7 @@
 		CardTitle
 	} from '$lib/components/ui/card';
 	import { Alert, AlertDescription } from '$lib/components/ui/alert';
+	import { Skeleton } from '$lib/components/ui/skeleton';
 	import * as Select from '$lib/components/ui/select';
 	import * as Dialog from '$lib/components/ui/dialog';
 	import * as AlertDialog from '$lib/components/ui/alert-dialog';
@@ -20,29 +21,46 @@
 	import { Badge } from '$lib/components/ui/badge';
 	import { toast } from 'svelte-sonner';
 	import { AdminLevel, type AdminRole } from '$lib/types/admin';
-	import { request } from '$lib/api';
+	import { request, ApiError } from '$lib/api';
 	import { onMount } from 'svelte';
 
 	// CSR state
 	let adminsList = $state<any[]>([]);
 	let facultiesList = $state<any[]>([]);
 	let loadingData = $state(true);
+	let loadError = $state<string | null>(null);
 	let refreshing = $state(false);
 
-	onMount(async () => {
+	async function fetchData() {
+		loadingData = true;
+		loadError = null;
 		try {
 			const [adminsRes, orgsRes] = await Promise.all([
-				request('/admins').catch(() => ({ admins: [] })),
-				request('/organizations/admin').catch(() => [])
+				request('/admins'),
+				request('/organizations/admin').catch(() => [] as any[])
 			]);
 			adminsList = (adminsRes as any).admins ?? adminsRes ?? [];
 			facultiesList = Array.isArray(orgsRes) ? orgsRes : [];
-		} catch {
-			// silent
+		} catch (e) {
+			loadError = e instanceof ApiError ? e.message : 'ไม่สามารถโหลดข้อมูลแอดมินได้';
 		} finally {
 			loadingData = false;
 		}
-	});
+	}
+
+	async function refetchAdmins() {
+		refreshing = true;
+		try {
+			const res = await request('/admins');
+			adminsList = (res as any).admins ?? res ?? [];
+		} catch (e) {
+			toast.error(e instanceof ApiError ? e.message : 'ไม่สามารถรีเฟรชข้อมูลได้');
+		} finally {
+			refreshing = false;
+		}
+	}
+
+	onMount(fetchData);
 
 	// Legacy proxy so template still works
 	const data = $derived({ admins: adminsList, faculties: facultiesList, form: null });
@@ -97,7 +115,7 @@
 			});
 			toast.success('สร้างแอดมินสำเร็จ');
 			dialogOpen = false;
-			window.location.reload();
+			await refetchAdmins();
 		} catch {
 			toast.error('เกิดข้อผิดพลาดในการเชื่อมต่อ');
 		} finally {
@@ -217,7 +235,7 @@
 			toast.success('ลบแอดมินสำเร็จ');
 			deleteDialogOpen = false;
 			adminToDelete = null;
-			setTimeout(() => window.location.reload(), 500);
+			await refetchAdmins();
 		} catch (error) {
 			console.error('Delete error:', error);
 			toast.error('เกิดข้อผิดพลาดในการเชื่อมต่อ');
@@ -265,7 +283,7 @@
 
 			toast.success('แก้ไขแอดมินสำเร็จ');
 			editDialogOpen = false;
-			setTimeout(() => window.location.reload(), 500);
+			await refetchAdmins();
 		} catch (error) {
 			console.error('Update error:', error);
 			toast.error('เกิดข้อผิดพลาดในการเชื่อมต่อ');
@@ -290,8 +308,7 @@
 			});
 
 			toast.success(`${actionText}บัญชีแอดมินสำเร็จ`);
-			// รีเฟรชข้อมูลทันทีเพื่อให้ UI อัพเดต
-			setTimeout(() => window.location.reload(), 300);
+			await refetchAdmins();
 		} catch (error) {
 			console.error('Toggle status error:', error);
 			toast.error('เกิดข้อผิดพลาดในการเชื่อมต่อ');
@@ -492,23 +509,20 @@
 			</CardHeader>
 			<CardContent class="p-4 lg:p-6">
 				<div class="text-lg font-bold text-blue-600 lg:text-2xl">
-					{groupedAdmins.facultyGroups.reduce((acc, [, group]) => acc + group.admins.length, 0)}
+					{filteredAdmins.filter((a) => a.admin_level === AdminLevel.OrganizationAdmin).length}
 				</div>
 			</CardContent>
 		</Card>
 
 		<Card>
 			<CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
-				<CardTitle class="truncate text-xs font-medium lg:text-sm"
-					>แอดมินหน่วยงานและทั่วไป</CardTitle
-				>
+				<CardTitle class="truncate text-xs font-medium lg:text-sm">แอดมินทั่วไป</CardTitle>
 				<Users class="h-4 w-4 flex-shrink-0 text-gray-500 lg:h-5 lg:w-5" />
 			</CardHeader>
 			<CardContent class="p-4 lg:p-6">
 				<div class="text-lg font-bold text-gray-600 lg:text-2xl">
-					{groupedAdmins.facultyGroups.reduce((acc, [, group]) => acc + group.admins.length, 0)}
+					{filteredAdmins.filter((a) => a.admin_level === AdminLevel.RegularAdmin).length}
 				</div>
-				<p class="text-xs text-muted-foreground">รวมแอดมินในหน่วยงานทั้งหมด</p>
 			</CardContent>
 		</Card>
 	</div>
@@ -577,7 +591,34 @@
 
 	<!-- Admin Groups -->
 	<div class="space-y-8">
-		{#if refreshing}
+		{#if loadingData}
+			<Card>
+				<CardContent class="p-6">
+					<div class="space-y-3">
+						{#each Array(4) as _}
+							<div class="flex items-center gap-3">
+								<Skeleton class="size-10 rounded-full" />
+								<div class="flex-1 space-y-2">
+									<Skeleton class="h-4 w-1/3" />
+									<Skeleton class="h-3 w-1/2" />
+								</div>
+								<Skeleton class="h-8 w-20" />
+							</div>
+						{/each}
+					</div>
+				</CardContent>
+			</Card>
+		{:else if loadError}
+			<Alert variant="destructive">
+				<CircleAlert class="size-4" />
+				<AlertDescription class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+					<span>{loadError}</span>
+					<Button size="sm" variant="outline" onclick={fetchData}>
+						<RefreshCw class="mr-2 size-4" />ลองใหม่
+					</Button>
+				</AlertDescription>
+			</Alert>
+		{:else if refreshing}
 			<div class="flex items-center justify-center py-12">
 				<Loader class="mr-3 h-8 w-8 animate-spin text-muted-foreground" />
 				<span class="text-muted-foreground">กำลังรีเฟรชข้อมูล...</span>
