@@ -79,12 +79,10 @@ pub struct User {
     pub last_name: String,
     pub phone: Option<String>,
     pub address: Option<String>,
-    pub qr_secret: String,
     pub status: UserStatus,
     pub department_id: Option<Uuid>,
     pub deleted_at: Option<DateTime<Utc>>,
     pub last_login_at: Option<DateTime<Utc>>,
-    pub login_count: Option<i32>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
@@ -97,7 +95,6 @@ pub struct AdminRole {
     pub organization_id: Option<Uuid>,
     pub permissions: Vec<String>,
     pub is_enabled: bool,
-    pub last_session_id: Option<String>,
     pub created_at: Option<DateTime<Utc>>,
     pub updated_at: Option<DateTime<Utc>>,
 }

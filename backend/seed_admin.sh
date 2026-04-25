@@ -43,8 +43,8 @@ NEW_USER_ID=$(uuidgen)
 
 echo "➕ Inserting admin user ($DUMMY_EMAIL)..."
 psql "$DATABASE_URL" -c "
-INSERT INTO users (id, student_id, email, password_hash, prefix, first_name, last_name, phone, qr_secret, status)
-VALUES ('$NEW_USER_ID', 'ADMIN001', '$DUMMY_EMAIL', '$HASH', 'Admin', 'Super', 'Administrator', '0123456789', '$(openssl rand -hex 32)', 'active')
+INSERT INTO users (id, student_id, email, password_hash, prefix, first_name, last_name, phone, status)
+VALUES ('$NEW_USER_ID', 'ADMIN001', '$DUMMY_EMAIL', '$HASH', 'Admin', 'Super', 'Administrator', '0123456789', 'active')
 ON CONFLICT (email) DO NOTHING;
 "
 

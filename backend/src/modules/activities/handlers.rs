@@ -181,8 +181,6 @@ pub async fn create_activity(
         .map_err(|_| (StatusCode::UNAUTHORIZED, "Invalid user ID".to_string()))?;
 
     let activity_id = Uuid::new_v4();
-    let now = chrono::Utc::now().format("%Y").to_string();
-    let academic_year: i32 = now.parse().unwrap_or(2024);
 
     sqlx::query(r#"
         INSERT INTO activities (
@@ -190,9 +188,9 @@ pub async fn create_activity(
             activity_level, eligible_organizations,
             start_date, end_date, start_time_only, end_time_only,
             hours, max_participants, registration_open, status,
-            organizer_id, created_by, created_at, updated_at, academic_year
+            organizer_id, created_by, created_at, updated_at
         )
-        VALUES ($1,$2,$3,$4,$5,$6::activity_level,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,NOW(),NOW(),$18)
+        VALUES ($1,$2,$3,$4,$5,$6::activity_level,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,NOW(),NOW())
     "#)
     .bind(activity_id)
     .bind(payload.title)
@@ -211,7 +209,6 @@ pub async fn create_activity(
     .bind(ActivityStatus::Draft)
     .bind(payload.organizer_id)
     .bind(user_id)
-    .bind(academic_year)
     .execute(&pool)
     .await
     .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, format!("Failed to create activity: {}", e)))?;

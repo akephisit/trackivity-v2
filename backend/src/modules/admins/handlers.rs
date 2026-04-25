@@ -162,11 +162,10 @@ pub async fn create_admin(
         .to_string();
 
     let student_id = format!("A{}", rand::random::<u32>() % 900000000 + 100000000);
-    let qr_secret = uuid::Uuid::new_v4().to_string();
 
     let row = sqlx::query(
-        "INSERT INTO users (student_id, email, password_hash, prefix, first_name, last_name, qr_secret, status)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, 'active') RETURNING id"
+        "INSERT INTO users (student_id, email, password_hash, prefix, first_name, last_name, status)
+         VALUES ($1, $2, $3, $4, $5, $6, 'active') RETURNING id"
     )
     .bind(&student_id)
     .bind(&payload.email)
@@ -174,7 +173,6 @@ pub async fn create_admin(
     .bind(&payload.prefix)
     .bind(&payload.first_name)
     .bind(&payload.last_name)
-    .bind(&qr_secret)
     .fetch_one(&pool)
     .await
     .map_err(|e| (StatusCode::BAD_REQUEST, e.to_string()))?;

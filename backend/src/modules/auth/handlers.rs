@@ -117,7 +117,7 @@ pub async fn login_handler(
         .await
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, format!("Failed to create session: {}", e)))?;
 
-    sqlx::query("UPDATE users SET last_login_at = NOW(), login_count = COALESCE(login_count, 0) + 1 WHERE id = $1")
+    sqlx::query("UPDATE users SET last_login_at = NOW() WHERE id = $1")
         .bind(user.id)
         .execute(&pool)
         .await
@@ -287,25 +287,23 @@ pub async fn register_handler(
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, format!("Failed to hash password: {}", e)))?
         .to_string();
 
-    let qr_secret = Uuid::new_v4().to_string();
     let user_id = Uuid::new_v4();
 
-    let result = sqlx::query!(
+    let result = sqlx::query(
         r#"
-        INSERT INTO users (id, student_id, email, password_hash, prefix, first_name, last_name, phone, qr_secret, status, department_id)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'active'::user_status, $10)
+        INSERT INTO users (id, student_id, email, password_hash, prefix, first_name, last_name, phone, status, department_id)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'active'::user_status, $9)
         "#,
-        user_id,
-        payload.student_id,
-        payload.email,
-        password_hash,
-        payload.prefix,
-        payload.first_name,
-        payload.last_name,
-        payload.phone,
-        qr_secret,
-        payload.department_id,
     )
+    .bind(user_id)
+    .bind(&payload.student_id)
+    .bind(&payload.email)
+    .bind(&password_hash)
+    .bind(&payload.prefix)
+    .bind(&payload.first_name)
+    .bind(&payload.last_name)
+    .bind(&payload.phone)
+    .bind(payload.department_id)
     .execute(&pool)
     .await;
 
