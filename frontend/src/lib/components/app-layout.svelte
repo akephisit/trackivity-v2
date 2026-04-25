@@ -91,9 +91,9 @@
 	}
 </script>
 
-<div class="min-h-screen bg-background">
-	<!-- Mobile Header -->
-	<header class="sticky top-0 z-40 border-b bg-card lg:hidden">
+<div class="flex h-[100dvh] flex-col overflow-hidden bg-background">
+	<!-- Mobile Header (top of the column flex) -->
+	<header class="z-40 shrink-0 border-b bg-card lg:hidden">
 		<div class="flex items-center justify-between px-4 py-3">
 			<div class="flex items-center gap-3">
 				<Button variant="ghost" size="sm" onclick={onToggleMobileMenu} class="p-2">
@@ -139,7 +139,7 @@
 		></div>
 	{/if}
 
-	<div class="flex">
+	<div class="flex min-h-0 flex-1">
 		<!-- Desktop Sidebar -->
 		<div class="fixed top-0 left-0 hidden h-[100dvh] w-64 border-r bg-card lg:block">
 			<aside class="relative flex h-full flex-col overflow-hidden">
@@ -382,9 +382,9 @@
 		</aside>
 
 		<!-- Main Content -->
-		<main class="min-h-screen flex-1 overflow-x-hidden lg:ml-64">
-			<!-- Desktop Top Bar -->
-			<header class="fixed top-0 right-0 left-64 z-40 hidden border-b bg-card lg:block">
+		<main class="flex min-w-0 flex-1 flex-col overflow-hidden lg:ml-64">
+			<!-- Desktop Top Bar (top of main's column flex, not fixed) -->
+			<header class="z-40 hidden shrink-0 border-b bg-card lg:block">
 				<div class="flex items-center justify-between px-6 py-3">
 					<h1 class="text-lg font-semibold">{appTitle}</h1>
 					<div class="flex items-center gap-2">
@@ -406,17 +406,18 @@
 				</div>
 			</header>
 
-			<div
-				class="container mx-auto w-full max-w-7xl overflow-x-hidden px-4 py-6 pt-4 lg:px-6 lg:py-4 lg:pt-20"
-			>
-				{@render children()}
+			<!-- Scroll container — scrollbar lives here, below the topbar -->
+			<div class="flex-1 overflow-x-hidden overflow-y-auto">
+				<div class="container mx-auto w-full max-w-7xl px-4 py-6 lg:px-6 lg:py-4">
+					{@render children()}
+				</div>
 			</div>
 		</main>
 	</div>
 
-	<!-- Bottom Navigation for Mobile -->
+	<!-- Bottom Navigation for Mobile (bottom of the column flex) -->
 	{#if bottomNavItems.length > 0}
-		<nav class="fixed right-0 bottom-0 left-0 z-30 border-t bg-card lg:hidden">
+		<nav class="z-30 shrink-0 border-t bg-card lg:hidden">
 			<div class="flex items-center justify-around py-2">
 				{#each bottomNavItems as item}
 					{@const IconComponent = item.icon}
@@ -433,8 +434,5 @@
 				{/each}
 			</div>
 		</nav>
-
-		<!-- Bottom padding for mobile bottom nav -->
-		<div class="h-16 lg:hidden"></div>
 	{/if}
 </div>
