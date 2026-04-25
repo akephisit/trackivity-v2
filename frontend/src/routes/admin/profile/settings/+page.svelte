@@ -11,20 +11,33 @@
 	import { Input } from '$lib/components/ui/input';
 	import { Button } from '$lib/components/ui/button';
 	import { toast } from 'svelte-sonner';
-	import { usersApi, auth as authApi, ApiError } from '$lib/api';
+	import { usersApi, ApiError } from '$lib/api';
 	import { authStore } from '$lib/stores/auth.svelte';
-	import { onMount } from 'svelte';
 
-	let user = $state(authStore.user);
+	const user = $derived(authStore.user);
+
+	const ADMIN_LEVEL_LABEL: Record<string, string> = {
+		super_admin: 'ซุปเปอร์แอดมิน',
+		organization_admin: 'แอดมินหน่วยงาน',
+		regular_admin: 'แอดมินทั่วไป'
+	};
 
 	let isChangingPassword = $state(false);
 	let isUpdatingProfile = $state(false);
 
 	// Form states
 	let profileForm = $state({
-		first_name: user?.first_name || '',
-		last_name: user?.last_name || '',
-		email: user?.email || ''
+		first_name: '',
+		last_name: ''
+	});
+
+	let profileLoaded = false;
+	$effect(() => {
+		if (!profileLoaded && user) {
+			profileForm.first_name = user.first_name || '';
+			profileForm.last_name = user.last_name || '';
+			profileLoaded = true;
+		}
 	});
 
 	let passwordForm = $state({
@@ -122,10 +135,13 @@
 						<Input
 							id="email"
 							type="email"
-							bind:value={profileForm.email}
-							placeholder="กรุณากรอกอีเมล"
-							disabled={isUpdatingProfile}
+							value={user?.email ?? ''}
+							readonly
+							disabled
 						/>
+						<p class="text-xs text-muted-foreground">
+							ไม่สามารถแก้ไขอีเมลได้ หากต้องการเปลี่ยนกรุณาติดต่อผู้ดูแลระบบ
+						</p>
 					</div>
 				</div>
 
@@ -195,12 +211,14 @@
 			<div class="grid gap-4 md:grid-cols-2">
 				<div>
 					<Label class="text-sm font-medium text-muted-foreground">ประเภทผู้ใช้</Label>
-					<p class="text-sm font-medium">{authStore.user?.admin_role?.admin_level || 'ไม่ทราบ'}</p>
+					<p class="text-sm font-medium">
+						{ADMIN_LEVEL_LABEL[user?.admin_role?.admin_level ?? ''] ?? 'ไม่ทราบ'}
+					</p>
 				</div>
-				{#if authStore.user}
+				{#if user}
 					<div>
 						<Label class="text-sm font-medium text-muted-foreground">หน่วยงาน</Label>
-						<p class="text-sm font-medium">{authStore.user?.organization_name ?? '-'}</p>
+						<p class="text-sm font-medium">{user?.organization_name ?? '-'}</p>
 					</div>
 				{/if}
 			</div>
