@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { ArrowLeft, Calendar as CalendarIcon, Clock, MapPin, Plus } from '@lucide/svelte';
+	import { ArrowLeft, Calendar as CalendarIcon, CircleAlert, Clock, MapPin, Plus, RefreshCw } from '@lucide/svelte';
 	import {
 		activities as activitiesApi,
 		organizations as orgsApi,
@@ -7,12 +7,14 @@
 	} from '$lib/api';
 	import { activityTypeOptions, activityLevelOptions } from '$lib/utils/activity';
 	import { onMount } from 'svelte';
+	import { authStore } from '$lib/stores/auth.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
 	import { Textarea } from '$lib/components/ui/textarea';
 	import { Switch } from '$lib/components/ui/switch';
 	import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
+	import { Alert, AlertDescription } from '$lib/components/ui/alert';
 	import * as Select from '$lib/components/ui/select';
 	import * as Popover from '$lib/components/ui/popover';
 	import { Calendar } from '$lib/components/ui/calendar';
@@ -25,14 +27,19 @@
 
 	// ─── State ─────────────────────────────────────────────────────────────────
 	let orgs = $state<Organization[]>([]);
+	let loadingOrgs = $state(true);
+	let loadError = $state<string | null>(null);
 	let submitting = $state(false);
 	let errors = $state<Record<string, string>>({});
+
+	const isSuperAdmin = $derived(authStore.user?.admin_role?.admin_level === 'super_admin');
+	const currentOrgId = $derived(authStore.user?.admin_role?.organization_id ?? '');
 
 	// Basic fields
 	let title = $state('');
 	let description = $state('');
 	let location = $state('');
-	let activityType = $state('Academic');
+	let activityType = $state('academic');
 	let activityLevel = $state('faculty');
 	let organizerId = $state('');
 	let hours = $state('');
@@ -51,14 +58,29 @@
 	let endTimeMinute = $state('');
 
 	// ─── Load orgs ─────────────────────────────────────────────────────────────
-	onMount(async () => {
+	async function fetchOrgs() {
+		loadingOrgs = true;
+		loadError = null;
 		try {
 			const data = await orgsApi.list();
 			orgs = data.all;
-		} catch {
-			toast.error('ไม่สามารถโหลดรายการหน่วยงานได้');
+			// Org / regular admin can only create activities for their own
+			// organization (backend enforces this since a7a44cd). Auto-fill
+			// + lock the field so they can't pick something the API will
+			// just reject.
+			if (!isSuperAdmin && currentOrgId && !organizerId) {
+				organizerId = currentOrgId;
+			}
+		} catch (e: any) {
+			const msg = e?.message ?? 'ไม่สามารถโหลดรายการหน่วยงานได้';
+			loadError = msg;
+			toast.error(msg);
+		} finally {
+			loadingOrgs = false;
 		}
-	});
+	}
+
+	onMount(fetchOrgs);
 
 	// ─── Helpers ───────────────────────────────────────────────────────────────
 	function generateHourOptions() {
@@ -217,17 +239,39 @@
 				<!-- หน่วยงานผู้จัด -->
 				<div class="space-y-2">
 					<Label>หน่วยงานที่จัดกิจกรรม *</Label>
-					<Select.Root type="single" bind:value={organizerId}>
-						<Select.Trigger class="w-full">
-							{orgs.find((o) => o.id === organizerId)?.name || 'เลือกหน่วยงาน'}
-						</Select.Trigger>
-						<Select.Content>
-							{#each orgs as org}
-								<Select.Item value={org.id}>{org.name}</Select.Item>
-							{/each}
-						</Select.Content>
-					</Select.Root>
+					{#if !isSuperAdmin}
+						<!-- Org / regular admin can only create for their own org (backend
+						     enforces). Show the chosen org as a disabled, read-only field. -->
+						<Input
+							value={orgs.find((o) => o.id === organizerId)?.name ?? 'กำลังโหลด...'}
+							disabled
+							readonly
+						/>
+					{:else}
+						<Select.Root type="single" bind:value={organizerId} disabled={loadingOrgs}>
+							<Select.Trigger class="w-full">
+								{orgs.find((o) => o.id === organizerId)?.name ||
+									(loadingOrgs ? 'กำลังโหลดหน่วยงาน...' : 'เลือกหน่วยงาน')}
+							</Select.Trigger>
+							<Select.Content>
+								{#each orgs as org}
+									<Select.Item value={org.id}>{org.name}</Select.Item>
+								{/each}
+							</Select.Content>
+						</Select.Root>
+					{/if}
 					{#if errors.organizer_id}<p class="text-sm text-red-500">{errors.organizer_id}</p>{/if}
+					{#if loadError}
+						<Alert variant="destructive">
+							<CircleAlert class="size-4" />
+							<AlertDescription class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+								<span>{loadError}</span>
+								<Button size="sm" variant="outline" onclick={fetchOrgs}>
+									<RefreshCw class="mr-2 size-4" />ลองใหม่
+								</Button>
+							</AlertDescription>
+						</Alert>
+					{/if}
 				</div>
 
 				<!-- หน่วยงานที่เข้าร่วมได้ -->
