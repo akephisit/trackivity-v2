@@ -212,10 +212,11 @@
 		</CardHeader>
 		<CardContent class="space-y-4 p-4 lg:p-6">
 			{#if isLoading}
-				<div class="flex items-center justify-center p-8">
+				<div class="flex flex-col items-center justify-center gap-3 p-8">
 					<div
 						class="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"
 					></div>
+					<p class="text-sm text-muted-foreground">กำลังโหลดกิจกรรม...</p>
 				</div>
 			{:else if activities.length === 0}
 				<Alert>
@@ -229,7 +230,6 @@
 					<Label class="text-sm font-medium">
 						เลือกกิจกรรมที่ต้องการสแกน (เฉพาะกิจกรรมที่กำลังดำเนินการ):
 					</Label>
-					<input type="hidden" name="selectedActivityId" bind:value={selectedActivityId} />
 					<Select.Root
 						type="single"
 						bind:value={selectedActivityId as any}

@@ -9,6 +9,7 @@
 	import { Badge } from '$lib/components/ui/badge';
 	import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
 	import * as Table from '$lib/components/ui/table';
+	import * as Select from '$lib/components/ui/select';
 	import { Skeleton } from '$lib/components/ui/skeleton';
 	import { goto } from '$app/navigation';
 
@@ -149,33 +150,57 @@
 					<Search class="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
 					<Input bind:value={searchTerm} placeholder="ค้นหาผู้ใช้..." class="pl-9" />
 				</div>
-				<select
-					bind:value={selectedStatus}
-					class="flex h-9 w-full items-center rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm sm:w-40"
-				>
-					<option value="all">สถานะทั้งหมด</option>
-					<option value="active">เปิดใช้งาน</option>
-					<option value="inactive">ปิดใช้งาน</option>
-					<option value="suspended">ระงับ</option>
-				</select>
-				<select
-					bind:value={selectedOrg}
-					class="flex h-9 w-full items-center rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm sm:w-48"
-				>
-					<option value="all">หน่วยงานทั้งหมด</option>
-					{#each organizations as org}
-						<option value={org.name}>{org.name}</option>
-					{/each}
-				</select>
+				<Select.Root type="single" bind:value={selectedStatus}>
+					<Select.Trigger class="sm:w-40">
+						{#if selectedStatus === 'active'}เปิดใช้งาน
+						{:else if selectedStatus === 'inactive'}ปิดใช้งาน
+						{:else if selectedStatus === 'suspended'}ระงับ
+						{:else}สถานะทั้งหมด
+						{/if}
+					</Select.Trigger>
+					<Select.Content>
+						<Select.Item value="all">สถานะทั้งหมด</Select.Item>
+						<Select.Item value="active">เปิดใช้งาน</Select.Item>
+						<Select.Item value="inactive">ปิดใช้งาน</Select.Item>
+						<Select.Item value="suspended">ระงับ</Select.Item>
+					</Select.Content>
+				</Select.Root>
+				<Select.Root type="single" bind:value={selectedOrg}>
+					<Select.Trigger class="sm:w-48">
+						{selectedOrg === 'all' ? 'หน่วยงานทั้งหมด' : selectedOrg}
+					</Select.Trigger>
+					<Select.Content>
+						<Select.Item value="all">หน่วยงานทั้งหมด</Select.Item>
+						{#each organizations as org}
+							<Select.Item value={org.name}>{org.name}</Select.Item>
+						{/each}
+					</Select.Content>
+				</Select.Root>
 			</div>
 		</CardHeader>
 		<CardContent>
 			{#if loading}
-				<div class="space-y-3">
-					{#each Array(6) as _}
-						<Skeleton class="h-10 w-full" />
-					{/each}
-				</div>
+				<Table.Root>
+					<Table.Header>
+						<Table.Row>
+							<Table.Head>ผู้ใช้</Table.Head>
+							<Table.Head>รหัสนักศึกษา</Table.Head>
+							<Table.Head>หน่วยงาน</Table.Head>
+							<Table.Head>ภาควิชา</Table.Head>
+							<Table.Head>สถานะ</Table.Head>
+							<Table.Head>เข้าสู่ระบบล่าสุด</Table.Head>
+						</Table.Row>
+					</Table.Header>
+					<Table.Body>
+						{#each Array(6) as _}
+							<Table.Row>
+								{#each Array(6) as _}
+									<Table.Cell><Skeleton class="h-4 w-full" /></Table.Cell>
+								{/each}
+							</Table.Row>
+						{/each}
+					</Table.Body>
+				</Table.Root>
 			{:else if error}
 				<div class="py-8 text-center text-destructive">{error}</div>
 			{:else if filteredUsers.length === 0}
