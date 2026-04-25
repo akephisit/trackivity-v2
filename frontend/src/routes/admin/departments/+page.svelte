@@ -1,13 +1,15 @@
 <script lang="ts">
-	import { Pencil, Plus, RefreshCw, School, Search, ToggleLeft, ToggleRight, Trash2 } from '@lucide/svelte';
+	import { CircleAlert, Pencil, Plus, RefreshCw, School, Search, ToggleLeft, ToggleRight, Trash2 } from '@lucide/svelte';
 	import { departmentsApi, organizationsApi, ApiError } from '$lib/api';
 	import type { Department, Organization, CreateDepartmentInput, UpdateDepartmentInput } from '$lib/api';
 	import { onMount } from 'svelte';
 	import { toast } from 'svelte-sonner';
+	import { authStore } from '$lib/stores/auth.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
 	import { Badge } from '$lib/components/ui/badge';
+	import { Alert, AlertDescription } from '$lib/components/ui/alert';
 	import {
 		Card, CardContent, CardHeader, CardTitle
 	} from '$lib/components/ui/card';
@@ -23,6 +25,9 @@
 	let searchTerm = $state('');
 	let filterOrg = $state('all');
 	let filterStatus = $state('all');
+
+	const isSuperAdmin = $derived(authStore.user?.admin_role?.admin_level === 'super_admin');
+	const currentOrgId = $derived(authStore.user?.admin_role?.organization_id ?? '');
 
 	// Dialogs
 	let createDialogOpen = $state(false);
@@ -95,7 +100,15 @@
 
 	// ─── Actions ────────────────────────────────────────────────────────────
 	function openCreate() {
-		createForm = { name: '', code: '', description: null, organization_id: '', status: true };
+		// Pre-fill organization for org admins (backend would reject any other
+		// value anyway, so we don't need to make them choose).
+		createForm = {
+			name: '',
+			code: '',
+			description: null,
+			organization_id: isSuperAdmin ? '' : currentOrgId,
+			status: true
+		};
 		createDialogOpen = true;
 	}
 
@@ -219,34 +232,73 @@
 					<Search class="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
 					<Input bind:value={searchTerm} placeholder="ค้นหาภาควิชา..." class="pl-9" />
 				</div>
-				<select
-					bind:value={filterOrg}
-					class="flex h-9 w-full items-center rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm sm:w-48"
-				>
-					<option value="all">หน่วยงานทั้งหมด</option>
-					{#each organizations as org}
-						<option value={org.id}>{org.name}</option>
-					{/each}
-				</select>
-				<select
-					bind:value={filterStatus}
-					class="flex h-9 w-full items-center rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm sm:w-40"
-				>
-					<option value="all">สถานะทั้งหมด</option>
-					<option value="active">เปิดใช้งาน</option>
-					<option value="inactive">ปิดใช้งาน</option>
-				</select>
+				{#if isSuperAdmin}
+					<Select.Root type="single" bind:value={filterOrg}>
+						<Select.Trigger class="sm:w-48">
+							{filterOrg === 'all'
+								? 'หน่วยงานทั้งหมด'
+								: (organizations.find((o) => o.id === filterOrg)?.name ?? 'หน่วยงานทั้งหมด')}
+						</Select.Trigger>
+						<Select.Content>
+							<Select.Item value="all">หน่วยงานทั้งหมด</Select.Item>
+							{#each organizations as org}
+								<Select.Item value={org.id}>{org.name}</Select.Item>
+							{/each}
+						</Select.Content>
+					</Select.Root>
+				{/if}
+				<Select.Root type="single" bind:value={filterStatus}>
+					<Select.Trigger class="sm:w-40">
+						{filterStatus === 'active'
+							? 'เปิดใช้งาน'
+							: filterStatus === 'inactive'
+								? 'ปิดใช้งาน'
+								: 'สถานะทั้งหมด'}
+					</Select.Trigger>
+					<Select.Content>
+						<Select.Item value="all">สถานะทั้งหมด</Select.Item>
+						<Select.Item value="active">เปิดใช้งาน</Select.Item>
+						<Select.Item value="inactive">ปิดใช้งาน</Select.Item>
+					</Select.Content>
+				</Select.Root>
 			</div>
 		</CardHeader>
 		<CardContent>
 			{#if loading}
-				<div class="space-y-3">
-					{#each Array(5) as _}
-						<Skeleton class="h-10 w-full" />
-					{/each}
-				</div>
+				{@const cols = isSuperAdmin ? 6 : 5}
+				<Table.Root>
+					<Table.Header>
+						<Table.Row>
+							<Table.Head>ชื่อภาควิชา</Table.Head>
+							<Table.Head>รหัส</Table.Head>
+							{#if isSuperAdmin}
+								<Table.Head>หน่วยงาน</Table.Head>
+							{/if}
+							<Table.Head>นักศึกษา</Table.Head>
+							<Table.Head>สถานะ</Table.Head>
+							<Table.Head class="text-right">การจัดการ</Table.Head>
+						</Table.Row>
+					</Table.Header>
+					<Table.Body>
+						{#each Array(5) as _}
+							<Table.Row>
+								{#each Array(cols) as _}
+									<Table.Cell><Skeleton class="h-4 w-full" /></Table.Cell>
+								{/each}
+							</Table.Row>
+						{/each}
+					</Table.Body>
+				</Table.Root>
 			{:else if error}
-				<div class="py-8 text-center text-destructive">{error}</div>
+				<Alert variant="destructive">
+					<CircleAlert class="size-4" />
+					<AlertDescription class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+						<span>{error}</span>
+						<Button size="sm" variant="outline" onclick={fetchData}>
+							<RefreshCw class="mr-2 size-4" />ลองใหม่
+						</Button>
+					</AlertDescription>
+				</Alert>
 			{:else if filteredDepts.length === 0}
 				<div class="py-12 text-center">
 					<School class="mx-auto mb-4 size-12 text-muted-foreground/50" />
@@ -258,7 +310,9 @@
 						<Table.Row>
 							<Table.Head>ชื่อภาควิชา</Table.Head>
 							<Table.Head>รหัส</Table.Head>
-							<Table.Head>หน่วยงาน</Table.Head>
+							{#if isSuperAdmin}
+								<Table.Head>หน่วยงาน</Table.Head>
+							{/if}
 							<Table.Head>นักศึกษา</Table.Head>
 							<Table.Head>สถานะ</Table.Head>
 							<Table.Head class="text-right">การจัดการ</Table.Head>
@@ -278,9 +332,11 @@
 								<Table.Cell>
 									<code class="rounded bg-muted px-1 py-0.5 text-sm">{dept.code}</code>
 								</Table.Cell>
-								<Table.Cell>
-									<span class="text-sm">{dept.organization_name ?? '-'}</span>
-								</Table.Cell>
+								{#if isSuperAdmin}
+									<Table.Cell>
+										<span class="text-sm">{dept.organization_name ?? '-'}</span>
+									</Table.Cell>
+								{/if}
 								<Table.Cell>
 									<span>{dept.students_count ?? 0}</span>
 								</Table.Cell>
@@ -291,17 +347,22 @@
 								</Table.Cell>
 								<Table.Cell class="text-right">
 									<div class="flex items-center justify-end gap-1">
-										<Button variant="ghost" size="sm" onclick={() => handleToggleStatus(dept)}>
+										<Button
+											variant="ghost"
+											size="sm"
+											onclick={() => handleToggleStatus(dept)}
+											aria-label={dept.status ? 'ปิดการใช้งาน' : 'เปิดการใช้งาน'}
+										>
 											{#if dept.status}
 												<ToggleRight class="size-4 text-green-600" />
 											{:else}
 												<ToggleLeft class="size-4 text-muted-foreground" />
 											{/if}
 										</Button>
-										<Button variant="ghost" size="sm" onclick={() => openEdit(dept)}>
+										<Button variant="ghost" size="sm" onclick={() => openEdit(dept)} aria-label="แก้ไข">
 											<Pencil class="size-4" />
 										</Button>
-										<Button variant="ghost" size="sm" onclick={() => openDelete(dept)}>
+										<Button variant="ghost" size="sm" onclick={() => openDelete(dept)} aria-label="ลบ">
 											<Trash2 class="size-4 text-destructive" />
 										</Button>
 									</div>
@@ -322,19 +383,22 @@
 			<Dialog.Title>เพิ่มภาควิชาใหม่</Dialog.Title>
 		</Dialog.Header>
 		<div class="space-y-4 py-2">
-			<div class="space-y-1">
-				<Label>หน่วยงาน *</Label>
-				<Select.Root type="single" bind:value={createForm.organization_id}>
-					<Select.Trigger class="w-full">
-						{orgOptions.find((o) => o.value === createForm.organization_id)?.label ?? 'เลือกหน่วยงาน'}
-					</Select.Trigger>
-					<Select.Content>
-						{#each orgOptions as opt}
-							<Select.Item value={opt.value}>{opt.label}</Select.Item>
-						{/each}
-					</Select.Content>
-				</Select.Root>
-			</div>
+			{#if isSuperAdmin}
+				<div class="space-y-1">
+					<Label>หน่วยงาน *</Label>
+					<Select.Root type="single" bind:value={createForm.organization_id}>
+						<Select.Trigger class="w-full">
+							{orgOptions.find((o) => o.value === createForm.organization_id)?.label ??
+								'เลือกหน่วยงาน'}
+						</Select.Trigger>
+						<Select.Content>
+							{#each orgOptions as opt}
+								<Select.Item value={opt.value}>{opt.label}</Select.Item>
+							{/each}
+						</Select.Content>
+					</Select.Root>
+				</div>
+			{/if}
 			<div class="space-y-1">
 				<Label>ชื่อภาควิชา *</Label>
 				<Input bind:value={createForm.name} placeholder="ชื่อภาควิชา" />
