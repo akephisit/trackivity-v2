@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { Activity as ActivityIcon, Undo2, Building as BuildingIcon, Calendar as CalendarIcon, Check, CircleAlert, MapPin, QrCode, RefreshCw, Settings, Users, X } from '@lucide/svelte';
-	import { onMount } from 'svelte';
+	import { Activity as ActivityIcon, Undo2, Building as BuildingIcon, Calendar as CalendarIcon, Check, ChevronsUpDown, CircleAlert, MapPin, QrCode, RefreshCw, Search, Settings, Users, X } from '@lucide/svelte';
+	import { onMount, tick } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { browser } from '$app/environment';
 
@@ -10,7 +10,8 @@
 	import { Badge } from '$lib/components/ui/badge';
 	import { Separator } from '$lib/components/ui/separator';
 	import { Alert, AlertDescription } from '$lib/components/ui/alert';
-	import * as Select from '$lib/components/ui/select';
+	import { Input } from '$lib/components/ui/input';
+	import * as Popover from '$lib/components/ui/popover';
 	import { Label } from '$lib/components/ui/label';
 	import { authStore } from '$lib/stores/auth.svelte';
 	import { activities as activitiesApi, type Activity } from '$lib/api';
@@ -30,12 +31,42 @@
 	let isLoading = $state(true);
 	let loadError = $state<string | null>(null);
 
+	// Activity picker (combobox) state
+	let pickerOpen = $state(false);
+	let pickerSearch = $state('');
+	let searchInputEl = $state<HTMLInputElement | null>(null);
+
 	// Derived — no manual counter needed; backend sends real counts
 	const selectedActivity = $derived(
 		selectedActivityId ? activities.find((a) => a.id === selectedActivityId) || null : null
 	);
 	const currentParticipantCount = $derived(selectedActivity?.checked_in_count ?? 0);
 	const isSuperAdmin = $derived(authStore.user?.admin_role?.admin_level === 'super_admin');
+
+	const filteredActivities = $derived.by(() => {
+		const q = pickerSearch.trim().toLowerCase();
+		if (!q) return activities;
+		return activities.filter(
+			(a) =>
+				a.title?.toLowerCase().includes(q) ||
+				a.location?.toLowerCase().includes(q) ||
+				a.organizer_name?.toLowerCase().includes(q)
+		);
+	});
+
+	async function focusSearchAfterOpen(open: boolean) {
+		if (open) {
+			await tick();
+			searchInputEl?.focus();
+		} else {
+			pickerSearch = '';
+		}
+	}
+
+	function pickActivity(activityId: string) {
+		if (activityId !== selectedActivityId) handleActivityChange(activityId);
+		pickerOpen = false;
+	}
 
 	// Sync activity_id with the URL via history.replaceState — simpler and
 	// avoids the goto()/untrack/guard-flag dance that the previous version
@@ -237,26 +268,80 @@
 					<Label class="text-sm font-medium">
 						เลือกกิจกรรมที่ต้องการสแกน (เฉพาะกิจกรรมที่กำลังดำเนินการ):
 					</Label>
-					<Select.Root
-						type="single"
-						value={selectedActivityId}
-						onValueChange={(value) => {
-							if (value && value !== selectedActivityId) {
-								handleActivityChange(value);
-							}
-						}}
-					>
-						<Select.Trigger class="w-full">
-							{activities.find((a) => a.id === selectedActivityId)?.title ?? 'เลือกกิจกรรม...'}
-						</Select.Trigger>
-						<Select.Content>
-							{#each activities as activity}
-								<Select.Item value={activity.id}>
-									{activity.title}
-								</Select.Item>
-							{/each}
-						</Select.Content>
-					</Select.Root>
+					<Popover.Root bind:open={pickerOpen} onOpenChange={focusSearchAfterOpen}>
+						<Popover.Trigger>
+							{#snippet child({ props })}
+								<Button
+									{...props}
+									variant="outline"
+									role="combobox"
+									aria-expanded={pickerOpen}
+									class="w-full justify-between font-normal"
+								>
+									<span class="truncate">
+										{#if selectedActivity}
+											{selectedActivity.title}
+											<span class="text-muted-foreground"> · {formatDate(selectedActivity.start_date)}</span>
+										{:else}
+											<span class="text-muted-foreground">เลือกกิจกรรม...</span>
+										{/if}
+									</span>
+									<ChevronsUpDown class="ml-2 size-4 shrink-0 opacity-50" />
+								</Button>
+							{/snippet}
+						</Popover.Trigger>
+						<Popover.Content
+							class="w-[var(--bits-popover-anchor-width)] p-0"
+							align="start"
+							sideOffset={4}
+						>
+							<div class="border-b p-2">
+								<div class="relative">
+									<Search class="absolute top-1/2 left-2 size-4 -translate-y-1/2 text-muted-foreground" />
+									<Input
+										bind:ref={searchInputEl}
+										bind:value={pickerSearch}
+										placeholder="ค้นหาชื่อกิจกรรม / สถานที่ / ผู้จัด"
+										class="h-9 pl-8"
+									/>
+								</div>
+							</div>
+							<div class="max-h-72 overflow-y-auto p-1">
+								{#each filteredActivities as activity (activity.id)}
+									<button
+										type="button"
+										onclick={() => pickActivity(activity.id)}
+										class="flex w-full items-start gap-2 rounded-sm px-2 py-2 text-left text-sm hover:bg-accent hover:text-accent-foreground {activity.id ===
+										selectedActivityId
+											? 'bg-accent/50'
+											: ''}"
+									>
+										<Check
+											class="mt-0.5 size-4 shrink-0 {activity.id === selectedActivityId
+												? 'opacity-100'
+												: 'opacity-0'}"
+										/>
+										<div class="min-w-0 flex-1">
+											<div class="truncate font-medium">{activity.title}</div>
+											<div class="flex flex-wrap gap-x-2 text-xs text-muted-foreground">
+												<span>{formatDate(activity.start_date)}</span>
+												{#if activity.location}
+													<span>· {activity.location}</span>
+												{/if}
+												{#if activity.organizer_name}
+													<span>· {activity.organizer_name}</span>
+												{/if}
+											</div>
+										</div>
+									</button>
+								{:else}
+									<div class="px-3 py-6 text-center text-sm text-muted-foreground">
+										ไม่พบกิจกรรมที่ตรงกับ "{pickerSearch}"
+									</div>
+								{/each}
+							</div>
+						</Popover.Content>
+					</Popover.Root>
 				</div>
 
 				<!-- Selected Activity Info -->
