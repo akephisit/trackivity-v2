@@ -444,63 +444,11 @@ export const usersApi = {
         }),
 };
 
-// ─── System & Sessions ───────────────────────────────────────────────────
-
-export interface Analytics {
-    total_users: number;
-    total_activities: number;
-    total_participations: number;
-    active_sessions: number;
-    [key: string]: any; // Allow other properties
-}
-
-export interface UserSession {
-    session_id: string;
-    user_id: string;
-    device_info?: {
-        device_type?: string;
-        [key: string]: any;
-    };
-    last_activity: string;
-    is_active: boolean;
-    [key: string]: any;
-}
-
-export const systemApi = {
-    getAnalytics: () =>
-        request<Analytics>('/analytics'),
-
-    getAllSessions: (params?: { page?: number; per_page?: number; active_only?: boolean }) => {
-        const query = new URLSearchParams();
-        if (params) {
-            Object.entries(params).forEach(([key, value]) => {
-                if (value !== undefined) query.append(key, value.toString());
-            });
-        }
-        const endpoint = `/sessions${query.toString() ? `?${query.toString()}` : ''}`;
-        // Assumes API returns an array or paginated object, will use any to unblock Dashboard type
-        return request<any>(endpoint);
-    }
-};
-
 // ─── QR Code ─────────────────────────────────────────────────────────────
 
 export const qrApi = {
     generateQRCode: () =>
         request<any>('/qr/generate', { method: 'POST' }),
-
-    scanQRCode: (qrData: string, activityId?: string, deviceInfo?: any) =>
-        request<any>('/qr/scan', {
-            method: 'POST',
-            body: JSON.stringify({
-                qr_data: qrData,
-                activity_id: activityId,
-                device_info: deviceInfo || {}
-            }),
-        }),
-
-    getUserQRCodes: () =>
-        request<any[]>('/qr/user'),
 };
 
 // ─── Notifications ─────────────────────────────────────────────────────────

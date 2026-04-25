@@ -355,11 +355,16 @@ pub async fn forgot_password_handler(
 
     let resend_api_key = std::env::var("RESEND_API_KEY").unwrap_or_default();
     let frontend_url = std::env::var("FRONTEND_URL").unwrap_or_else(|_| "http://localhost:5173".to_string());
-    
-    if !resend_api_key.is_empty() {
+
+    if resend_api_key.is_empty() {
+        tracing::warn!(
+            "RESEND_API_KEY is not set — skipping password reset email for {}",
+            email
+        );
+    } else {
         let reset_link = format!("{}/reset-password?token={}", frontend_url, token);
         let client = reqwest::Client::new();
-        
+
         let html_content = format!(
             r#"<h2>คุณได้ขอรีเซ็ตรหัสผ่าน</h2>
             <p>กรุณาคลิกที่ลิงก์ด้านล่างเพื่อตั้งรหัสผ่านใหม่สำหรับบัญชี Trackivity ของคุณ:</p>
@@ -370,16 +375,36 @@ pub async fn forgot_password_handler(
 
         let payload = serde_json::json!({
             "from": "Trackivity <admin@utrackivity.com>",
-            "to": [email],
+            "to": [&email],
             "subject": "Trackivity - คำขอตั้งรหัสผ่านใหม่",
             "html": html_content
         });
 
-        let _ = client.post("https://api.resend.com/emails")
-            .bearer_auth(resend_api_key)
+        match client
+            .post("https://api.resend.com/emails")
+            .bearer_auth(&resend_api_key)
             .json(&payload)
             .send()
-            .await;
+            .await
+        {
+            Ok(resp) => {
+                let status = resp.status();
+                if status.is_success() {
+                    tracing::info!("Password reset email queued for {}", email);
+                } else {
+                    let body = resp.text().await.unwrap_or_default();
+                    tracing::error!(
+                        "Resend API returned {} for {}: {}",
+                        status,
+                        email,
+                        body
+                    );
+                }
+            }
+            Err(e) => {
+                tracing::error!("Resend network error for {}: {}", email, e);
+            }
+        }
     }
 
     Ok((StatusCode::OK, Json(serde_json::json!({ "message": "If this email exists, a password reset link has been sent." }))).into_response())

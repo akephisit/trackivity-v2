@@ -321,44 +321,6 @@ export class QRClient {
 		}
 	}
 
-	// ===== QR CODE SCANNING =====
-	async scanQRCode(qrData: string, activityId?: string): Promise<QRScanResult> {
-		if (!browser) {
-			throw new Error('QR scanning not available on server');
-		}
-
-		try {
-			// Validate QR data format
-			const parsedData = this.parseQRData(qrData);
-			if (!parsedData) {
-				throw new Error('Invalid QR code format');
-			}
-
-			// Verify signature if present
-			if (parsedData.signature) {
-				const isValid = await this.verifyQRSignature(parsedData);
-				if (!isValid) {
-					throw new Error('Invalid QR code signature');
-				}
-			}
-
-			// Send to backend for processing
-			const response = await qrApi.scanQRCode(
-				qrData,
-				activityId,
-				{ device_fingerprint: typeof generateDeviceFingerprint === 'function' ? generateDeviceFingerprint() : 'unknown' }
-			);
-			return response.data || response; // Dependent on whether API wraps in { data: ... }
-		} catch (error) {
-			console.error('QR scanning failed:', error);
-			return {
-				success: false,
-				scan_time: new Date().toISOString(),
-				error: error instanceof Error ? error.message : 'QR scanning failed'
-			};
-		}
-	}
-
 	private parseQRData(qrData: string): QRData | null {
 		try {
 			const parsed = JSON.parse(qrData);
@@ -565,7 +527,6 @@ export function useQRCode() {
 		status,
 		error,
 		generate: (user?: SessionUser) => qrClient.generateQRCode(user),
-		download: (filename?: string) => qrClient.downloadQRCode(filename),
-		scan: (qrData: string, activityId?: string) => qrClient.scanQRCode(qrData, activityId)
+		download: (filename?: string) => qrClient.downloadQRCode(filename)
 	};
 }

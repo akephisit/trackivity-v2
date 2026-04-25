@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { systemApi, organizationsApi } from '$lib/api';
-	import type { Analytics, UserSession } from '$lib/api';
+	import { organizationsApi } from '$lib/api';
 	import type { Organization } from '$lib/types';
 
 	import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
@@ -15,10 +14,6 @@
 		IconUsers,
 		IconSchool,
 		IconAnalyze,
-		IconShieldCheck,
-		IconTrendingUp,
-		IconActivity,
-		IconDevices,
 		IconChevronRight,
 		IconAlertCircle,
 		IconCrown,
@@ -29,60 +24,29 @@
 		IconPlus
 	} from '@tabler/icons-svelte';
 
-	// Component state
-	let analytics: Analytics | null = null;
 	let faculties: Organization[] = [];
-	let activeSessions: UserSession[] = [];
-	let loading = {
-		analytics: true,
-		faculties: true,
-		sessions: true
-	};
+	let loadingFaculties = true;
 	let error: string | null = null;
 
-	onMount(async () => {
-		await Promise.all([loadAnalytics(), loadFaculties(), loadActiveSessions()]);
-	});
+	// Derived totals from faculty list (backend doesn't expose a dedicated analytics endpoint yet)
+	$: totalStudents = faculties.reduce((sum, f) => sum + (f.total_students || 0), 0);
+	$: totalActivities = faculties.reduce((sum, f) => sum + (f.total_activities || 0), 0);
+	$: totalFaculties = faculties.length;
 
-	async function loadAnalytics() {
-		try {
-			loading.analytics = true;
-			const response = await systemApi.getAnalytics();
-			analytics = response;
-		} catch (err) {
-			console.error('Failed to load analytics:', err);
-			error = 'ไม่สามารถโหลดข้อมูลการวิเคราะห์ได้';
-		} finally {
-			loading.analytics = false;
-		}
-	}
+	onMount(async () => {
+		await loadFaculties();
+	});
 
 	async function loadFaculties() {
 		try {
-			loading.faculties = true;
+			loadingFaculties = true;
 			const response = await organizationsApi.list();
-			// API returns organization array directly
 			faculties = response as any;
 		} catch (err) {
 			console.error('Failed to load faculties:', err);
+			error = 'ไม่สามารถโหลดข้อมูลหน่วยงานได้';
 		} finally {
-			loading.faculties = false;
-		}
-	}
-
-	async function loadActiveSessions() {
-		try {
-			loading.sessions = true;
-			const response = await systemApi.getAllSessions({
-				per_page: 10,
-				active_only: true
-			});
-
-			activeSessions = Array.isArray(response) ? response : (response.data || response.sessions || []);
-		} catch (err) {
-			console.error('Failed to load sessions:', err);
-		} finally {
-			loading.sessions = false;
+			loadingFaculties = false;
 		}
 	}
 
@@ -90,31 +54,8 @@
 		return new Intl.NumberFormat('th-TH').format(num);
 	}
 
-	function getDeviceIcon(deviceType?: string) {
-		switch (deviceType) {
-			case 'mobile':
-				return '📱';
-			case 'tablet':
-				return '📱';
-			default:
-				return '💻';
-		}
-	}
-
-	function formatDate(dateString: string): string {
-		return new Date(dateString).toLocaleDateString('th-TH', {
-			year: 'numeric',
-			month: 'short',
-			day: 'numeric',
-			hour: '2-digit',
-			minute: '2-digit'
-		});
-	}
-
 	function calculateFacultyUtilization(faculty: Organization): number {
 		if (!faculty.total_students || faculty.total_students === 0) return 0;
-		// This would be calculated based on actual participation vs capacity
-		// For now using mock calculation
 		return Math.min(100, (faculty.total_students / 1000) * 100);
 	}
 </script>
@@ -149,17 +90,30 @@
 		</Alert>
 	{/if}
 
-	<div class="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+	<div class="grid gap-6 md:grid-cols-3">
 		<Card>
 			<CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
-				<CardTitle class="text-sm font-medium">ผู้ใช้ทั้งหมด</CardTitle>
+				<CardTitle class="text-sm font-medium">หน่วยงานทั้งหมด</CardTitle>
+				<IconSchool class="size-4 text-muted-foreground" />
+			</CardHeader>
+			<CardContent>
+				<div class="text-2xl font-bold">
+					{loadingFaculties ? '--' : formatNumber(totalFaculties)}
+				</div>
+				<p class="text-xs text-muted-foreground">คณะ/สำนักงาน</p>
+			</CardContent>
+		</Card>
+
+		<Card>
+			<CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
+				<CardTitle class="text-sm font-medium">นักศึกษาทั้งหมด</CardTitle>
 				<IconUsers class="size-4 text-muted-foreground" />
 			</CardHeader>
 			<CardContent>
 				<div class="text-2xl font-bold">
-					{loading.analytics || !analytics ? '--' : formatNumber(analytics.total_users)}
+					{loadingFaculties ? '--' : formatNumber(totalStudents)}
 				</div>
-				<p class="text-xs text-muted-foreground">ผู้ใช้ในระบบ</p>
+				<p class="text-xs text-muted-foreground">รวมทุกหน่วยงาน</p>
 			</CardContent>
 		</Card>
 
@@ -170,40 +124,14 @@
 			</CardHeader>
 			<CardContent>
 				<div class="text-2xl font-bold">
-					{loading.analytics || !analytics ? '--' : formatNumber(analytics.total_activities)}
+					{loadingFaculties ? '--' : formatNumber(totalActivities)}
 				</div>
-				<p class="text-xs text-muted-foreground">กิจกรรมในระบบ</p>
-			</CardContent>
-		</Card>
-
-		<Card>
-			<CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
-				<CardTitle class="text-sm font-medium">การเข้าร่วมทั้งหมด</CardTitle>
-				<IconActivity class="size-4 text-muted-foreground" />
-			</CardHeader>
-			<CardContent>
-				<div class="text-2xl font-bold">
-					{loading.analytics || !analytics ? '--' : formatNumber(analytics.total_participations)}
-				</div>
-				<p class="text-xs text-muted-foreground">การเข้าร่วมกิจกรรม</p>
-			</CardContent>
-		</Card>
-
-		<Card>
-			<CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
-				<CardTitle class="text-sm font-medium">เซสชันที่ใช้งาน</CardTitle>
-				<IconDevices class="size-4 text-muted-foreground" />
-			</CardHeader>
-			<CardContent>
-				<div class="text-2xl font-bold">
-					{loading.analytics || !analytics ? '--' : formatNumber(analytics.active_sessions)}
-				</div>
-				<p class="text-xs text-muted-foreground">เซสชันออนไลน์</p>
+				<p class="text-xs text-muted-foreground">รวมทุกหน่วยงาน</p>
 			</CardContent>
 		</Card>
 	</div>
 
-	<!-- Faculty Overview and Active Sessions -->
+	<!-- Faculty Overview and Quick Actions -->
 	<div class="grid gap-6 lg:grid-cols-2">
 		<!-- Faculty Overview -->
 		<Card>
@@ -220,7 +148,7 @@
 				</CardTitle>
 			</CardHeader>
 			<CardContent>
-				{#if loading.faculties}
+				{#if loadingFaculties}
 					<div class="space-y-4">
 						{#each Array(3) as _}
 							<div class="space-y-2">
@@ -284,94 +212,7 @@
 			</CardContent>
 		</Card>
 
-		<!-- Active Sessions -->
-		<Card>
-			<CardHeader>
-				<CardTitle class="flex items-center justify-between">
-					<span class="flex items-center gap-2">
-						<IconShieldCheck class="size-5" />
-						เซสชันที่ใช้งาน
-					</span>
-					<Button size="sm" variant="outline" href="/admin/system/sessions">
-						จัดการเซสชัน
-						<IconChevronRight class="ml-1 size-4" />
-					</Button>
-				</CardTitle>
-			</CardHeader>
-			<CardContent>
-				{#if loading.sessions}
-					<div class="space-y-3">
-						{#each Array(5) as _}
-							<div class="space-y-2">
-								<Skeleton class="h-4 w-3/4" />
-								<Skeleton class="h-3 w-1/2" />
-							</div>
-						{/each}
-					</div>
-				{:else if activeSessions.length === 0}
-					<div class="py-6 text-center text-muted-foreground">
-						<IconDevices class="mx-auto mb-2 size-8 opacity-50" />
-						<p>ไม่มีเซสชันที่ใช้งาน</p>
-					</div>
-				{:else}
-					<div class="space-y-3">
-						{#each activeSessions as session}
-							<div class="flex items-center justify-between rounded-lg border p-3">
-								<div class="flex items-center gap-3">
-									<div class="text-lg">
-										{getDeviceIcon(session.device_info?.device_type)}
-									</div>
-									<div>
-										<p class="text-sm font-medium">
-											เซสชัน {session.session_id.slice(0, 8)}...
-										</p>
-										<p class="text-xs text-muted-foreground">
-											{formatDate(session.last_activity)}
-										</p>
-									</div>
-								</div>
-								<Badge variant={session.is_active ? 'default' : 'secondary'}>
-									{session.is_active ? 'ใช้งาน' : 'ไม่ใช้งาน'}
-								</Badge>
-							</div>
-						{/each}
-					</div>
-				{/if}
-			</CardContent>
-		</Card>
-	</div>
-
-	<!-- Analytics Chart Placeholder and Quick Actions -->
-	<div class="grid gap-6 lg:grid-cols-3">
-		<!-- Participation Trends -->
-		<Card class="lg:col-span-2">
-			<CardHeader>
-				<CardTitle class="flex items-center gap-2">
-					<IconTrendingUp class="size-5" />
-					แนวโน้มการเข้าร่วมกิจกรรม
-				</CardTitle>
-			</CardHeader>
-			<CardContent>
-				{#if loading.analytics || !analytics}
-					<div class="flex h-64 items-center justify-center">
-						<div class="space-y-2 text-center">
-							<Skeleton class="h-32 w-full" />
-							<Skeleton class="mx-auto h-4 w-3/4" />
-						</div>
-					</div>
-				{:else}
-					<div class="flex h-64 items-center justify-center text-muted-foreground">
-						<div class="space-y-2 text-center">
-							<IconAnalyze class="mx-auto size-12 opacity-50" />
-							<p>กราฟแนวโน้มการเข้าร่วม</p>
-							<p class="text-xs">จะแสดงเมื่อมีข้อมูลเพียงพอ</p>
-						</div>
-					</div>
-				{/if}
-			</CardContent>
-		</Card>
-
-		<!-- System Actions -->
+		<!-- Quick Actions -->
 		<Card>
 			<CardHeader>
 				<CardTitle class="flex items-center gap-2">
@@ -389,11 +230,6 @@
 					<Button href="/admin/system/organizations" variant="outline" class="w-full justify-start">
 						<IconSchool class="mr-2 size-4" />
 						จัดการหน่วยงาน
-					</Button>
-
-					<Button href="/admin/system/sessions" variant="outline" class="w-full justify-start">
-						<IconShieldCheck class="mr-2 size-4" />
-						จัดการเซสชัน
 					</Button>
 
 					<Button href="/admin/system/admins" variant="outline" class="w-full justify-start">
