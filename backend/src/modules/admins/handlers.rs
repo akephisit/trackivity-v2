@@ -185,6 +185,14 @@ pub async fn create_admin(
         .to_string();
 
     let student_id = format!("A{}", rand::random::<u32>() % 900000000 + 100000000);
+    let org_id: Option<Uuid> = payload.organization_id.and_then(|id| Uuid::parse_str(&id).ok());
+    let permissions = payload.permissions.unwrap_or_else(|| vec!["ViewDashboard".to_string()]);
+
+    // Wrap user + admin_role inserts in a transaction so a failure on the
+    // second statement doesn't leave an orphan user account behind.
+    let mut tx = pool.begin()
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
 
     let row = sqlx::query(
         "INSERT INTO users (student_id, email, password_hash, prefix, first_name, last_name, status)
@@ -196,15 +204,12 @@ pub async fn create_admin(
     .bind(&payload.prefix)
     .bind(&payload.first_name)
     .bind(&payload.last_name)
-    .fetch_one(&pool)
+    .fetch_one(&mut *tx)
     .await
     .map_err(|e| (StatusCode::BAD_REQUEST, e.to_string()))?;
 
     use sqlx::Row;
     let user_id: Uuid = row.try_get("id").map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
-
-    let org_id: Option<Uuid> = payload.organization_id.and_then(|id| Uuid::parse_str(&id).ok());
-    let permissions = payload.permissions.unwrap_or_else(|| vec!["ViewDashboard".to_string()]);
 
     sqlx::query(
         "INSERT INTO admin_roles (user_id, admin_level, organization_id, permissions, is_enabled)
@@ -214,9 +219,13 @@ pub async fn create_admin(
     .bind(&payload.admin_level)
     .bind(&org_id)
     .bind(&permissions)
-    .execute(&pool)
+    .execute(&mut *tx)
     .await
     .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+
+    tx.commit()
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
 
     Ok(Json(serde_json::json!({ "success": true, "message": "Admin created" })))
 }
@@ -237,7 +246,15 @@ pub async fn update_admin(
     let user_id: Uuid = row.try_get("user_id").map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, "failed parsing id".to_string()))?;
 
     let dep_id = payload.department_id.and_then(|id| Uuid::parse_str(&id).ok());
-    
+    let org_id = payload.organization_id.and_then(|id| Uuid::parse_str(&id).ok());
+
+    // Both writes happen together so admin_role.organization_id can't drift
+    // away from users.department_id when one statement succeeds and the
+    // other doesn't.
+    let mut tx = pool.begin()
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+
     sqlx::query(
         "UPDATE users SET first_name = $1, last_name = $2, email = $3, prefix = COALESCE($4, prefix), department_id = $5, updated_at = NOW() WHERE id = $6"
     )
@@ -247,19 +264,22 @@ pub async fn update_admin(
     .bind(&payload.prefix)
     .bind(&dep_id)
     .bind(&user_id)
-    .execute(&pool)
+    .execute(&mut *tx)
     .await
     .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
 
-    let org_id = payload.organization_id.and_then(|id| Uuid::parse_str(&id).ok());
     if let Some(org) = org_id {
         sqlx::query("UPDATE admin_roles SET organization_id = $1, updated_at = NOW() WHERE id = $2")
             .bind(org)
             .bind(admin_id)
-            .execute(&pool)
+            .execute(&mut *tx)
             .await
             .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
     }
+
+    tx.commit()
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
 
     Ok(Json(serde_json::json!({ "success": true })))
 }

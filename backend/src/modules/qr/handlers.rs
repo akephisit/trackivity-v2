@@ -272,12 +272,17 @@ async fn scan_qr(
         "checkin" => {
             match participation {
                 None => {
-                    // Auto-register + check-in (walk-in)
+                    // Auto-register + check-in (walk-in).
+                    // ON CONFLICT DO NOTHING handles the race where two
+                    // scanners insert the same (user, activity) at once —
+                    // one wins, the other becomes a no-op instead of
+                    // surfacing a UNIQUE constraint 500.
                     let participation_id = Uuid::new_v4();
                     let now = Utc::now();
                     sqlx::query(r#"
                         INSERT INTO participations (id, user_id, activity_id, status, registered_at, checked_in_at)
                         VALUES ($1, $2, $3, 'checked_in'::participation_status, NOW(), NOW())
+                        ON CONFLICT (user_id, activity_id) DO NOTHING
                     "#)
                     .bind(participation_id)
                     .bind(student_id)

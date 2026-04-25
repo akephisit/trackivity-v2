@@ -109,19 +109,23 @@ pub async fn login_handler(
     let expiration_duration = if remember_me { Duration::days(30) } else { Duration::days(7) };
     let expires_at = Utc::now().checked_add_signed(expiration_duration).expect("valid timestamp");
 
-    sqlx::query("INSERT INTO sessions (id, user_id, expires_at, created_at, last_accessed, is_active, login_method) VALUES ($1, $2, $3, NOW(), NOW(), TRUE, 'password')")
-        .bind(&session_id)
-        .bind(user.id)
-        .bind(expires_at)
-        .execute(&pool)
-        .await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, format!("Failed to create session: {}", e)))?;
+    // Session insert and last_login update are independent — run them
+    // concurrently to save one round-trip on every login.
+    let session_insert = sqlx::query(
+        "INSERT INTO sessions (id, user_id, expires_at, created_at, last_accessed, is_active, login_method) VALUES ($1, $2, $3, NOW(), NOW(), TRUE, 'password')",
+    )
+    .bind(&session_id)
+    .bind(user.id)
+    .bind(expires_at)
+    .execute(&pool);
 
-    sqlx::query("UPDATE users SET last_login_at = NOW() WHERE id = $1")
+    let last_login_update = sqlx::query("UPDATE users SET last_login_at = NOW() WHERE id = $1")
         .bind(user.id)
-        .execute(&pool)
-        .await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, format!("Failed to update user stats: {}", e)))?;
+        .execute(&pool);
+
+    let (session_res, last_login_res) = tokio::join!(session_insert, last_login_update);
+    session_res.map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, format!("Failed to create session: {}", e)))?;
+    last_login_res.map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, format!("Failed to update user stats: {}", e)))?;
 
     let secret = std::env::var("JWT_SECRET")
         .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, "JWT_SECRET not set".to_string()))?;
@@ -439,22 +443,36 @@ pub async fn reset_password_handler(
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, format!("Failed to hash password: {}", e)))?
         .to_string();
 
-    sqlx::query("UPDATE users SET password_hash = $1 WHERE id = $2")
-        .bind(password_hash)
-        .bind(user_id)
-        .execute(&pool)
+    // Update password, consume token, and invalidate sessions atomically.
+    // If any step fails, the whole reset rolls back so the token remains
+    // usable (or, conversely, can never be silently consumed without a
+    // password change).
+    let mut tx = pool.begin()
         .await
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
 
-    let _ = sqlx::query("DELETE FROM password_reset_tokens WHERE token = $1")
-        .bind(&payload.token)
-        .execute(&pool)
-        .await;
-
-    let _ = sqlx::query("UPDATE sessions SET is_active = FALSE WHERE user_id = $1")
+    sqlx::query("UPDATE users SET password_hash = $1 WHERE id = $2")
+        .bind(password_hash)
         .bind(user_id)
-        .execute(&pool)
-        .await;
+        .execute(&mut *tx)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+
+    sqlx::query("DELETE FROM password_reset_tokens WHERE token = $1")
+        .bind(&payload.token)
+        .execute(&mut *tx)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+
+    sqlx::query("UPDATE sessions SET is_active = FALSE WHERE user_id = $1")
+        .bind(user_id)
+        .execute(&mut *tx)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+
+    tx.commit()
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
 
     Ok((StatusCode::OK, Json(serde_json::json!({ "message": "Password successfully reset" }))).into_response())
 }
