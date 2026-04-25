@@ -1,7 +1,7 @@
 use axum::{Json, extract::{Query, State, Path}, http::{StatusCode, HeaderMap}};
 use serde::Deserialize;
 use sqlx::PgPool;
-use crate::models::User;
+use crate::models::{AdminLevel, User};
 use crate::modules::auth::get_claims_from_headers;
 use super::models::{UserListItem, UserListResponse, UpdateProfileInput, ChangePasswordInput};
 use uuid::Uuid;
@@ -23,13 +23,27 @@ pub async fn list_users(
         return Err((StatusCode::FORBIDDEN, "Admin access required".to_string()));
     }
 
+    // Super admin sees all users; org / regular admin only sees users
+    // whose department belongs to their own organization. The $1::uuid
+    // IS NULL trick lets one query handle both cases.
+    let scope_org_id: Option<Uuid> = match claims.admin_level {
+        Some(AdminLevel::SuperAdmin) => None,
+        _ => claims.organization_id,
+    };
+
     let page = params.page.unwrap_or(1).max(1);
     let per_page = params.per_page.unwrap_or(50).clamp(1, 200);
     let offset = (page - 1) * per_page;
 
     let total: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM users WHERE deleted_at IS NULL",
+        r#"
+        SELECT COUNT(*) FROM users u
+        LEFT JOIN departments d ON u.department_id = d.id
+        WHERE u.deleted_at IS NULL
+          AND ($1::uuid IS NULL OR d.organization_id = $1)
+        "#,
     )
+    .bind(scope_org_id)
     .fetch_one(&pool)
     .await
     .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, format!("Failed to count users: {}", e)))?;
@@ -44,9 +58,11 @@ pub async fn list_users(
         LEFT JOIN departments d ON u.department_id = d.id
         LEFT JOIN organizations o ON d.organization_id = o.id
         WHERE u.deleted_at IS NULL
+          AND ($1::uuid IS NULL OR d.organization_id = $1)
         ORDER BY u.created_at DESC
-        LIMIT $1 OFFSET $2
+        LIMIT $2 OFFSET $3
     "#)
+    .bind(scope_org_id)
     .bind(per_page)
     .bind(offset)
     .fetch_all(&pool)
@@ -66,6 +82,11 @@ pub async fn get_user(
         return Err((StatusCode::FORBIDDEN, "Admin access required".to_string()));
     }
 
+    let scope_org_id: Option<Uuid> = match claims.admin_level {
+        Some(AdminLevel::SuperAdmin) => None,
+        _ => claims.organization_id,
+    };
+
     let user = sqlx::query_as::<_, UserListItem>(r#"
         SELECT
             u.id, u.student_id, u.email, u.prefix, u.first_name, u.last_name,
@@ -75,9 +96,12 @@ pub async fn get_user(
         FROM users u
         LEFT JOIN departments d ON u.department_id = d.id
         LEFT JOIN organizations o ON d.organization_id = o.id
-        WHERE u.id = $1 AND u.deleted_at IS NULL
+        WHERE u.id = $1
+          AND u.deleted_at IS NULL
+          AND ($2::uuid IS NULL OR d.organization_id = $2)
     "#)
     .bind(user_id)
+    .bind(scope_org_id)
     .fetch_optional(&pool)
     .await
     .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?

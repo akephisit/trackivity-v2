@@ -232,9 +232,15 @@ pub async fn create_admin(
 
 pub async fn update_admin(
     State(pool): State<PgPool>,
+    headers: HeaderMap,
     Path(admin_id): Path<Uuid>,
     Json(payload): Json<UpdateAdminInput>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, String)> {
+    let claims = get_claims_from_headers(&headers)?;
+    if !matches!(claims.admin_level, Some(AdminLevel::SuperAdmin)) {
+        return Err((StatusCode::FORBIDDEN, "Super admin access required".to_string()));
+    }
+
     let row = sqlx::query("SELECT user_id FROM admin_roles WHERE id = $1")
         .bind(admin_id)
         .fetch_optional(&pool)
@@ -286,8 +292,14 @@ pub async fn update_admin(
 
 pub async fn delete_admin(
     State(pool): State<PgPool>,
+    headers: HeaderMap,
     Path(admin_id): Path<Uuid>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, String)> {
+    let claims = get_claims_from_headers(&headers)?;
+    if !matches!(claims.admin_level, Some(AdminLevel::SuperAdmin)) {
+        return Err((StatusCode::FORBIDDEN, "Super admin access required".to_string()));
+    }
+
     let row = sqlx::query("SELECT user_id FROM admin_roles WHERE id = $1")
         .bind(admin_id)
         .fetch_optional(&pool)
@@ -312,9 +324,15 @@ pub async fn delete_admin(
 
 pub async fn toggle_admin_status(
     State(pool): State<PgPool>,
+    headers: HeaderMap,
     Path(admin_id): Path<Uuid>,
     Json(payload): Json<ToggleStatusInput>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, String)> {
+    let claims = get_claims_from_headers(&headers)?;
+    if !matches!(claims.admin_level, Some(AdminLevel::SuperAdmin)) {
+        return Err((StatusCode::FORBIDDEN, "Super admin access required".to_string()));
+    }
+
     sqlx::query("UPDATE admin_roles SET is_enabled = $1, updated_at = NOW() WHERE id = $2")
         .bind(payload.is_active)
         .bind(admin_id)
