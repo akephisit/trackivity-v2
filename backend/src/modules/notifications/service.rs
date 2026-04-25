@@ -70,6 +70,55 @@ impl NotificationService {
         Ok(rec.id)
     }
 
+    /// Broadcast the same notification to many users in a single INSERT,
+    /// then fan out Web Push deliveries concurrently. Use this instead of
+    /// looping `send` per recipient: it cuts one DB round-trip per user.
+    pub async fn send_bulk(
+        pool: &PgPool,
+        user_ids: &[Uuid],
+        title: &str,
+        message: &str,
+        type_: NotificationType,
+        link: Option<&str>,
+    ) -> Result<(), sqlx::Error> {
+        if user_ids.is_empty() {
+            return Ok(());
+        }
+
+        sqlx::query(
+            r#"
+            INSERT INTO notifications (user_id, title, message, type, link)
+            SELECT uid, $2, $3, $4::app_notification_type, $5
+            FROM UNNEST($1::uuid[]) AS uid
+            "#,
+        )
+        .bind(user_ids)
+        .bind(title)
+        .bind(message)
+        .bind(type_.as_str())
+        .bind(link)
+        .execute(pool)
+        .await?;
+
+        // Fire-and-forget Web Push per user.
+        for &user_id in user_ids {
+            let pool_clone = pool.clone();
+            let title = title.to_string();
+            let message = message.to_string();
+            let link = link.map(|s| s.to_string());
+            tokio::spawn(async move {
+                if let Err(e) =
+                    Self::send_web_push(&pool_clone, user_id, &title, &message, link.as_deref())
+                        .await
+                {
+                    tracing::error!("Web Push Failed for user {}: {}", user_id, e);
+                }
+            });
+        }
+
+        Ok(())
+    }
+
     /// Internal helper to send Web Push (public for testing)
     pub async fn send_web_push(
         pool: &PgPool,

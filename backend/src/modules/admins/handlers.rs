@@ -6,6 +6,7 @@ use argon2::{Argon2, PasswordHasher, password_hash::{rand_core::OsRng, SaltStrin
 use axum::http::HeaderMap;
 
 use crate::modules::auth::get_claims_from_headers;
+use crate::models::AdminLevel;
 use super::models::*;
 use rand::Rng;
 
@@ -13,8 +14,10 @@ pub async fn list_admins(
     State(pool): State<PgPool>,
     headers: HeaderMap,
 ) -> Result<Json<AdminsListResponse>, (StatusCode, String)> {
-    let _claims = get_claims_from_headers(&headers)?;
-    // Should ideally check if claims.is_admin is true
+    let claims = get_claims_from_headers(&headers)?;
+    if !matches!(claims.admin_level, Some(AdminLevel::SuperAdmin)) {
+        return Err((StatusCode::FORBIDDEN, "Super admin access required".to_string()));
+    }
     
     let rows = sqlx::query_as::<_, AdminRoleView>(r#"
         SELECT
@@ -83,7 +86,13 @@ pub async fn list_organization_admins(
     State(pool): State<PgPool>,
     headers: HeaderMap,
 ) -> Result<Json<Vec<AdminResponseItem>>, (StatusCode, String)> {
-    let _claims: Option<()> = None;
+    let claims = get_claims_from_headers(&headers)?;
+    if !matches!(
+        claims.admin_level,
+        Some(AdminLevel::SuperAdmin) | Some(AdminLevel::OrganizationAdmin)
+    ) {
+        return Err((StatusCode::FORBIDDEN, "Admin access required".to_string()));
+    }
 
     let rows = sqlx::query_as::<_, AdminRoleView>(r#"
         SELECT
@@ -151,10 +160,24 @@ pub async fn list_organization_admins(
 
 pub async fn create_admin(
     State(pool): State<PgPool>,
-    _headers: HeaderMap,
+    headers: HeaderMap,
     Json(payload): Json<CreateAdminInput>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, String)> {
-    let pw = payload.password.unwrap_or_else(|| "123456".to_string());
+    let claims = get_claims_from_headers(&headers)?;
+    if !matches!(claims.admin_level, Some(AdminLevel::SuperAdmin)) {
+        return Err((StatusCode::FORBIDDEN, "Super admin access required".to_string()));
+    }
+
+    let pw = payload.password.ok_or((
+        StatusCode::BAD_REQUEST,
+        "Password is required".to_string(),
+    ))?;
+    if pw.len() < 8 {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            "Password must be at least 8 characters".to_string(),
+        ));
+    }
     let salt = SaltString::generate(&mut OsRng);
     let password_hash = Argon2::default()
         .hash_password(pw.as_bytes(), &salt)
@@ -253,7 +276,9 @@ pub async fn delete_admin(
         .ok_or((StatusCode::NOT_FOUND, "Admin not found".to_string()))?;
 
     use sqlx::Row;
-    let user_id: Uuid = row.try_get("user_id").unwrap();
+    let user_id: Uuid = row
+        .try_get("user_id")
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
 
     // Actually, deleting users will cascade delete admin_roles, assuming FK CASCADE
     sqlx::query("DELETE FROM users WHERE id = $1")

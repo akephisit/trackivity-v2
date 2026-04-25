@@ -13,14 +13,29 @@ pub async fn list_departments(
         return Err((StatusCode::FORBIDDEN, "Admin access required".to_string()));
     }
 
+    // Aggregate per-department user counts and per-organization admin counts
+    // via LEFT JOIN derived tables instead of correlated subqueries that ran
+    // once per department row.
     let departments = sqlx::query_as::<_, DepartmentFull>(r#"
         SELECT
             d.id, d.name, d.code, d.description, d.organization_id, d.status, d.created_at, d.updated_at,
             o.name AS organization_name,
-            (SELECT COUNT(*) FROM users u WHERE u.department_id = d.id AND u.deleted_at IS NULL) AS students_count,
-            (SELECT COUNT(*) FROM admin_roles ar WHERE ar.organization_id = d.organization_id) AS admins_count
+            COALESCE(uc.students_count, 0) AS students_count,
+            COALESCE(ac.admins_count, 0) AS admins_count
         FROM departments d
         JOIN organizations o ON d.organization_id = o.id
+        LEFT JOIN (
+            SELECT department_id, COUNT(*) AS students_count
+            FROM users
+            WHERE deleted_at IS NULL AND department_id IS NOT NULL
+            GROUP BY department_id
+        ) uc ON uc.department_id = d.id
+        LEFT JOIN (
+            SELECT organization_id, COUNT(*) AS admins_count
+            FROM admin_roles
+            WHERE organization_id IS NOT NULL
+            GROUP BY organization_id
+        ) ac ON ac.organization_id = d.organization_id
         ORDER BY o.name ASC, d.name ASC
     "#)
     .fetch_all(&pool)

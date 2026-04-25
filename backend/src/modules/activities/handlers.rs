@@ -5,6 +5,9 @@ use crate::modules::auth::get_claims_from_headers;
 use super::models::{ActivityPublic, CreateActivityInput, CreateActivityResponse, DashboardResponse, UpdateActivityInput};
 use uuid::Uuid;
 
+// Aggregates participations once via LEFT JOIN instead of running two
+// correlated subqueries per row, which used to scale O(n) per result row
+// against the participations table.
 const ACTIVITY_SELECT: &str = r#"
     SELECT
         a.id, a.title, a.description, a.location,
@@ -17,11 +20,20 @@ const ACTIVITY_SELECT: &str = r#"
         u.first_name AS creator_name,
         a.activity_level::text AS activity_level,
         a.eligible_organizations,
-        (SELECT COUNT(*) FROM participations p WHERE p.activity_id = a.id) AS participant_count,
-        (SELECT COUNT(*) FROM participations p WHERE p.activity_id = a.id AND p.status IN ('checked_in'::participation_status, 'checked_out'::participation_status)) AS checked_in_count
+        COALESCE(pc.participant_count, 0) AS participant_count,
+        COALESCE(pc.checked_in_count, 0) AS checked_in_count
     FROM activities a
     JOIN organizations o ON a.organizer_id = o.id
     JOIN users u ON a.created_by = u.id
+    LEFT JOIN (
+        SELECT activity_id,
+               COUNT(*) AS participant_count,
+               COUNT(*) FILTER (
+                   WHERE status IN ('checked_in'::participation_status, 'checked_out'::participation_status)
+               ) AS checked_in_count
+        FROM participations
+        GROUP BY activity_id
+    ) pc ON pc.activity_id = a.id
 "#;
 
 pub async fn get_dashboard_activities(
@@ -298,7 +310,7 @@ pub async fn update_activity(
                 r#"
                 SELECT u.id FROM users u
                 LEFT JOIN departments d ON u.department_id = d.id
-                WHERE $1::jsonb = '[]'::jsonb 
+                WHERE $1::jsonb = '[]'::jsonb
                    OR ($1::jsonb ? d.organization_id::text)
                 "#
             )
@@ -307,15 +319,15 @@ pub async fn update_activity(
             .await
             .unwrap_or_default();
 
-            for u_id in user_ids {
-                let _ = crate::modules::notifications::service::NotificationService::send(
-                    &pool_for_notify,
-                    u_id,
-                    &format!("🎉 มีกิจกรรมใหม่: {}", activity_title),
-                    &format!("กิจกรรม '{}' เปิดรับสมัครแล้ว! เข้าร่วมได้เลย", activity_title),
-                    crate::modules::notifications::service::NotificationType::Info,
-                    Some(&format!("/student/activities/{}", activity_id_str)),
-                ).await;
+            if let Err(e) = crate::modules::notifications::service::NotificationService::send_bulk(
+                &pool_for_notify,
+                &user_ids,
+                &format!("🎉 มีกิจกรรมใหม่: {}", activity_title),
+                &format!("กิจกรรม '{}' เปิดรับสมัครแล้ว! เข้าร่วมได้เลย", activity_title),
+                crate::modules::notifications::service::NotificationType::Info,
+                Some(&format!("/student/activities/{}", activity_id_str)),
+            ).await {
+                tracing::error!("Failed to broadcast activity notification: {}", e);
             }
         });
     }

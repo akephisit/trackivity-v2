@@ -1,4 +1,5 @@
-use axum::{Json, extract::{State, Path}, http::{StatusCode, HeaderMap}};
+use axum::{Json, extract::{Query, State, Path}, http::{StatusCode, HeaderMap}};
+use serde::Deserialize;
 use sqlx::PgPool;
 use crate::models::User;
 use crate::modules::auth::get_claims_from_headers;
@@ -6,14 +7,32 @@ use super::models::{UserListItem, UserListResponse, UpdateProfileInput, ChangePa
 use uuid::Uuid;
 use argon2::{Argon2, PasswordHash, PasswordVerifier, password_hash::{rand_core::OsRng, PasswordHasher, SaltString}};
 
+#[derive(Debug, Deserialize)]
+pub struct ListUsersQuery {
+    pub page: Option<i64>,
+    pub per_page: Option<i64>,
+}
+
 pub async fn list_users(
     State(pool): State<PgPool>,
     headers: HeaderMap,
+    Query(params): Query<ListUsersQuery>,
 ) -> Result<Json<UserListResponse>, (StatusCode, String)> {
     let claims = get_claims_from_headers(&headers)?;
     if !claims.is_admin {
         return Err((StatusCode::FORBIDDEN, "Admin access required".to_string()));
     }
+
+    let page = params.page.unwrap_or(1).max(1);
+    let per_page = params.per_page.unwrap_or(50).clamp(1, 200);
+    let offset = (page - 1) * per_page;
+
+    let total: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM users WHERE deleted_at IS NULL",
+    )
+    .fetch_one(&pool)
+    .await
+    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, format!("Failed to count users: {}", e)))?;
 
     let users = sqlx::query_as::<_, UserListItem>(r#"
         SELECT
@@ -26,13 +45,14 @@ pub async fn list_users(
         LEFT JOIN organizations o ON d.organization_id = o.id
         WHERE u.deleted_at IS NULL
         ORDER BY u.created_at DESC
-        LIMIT 500
+        LIMIT $1 OFFSET $2
     "#)
+    .bind(per_page)
+    .bind(offset)
     .fetch_all(&pool)
     .await
     .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, format!("Failed to fetch users: {}", e)))?;
 
-    let total = users.len() as i64;
     Ok(Json(UserListResponse { users, total }))
 }
 
