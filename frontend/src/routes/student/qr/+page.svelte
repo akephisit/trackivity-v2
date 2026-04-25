@@ -170,19 +170,19 @@
 						<img
 							src={$qrDataURL}
 							alt="QR Code"
-							class="h-48 w-48 rounded-xl object-contain transition-opacity sm:h-56 sm:w-56"
+							class="h-60 w-60 rounded-xl object-contain transition-opacity sm:h-64 sm:w-64"
 						/>
 					</div>
 				{:else if $qrStatus === 'generating' || $qrStatus === 'idle'}
 					<div
-						class="flex h-48 w-48 flex-col items-center justify-center rounded-[2rem] border-4 border-slate-100 dark:border-slate-900 bg-slate-50 dark:bg-slate-950/30 sm:h-56 sm:w-56"
+						class="flex h-60 w-60 flex-col items-center justify-center rounded-[2rem] border-4 border-slate-100 dark:border-slate-900 bg-slate-50 dark:bg-slate-950/30 sm:h-64 sm:w-64"
 					>
 						<QrCode class="size-12 animate-pulse text-slate-300 dark:text-slate-600" />
 						<p class="mt-4 animate-pulse text-sm font-medium text-slate-400 dark:text-slate-500">กำลังโหลด...</p>
 					</div>
 				{:else}
 					<div
-						class="flex h-48 w-48 flex-col items-center justify-center rounded-[2rem] border-4 border-red-100 dark:border-red-900 bg-red-50 dark:bg-red-950/30 p-4 text-red-500 dark:text-red-400 sm:h-56 sm:w-56"
+						class="flex h-60 w-60 flex-col items-center justify-center rounded-[2rem] border-4 border-red-100 dark:border-red-900 bg-red-50 dark:bg-red-950/30 p-4 text-red-500 dark:text-red-400 sm:h-64 sm:w-64"
 					>
 						<CircleAlert class="mb-3 size-12" />
 						<p class="text-sm font-bold">QR ไม่พร้อมใช้งาน</p>
