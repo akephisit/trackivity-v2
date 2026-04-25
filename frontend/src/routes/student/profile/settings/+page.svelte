@@ -11,19 +11,26 @@
 	import { Input } from '$lib/components/ui/input';
 	import { Button } from '$lib/components/ui/button';
 	import { toast } from 'svelte-sonner';
-	import { usersApi, auth as authApi, ApiError } from '$lib/api';
+	import { usersApi, ApiError } from '$lib/api';
 	import { authStore } from '$lib/stores/auth.svelte';
 
-	let user = $state(authStore.user);
+	const user = $derived(authStore.user);
 
 	let isChangingPassword = $state(false);
 	let isUpdatingProfile = $state(false);
 
-	// Form states
 	let profileForm = $state({
-		first_name: user?.first_name || '',
-		last_name: user?.last_name || '',
-		email: user?.email || ''
+		first_name: '',
+		last_name: ''
+	});
+
+	let profileLoaded = false;
+	$effect(() => {
+		if (!profileLoaded && user) {
+			profileForm.first_name = user.first_name || '';
+			profileForm.last_name = user.last_name || '';
+			profileLoaded = true;
+		}
 	});
 
 	let passwordForm = $state({
@@ -53,8 +60,12 @@
 			toast.error('รหัสผ่านใหม่และยืนยันรหัสผ่านไม่ตรงกัน');
 			return;
 		}
-		if (passwordForm.new_password.length < 6) {
-			toast.error('รหัสผ่านใหม่ต้องมีอย่างน้อย 6 ตัวอักษร');
+		if (passwordForm.new_password.length < 8) {
+			toast.error('รหัสผ่านใหม่ต้องมีอย่างน้อย 8 ตัวอักษร');
+			return;
+		}
+		if (!/^(?=.*[A-Za-z])(?=.*\d).{8,}$/.test(passwordForm.new_password)) {
+			toast.error('รหัสผ่านต้องมีตัวอักษรและตัวเลขอย่างน้อย 1 ตัว');
 			return;
 		}
 		isChangingPassword = true;
@@ -93,7 +104,7 @@
 			</CardHeader>
 			<CardContent class="space-y-4">
 				<div class="grid gap-4">
-					<div class="grid grid-cols-2 gap-4">
+					<div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
 						<div class="space-y-2">
 							<Label for="first_name">ชื่อ</Label>
 							<Input
@@ -118,13 +129,10 @@
 							<Mail class="size-4" />
 							อีเมล
 						</Label>
-						<Input
-							id="email"
-							type="email"
-							bind:value={profileForm.email}
-							placeholder="กรุณากรอกอีเมล"
-							disabled={isUpdatingProfile}
-						/>
+						<Input id="email" type="email" value={user?.email ?? ''} readonly disabled />
+						<p class="text-xs text-muted-foreground">
+							ไม่สามารถแก้ไขอีเมลได้ หากต้องการเปลี่ยนกรุณาติดต่อผู้ดูแลระบบ
+						</p>
 					</div>
 				</div>
 
@@ -161,7 +169,7 @@
 							id="new_password"
 							type="password"
 							bind:value={passwordForm.new_password}
-							placeholder="กรุณากรอกรหัสผ่านใหม่"
+							placeholder="อย่างน้อย 8 ตัวอักษร มีตัวอักษรและตัวเลข"
 							disabled={isChangingPassword}
 						/>
 					</div>

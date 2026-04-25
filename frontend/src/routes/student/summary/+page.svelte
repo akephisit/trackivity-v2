@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Activity as ActivityIcon, Award, Building as BuildingIcon, ChartBar, CircleCheck, Download, FileText, Hourglass, Info, Loader, Printer, School, Target, TrendingUp, User as UserIcon } from '@lucide/svelte';
+	import { Activity as ActivityIcon, Award, Building as BuildingIcon, ChartBar, CircleAlert, CircleCheck, Download, FileText, Hourglass, Info, Loader, Printer, RefreshCw, School, Target, TrendingUp, User as UserIcon } from '@lucide/svelte';
 	import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
@@ -20,6 +20,7 @@
 	import { activitiesApi, auth as authApi, organizationsApi, ApiError } from '$lib/api';
 	import { onMount } from 'svelte';
 	import { Skeleton } from '$lib/components/ui/skeleton';
+	import { Alert, AlertDescription } from '$lib/components/ui/alert';
 	import { exportSummaryPDF } from '$lib/utils/export-pdf';
 
 	// CSR state
@@ -43,7 +44,9 @@
 		)
 	);
 
-	onMount(async () => {
+	async function fetchSummary() {
+		loading = true;
+		error = null;
 		try {
 			const [user, participations] = await Promise.all([
 				authApi.me(),
@@ -67,7 +70,6 @@
 					};
 				} catch (reqError) {
 					console.error('Failed to fetch activity requirements:', reqError);
-					// Proceed without requirements if they fail to load
 				}
 			}
 		} catch (e) {
@@ -79,7 +81,9 @@
 		} finally {
 			loading = false;
 		}
-	});
+	}
+
+	onMount(fetchSummary);
 
 	// Generate report date
 	const reportDate = new Date().toLocaleDateString('th-TH', {
@@ -148,7 +152,19 @@
 		</div>
 	</div>
 
-	{#if loading}
+	{#if error}
+		<Alert variant="destructive">
+			<CircleAlert class="size-4" />
+			<AlertDescription
+				class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between"
+			>
+				<span>{error}</span>
+				<Button size="sm" variant="outline" onclick={fetchSummary}>
+					<RefreshCw class="mr-2 size-4" />ลองใหม่
+				</Button>
+			</AlertDescription>
+		</Alert>
+	{:else if loading}
 		<!-- Skeleton loading state -->
 		<Card class="border-2">
 			<CardHeader>
@@ -161,7 +177,7 @@
 				</div>
 			</CardHeader>
 			<CardContent class="space-y-4">
-				<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+				<div class="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
 					{#each Array(3) as _}
 						<div class="flex items-center gap-3">
 							<Skeleton class="size-4 rounded" />
@@ -173,7 +189,7 @@
 					{/each}
 				</div>
 				<Skeleton class="h-px w-full" />
-				<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+				<div class="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
 					{#each Array(4) as _}
 						<div class="flex items-center gap-3">
 							<Skeleton class="size-10 rounded-full" />
@@ -266,7 +282,7 @@
 					<Separator />
 
 					<!-- Quick Stats -->
-					<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+					<div class="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
 						<div
 							class="flex items-center gap-4 rounded-xl border bg-card p-4 shadow-sm transition-all hover:-translate-y-1 hover:shadow-md"
 						>

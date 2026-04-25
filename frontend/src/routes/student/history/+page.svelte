@@ -1,14 +1,31 @@
 <script lang="ts">
-	import { CircleAlert, Award, Building as BuildingIcon, Store, CalendarDays, Check, Clock2, History, Hourglass, LogIn, LogOut, MapPin, School, Search, TrendingUp, UserCheck, X } from '@lucide/svelte';
+	import { CircleAlert, Award, Building as BuildingIcon, Store, CalendarDays, Check, Clock2, History, Hourglass, LogIn, LogOut, MapPin, RefreshCw, School, Search, TrendingUp, UserCheck, X } from '@lucide/svelte';
 	import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Skeleton } from '$lib/components/ui/skeleton';
 	import { Alert, AlertDescription } from '$lib/components/ui/alert';
 	import { Input } from '$lib/components/ui/input';
+	import { Button } from '$lib/components/ui/button';
+	import * as Select from '$lib/components/ui/select';
 	import { getActivityLevelDisplayName, getActivityTypeDisplayName } from '$lib/utils/activity';
 
 	import { activitiesApi, ApiError } from '$lib/api';
 	import { onMount } from 'svelte';
+
+	const SORT_LABEL: Record<string, string> = {
+		recent: 'ล่าสุดก่อน',
+		oldest: 'เก่าก่อน',
+		title: 'ชื่อกิจกรรม',
+		duration: 'ระยะเวลาเข้าร่วม'
+	};
+	const FILTER_LABEL: Record<string, string> = {
+		all: 'ทั้งหมด',
+		completed: 'เสร็จสิ้นแล้ว',
+		in_progress: 'กำลังดำเนินการ',
+		this_month: 'เดือนนี้',
+		last_month: 'เดือนที่แล้ว',
+		this_year: 'ปีนี้'
+	};
 
 	let participationHistory: any[] = $state([]);
 	let filteredHistory: any[] = $state([]);
@@ -32,7 +49,9 @@
 		universityActivities: 0
 	});
 
-	onMount(async () => {
+	async function fetchHistory() {
+		loading = true;
+		error = null;
 		try {
 			const data = await activitiesApi.myParticipations();
 			participationHistory = data;
@@ -47,7 +66,9 @@
 		} finally {
 			loading = false;
 		}
-	});
+	}
+
+	onMount(fetchHistory);
 
 	function calculateStats(data: any[]) {
 		const now = new Date();
@@ -403,27 +424,27 @@
 
 		<!-- Sort and Filter Controls -->
 		<div class="flex flex-col gap-3 sm:flex-row">
-			<select
-				bind:value={sortBy}
-				class="flex h-9 w-full items-center justify-between rounded-md border border-input bg-transparent px-3 py-2 text-sm whitespace-nowrap shadow-sm ring-offset-background placeholder:text-muted-foreground focus:ring-1 focus:ring-ring focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 sm:w-[200px]"
-			>
-				<option value="recent">ล่าสุดก่อน</option>
-				<option value="oldest">เก่าก่อน</option>
-				<option value="title">ชื่อกิจกรรม</option>
-				<option value="duration">ระยะเวลาเข้าร่วม</option>
-			</select>
+			<Select.Root type="single" bind:value={sortBy}>
+				<Select.Trigger class="w-full sm:w-[200px]" aria-label="เรียงลำดับ">
+					{SORT_LABEL[sortBy] ?? 'เรียงลำดับ'}
+				</Select.Trigger>
+				<Select.Content>
+					{#each Object.entries(SORT_LABEL) as [value, label]}
+						<Select.Item {value}>{label}</Select.Item>
+					{/each}
+				</Select.Content>
+			</Select.Root>
 
-			<select
-				bind:value={filterBy}
-				class="flex h-9 w-full items-center justify-between rounded-md border border-input bg-transparent px-3 py-2 text-sm whitespace-nowrap shadow-sm ring-offset-background placeholder:text-muted-foreground focus:ring-1 focus:ring-ring focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 sm:w-[200px]"
-			>
-				<option value="all">ทั้งหมด</option>
-				<option value="completed">เสร็จสิ้นแล้ว</option>
-				<option value="in_progress">กำลังดำเนินการ</option>
-				<option value="this_month">เดือนนี้</option>
-				<option value="last_month">เดือนที่แล้ว</option>
-				<option value="this_year">ปีนี้</option>
-			</select>
+			<Select.Root type="single" bind:value={filterBy}>
+				<Select.Trigger class="w-full sm:w-[200px]" aria-label="ตัวกรอง">
+					{FILTER_LABEL[filterBy] ?? 'ตัวกรอง'}
+				</Select.Trigger>
+				<Select.Content>
+					{#each Object.entries(FILTER_LABEL) as [value, label]}
+						<Select.Item {value}>{label}</Select.Item>
+					{/each}
+				</Select.Content>
+			</Select.Root>
 		</div>
 	</div>
 
@@ -432,7 +453,14 @@
 		{#if error}
 			<Alert variant="destructive">
 				<CircleAlert class="size-4" />
-				<AlertDescription>{error}</AlertDescription>
+				<AlertDescription
+					class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between"
+				>
+					<span>{error}</span>
+					<Button size="sm" variant="outline" onclick={fetchHistory}>
+						<RefreshCw class="mr-2 size-4" />ลองใหม่
+					</Button>
+				</AlertDescription>
 			</Alert>
 		{:else if loading}
 			<div class="space-y-4">
@@ -542,7 +570,7 @@
 												<CalendarDays class="mt-0.5 size-4 shrink-0 text-muted-foreground" />
 												<div class="grid gap-0.5">
 													<span
-														class="text-[11px] font-medium tracking-wide text-muted-foreground uppercase"
+														class="text-xs font-medium tracking-wide text-muted-foreground uppercase"
 														>กำหนดการ</span
 													>
 													<span class="font-medium text-foreground">
@@ -560,7 +588,7 @@
 												<MapPin class="mt-0.5 size-4 shrink-0 text-muted-foreground" />
 												<div class="grid gap-0.5">
 													<span
-														class="text-[11px] font-medium tracking-wide text-muted-foreground uppercase"
+														class="text-xs font-medium tracking-wide text-muted-foreground uppercase"
 														>สถานที่จัดกิจกรรม</span
 													>
 													<span class="text-foreground">{participation.activity.location}</span>
@@ -574,7 +602,7 @@
 											<History class="mt-0.5 size-4 shrink-0 text-muted-foreground" />
 											<div class="grid w-full gap-1">
 												<span
-													class="text-[11px] font-medium tracking-wide text-muted-foreground uppercase"
+													class="text-xs font-medium tracking-wide text-muted-foreground uppercase"
 													>ประวัติการบันทึกเวลา</span
 												>
 

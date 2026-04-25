@@ -571,7 +571,7 @@
 								<Button
 									variant="ghost"
 									size="sm"
-									class="absolute top-0 right-0 h-full px-3"
+									class="absolute top-0 right-0 h-full min-w-11 px-3"
 									onclick={() => (showCurrentPassword = !showCurrentPassword)}
 									type="button"
 								>
@@ -610,7 +610,7 @@
 								<Button
 									variant="ghost"
 									size="sm"
-									class="absolute top-0 right-0 h-full px-3"
+									class="absolute top-0 right-0 h-full min-w-11 px-3"
 									onclick={() => (showNewPassword = !showNewPassword)}
 									type="button"
 								>
@@ -655,7 +655,7 @@
 								<Button
 									variant="ghost"
 									size="sm"
-									class="absolute top-0 right-0 h-full px-3"
+									class="absolute top-0 right-0 h-full min-w-11 px-3"
 									onclick={() => (showConfirmPassword = !showConfirmPassword)}
 									type="button"
 								>

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { CircleAlert, CalendarDays, ChevronRight, CircleCheck, Clock, Hourglass, MapPin, Search, Users } from '@lucide/svelte';
-	import { activitiesApi, type Activity } from '$lib/api';
+	import { activitiesApi, type Activity, ApiError } from '$lib/api';
 	import { onMount } from 'svelte';
 	import { getActivityTypeDisplayName } from '$lib/utils/activity';
 	import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
@@ -10,8 +10,8 @@
 	import { Alert, AlertDescription } from '$lib/components/ui/alert';
 	import { Tabs, TabsList, TabsTrigger, TabsContent } from '$lib/components/ui/tabs';
 	import { Input } from '$lib/components/ui/input';
+	import { RefreshCw } from '@lucide/svelte';
 	import MetaTags from '$lib/components/seo/MetaTags.svelte';
-	import { goto } from '$app/navigation';
 
 	let allActivities = $state<Activity[]>([]);
 	let loading = $state(true);
@@ -19,15 +19,19 @@
 	let searchQuery = $state('');
 	let selectedFilter = $state('active');
 
-	onMount(async () => {
+	async function fetchActivities() {
+		loading = true;
+		error = null;
 		try {
 			allActivities = await activitiesApi.list();
-		} catch {
-			error = 'ไม่สามารถโหลดกิจกรรมได้ กรุณาลองใหม่';
+		} catch (e) {
+			error = e instanceof ApiError ? e.message : 'ไม่สามารถโหลดกิจกรรมได้ กรุณาลองใหม่';
 		} finally {
 			loading = false;
 		}
-	});
+	}
+
+	onMount(fetchActivities);
 
 	const filteredActivities = $derived.by(() => {
 		let filtered = allActivities;
@@ -126,7 +130,14 @@
 			{#if error}
 				<Alert variant="destructive">
 					<CircleAlert class="size-4" />
-					<AlertDescription>{error}</AlertDescription>
+					<AlertDescription
+						class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between"
+					>
+						<span>{error}</span>
+						<Button size="sm" variant="outline" onclick={fetchActivities}>
+							<RefreshCw class="mr-2 size-4" />ลองใหม่
+						</Button>
+					</AlertDescription>
 				</Alert>
 			{:else if loading}
 				<div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -166,10 +177,11 @@
 					{#each filteredActivities as activity}
 						{@const statusBadge = getStatusBadge(activity)}
 						{@const openReg = isRegistrationOpen(activity)}
-						<Card
-							class="group flex cursor-pointer flex-col transition-all hover:shadow-md"
-							onclick={() => goto(`/student/activities/${activity.id}`)}
+						<a
+							href={`/student/activities/${activity.id}`}
+							class="group block rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-ring active:scale-[0.99]"
 						>
+						<Card class="flex h-full flex-col transition-all hover:shadow-md">
 							<CardHeader class="pb-2">
 								<div class="flex items-start justify-between gap-2">
 									<div class="min-w-0 flex-1">
@@ -238,17 +250,16 @@
 									{:else}
 										<div></div>
 									{/if}
-									<Button
-										size="sm"
-										variant="ghost"
-										class="gap-1 transition-colors group-hover:bg-primary group-hover:text-primary-foreground"
+									<span
+										class="inline-flex items-center gap-1 rounded-md px-2 py-1 text-sm font-medium text-muted-foreground transition-colors group-hover:bg-primary group-hover:text-primary-foreground"
 									>
 										ดูรายละเอียด
 										<ChevronRight class="size-4" />
-									</Button>
+									</span>
 								</div>
 							</CardContent>
 						</Card>
+						</a>
 					{/each}
 				</div>
 
@@ -260,7 +271,7 @@
 	{/snippet}
 
 	<Tabs bind:value={selectedFilter} class="w-full">
-		<TabsList class="grid w-full grid-cols-4">
+		<TabsList class="grid h-auto w-full grid-cols-2 gap-1 p-1 sm:grid-cols-4">
 			<TabsTrigger value="active" class="text-xs sm:text-sm">
 				ทั้งหมด
 				{#if !loading}
