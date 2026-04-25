@@ -85,6 +85,40 @@ export function isValidActivityLevel(level: string): boolean {
 }
 
 /**
+ * Shared Thai status labels and badge variants for ActivityStatus,
+ * so list / detail / edit pages stay in sync.
+ */
+export const ACTIVITY_STATUS_LABEL: Record<ActivityStatus, string> = {
+	draft: 'แบบร่าง',
+	published: 'เผยแพร่แล้ว',
+	ongoing: 'กำลังดำเนินการ',
+	completed: 'เสร็จสิ้น',
+	cancelled: 'ยกเลิกแล้ว'
+};
+
+export const ACTIVITY_STATUS_VARIANT: Record<
+	ActivityStatus,
+	'default' | 'secondary' | 'destructive' | 'outline'
+> = {
+	draft: 'outline',
+	published: 'default',
+	ongoing: 'default',
+	completed: 'secondary',
+	cancelled: 'destructive'
+};
+
+export function getActivityStatusBadge(status: string): {
+	label: string;
+	variant: 'default' | 'secondary' | 'destructive' | 'outline';
+} {
+	const s = status as ActivityStatus;
+	return {
+		label: ACTIVITY_STATUS_LABEL[s] ?? 'ไม่ระบุ',
+		variant: ACTIVITY_STATUS_VARIANT[s] ?? 'outline'
+	};
+}
+
+/**
  * แปลงค่า ActivityType จากรูปแบบ English เป็น Thai สำหรับแสดงผล
  * English: 'Academic' | 'Sports' | 'Cultural' | 'Social' | 'Other'
  * Thai: 'วิชาการ' | 'กีฬา' | 'วัฒนธรรม' | 'สังคม' | 'อื่นๆ'

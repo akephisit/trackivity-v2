@@ -1,11 +1,18 @@
 <script lang="ts">
-	import { ArrowLeft, Landmark, Calendar as CalendarIcon, LayoutGrid, Clock, Clock3, Pencil, Info, MapPin, Settings, Trash2, User as UserIcon, Users } from '@lucide/svelte';
+	import { ArrowLeft, CircleAlert, Landmark, Calendar as CalendarIcon, LayoutGrid, Clock, Clock3, Pencil, Info, MapPin, RefreshCw, Settings, Trash2, User as UserIcon, Users } from '@lucide/svelte';
 	import { activities as activitiesApi, type Activity } from '$lib/api';
-	import { getActivityTypeDisplayName } from '$lib/utils/activity';
+	import {
+		ACTIVITY_STATUS_LABEL,
+		getActivityStatusBadge,
+		getActivityTypeDisplayName
+	} from '$lib/utils/activity';
+	import type { ActivityStatus } from '$lib/types/activity';
 	import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
 	import { Button } from '$lib/components/ui/button';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Separator } from '$lib/components/ui/separator';
+	import { Skeleton } from '$lib/components/ui/skeleton';
+	import { Alert, AlertDescription } from '$lib/components/ui/alert';
 	import * as Select from '$lib/components/ui/select';
 	import * as AlertDialog from '$lib/components/ui/alert-dialog';
 	import { Switch } from '$lib/components/ui/switch';
@@ -13,9 +20,11 @@
 	import { page } from '$app/state';
 	import { goto } from '$app/navigation';
 	import { toast } from 'svelte-sonner';
+
 	let activity = $state<Activity | null>(null);
 	let loading = $state(true);
 	let notFound = $state(false);
+	let loadError = $state<string | null>(null);
 
 	let selectedStatus = $state('');
 	let updatingStatus = $state(false);
@@ -24,18 +33,24 @@
 	let deleteActivityDialogOpen = $state(false);
 	let deleting = $state(false);
 
-	onMount(async () => {
+	async function loadActivity() {
 		const id = page.params.id!;
+		loading = true;
+		loadError = null;
+		notFound = false;
 		try {
 			activity = await activitiesApi.get(id);
 			selectedStatus = activity.status;
 			registrationOpen = !!activity.registration_open;
 		} catch (e: any) {
 			if (e?.status === 404) notFound = true;
+			else loadError = e?.message ?? 'ไม่สามารถโหลดข้อมูลกิจกรรมได้';
 		} finally {
 			loading = false;
 		}
-	});
+	}
+
+	onMount(loadActivity);
 
 	function formatDateTime(dateString: string | null | undefined): string {
 		if (!dateString) return '-';
@@ -45,24 +60,9 @@
 		});
 	}
 
-	function getStatusBadge(status: string): { text: string; variant: 'default' | 'secondary' | 'outline' | 'destructive' } {
-		switch (status) {
-			case 'draft': return { text: 'ร่าง', variant: 'outline' };
-			case 'published': return { text: 'เผยแพร่แล้ว', variant: 'default' };
-			case 'ongoing': return { text: 'กำลังดำเนินการ', variant: 'secondary' };
-			case 'completed': return { text: 'เสร็จสิ้น', variant: 'outline' };
-			case 'cancelled': return { text: 'ยกเลิก', variant: 'destructive' };
-			default: return { text: status, variant: 'outline' };
-		}
-	}
-
-	const statusOptions = [
-		{ value: 'draft', label: 'ร่าง' },
-		{ value: 'published', label: 'เผยแพร่แล้ว' },
-		{ value: 'ongoing', label: 'กำลังดำเนินการ' },
-		{ value: 'completed', label: 'เสร็จสิ้น' },
-		{ value: 'cancelled', label: 'ยกเลิก' }
-	];
+	const statusOptions = (
+		Object.entries(ACTIVITY_STATUS_LABEL) as [ActivityStatus, string][]
+	).map(([value, label]) => ({ value, label }));
 
 	async function handleUpdateStatus() {
 		if (!activity || selectedStatus === activity.status) return;
@@ -115,16 +115,35 @@
 <svelte:head><title>จัดการกิจกรรม - Trackivity</title></svelte:head>
 
 {#if loading}
-	<div class="flex h-64 items-center justify-center">
-		<div class="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+	<div class="space-y-6">
+		<div class="flex items-center gap-4">
+			<Skeleton class="h-9 w-20" />
+			<Skeleton class="h-8 w-64 flex-1" />
+			<Skeleton class="h-9 w-20" />
+			<Skeleton class="h-9 w-20" />
+		</div>
+		<Skeleton class="h-14 w-full" />
+		<Skeleton class="h-96 w-full" />
 	</div>
-{:else if notFound || !activity}
+{:else if notFound}
 	<div class="py-12 text-center">
 		<h2 class="text-xl font-bold">ไม่พบกิจกรรม</h2>
 		<Button variant="outline" class="mt-4" onclick={() => goto('/admin/activities')}>กลับ</Button>
 	</div>
+{:else if loadError || !activity}
+	<div class="space-y-4">
+		<Alert variant="destructive">
+			<CircleAlert class="size-4" />
+			<AlertDescription class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+				<span>{loadError ?? 'ไม่สามารถโหลดข้อมูลกิจกรรมได้'}</span>
+				<Button size="sm" variant="outline" onclick={loadActivity}>
+					<RefreshCw class="mr-2 size-4" />ลองใหม่
+				</Button>
+			</AlertDescription>
+		</Alert>
+	</div>
 {:else}
-	{@const statusBadge = getStatusBadge(activity.status)}
+	{@const statusBadge = getActivityStatusBadge(activity.status)}
 	<div class="space-y-6">
 		<!-- Header -->
 		<div class="flex items-center gap-4">
@@ -141,7 +160,7 @@
 				<Button variant="outline" size="sm" onclick={() => goto(`/admin/activities/${activity!.id}/edit`)}>
 					<Pencil class="mr-2 size-4" />แก้ไข
 				</Button>
-				<Button variant="outline" size="sm" class="text-red-600 hover:text-red-700" onclick={() => deleteActivityDialogOpen = true}>
+				<Button variant="destructive" size="sm" onclick={() => deleteActivityDialogOpen = true}>
 					<Trash2 class="mr-2 size-4" />ลบ
 				</Button>
 			</div>
@@ -170,7 +189,7 @@
 						{/if}
 					</div>
 					<div class="flex gap-2">
-						<Badge variant={statusBadge.variant}>{statusBadge.text}</Badge>
+						<Badge variant={statusBadge.variant}>{statusBadge.label}</Badge>
 						<Badge variant={registrationOpen ? 'default' : 'outline'}>
 							{registrationOpen ? 'เปิดรับลงทะเบียนล่วงหน้า' : 'ปิดรับลงทะเบียนล่วงหน้า'}
 						</Badge>

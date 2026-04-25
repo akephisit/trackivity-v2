@@ -29,6 +29,7 @@
 	let faculties = $state<{ id: string; name: string }[]>([]);
 	let loading = $state(true);
 	let notFound = $state(false);
+	let loadError = $state<string | null>(null);
 	let submitting = $state(false);
 
 	// Form state (initialised after data loads)
@@ -55,8 +56,11 @@
 	let hoursValue = $state('');
 
 	// ─── Load data on mount ────────────────────────────────────────────────────
-	onMount(async () => {
+	async function loadEditData() {
 		const id = page.params.id!;
+		loading = true;
+		notFound = false;
+		loadError = null;
 		try {
 			const [act, orgs] = await Promise.all([
 				activitiesApi.get(id),
@@ -99,19 +103,21 @@
 
 		} catch (e: any) {
 			if (e?.status === 404) notFound = true;
-			else toast.error('ไม่สามารถโหลดข้อมูลกิจกรรมได้');
+			else {
+				loadError = e?.message ?? 'ไม่สามารถโหลดข้อมูลกิจกรรมได้';
+				toast.error('ไม่สามารถโหลดข้อมูลกิจกรรมได้');
+			}
 		} finally {
 			loading = false;
 		}
-	});
+	}
+
+	onMount(loadEditData);
 
 	// ─── Helpers ───────────────────────────────────────────────────────────────
-	function extractDateStr(act: any, which: 'start' | 'end'): string {
+	function extractDateStr(act: Activity, which: 'start' | 'end'): string {
 		const field = which === 'start' ? 'start_date' : 'end_date';
-		if (act[field]) return act[field];
-		const dt = which === 'start' ? act.start_time : act.end_time;
-		if (dt) return new Date(dt).toISOString().split('T')[0];
-		return '';
+		return (act[field] as string) ?? '';
 	}
 
 	function extractTimeStr(act: any, isStart: boolean): string {
@@ -196,7 +202,7 @@
 				hours: hoursValue ? parseInt(hoursValue) : null
 			});
 			toast.success('แก้ไขกิจกรรมสำเร็จ');
-			setTimeout(() => goto(`/admin/activities/${activity!.id}`), 50);
+			await goto(`/admin/activities/${activity!.id}`);
 		} catch (err: any) {
 			toast.error(err.message || 'เกิดข้อผิดพลาดในการอัปเดต');
 		} finally {
@@ -218,10 +224,20 @@
 		</div>
 		<Skeleton class="h-96 w-full" />
 	</div>
-{:else if notFound || !activity}
+{:else if notFound}
 	<div class="py-12 text-center">
 		<h2 class="text-xl font-bold">ไม่พบกิจกรรม</h2>
 		<Button variant="outline" class="mt-4" onclick={() => goto('/admin/activities')}>กลับ</Button>
+	</div>
+{:else if loadError || !activity}
+	<div class="space-y-4">
+		<Alert variant="destructive">
+			<CircleAlert class="size-4" />
+			<AlertDescription class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+				<span>{loadError ?? 'ไม่สามารถโหลดข้อมูลกิจกรรมได้'}</span>
+				<Button size="sm" variant="outline" onclick={loadEditData}>ลองใหม่</Button>
+			</AlertDescription>
+		</Alert>
 	</div>
 {:else}
 <div class="space-y-6">
