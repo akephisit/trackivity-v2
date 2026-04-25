@@ -124,7 +124,7 @@
 </svelte:head>
 
 <div
-	class="flex flex-col items-center px-4 pt-4 pb-[max(0.5rem,env(safe-area-inset-bottom))] sm:min-h-[calc(100vh-80px)] sm:justify-center sm:py-8"
+	class="flex h-[calc(100dvh-140px)] flex-col items-center overflow-hidden overscroll-none px-4 pt-4 pb-[max(0.5rem,env(safe-area-inset-bottom))] sm:h-auto sm:min-h-[calc(100vh-80px)] sm:justify-center sm:py-8"
 >
 	<!-- Main Card (Bank App Slip Style) -->
 	<div
