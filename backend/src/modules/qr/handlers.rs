@@ -10,7 +10,7 @@ use jsonwebtoken::{encode, decode, EncodingKey, DecodingKey, Header, Validation}
 use serde::{Deserialize, Serialize};
 
 use crate::modules::auth::handlers::get_claims_from_headers;
-use super::models::{QRDataPayload, QRGenerateResponse};
+use super::models::QRGenerateResponse;
 use crate::modules::notifications::service::{NotificationService, NotificationType};
 
 // ─── QR Token Claims (embedded in QR code) ────────────────────────────────────
@@ -59,7 +59,6 @@ pub struct ScanQRError {
 
 pub async fn generate_qr_handler(
     headers: HeaderMap,
-    State(_pool): State<PgPool>,
 ) -> Result<Json<QRGenerateResponse>, (StatusCode, String)> {
     let claims = get_claims_from_headers(&headers)
         .map_err(|e| (StatusCode::UNAUTHORIZED, format!("Unauthorized: {}", e.1)))?;
@@ -230,30 +229,36 @@ async fn scan_qr(
             }));
         }
         Some((status, title)) => {
-            if status == "completed" || status == "cancelled" {
-                return Ok(Json(ScanQRResponse {
-                    success: false,
-                    message: "กิจกรรมนี้สิ้นสุดแล้ว".to_string(),
-                    data: None,
-                    error: Some(ScanQRError {
-                        code: "ACTIVITY_EXPIRED".to_string(),
-                        message: "Activity is no longer ongoing".to_string(),
-                        category: "error".to_string(),
-                    }),
-                }));
-            } else if status == "draft" || status == "published" {
-                return Ok(Json(ScanQRResponse {
-                    success: false,
-                    message: "กิจกรรมยังไม่เปิดให้เช็คอิน".to_string(),
-                    data: None,
-                    error: Some(ScanQRError {
-                        code: "ACTIVITY_NOT_ONGOING".to_string(),
-                        message: "Activity is not ongoing yet".to_string(),
-                        category: "error".to_string(),
-                    }),
-                }));
+            // Only `ongoing` activities accept scans. Anything else
+            // (draft/published/completed/cancelled, or any future
+            // status enum value) blocks the scan with a clear reason.
+            match status.as_str() {
+                "ongoing" => (Some(status), title),
+                "completed" | "cancelled" => {
+                    return Ok(Json(ScanQRResponse {
+                        success: false,
+                        message: "กิจกรรมนี้สิ้นสุดแล้ว".to_string(),
+                        data: None,
+                        error: Some(ScanQRError {
+                            code: "ACTIVITY_EXPIRED".to_string(),
+                            message: "Activity is no longer ongoing".to_string(),
+                            category: "error".to_string(),
+                        }),
+                    }));
+                }
+                _ => {
+                    return Ok(Json(ScanQRResponse {
+                        success: false,
+                        message: "กิจกรรมยังไม่เปิดให้เช็คอิน".to_string(),
+                        data: None,
+                        error: Some(ScanQRError {
+                            code: "ACTIVITY_NOT_ONGOING".to_string(),
+                            message: "Activity is not ongoing yet".to_string(),
+                            category: "error".to_string(),
+                        }),
+                    }));
+                }
             }
-            (Some(status), title)
         }
     };
 

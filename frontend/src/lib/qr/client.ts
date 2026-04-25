@@ -356,7 +356,10 @@ export class QRClient {
 			clearTimeout(this.refreshTimer);
 		}
 
-		const refreshMs = this.config.refreshInterval * 60 * 1000;
+		// Refresh 15s before the JWT expiry to avoid a brief window
+		// where the on-screen QR has technically expired but the new
+		// one hasn't been generated yet.
+		const refreshMs = Math.max(5_000, this.config.refreshInterval * 60 * 1000 - 15_000);
 		this.refreshTimer = setTimeout(() => {
 			this.generateQRCode();
 		}, refreshMs);

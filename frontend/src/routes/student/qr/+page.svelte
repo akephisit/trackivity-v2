@@ -12,9 +12,11 @@
 
 	let copied = $state(false);
 	let refreshing = $state(false);
+	let autoRefreshing = $state(false);
 
 	let timeRemainingSeconds = $state(0);
 	let countdownTimer: ReturnType<typeof setInterval> | null = null;
+	let wakeLock: WakeLockSentinel | null = null;
 
 	function updateCountdown() {
 		if (!$qrCode) {
@@ -24,6 +26,15 @@
 		const expiresAt = new Date($qrCode.expires_at).getTime();
 		const remaining = Math.max(0, expiresAt - Date.now());
 		timeRemainingSeconds = Math.floor(remaining / 1000);
+
+		// Belt-and-suspenders auto-refresh in case the QRClient timer
+		// missed (e.g. tab was backgrounded past wake-up).
+		if (timeRemainingSeconds === 0 && !autoRefreshing && $qrStatus === 'ready') {
+			autoRefreshing = true;
+			generate().catch(console.error).finally(() => {
+				autoRefreshing = false;
+			});
+		}
 	}
 
 	function formatTimeRemaining(seconds: number): string {
@@ -31,6 +42,24 @@
 		const minutes = Math.floor(seconds / 60);
 		const secs = seconds % 60;
 		return `${minutes}:${secs.toString().padStart(2, '0')}`;
+	}
+
+	async function acquireWakeLock() {
+		if (typeof navigator === 'undefined' || !('wakeLock' in navigator)) return;
+		try {
+			wakeLock = await navigator.wakeLock.request('screen');
+			wakeLock.addEventListener('release', () => {
+				wakeLock = null;
+			});
+		} catch {
+			// User can revoke or browser can deny; that's fine — non-essential.
+		}
+	}
+
+	function handleVisibility() {
+		if (document.visibilityState === 'visible' && !wakeLock) {
+			acquireWakeLock();
+		}
 	}
 
 	$effect(() => {
@@ -48,8 +77,14 @@
 			generate().catch(console.error);
 		}
 
+		acquireWakeLock();
+		document.addEventListener('visibilitychange', handleVisibility);
+
 		return () => {
 			if (countdownTimer) clearInterval(countdownTimer);
+			document.removeEventListener('visibilitychange', handleVisibility);
+			wakeLock?.release().catch(() => {});
+			wakeLock = null;
 		};
 	});
 
@@ -164,6 +199,24 @@
 				{/if}
 			</div>
 
+			<!-- Countdown -->
+			{#if $qrStatus === 'ready' && $qrCode}
+				{@const lowTime = timeRemainingSeconds > 0 && timeRemainingSeconds <= 30}
+				<div
+					class="mx-auto mb-5 inline-flex items-center gap-2 rounded-full border px-4 py-1.5 text-sm font-medium tabular-nums {lowTime
+						? 'border-orange-300 bg-orange-50 text-orange-700 dark:border-orange-700 dark:bg-orange-950/30 dark:text-orange-300'
+						: 'border-slate-200 bg-slate-50 text-slate-600 dark:border-slate-800 dark:bg-slate-950/30 dark:text-slate-400'}"
+					aria-live="polite"
+				>
+					<Clock class="size-4 {lowTime ? 'animate-pulse' : ''}" />
+					{#if autoRefreshing || timeRemainingSeconds === 0}
+						<span>กำลังต่ออายุ…</span>
+					{:else}
+						<span>หมดอายุใน {formatTimeRemaining(timeRemainingSeconds)}</span>
+					{/if}
+				</div>
+			{/if}
+
 			<!-- Actions -->
 			{#if $qrStatus === 'ready' && $qrCode}
 				<div class="flex gap-3">
@@ -188,6 +241,7 @@
 						variant="ghost"
 						class="h-[52px] w-[52px] shrink-0 rounded-2xl border-2 border-slate-100 dark:border-slate-900 text-slate-500 dark:text-slate-400 transition-all hover:bg-slate-50 dark:hover:bg-slate-950/40 hover:text-primary active:scale-[0.98]"
 						title="โหลด QR ใหม่"
+						aria-label="โหลด QR ใหม่"
 					>
 						<RefreshCw class="size-6 {refreshing ? 'animate-spin' : ''}" />
 					</Button>
