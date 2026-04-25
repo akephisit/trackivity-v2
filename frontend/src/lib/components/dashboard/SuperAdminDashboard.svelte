@@ -24,14 +24,14 @@
 		IconPlus
 	} from '@tabler/icons-svelte';
 
-	let faculties: Organization[] = [];
-	let loadingFaculties = true;
-	let error: string | null = null;
+	let faculties = $state<Organization[]>([]);
+	let loadingFaculties = $state(true);
+	let error = $state<string | null>(null);
 
 	// Derived totals from faculty list (backend doesn't expose a dedicated analytics endpoint yet)
-	$: totalStudents = faculties.reduce((sum, f) => sum + (f.total_students || 0), 0);
-	$: totalActivities = faculties.reduce((sum, f) => sum + (f.total_activities || 0), 0);
-	$: totalFaculties = faculties.length;
+	const totalStudents = $derived(faculties.reduce((sum, f) => sum + (f.total_students || 0), 0));
+	const totalActivities = $derived(faculties.reduce((sum, f) => sum + (f.total_activities || 0), 0));
+	const totalFaculties = $derived(faculties.length);
 
 	onMount(async () => {
 		await loadFaculties();
