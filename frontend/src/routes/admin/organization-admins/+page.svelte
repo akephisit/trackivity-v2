@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Building as BuildingIcon, Calendar as CalendarIcon, Pencil, Eye, Filter, Loader, Mail, Plus, School, Search, Shield, ToggleLeft, ToggleRight, Trash2, UserCheck, Users } from '@lucide/svelte';
+	import { Building as BuildingIcon, Calendar as CalendarIcon, CircleAlert, Pencil, Eye, Filter, Loader, Mail, Plus, RefreshCw, School, Search, Shield, ToggleLeft, ToggleRight, Trash2, UserCheck, Users } from '@lucide/svelte';
 	import { z } from 'zod';
 	import { untrack } from 'svelte';
 	import { Button } from '$lib/components/ui/button';
@@ -13,6 +13,7 @@
 		CardTitle
 	} from '$lib/components/ui/card';
 	import { Alert, AlertDescription } from '$lib/components/ui/alert';
+	import { Skeleton } from '$lib/components/ui/skeleton';
 	import * as Dialog from '$lib/components/ui/dialog';
 	import * as AlertDialog from '$lib/components/ui/alert-dialog';
 	import * as Table from '$lib/components/ui/table';
@@ -23,7 +24,7 @@
 	import type { ExtendedAdminRole } from '$lib/types/admin';
 	import { AdminLevel, ADMIN_PERMISSIONS } from '$lib/types/admin';
 	import { PrefixOptions } from '$lib/schemas/auth';
-	import { request } from '$lib/api';
+	import { request, ApiError } from '$lib/api';
 	import { onMount } from 'svelte';
 	import { authStore } from '$lib/stores/auth.svelte';
 
@@ -31,26 +32,43 @@
 	let orgAdminsList = $state<any[]>([]);
 	let organizationsList = $state<any[]>([]);
 	let pageLoading = $state(true);
+	let loadError = $state<string | null>(null);
 	let refreshing = $state(false);
 
 	const currentUser = $derived(authStore.user);
 	const isSuperAdmin = $derived(currentUser?.admin_role?.admin_level === 'super_admin');
 	const userOrganizationId = $derived(currentUser?.organization_id ?? '');
 
-	onMount(async () => {
+	async function fetchData() {
+		pageLoading = true;
+		loadError = null;
 		try {
 			const [adminsRes, orgsRes] = await Promise.all([
-				request('/organization-admins').catch(() => []),
-				request('/organizations/admin').catch(() => [])
+				request('/organization-admins'),
+				request('/organizations/admin').catch(() => [] as any[])
 			]);
 			orgAdminsList = Array.isArray(adminsRes) ? adminsRes : (adminsRes as any).admins ?? [];
 			organizationsList = Array.isArray(orgsRes) ? orgsRes : [];
-		} catch {
-			// silent
+		} catch (e) {
+			loadError = e instanceof ApiError ? e.message : 'ไม่สามารถโหลดข้อมูลแอดมินได้';
 		} finally {
 			pageLoading = false;
 		}
-	});
+	}
+
+	async function refetchAdmins() {
+		refreshing = true;
+		try {
+			const res = await request('/organization-admins');
+			orgAdminsList = Array.isArray(res) ? res : (res as any).admins ?? [];
+		} catch (e) {
+			toast.error(e instanceof ApiError ? e.message : 'ไม่สามารถรีเฟรชข้อมูลได้');
+		} finally {
+			refreshing = false;
+		}
+	}
+
+	onMount(fetchData);
 
 	// Legacy proxy so template still compiles
 	const data = $derived({
@@ -92,8 +110,10 @@
 			await request('/admins', { method: 'POST', body: JSON.stringify(createFormData) });
             toast.success('สร้างแอดมินหน่วยงานสำเร็จ');
             createDialogOpen = false;
-            window.location.reload();
-		} catch { toast.error('เกิดข้อผิดพลาด'); } finally { createSubmitting = false; }
+            await refetchAdmins();
+		} catch (e) {
+			toast.error(e instanceof ApiError ? e.message : 'เกิดข้อผิดพลาดในการสร้างแอดมิน');
+		} finally { createSubmitting = false; }
 	}
 
 	// Dialog states
@@ -244,7 +264,7 @@
 
 			toast.success('แก้ไขข้อมูลแอดมินหน่วยงานสำเร็จ');
 			editDialogOpen = false;
-			setTimeout(() => window.location.reload(), 500);
+			await refetchAdmins();
 		} catch (error) {
 			console.error('Update error:', error);
 			toast.error('เกิดข้อผิดพลาดในการเชื่อมต่อ');
@@ -262,7 +282,7 @@
 			toast.success('ลบแอดมินหน่วยงานสำเร็จ');
 			deleteDialogOpen = false;
 			adminToDelete = null;
-			setTimeout(() => window.location.reload(), 500);
+			await refetchAdmins();
 		} catch (error) {
 			console.error('Delete error:', error);
 			toast.error('เกิดข้อผิดพลาดในการเชื่อมต่อ');
@@ -282,7 +302,7 @@
 			});
 
 			toast.success(`${actionText}แอดมินหน่วยงานสำเร็จ`);
-			setTimeout(() => window.location.reload(), 300);
+			await refetchAdmins();
 		} catch (error) {
 			console.error('Toggle status error:', error);
 			toast.error('เกิดข้อผิดพลาดในการเชื่อมต่อ');
@@ -357,7 +377,7 @@
 
 			toast.success('สร้างแอดมินทั่วไปสำเร็จ');
 			createGeneralAdminDialogOpen = false;
-			setTimeout(() => window.location.reload(), 500);
+			await refetchAdmins();
 		} catch (error) {
 			console.error('Create general admin error:', error);
 			toast.error('เกิดข้อผิดพลาดในการเชื่อมต่อ');
@@ -392,8 +412,8 @@
 				{/if}
 			</p>
 		</div>
-		<div class="flex gap-2">
-			{#if data.isSuperAdmin}
+		{#if data.isSuperAdmin}
+			<div class="flex gap-2">
 				<Button
 					onclick={openCreateDialog}
 					class="bg-blue-600 px-6 py-3 text-base font-medium text-white hover:bg-blue-700"
@@ -401,16 +421,8 @@
 					<Plus class="mr-2 h-5 w-5" />
 					เพิ่มแอดมินหน่วยงาน
 				</Button>
-			{:else}
-				<Button
-					onclick={openCreateGeneralAdminDialog}
-					class="bg-green-600 px-6 py-3 text-base font-medium text-white hover:bg-green-700"
-				>
-					<Plus class="mr-2 h-5 w-5" />
-					เพิ่มแอดมินทั่วไป
-				</Button>
-			{/if}
-		</div>
+			</div>
+		{/if}
 	</div>
 
 	<!-- Stats Cards -->
@@ -561,7 +573,34 @@
 
 	<!-- Faculty Admins Table -->
 	<div class="space-y-6" role="main" aria-labelledby="faculty-admin-management-heading">
-		{#if refreshing}
+		{#if pageLoading}
+			<Card>
+				<CardContent class="p-6">
+					<div class="space-y-3">
+						{#each Array(4) as _}
+							<div class="flex items-center gap-3">
+								<Skeleton class="size-12 rounded-lg" />
+								<div class="flex-1 space-y-2">
+									<Skeleton class="h-4 w-1/3" />
+									<Skeleton class="h-3 w-1/2" />
+								</div>
+								<Skeleton class="h-8 w-20" />
+							</div>
+						{/each}
+					</div>
+				</CardContent>
+			</Card>
+		{:else if loadError}
+			<Alert variant="destructive">
+				<CircleAlert class="size-4" />
+				<AlertDescription class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+					<span>{loadError}</span>
+					<Button size="sm" variant="outline" onclick={fetchData}>
+						<RefreshCw class="mr-2 size-4" />ลองใหม่
+					</Button>
+				</AlertDescription>
+			</Alert>
+		{:else if refreshing}
 			<div class="flex items-center justify-center py-12" role="status" aria-live="polite">
 				<Loader class="mr-3 h-8 w-8 animate-spin text-blue-500" />
 				<span class="text-lg text-gray-600 dark:text-gray-300">กำลังรีเฟรชข้อมูล...</span>
@@ -596,14 +635,6 @@
 						>
 							<Plus class="mr-2 h-5 w-5" />
 							เพิ่มแอดมินหน่วยงานแรก
-						</Button>
-					{:else}
-						<Button
-							onclick={openCreateGeneralAdminDialog}
-							class="bg-green-600 px-6 py-3 text-white hover:bg-green-700"
-						>
-							<Plus class="mr-2 h-5 w-5" />
-							เพิ่มแอดมินทั่วไปแรก
 						</Button>
 					{/if}
 				{/if}
@@ -801,7 +832,7 @@
 														variant="ghost"
 														size="sm"
 														onclick={() =>
-															openDeleteDialog(admin.user_id, admin.full_name || 'แอดมิน')}
+															openDeleteDialog(admin.id, admin.full_name || 'แอดมิน')}
 														class="text-red-600 hover:bg-red-50 hover:text-red-700"
 														title="ลบแอดมิน"
 													>
