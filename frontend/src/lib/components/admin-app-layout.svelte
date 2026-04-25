@@ -75,8 +75,8 @@
 			}
 			baseItems.push(
 				{
-					title: 'จัดการผู้ใช้หน่วยงาน',
-					href: '/admin/organization-users',
+					title: 'จัดการผู้ใช้',
+					href: '/admin/users',
 					icon: Users
 				},
 				{

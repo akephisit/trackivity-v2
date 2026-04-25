@@ -333,7 +333,7 @@
 						<Button
 							variant="outline"
 							class="w-full justify-start gap-3"
-							href="/admin/organization-users"
+							href="/admin/users"
 						>
 							<Users class="h-4 w-4 text-blue-500" />
 							ดูนักศึกษาในคณะ
