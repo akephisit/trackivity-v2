@@ -3,7 +3,11 @@
 /// <reference lib="webworker" />
 /// <reference types="@sveltejs/kit" />
 
-import { dev } from '$app/environment';
+// Service workers can't import from $app/environment, so use Vite's
+// build-time constant instead. import.meta.env.DEV is replaced with
+// `true` / `false` literally during the build, so production bundles
+// drop the wrapped console.log calls entirely via dead-code elimination.
+const dev = import.meta.env.DEV;
 
 // This service worker uses a Network-Only strategy (no caching)
 // Perfect for online-only PWA that always needs fresh data
