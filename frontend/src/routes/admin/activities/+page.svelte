@@ -1,6 +1,5 @@
 <script lang="ts">
-	import { CalendarDays, Pencil, Eye, MapPin, Plus, RefreshCw, Search, Users } from '@lucide/svelte';
-	import { authStore } from '$lib/stores/auth.svelte';
+	import { CalendarDays, Pencil, Eye, MapPin, Plus, RefreshCw, Search, FileText, CircleAlert } from '@lucide/svelte';
 	import { activities as activitiesApi, type Activity } from '$lib/api';
 	import { onMount } from 'svelte';
 	import { Button } from '$lib/components/ui/button';
@@ -14,26 +13,52 @@
 	import { Badge } from '$lib/components/ui/badge';
 	import { Input } from '$lib/components/ui/input';
 	import * as Select from '$lib/components/ui/select';
+	import { Skeleton } from '$lib/components/ui/skeleton';
+	import { Alert, AlertDescription } from '$lib/components/ui/alert';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
 	import { toast } from 'svelte-sonner';
 	import { getActivityTypeDisplayName } from '$lib/utils/activity';
-	import { formatViewCount, formatParticipantCount } from '$lib/utils/activity-tracking';
+
+	type ActivityStatus = 'draft' | 'published' | 'ongoing' | 'completed' | 'cancelled';
+
+	const STATUS_LABEL: Record<ActivityStatus, string> = {
+		draft: 'แบบร่าง',
+		published: 'เผยแพร่แล้ว',
+		ongoing: 'กำลังดำเนินการ',
+		completed: 'เสร็จสิ้น',
+		cancelled: 'ยกเลิกแล้ว'
+	};
+	const STATUS_VARIANT: Record<ActivityStatus, 'default' | 'secondary' | 'destructive' | 'outline'> = {
+		draft: 'outline',
+		published: 'default',
+		ongoing: 'default',
+		completed: 'secondary',
+		cancelled: 'destructive'
+	};
 
 	let allActivities = $state<Activity[]>([]);
 	let loading = $state(true);
+	let error = $state<string | null>(null);
 	let searchTerm = $state('');
 	let selectedType = $state('all');
 	let selectedStatus = $state('all');
 
-	onMount(async () => {
+	async function loadActivities() {
+		loading = true;
+		error = null;
 		try {
 			allActivities = await activitiesApi.list();
-		} catch {
+		} catch (e: any) {
+			error = e?.message ?? 'ไม่สามารถโหลดรายการกิจกรรมได้';
 			toast.error('ไม่สามารถโหลดรายการกิจกรรมได้');
 		} finally {
 			loading = false;
 		}
+	}
+
+	onMount(async () => {
+		await loadActivities();
 
 		const deleted = page.url.searchParams.get('deleted');
 		if (deleted === '1') {
@@ -42,22 +67,25 @@
 		}
 	});
 
-	let stats = $derived({
-		total: allActivities.length,
-		academic: allActivities.filter((a) => a.activity_type === 'academic').length,
-		sports: allActivities.filter((a) => a.activity_type === 'sports').length,
-		cultural: allActivities.filter((a) => a.activity_type === 'cultural').length,
-		ongoing: allActivities.filter((a) => a.status === 'ongoing').length,
-		totalParticipants: 0,
-		totalViews: 0
+	// Single-pass reduce instead of four .filter().length calls over the same array.
+	let stats = $derived.by(() => {
+		const acc = { total: 0, ongoing: 0, published: 0, draft: 0 };
+		for (const a of allActivities) {
+			acc.total++;
+			if (a.status === 'ongoing') acc.ongoing++;
+			else if (a.status === 'published') acc.published++;
+			else if (a.status === 'draft') acc.draft++;
+		}
+		return acc;
 	});
 
 	let filteredActivities = $derived(
 		allActivities.filter((activity) => {
+			const search = searchTerm.toLowerCase();
 			const matchesSearch =
-				searchTerm === '' ||
-				activity.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-				activity.location?.toLowerCase().includes(searchTerm.toLowerCase());
+				search === '' ||
+				activity.title?.toLowerCase().includes(search) ||
+				activity.location?.toLowerCase().includes(search);
 			const matchesType = selectedType === 'all' || activity.activity_type === selectedType;
 			const matchesStatus = selectedStatus === 'all' || activity.status === selectedStatus;
 			return matchesSearch && matchesType && matchesStatus;
@@ -74,14 +102,11 @@
 	function getActivityStatus(activity: Activity): {
 		label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline';
 	} {
-		switch (activity.status) {
-			case 'draft': return { label: 'แบบร่าง', variant: 'outline' };
-			case 'published': return { label: 'เผยแพร่แล้ว', variant: 'default' };
-			case 'ongoing': return { label: 'กำลังดำเนินการ', variant: 'default' };
-			case 'completed': return { label: 'เสร็จสิ้น', variant: 'secondary' };
-			case 'cancelled': return { label: 'ยกเลิกแล้ว', variant: 'destructive' };
-			default: return { label: 'ไม่ระบุ', variant: 'outline' };
-		}
+		const s = activity.status as ActivityStatus;
+		return {
+			label: STATUS_LABEL[s] ?? 'ไม่ระบุ',
+			variant: STATUS_VARIANT[s] ?? 'outline'
+		};
 	}
 </script>
 
@@ -104,16 +129,20 @@
 	<div class="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
 		{#each [
 			{ label: 'กิจกรรมทั้งหมด', value: stats.total, icon: CalendarDays },
-			{ label: 'วิชาการ', value: stats.academic, icon: Users },
-			{ label: 'กีฬา', value: stats.sports, icon: Users },
-			{ label: 'กำลังดำเนินการ', value: stats.ongoing, icon: RefreshCw }
+			{ label: 'กำลังดำเนินการ', value: stats.ongoing, icon: RefreshCw },
+			{ label: 'เผยแพร่แล้ว', value: stats.published, icon: Eye },
+			{ label: 'แบบร่าง', value: stats.draft, icon: FileText }
 		] as s}
 			<Card>
 				<CardContent class="p-4 lg:p-6">
 					<div class="flex items-center justify-between">
 						<div class="min-w-0 flex-1">
 							<p class="truncate text-xs text-muted-foreground lg:text-sm">{s.label}</p>
-							<p class="text-lg font-bold lg:text-2xl">{s.value}</p>
+							{#if loading}
+								<Skeleton class="mt-1 h-7 w-12" />
+							{:else}
+								<p class="text-lg font-bold lg:text-2xl">{s.value}</p>
+							{/if}
 						</div>
 						<div class="ml-2 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-primary/10 lg:h-10 lg:w-10">
 							<s.icon class="h-4 w-4 text-primary lg:h-5 lg:w-5" />
@@ -149,13 +178,16 @@
 						</Select.Content>
 					</Select.Root>
 					<Select.Root type="single" bind:value={selectedStatus}>
-						<Select.Trigger class="w-full sm:w-48">{selectedStatus === 'all' ? 'ทุกสถานะ' : selectedStatus}</Select.Trigger>
+						<Select.Trigger class="w-full sm:w-48">
+							{selectedStatus === 'all' ? 'ทุกสถานะ' : (STATUS_LABEL[selectedStatus as ActivityStatus] ?? selectedStatus)}
+						</Select.Trigger>
 						<Select.Content>
 							<Select.Item value="all">ทุกสถานะ</Select.Item>
 							<Select.Item value="draft">แบบร่าง</Select.Item>
 							<Select.Item value="published">เผยแพร่แล้ว</Select.Item>
 							<Select.Item value="ongoing">กำลังดำเนินการ</Select.Item>
 							<Select.Item value="completed">เสร็จสิ้น</Select.Item>
+							<Select.Item value="cancelled">ยกเลิกแล้ว</Select.Item>
 						</Select.Content>
 					</Select.Root>
 				</div>
@@ -175,8 +207,40 @@
 		</CardHeader>
 		<CardContent class="p-0">
 			{#if loading}
-				<div class="py-12 text-center">
-					<div class="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+				<div class="overflow-x-auto">
+					<Table.Root>
+						<Table.Header>
+							<Table.Row>
+								<Table.Head>กิจกรรม</Table.Head>
+								<Table.Head>ประเภท</Table.Head>
+								<Table.Head>วันที่</Table.Head>
+								<Table.Head>สถานที่</Table.Head>
+								<Table.Head>สถานะ</Table.Head>
+								<Table.Head class="text-right">จัดการ</Table.Head>
+							</Table.Row>
+						</Table.Header>
+						<Table.Body>
+							{#each Array(5) as _}
+								<Table.Row>
+									{#each Array(6) as _}
+										<Table.Cell><Skeleton class="h-4 w-full" /></Table.Cell>
+									{/each}
+								</Table.Row>
+							{/each}
+						</Table.Body>
+					</Table.Root>
+				</div>
+			{:else if error}
+				<div class="p-4">
+					<Alert variant="destructive">
+						<CircleAlert class="size-4" />
+						<AlertDescription class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+							<span>{error}</span>
+							<Button size="sm" variant="outline" onclick={loadActivities}>
+								<RefreshCw class="mr-2 size-4" />ลองใหม่
+							</Button>
+						</AlertDescription>
+					</Alert>
 				</div>
 			{:else if filteredActivities.length > 0}
 				<div class="overflow-x-auto">
@@ -211,7 +275,7 @@
 									</Table.Cell>
 									<Table.Cell>
 										{#if activity.location}
-											<div class="flex items-center gap-1 text-sm">
+											<div class="flex items-center gap-1 text-sm" title={activity.location}>
 												<MapPin class="h-3 w-3 text-muted-foreground" />
 												<span class="truncate">{activity.location}</span>
 											</div>
