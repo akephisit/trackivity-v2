@@ -128,7 +128,7 @@
 >
 	<!-- Main Card (Bank App Slip Style) -->
 	<div
-		class="w-full max-w-[360px] overflow-hidden rounded-[2rem] border border-border/50 bg-white dark:bg-neutral-900 shadow-xl"
+		class="w-full max-w-[360px] overflow-hidden rounded-[2rem] bg-white shadow-2xl ring-1 ring-black/5 select-none dark:bg-neutral-900 dark:ring-white/10"
 	>
 		<!-- Brand Header -->
 		<div class="relative bg-primary px-6 py-5 text-center text-primary-foreground">
@@ -248,8 +248,8 @@
 				</div>
 			{/if}
 
-			<p class="mt-6 text-[13px] leading-relaxed font-medium text-slate-400 dark:text-slate-500">
-				แสดง QR Code เพื่อเข้าร่วมกิจกรรม
+			<p class="mt-6 text-xs leading-relaxed font-medium text-slate-400 dark:text-slate-500">
+				แสดง QR Code นี้ให้เจ้าหน้าที่สแกนเพื่อเข้าร่วมกิจกรรม
 			</p>
 		</div>
 	</div>
