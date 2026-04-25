@@ -128,12 +128,12 @@
 >
 	<!-- Main Card (Bank App Slip Style) -->
 	<div
-		class="w-full max-w-[360px] overflow-hidden rounded-[2rem] bg-white shadow-2xl select-none dark:bg-neutral-900"
+		class="w-full max-w-[360px] overflow-hidden rounded-[2rem] bg-background select-none"
 	>
 		<!-- Brand Header -->
 		<div class="relative bg-primary px-6 py-5 text-center text-primary-foreground">
-			<!-- White curve at bottom -->
-			<div class="absolute inset-x-0 -bottom-1 h-6 rounded-t-[1.5rem] border-none bg-white dark:bg-neutral-900"></div>
+			<!-- Curve at bottom — same colour as the body so it blends -->
+			<div class="absolute inset-x-0 -bottom-1 h-6 rounded-t-[1.5rem] border-none bg-background"></div>
 			<div class="mb-5 flex items-center justify-center gap-2">
 				<QrCode class="size-6" />
 				<h2 class="flex items-center gap-1.5 text-[17px] font-bold tracking-wide">
@@ -146,7 +146,7 @@
 		</div>
 
 		<!-- Card Content -->
-		<div class="relative z-10 bg-white dark:bg-neutral-900 px-6 pb-8 text-center">
+		<div class="relative z-10 bg-background px-6 pb-8 text-center">
 			<!-- User Info -->
 			<div class="mb-7 space-y-1">
 				<h3 class="text-[22px] leading-tight font-bold text-slate-800 dark:text-slate-200">
