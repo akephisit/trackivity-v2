@@ -150,6 +150,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/admins", get(admins::handlers::list_admins).post(admins::handlers::create_admin))
         .route("/admins/{id}", put(admins::handlers::update_admin).delete(admins::handlers::delete_admin))
         .route("/admins/{id}/toggle-status", post(admins::handlers::toggle_admin_status))
+        // ─── Admin Dashboard ──────────────────────────────
+        .route("/admin/dashboard-stats", get(admins::handlers::get_dashboard_stats))
         // ─── Organization Admins ──────────────────────────
         .route("/organization-admins", get(admins::handlers::list_organization_admins))
         // ─── Notifications ────────────────────────────────

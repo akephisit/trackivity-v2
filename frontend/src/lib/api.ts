@@ -425,8 +425,13 @@ export interface UpdateProfileInput {
 }
 
 export const usersApi = {
-    list: () =>
-        request<UserListResponse>('/users'),
+    list: (params?: { page?: number; per_page?: number }) => {
+        const qs = new URLSearchParams();
+        if (params?.page) qs.set('page', String(params.page));
+        if (params?.per_page) qs.set('per_page', String(params.per_page));
+        const suffix = qs.toString() ? `?${qs.toString()}` : '';
+        return request<UserListResponse>(`/users${suffix}`);
+    },
 
     get: (id: string) =>
         request<UserListItem>(`/users/${id}`),
@@ -442,6 +447,21 @@ export const usersApi = {
             method: 'POST',
             body: JSON.stringify({ current_password: currentPassword, new_password: newPassword }),
         }),
+};
+
+export interface DashboardStats {
+    users_total: number;
+    users_active: number;
+    activities_total: number;
+    activities_recent_30d: number;
+    departments_total: number;
+    organizations_total: number;
+    scope: 'system' | 'organization';
+}
+
+export const adminApi = {
+    dashboardStats: () =>
+        request<DashboardStats>('/admin/dashboard-stats'),
 };
 
 // ─── QR Code ─────────────────────────────────────────────────────────────

@@ -3,11 +3,9 @@
 	import { authStore } from '$lib/stores/auth.svelte';
 	import {
 		activities as activitiesApi,
-		usersApi,
-		departmentsApi,
+		adminApi,
 		type Activity,
-		type UserListItem,
-		type Department
+		type DashboardStats
 	} from '$lib/api';
 	import { onMount } from 'svelte';
 	import {
@@ -23,15 +21,13 @@
 	import { getDailyGreeting } from '$lib/utils/greeting';
 
 	let recentActivities = $state<Activity[]>([]);
-	let allUsers = $state<UserListItem[]>([]);
-	let allDepartments = $state<Department[]>([]);
+	let stats = $state<DashboardStats | null>(null);
 	let loading = $state(true);
 	let error = $state<string | null>(null);
 
 	const user = $derived(authStore.user);
 	const adminRole = $derived(authStore.user?.admin_role ?? null);
 	const isOrgAdmin = $derived(adminRole?.admin_level === 'organization_admin');
-	const orgId = $derived(authStore.user?.organization_id ?? adminRole?.organization_id ?? null);
 	const orgName = $derived(authStore.user?.organization_name ?? null);
 
 	const greeting = $derived(
@@ -40,61 +36,30 @@
 			: { greeting: 'สวัสดี!', subtitle: 'พร้อมจัดการระบบ' }
 	);
 
-	// Compute stats from real data
-	const stats = $derived.by(() => {
-		if (isOrgAdmin) {
-			// Filter users belonging to this organization
-			const orgUsers = allUsers.filter((u) => u.organization_name === orgName);
-			const activeOrgUsers = orgUsers.filter((u) => u.status === 'active');
-			// Activities created in the last 30 days
-			const thirtyDaysAgo = new Date();
-			thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-			const recentCount = recentActivities.filter(
-				(a) => new Date(a.created_at) >= thirtyDaysAgo
-			).length;
-			return {
-				orgUsers: orgUsers.length,
-				activeOrgUsers: activeOrgUsers.length,
-				departments: allDepartments.length,
-				recentActivities: recentCount,
-				totalActivities: recentActivities.length
-			};
-		}
-		// Super / regular admin — show system-wide numbers
-		const activeUsers = allUsers.filter((u) => u.status === 'active');
-		return {
-			orgUsers: allUsers.length,
-			activeOrgUsers: activeUsers.length,
-			departments: allDepartments.length,
-			recentActivities: recentActivities.length,
-			totalActivities: recentActivities.length
-		};
-	});
-
 	const mainStats = $derived(
 		isOrgAdmin
 			? [
 					{
 						title: 'นักศึกษาในคณะ',
-						value: stats.orgUsers,
+						value: stats?.users_total ?? 0,
 						icon: Users,
 						color: 'text-blue-600'
 					},
 					{
 						title: 'ใช้งานอยู่',
-						value: stats.activeOrgUsers,
+						value: stats?.users_active ?? 0,
 						icon: UserCheck,
 						color: 'text-green-600'
 					},
 					{
 						title: 'ภาควิชา',
-						value: stats.departments,
+						value: stats?.departments_total ?? 0,
 						icon: BuildingIcon,
 						color: 'text-violet-600'
 					},
 					{
 						title: 'กิจกรรมทั้งหมด',
-						value: stats.totalActivities,
+						value: stats?.activities_total ?? 0,
 						icon: CalendarDays,
 						color: 'text-orange-600'
 					}
@@ -102,25 +67,25 @@
 			: [
 					{
 						title: 'ผู้ใช้ทั้งหมด',
-						value: stats.orgUsers,
+						value: stats?.users_total ?? 0,
 						icon: Users,
 						color: 'text-blue-600'
 					},
 					{
 						title: 'ใช้งานอยู่',
-						value: stats.activeOrgUsers,
+						value: stats?.users_active ?? 0,
 						icon: UserCheck,
 						color: 'text-green-600'
 					},
 					{
 						title: 'กิจกรรมทั้งหมด',
-						value: stats.totalActivities,
+						value: stats?.activities_total ?? 0,
 						icon: CalendarDays,
 						color: 'text-orange-600'
 					},
 					{
 						title: 'ภาควิชา',
-						value: stats.departments,
+						value: stats?.departments_total ?? 0,
 						icon: BuildingIcon,
 						color: 'text-violet-600'
 					}
@@ -194,14 +159,15 @@
 		loading = true;
 		error = null;
 		try {
-			const [dashboard, userResult, depts] = await Promise.all([
+			const [dashboard, dashStats] = await Promise.all([
 				activitiesApi.dashboard().catch(() => ({ recent: [], upcoming: [] })),
-				usersApi.list().catch(() => ({ users: [], total: 0 })),
-				departmentsApi.list().catch(() => [] as Department[])
+				adminApi.dashboardStats().catch((e) => {
+					console.error('Failed to load dashboard stats', e);
+					return null;
+				})
 			]);
 			recentActivities = dashboard.recent;
-			allUsers = userResult.users;
-			allDepartments = depts;
+			stats = dashStats;
 		} catch (e: any) {
 			error = e?.message ?? 'ไม่สามารถโหลดข้อมูลได้';
 		} finally {
@@ -381,21 +347,27 @@
 					<div class="space-y-4">
 						<div class="flex items-center justify-between">
 							<span class="text-sm">ผู้ใช้ทั้งหมด</span>
-							<span class="text-sm font-semibold"
-								>{loading ? '...' : allUsers.length.toLocaleString()}</span
-							>
+							<span class="text-sm font-semibold">
+								{loading ? '...' : (stats?.users_total ?? 0).toLocaleString()}
+							</span>
 						</div>
 						<div class="flex items-center justify-between">
-							<span class="text-sm">กิจกรรมล่าสุด</span>
-							<span class="text-sm font-semibold">{loading ? '...' : recentActivities.length}</span>
+							<span class="text-sm">กิจกรรมในรอบ 30 วัน</span>
+							<span class="text-sm font-semibold">
+								{loading ? '...' : (stats?.activities_recent_30d ?? 0).toLocaleString()}
+							</span>
 						</div>
 						<div class="flex items-center justify-between">
 							<span class="text-sm">ภาควิชา</span>
-							<span class="text-sm font-semibold">{loading ? '...' : allDepartments.length}</span>
+							<span class="text-sm font-semibold">
+								{loading ? '...' : (stats?.departments_total ?? 0).toLocaleString()}
+							</span>
 						</div>
 						<div class="flex items-center justify-between">
-							<span class="text-sm">Uptime</span>
-							<span class="text-sm font-semibold text-green-600">99.9%</span>
+							<span class="text-sm">หน่วยงาน</span>
+							<span class="text-sm font-semibold">
+								{loading ? '...' : (stats?.organizations_total ?? 0).toLocaleString()}
+							</span>
 						</div>
 					</div>
 				{/if}

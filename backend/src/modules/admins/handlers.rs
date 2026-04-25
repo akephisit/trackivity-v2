@@ -324,3 +324,123 @@ pub async fn toggle_admin_status(
 
     Ok(Json(serde_json::json!({ "success": true })))
 }
+
+/// Aggregate dashboard counts for the admin home page.
+///
+/// Scoped by the caller's admin_level:
+/// - super_admin: system-wide totals
+/// - organization_admin / regular_admin: numbers limited to their
+///   organization, derived from claims.organization_id
+///
+/// Replaces the previous frontend pattern that fetched the full user
+/// list to count it (which silently capped at the page size).
+pub async fn get_dashboard_stats(
+    State(pool): State<PgPool>,
+    headers: HeaderMap,
+) -> Result<Json<DashboardStats>, (StatusCode, String)> {
+    let claims = get_claims_from_headers(&headers)?;
+    if !claims.is_admin {
+        return Err((StatusCode::FORBIDDEN, "Admin access required".to_string()));
+    }
+
+    let scope_org_id: Option<Uuid> = match claims.admin_level {
+        Some(AdminLevel::SuperAdmin) => None,
+        Some(AdminLevel::OrganizationAdmin) | Some(AdminLevel::RegularAdmin) => {
+            claims.organization_id
+        }
+        None => None,
+    };
+    let scope = if scope_org_id.is_some() {
+        "organization"
+    } else {
+        "system"
+    };
+
+    // The $1::uuid IS NULL trick lets one query work for both scoped
+    // (organization_admin) and unscoped (super_admin) cases.
+    let users_total_q = sqlx::query_scalar::<_, i64>(
+        r#"
+        SELECT COUNT(*) FROM users u
+        LEFT JOIN departments d ON u.department_id = d.id
+        WHERE u.deleted_at IS NULL
+          AND ($1::uuid IS NULL OR d.organization_id = $1)
+        "#,
+    )
+    .bind(scope_org_id)
+    .fetch_one(&pool);
+
+    let users_active_q = sqlx::query_scalar::<_, i64>(
+        r#"
+        SELECT COUNT(*) FROM users u
+        LEFT JOIN departments d ON u.department_id = d.id
+        WHERE u.deleted_at IS NULL
+          AND u.status = 'active'::user_status
+          AND ($1::uuid IS NULL OR d.organization_id = $1)
+        "#,
+    )
+    .bind(scope_org_id)
+    .fetch_one(&pool);
+
+    let activities_total_q = sqlx::query_scalar::<_, i64>(
+        r#"
+        SELECT COUNT(*) FROM activities
+        WHERE ($1::uuid IS NULL OR organizer_id = $1)
+        "#,
+    )
+    .bind(scope_org_id)
+    .fetch_one(&pool);
+
+    let activities_recent_q = sqlx::query_scalar::<_, i64>(
+        r#"
+        SELECT COUNT(*) FROM activities
+        WHERE created_at >= NOW() - INTERVAL '30 days'
+          AND ($1::uuid IS NULL OR organizer_id = $1)
+        "#,
+    )
+    .bind(scope_org_id)
+    .fetch_one(&pool);
+
+    let departments_total_q = sqlx::query_scalar::<_, i64>(
+        r#"
+        SELECT COUNT(*) FROM departments
+        WHERE ($1::uuid IS NULL OR organization_id = $1)
+        "#,
+    )
+    .bind(scope_org_id)
+    .fetch_one(&pool);
+
+    // organizations_total only meaningful for super_admin
+    let organizations_total_q = sqlx::query_scalar::<_, i64>(
+        "SELECT COUNT(*) FROM organizations WHERE status = TRUE",
+    )
+    .fetch_one(&pool);
+
+    // Run them concurrently so the dashboard returns in roughly one
+    // round-trip's worth of latency instead of six.
+    let (
+        users_total,
+        users_active,
+        activities_total,
+        activities_recent_30d,
+        departments_total,
+        organizations_total,
+    ) = tokio::try_join!(
+        users_total_q,
+        users_active_q,
+        activities_total_q,
+        activities_recent_q,
+        departments_total_q,
+        organizations_total_q
+    )
+    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+
+    Ok(Json(DashboardStats {
+        users_total,
+        users_active,
+        activities_total,
+        activities_recent_30d,
+        departments_total,
+        organizations_total,
+        scope,
+    }))
+}

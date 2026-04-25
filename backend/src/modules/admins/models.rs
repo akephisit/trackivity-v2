@@ -113,3 +113,16 @@ pub struct UpdateAdminInput {
 pub struct ToggleStatusInput {
     pub is_active: bool,
 }
+
+#[derive(Debug, Serialize)]
+pub struct DashboardStats {
+    pub users_total: i64,
+    pub users_active: i64,
+    pub activities_total: i64,
+    pub activities_recent_30d: i64,
+    pub departments_total: i64,
+    pub organizations_total: i64,
+    /// Whether the numbers are scoped to a single organization
+    /// (organization_admin / regular_admin) or system-wide (super_admin).
+    pub scope: &'static str,
+}
