@@ -12,6 +12,41 @@ pub struct ListActivitiesQuery {
     pub status: Option<String>,
 }
 
+/// Returns Ok(()) if the caller is allowed to mutate `activity_id`.
+/// Super admin can touch anything; org / regular admin can only touch
+/// activities organised by their own organization. The check is one
+/// SELECT, so callers should run it before any UPDATE / DELETE.
+async fn assert_admin_can_manage_activity(
+    pool: &PgPool,
+    claims: &crate::modules::auth::models::Claims,
+    activity_id: Uuid,
+) -> Result<(), (StatusCode, String)> {
+    if !claims.is_admin {
+        return Err((StatusCode::FORBIDDEN, "Admin access required".to_string()));
+    }
+    if matches!(claims.admin_level, Some(AdminLevel::SuperAdmin)) {
+        return Ok(());
+    }
+    let admin_org = claims.organization_id.ok_or((
+        StatusCode::FORBIDDEN,
+        "Admin is not assigned to any organization".to_string(),
+    ))?;
+    let organizer_id: Option<Uuid> =
+        sqlx::query_scalar("SELECT organizer_id FROM activities WHERE id = $1")
+            .bind(activity_id)
+            .fetch_optional(pool)
+            .await
+            .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
+            .ok_or((StatusCode::NOT_FOUND, "Activity not found".to_string()))?;
+    if organizer_id != Some(admin_org) {
+        return Err((
+            StatusCode::FORBIDDEN,
+            "Activity belongs to another organization".to_string(),
+        ));
+    }
+    Ok(())
+}
+
 // Aggregates participations once via LEFT JOIN instead of running two
 // correlated subqueries per row, which used to scale O(n) per result row
 // against the participations table.
@@ -215,6 +250,21 @@ pub async fn create_activity(
     let user_id = Uuid::parse_str(&claims.sub)
         .map_err(|_| (StatusCode::UNAUTHORIZED, "Invalid user ID".to_string()))?;
 
+    // Org / regular admin can only create activities organised by their own
+    // organization. Super admin can pick any organizer_id.
+    if !matches!(claims.admin_level, Some(AdminLevel::SuperAdmin)) {
+        let admin_org = claims.organization_id.ok_or((
+            StatusCode::FORBIDDEN,
+            "Admin is not assigned to any organization".to_string(),
+        ))?;
+        if payload.organizer_id != admin_org {
+            return Err((
+                StatusCode::FORBIDDEN,
+                "Cannot create an activity for another organization".to_string(),
+            ));
+        }
+    }
+
     let activity_id = Uuid::new_v4();
 
     sqlx::query(r#"
@@ -261,8 +311,18 @@ pub async fn update_activity(
     Json(payload): Json<UpdateActivityInput>,
 ) -> Result<Json<ActivityPublic>, (StatusCode, String)> {
     let claims = get_claims_from_headers(&headers)?;
-    if !claims.is_admin {
-        return Err((StatusCode::FORBIDDEN, "Admin access required".to_string()));
+    assert_admin_can_manage_activity(&pool, &claims, activity_id).await?;
+
+    // Org / regular admin can't transfer the activity to another organization.
+    if !matches!(claims.admin_level, Some(AdminLevel::SuperAdmin)) {
+        if let Some(new_org) = payload.organizer_id {
+            if Some(new_org) != claims.organization_id {
+                return Err((
+                    StatusCode::FORBIDDEN,
+                    "Cannot reassign activity to another organization".to_string(),
+                ));
+            }
+        }
     }
 
     // Build dynamic update
@@ -364,9 +424,7 @@ pub async fn delete_activity(
     Path(activity_id): Path<Uuid>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, String)> {
     let claims = get_claims_from_headers(&headers)?;
-    if !claims.is_admin {
-        return Err((StatusCode::FORBIDDEN, "Admin access required".to_string()));
-    }
+    assert_admin_can_manage_activity(&pool, &claims, activity_id).await?;
 
     sqlx::query("DELETE FROM activities WHERE id = $1")
         .bind(activity_id)
