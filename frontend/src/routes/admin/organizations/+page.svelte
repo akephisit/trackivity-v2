@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Building as BuildingIcon, Pencil, Plus, RefreshCw, Search, ToggleLeft, ToggleRight, Trash2 } from '@lucide/svelte';
+	import { Building as BuildingIcon, CircleAlert, Pencil, Plus, RefreshCw, Search, ToggleLeft, ToggleRight, Trash2 } from '@lucide/svelte';
 	import { organizationsApi, ApiError } from '$lib/api';
 	import type { Organization, CreateOrganizationInput, UpdateOrganizationInput } from '$lib/api';
 	import { onMount } from 'svelte';
@@ -8,8 +8,9 @@
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
 	import { Badge } from '$lib/components/ui/badge';
+	import { Alert, AlertDescription } from '$lib/components/ui/alert';
 	import {
-		Card, CardContent, CardHeader, CardTitle, CardDescription
+		Card, CardContent, CardHeader, CardTitle
 	} from '$lib/components/ui/card';
 	import * as Table from '$lib/components/ui/table';
 	import * as Dialog from '$lib/components/ui/dialog';
@@ -223,13 +224,36 @@
 		</CardHeader>
 		<CardContent>
 			{#if loading}
-				<div class="space-y-3">
-					{#each Array(5) as _}
-						<Skeleton class="h-10 w-full" />
-					{/each}
-				</div>
+				<Table.Root>
+					<Table.Header>
+						<Table.Row>
+							<Table.Head>ชื่อหน่วยงาน</Table.Head>
+							<Table.Head>รหัส</Table.Head>
+							<Table.Head>ประเภท</Table.Head>
+							<Table.Head>สถานะ</Table.Head>
+							<Table.Head class="text-right">การจัดการ</Table.Head>
+						</Table.Row>
+					</Table.Header>
+					<Table.Body>
+						{#each Array(5) as _}
+							<Table.Row>
+								{#each Array(5) as _}
+									<Table.Cell><Skeleton class="h-4 w-full" /></Table.Cell>
+								{/each}
+							</Table.Row>
+						{/each}
+					</Table.Body>
+				</Table.Root>
 			{:else if error}
-				<div class="py-8 text-center text-destructive">{error}</div>
+				<Alert variant="destructive">
+					<CircleAlert class="size-4" />
+					<AlertDescription class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+						<span>{error}</span>
+						<Button size="sm" variant="outline" onclick={fetchData}>
+							<RefreshCw class="mr-2 size-4" />ลองใหม่
+						</Button>
+					</AlertDescription>
+				</Alert>
 			{:else if filteredOrgs.length === 0}
 				<div class="py-12 text-center">
 					<BuildingIcon class="mx-auto mb-4 size-12 text-muted-foreground/50" />
@@ -277,6 +301,7 @@
 											size="sm"
 											onclick={() => handleToggleStatus(org)}
 											title={org.status ? 'ปิดการใช้งาน' : 'เปิดการใช้งาน'}
+											aria-label={org.status ? 'ปิดการใช้งาน' : 'เปิดการใช้งาน'}
 										>
 											{#if org.status}
 												<ToggleRight class="size-4 text-green-600" />
@@ -284,10 +309,10 @@
 												<ToggleLeft class="size-4 text-muted-foreground" />
 											{/if}
 										</Button>
-										<Button variant="ghost" size="sm" onclick={() => openEdit(org)}>
+										<Button variant="ghost" size="sm" onclick={() => openEdit(org)} aria-label="แก้ไข">
 											<Pencil class="size-4" />
 										</Button>
-										<Button variant="ghost" size="sm" onclick={() => openDelete(org)}>
+										<Button variant="ghost" size="sm" onclick={() => openDelete(org)} aria-label="ลบ">
 											<Trash2 class="size-4 text-destructive" />
 										</Button>
 									</div>

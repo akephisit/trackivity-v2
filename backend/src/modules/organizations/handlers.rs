@@ -1,9 +1,18 @@
 use axum::{Json, extract::{State, Path}, http::{StatusCode, HeaderMap}};
 use sqlx::PgPool;
-use crate::models::{Organization, OrganizationType};
+use crate::models::{AdminLevel, Organization, OrganizationType};
 use crate::modules::auth::get_claims_from_headers;
 use super::models::{Department, OrganizationsResponse, GroupedOrganizations, CreateOrganizationInput, UpdateOrganizationInput};
 use uuid::Uuid;
+
+fn require_super_admin(
+    claims: &crate::modules::auth::models::Claims,
+) -> Result<(), (StatusCode, String)> {
+    if !matches!(claims.admin_level, Some(AdminLevel::SuperAdmin)) {
+        return Err((StatusCode::FORBIDDEN, "Super admin access required".to_string()));
+    }
+    Ok(())
+}
 
 pub async fn get_all_organizations(
     State(pool): State<PgPool>,
@@ -60,9 +69,7 @@ pub async fn create_organization(
     Json(payload): Json<CreateOrganizationInput>,
 ) -> Result<Json<Organization>, (StatusCode, String)> {
     let claims = get_claims_from_headers(&headers)?;
-    if !claims.is_admin {
-        return Err((StatusCode::FORBIDDEN, "Admin access required".to_string()));
-    }
+    require_super_admin(&claims)?;
 
     let org_id = Uuid::new_v4();
     let status = payload.status.unwrap_or(true);
@@ -104,9 +111,7 @@ pub async fn update_organization(
     Json(payload): Json<UpdateOrganizationInput>,
 ) -> Result<Json<Organization>, (StatusCode, String)> {
     let claims = get_claims_from_headers(&headers)?;
-    if !claims.is_admin {
-        return Err((StatusCode::FORBIDDEN, "Admin access required".to_string()));
-    }
+    require_super_admin(&claims)?;
 
     sqlx::query(r#"
         UPDATE organizations SET
@@ -144,9 +149,7 @@ pub async fn delete_organization(
     Path(org_id): Path<Uuid>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, String)> {
     let claims = get_claims_from_headers(&headers)?;
-    if !claims.is_admin {
-        return Err((StatusCode::FORBIDDEN, "Admin access required".to_string()));
-    }
+    require_super_admin(&claims)?;
 
     sqlx::query("DELETE FROM organizations WHERE id = $1")
         .bind(org_id)
@@ -163,9 +166,7 @@ pub async fn toggle_organization_status(
     Path(org_id): Path<Uuid>,
 ) -> Result<Json<Organization>, (StatusCode, String)> {
     let claims = get_claims_from_headers(&headers)?;
-    if !claims.is_admin {
-        return Err((StatusCode::FORBIDDEN, "Admin access required".to_string()));
-    }
+    require_super_admin(&claims)?;
 
     sqlx::query("UPDATE organizations SET status = NOT status, updated_at = NOW() WHERE id = $1")
         .bind(org_id)
@@ -240,6 +241,17 @@ pub async fn update_activity_requirements(
     let claims = get_claims_from_headers(&headers)?;
     if !claims.is_admin {
         return Err((StatusCode::FORBIDDEN, "Admin access required".to_string()));
+    }
+    // Super admin can edit any org's requirements; organization / regular
+    // admin can only edit their own org's. Without this an org admin from
+    // Faculty A could rewrite Faculty B's required hours by knowing the URL.
+    if !matches!(claims.admin_level, Some(AdminLevel::SuperAdmin))
+        && claims.organization_id != Some(organization_id)
+    {
+        return Err((
+            StatusCode::FORBIDDEN,
+            "Cannot edit another organization's requirements".to_string(),
+        ));
     }
 
     // Upsert the requirements
