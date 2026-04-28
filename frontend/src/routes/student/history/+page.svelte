@@ -523,8 +523,8 @@
 
 											{#if participation.activity?.activity_level}
 												<Badge
-													variant={levelVariant}
-													class="gap-1 border bg-background px-2 shadow-sm"
+													variant="outline"
+													class="gap-1 bg-background px-2 shadow-sm"
 												>
 													<LevelIcon class="size-3" />
 													{getActivityLevelDisplayName(participation.activity.activity_level)}
