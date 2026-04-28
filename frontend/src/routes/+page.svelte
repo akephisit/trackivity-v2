@@ -321,7 +321,7 @@
 	<footer class="mt-16 border-t bg-muted/30">
 		<div class="container mx-auto px-4 py-6">
 			<div class="text-center text-sm text-muted-foreground">
-				<p>© 2025 ระบบติดตามกิจกรรม</p>
+				<p>© 2025 สโมสรนักศึกษาคณะวิทยาศาสตร์และเทคโนโลยี มหาวิทยาลัยราชภัฏเทพสตรี</p>
 			</div>
 		</div>
 	</footer>

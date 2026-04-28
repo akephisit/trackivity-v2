@@ -457,7 +457,7 @@
 				</Card>
 
 				<div class="mt-6 text-center text-xs text-gray-500 dark:text-gray-400">
-					<p>© 2025 Trackivity. All rights reserved.</p>
+					<p>© 2025 สโมสรนักศึกษาคณะวิทยาศาสตร์และเทคโนโลยี มหาวิทยาลัยราชภัฏเทพสตรี</p>
 				</div>
 			</div>
 		</div>
