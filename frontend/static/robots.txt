@@ -1,3 +1,5 @@
-# allow crawling everything by default
+# Crawlable by all bots; protected pages opt out via <meta name="robots" noindex>
 User-agent: *
 Disallow:
+
+Sitemap: https://sci.utrackivity.com/sitemap.xml
