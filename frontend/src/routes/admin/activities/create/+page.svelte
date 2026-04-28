@@ -1,4 +1,5 @@
 <script lang="ts">
+	import MetaTags from '$lib/components/seo/MetaTags.svelte';
 	import { ArrowLeft, Calendar as CalendarIcon, CircleAlert, Clock, MapPin, Plus, RefreshCw } from '@lucide/svelte';
 	import {
 		activities as activitiesApi,
@@ -163,7 +164,10 @@
 	}
 </script>
 
-<svelte:head><title>สร้างกิจกรรมใหม่ - Trackivity</title></svelte:head>
+<MetaTags
+	title="สร้างกิจกรรมใหม่"
+	description="เพิ่มกิจกรรมใหม่เข้าสู่ระบบ"
+/>
 
 <div class="space-y-6">
 	<!-- Header -->

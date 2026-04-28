@@ -1,4 +1,5 @@
 <script lang="ts">
+	import MetaTags from '$lib/components/seo/MetaTags.svelte';
 	import { Building as BuildingIcon, Calendar as CalendarIcon, CircleAlert, Pencil, Eye, Filter, Loader, Mail, Plus, RefreshCw, School, Search, Shield, ToggleLeft, ToggleRight, Trash2, UserCheck, Users } from '@lucide/svelte';
 	import { z } from 'zod';
 	import { untrack } from 'svelte';
@@ -392,9 +393,10 @@
 	);
 </script>
 
-<svelte:head>
-	<title>{pageTitle} - Trackivity</title>
-</svelte:head>
+<MetaTags
+	title={pageTitle}
+	description="จัดการแอดมินของหน่วยงานและสิทธิ์การเข้าถึง"
+/>
 
 <div class="space-y-6">
 	<!-- Header -->

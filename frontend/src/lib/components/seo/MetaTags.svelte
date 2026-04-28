@@ -1,10 +1,13 @@
 <script lang="ts">
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 
 	type Props = {
 		title: string;
 		description?: string;
 		image?: string; // absolute or relative path
+		imageWidth?: number;
+		imageHeight?: number;
+		imageAlt?: string;
 		url?: string; // absolute URL; defaults to current
 		type?: 'website' | 'article' | string;
 		siteName?: string;
@@ -15,15 +18,18 @@
 		title,
 		description = 'ระบบติดตามกิจกรรมของมหาวิทยาลัย จัดการ ลงทะเบียน และติดตามกิจกรรมทั้งหมดได้ในที่เดียว',
 		image = '/pwa-512x512.png',
+		imageWidth = 512,
+		imageHeight = 512,
+		imageAlt = 'Trackivity',
 		url,
 		type = 'website',
 		siteName = 'Trackivity',
 		locale = 'th_TH'
 	}: Props = $props();
 
-	let canonical = $derived(url || $page.url?.href || '');
+	let canonical = $derived(url || page.url?.href || '');
 	let ogImage = $derived.by(() => {
-		const current = $page.url;
+		const current = page.url;
 		if (image?.startsWith('http')) {
 			return image;
 		} else if (current && image) {
@@ -56,6 +62,9 @@
 	{/if}
 	{#if ogImage}
 		<meta property="og:image" content={ogImage} />
+		<meta property="og:image:width" content={String(imageWidth)} />
+		<meta property="og:image:height" content={String(imageHeight)} />
+		<meta property="og:image:alt" content={imageAlt} />
 	{/if}
 
 	<!-- Twitter -->
@@ -66,5 +75,6 @@
 	{/if}
 	{#if ogImage}
 		<meta name="twitter:image" content={ogImage} />
+		<meta name="twitter:image:alt" content={imageAlt} />
 	{/if}
 </svelte:head>

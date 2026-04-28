@@ -1,4 +1,5 @@
 <script lang="ts">
+	import MetaTags from '$lib/components/seo/MetaTags.svelte';
 	import { CircleAlert, Calendar as CalendarIcon, Check, Pencil, Eye, EyeOff, Key, Mail, MapPin, Phone, School, Shield, User as UserIcon, X } from '@lucide/svelte';
 	import { authStore } from '$lib/stores/auth.svelte';
 	import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
@@ -274,8 +275,12 @@
 	}
 </script>
 
+<MetaTags
+	title="โปรไฟล์"
+	description="ข้อมูลส่วนตัวและการตั้งค่าบัญชีนักศึกษา"
+/>
+
 <svelte:head>
-	<title>โปรไฟล์ - Trackivity</title>
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
 </svelte:head>
 

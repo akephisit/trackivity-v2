@@ -1,4 +1,5 @@
 <script lang="ts">
+	import MetaTags from '$lib/components/seo/MetaTags.svelte';
 	import { ChevronLeft, ChevronRight, CircleAlert, RefreshCw, Search, UserCheck, UserX, Users } from '@lucide/svelte';
 	import { usersApi, adminApi, ApiError } from '$lib/api';
 	import type { UserListItem, DashboardStats } from '$lib/api';
@@ -127,9 +128,10 @@
 	}
 </script>
 
-<svelte:head>
-	<title>จัดการผู้ใช้ - Trackivity Admin</title>
-</svelte:head>
+<MetaTags
+	title="จัดการผู้ใช้"
+	description="ดูและจัดการบัญชีนักศึกษาและบุคลากรในระบบ"
+/>
 
 <div class="space-y-6">
 	<!-- Header -->

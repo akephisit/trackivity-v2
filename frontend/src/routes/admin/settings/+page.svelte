@@ -1,4 +1,5 @@
 <script lang="ts">
+	import MetaTags from '$lib/components/seo/MetaTags.svelte';
 	import { CircleAlert, Building as BuildingIcon, Check, Hourglass, Info, RefreshCw, School, Settings } from '@lucide/svelte';
 	import {
 		Card,
@@ -98,9 +99,10 @@
 	);
 </script>
 
-<svelte:head>
-	<title>ตั้งค่าระบบ - Trackivity</title>
-</svelte:head>
+<MetaTags
+	title="ตั้งค่าระบบ"
+	description="กำหนดค่าและความต้องการของระบบติดตามกิจกรรม"
+/>
 
 <div class="space-y-4 lg:space-y-6">
 	<!-- Header -->

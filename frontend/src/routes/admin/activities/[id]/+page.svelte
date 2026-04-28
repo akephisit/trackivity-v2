@@ -1,4 +1,5 @@
 <script lang="ts">
+	import MetaTags from '$lib/components/seo/MetaTags.svelte';
 	import { ArrowLeft, CircleAlert, Landmark, Calendar as CalendarIcon, LayoutGrid, Clock, Clock3, Pencil, Info, MapPin, RefreshCw, Settings, Trash2, User as UserIcon, Users } from '@lucide/svelte';
 	import { activities as activitiesApi, type Activity } from '$lib/api';
 	import {
@@ -112,7 +113,10 @@
 	}
 </script>
 
-<svelte:head><title>จัดการกิจกรรม - Trackivity</title></svelte:head>
+<MetaTags
+	title={activity?.title ?? 'รายละเอียดกิจกรรม'}
+	description="ดูรายละเอียดและจัดการผู้เข้าร่วมกิจกรรม"
+/>
 
 {#if loading}
 	<div class="space-y-6">

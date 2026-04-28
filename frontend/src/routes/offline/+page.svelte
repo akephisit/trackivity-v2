@@ -1,4 +1,5 @@
 <script lang="ts">
+	import MetaTags from '$lib/components/seo/MetaTags.svelte';
 	import { Activity as ActivityIcon, CircleAlert, House, QrCode, RefreshCw, WifiOff } from '@lucide/svelte';
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
@@ -70,8 +71,12 @@
 	}
 </script>
 
+<MetaTags
+	title="ออฟไลน์"
+	description="ขณะนี้ออฟไลน์อยู่ กรุณาตรวจสอบการเชื่อมต่ออินเทอร์เน็ต"
+/>
+
 <svelte:head>
-	<title>ออฟไลน์ - Trackivity</title>
 	<meta name="robots" content="noindex, nofollow" />
 </svelte:head>
 

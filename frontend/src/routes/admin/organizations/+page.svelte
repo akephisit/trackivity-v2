@@ -1,4 +1,5 @@
 <script lang="ts">
+	import MetaTags from '$lib/components/seo/MetaTags.svelte';
 	import { Building as BuildingIcon, CircleAlert, Pencil, Plus, RefreshCw, Search, ToggleLeft, ToggleRight, Trash2 } from '@lucide/svelte';
 	import { organizationsApi, ApiError } from '$lib/api';
 	import type { Organization, CreateOrganizationInput, UpdateOrganizationInput } from '$lib/api';
@@ -171,9 +172,10 @@
 	}
 </script>
 
-<svelte:head>
-	<title>จัดการหน่วยงาน - Trackivity Admin</title>
-</svelte:head>
+<MetaTags
+	title="จัดการหน่วยงาน"
+	description="เพิ่มและจัดการคณะและสำนักงานภายในระบบ"
+/>
 
 <div class="space-y-6">
 	<!-- Header -->

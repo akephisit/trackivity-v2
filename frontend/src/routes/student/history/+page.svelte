@@ -1,4 +1,5 @@
 <script lang="ts">
+	import MetaTags from '$lib/components/seo/MetaTags.svelte';
 	import { CircleAlert, Award, Building as BuildingIcon, Store, CalendarDays, Check, Clock2, History, Hourglass, LogIn, LogOut, MapPin, RefreshCw, School, Search, TrendingUp, UserCheck, X } from '@lucide/svelte';
 	import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
 	import { Badge } from '$lib/components/ui/badge';
@@ -333,8 +334,12 @@
 	}
 </script>
 
+<MetaTags
+	title="ประวัติการเข้าร่วม"
+	description="ดูประวัติกิจกรรมที่เคยเข้าร่วมและชั่วโมงสะสม"
+/>
+
 <svelte:head>
-	<title>ประวัติการเข้าร่วม - Trackivity</title>
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
 </svelte:head>
 

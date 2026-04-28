@@ -1,4 +1,5 @@
 <script lang="ts">
+	import MetaTags from '$lib/components/seo/MetaTags.svelte';
 	import { ChevronDown, CircleAlert, Pencil, Filter, Loader, Mail, Plus, RefreshCw, Search, Shield, ToggleLeft, ToggleRight, Trash2, Users } from '@lucide/svelte';
 	import { PrefixOptions } from '$lib/schemas/auth';
 	import { Button } from '$lib/components/ui/button';
@@ -456,9 +457,10 @@
 	});
 </script>
 
-<svelte:head>
-	<title>จัดการแอดมิน - Trackivity</title>
-</svelte:head>
+<MetaTags
+	title="จัดการแอดมิน"
+	description="เพิ่มและจัดการสิทธิ์ผู้ดูแลระบบ"
+/>
 
 <div class="space-y-4 lg:space-y-6">
 	<!-- Header -->

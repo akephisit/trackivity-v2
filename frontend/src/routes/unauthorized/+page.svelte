@@ -1,4 +1,5 @@
 <script lang="ts">
+	import MetaTags from '$lib/components/seo/MetaTags.svelte';
 	import { ArrowLeft, House, Shield } from '@lucide/svelte';
 	import { Button } from '$lib/components/ui/button';
 	import {
@@ -15,9 +16,10 @@
 	}
 </script>
 
-<svelte:head>
-	<title>ไม่มีสิทธิ์เข้าถึง - Trackivity</title>
-</svelte:head>
+<MetaTags
+	title="ไม่มีสิทธิ์เข้าถึง"
+	description="คุณไม่มีสิทธิ์ในการเข้าถึงหน้านี้"
+/>
 
 <div
 	class="flex min-h-screen items-center justify-center bg-gray-50 px-4 py-12 sm:px-6 lg:px-8 dark:bg-gray-900"

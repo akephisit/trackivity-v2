@@ -1,4 +1,5 @@
 <script lang="ts">
+	import MetaTags from '$lib/components/seo/MetaTags.svelte';
 	import { CircleAlert, Pencil, Plus, RefreshCw, School, Search, ToggleLeft, ToggleRight, Trash2 } from '@lucide/svelte';
 	import { departmentsApi, organizationsApi, ApiError } from '$lib/api';
 	import type { Department, Organization, CreateDepartmentInput, UpdateDepartmentInput } from '$lib/api';
@@ -185,9 +186,10 @@
 	}
 </script>
 
-<svelte:head>
-	<title>จัดการภาควิชา - Trackivity Admin</title>
-</svelte:head>
+<MetaTags
+	title="จัดการภาควิชา"
+	description="เพิ่มและจัดการภาควิชาภายใต้คณะ"
+/>
 
 <div class="space-y-6">
 	<!-- Header -->

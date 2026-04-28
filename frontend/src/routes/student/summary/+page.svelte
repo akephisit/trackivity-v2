@@ -1,4 +1,5 @@
 <script lang="ts">
+	import MetaTags from '$lib/components/seo/MetaTags.svelte';
 	import { Activity as ActivityIcon, Award, Building as BuildingIcon, ChartBar, CircleAlert, CircleCheck, Download, FileText, Hourglass, Info, Loader, Printer, RefreshCw, School, Target, TrendingUp, User as UserIcon } from '@lucide/svelte';
 	import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
 	import { Badge } from '$lib/components/ui/badge';
@@ -120,8 +121,12 @@
 	}
 </script>
 
+<MetaTags
+	title="สรุปกิจกรรม"
+	description="รายงานสรุปกิจกรรมที่เข้าร่วมแยกตามระดับคณะและมหาวิทยาลัย"
+/>
+
 <svelte:head>
-	<title>สรุปกิจกรรม - Trackivity</title>
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
 </svelte:head>
 

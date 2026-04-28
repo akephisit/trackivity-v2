@@ -1,4 +1,5 @@
 <script lang="ts">
+	import MetaTags from '$lib/components/seo/MetaTags.svelte';
 	import { CircleAlert, Check, Clock, Copy, QrCode, RefreshCw } from '@lucide/svelte';
 	import { onMount } from 'svelte';
 	import { authStore } from '$lib/stores/auth.svelte';
@@ -115,8 +116,12 @@
 	}
 </script>
 
+<MetaTags
+	title="QR Code ของฉัน"
+	description="แสดง QR Code ส่วนตัวสำหรับเช็คอินกิจกรรม"
+/>
+
 <svelte:head>
-	<title>QR Code - Trackivity</title>
 	<meta
 		name="viewport"
 		content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"

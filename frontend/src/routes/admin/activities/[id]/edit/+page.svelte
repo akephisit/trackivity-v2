@@ -1,4 +1,5 @@
 <script lang="ts">
+	import MetaTags from '$lib/components/seo/MetaTags.svelte';
 	import { CircleAlert, ArrowLeft, Calendar as CalendarIcon, Clock, Save, Eye, Info } from '@lucide/svelte';
 	import { activitiesApi, organizationsApi, type Activity } from '$lib/api';
 	import type { ActivityStatus } from '$lib/types/activity';
@@ -211,8 +212,12 @@
 	}
 </script>
 
+<MetaTags
+	title={activity ? `แก้ไข${activity.title}` : 'แก้ไขกิจกรรม'}
+	description="แก้ไขรายละเอียดและการตั้งค่าของกิจกรรม"
+/>
+
 <svelte:head>
-	<title>{activity ? `แก้ไข${activity.title}` : 'แก้ไขกิจกรรม'} - Trackivity</title>
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
 </svelte:head>
 

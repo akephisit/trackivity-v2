@@ -1,4 +1,5 @@
 <script lang="ts">
+	import MetaTags from '$lib/components/seo/MetaTags.svelte';
 	import { Activity as ActivityIcon, Undo2, Building as BuildingIcon, Calendar as CalendarIcon, Check, ChevronsUpDown, CircleAlert, MapPin, QrCode, RefreshCw, Search, Settings, Users, X } from '@lucide/svelte';
 	import { onMount, tick } from 'svelte';
 	import { goto } from '$app/navigation';
@@ -172,10 +173,10 @@
 	}
 </script>
 
-<svelte:head>
-	<title>QR Scanner - Trackivity</title>
-	<meta name="description" content="ระบบสแกน QR Code สำหรับผู้ดูแลระบบ" />
-</svelte:head>
+<MetaTags
+	title="สแกน QR Code"
+	description="สแกน QR Code เพื่อบันทึกการเข้าร่วมกิจกรรม"
+/>
 
 <div class="space-y-4 lg:space-y-6">
 	<!-- Header -->

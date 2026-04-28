@@ -1,4 +1,5 @@
 <script lang="ts">
+	import MetaTags from '$lib/components/seo/MetaTags.svelte';
 	import { Lock, Mail, User as UserIcon } from '@lucide/svelte';
 	import {
 		Card,
@@ -85,9 +86,10 @@
 	}
 </script>
 
-<svelte:head>
-	<title>ตั้งค่าบัญชี - Trackivity Admin</title>
-</svelte:head>
+<MetaTags
+	title="ตั้งค่าบัญชี"
+	description="จัดการข้อมูลและรหัสผ่านของบัญชีผู้ดูแลระบบ"
+/>
 
 <div class="container mx-auto max-w-4xl space-y-6">
 	<div class="flex items-center space-x-2">
