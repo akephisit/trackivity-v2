@@ -19,17 +19,7 @@
 
 <svelte:head>
 	<link rel="icon" href={favicon} />
-	<!-- Default SEO -->
 	<title>Trackivity — ระบบบันทึกกิจกรรม</title>
-	<meta name="title" content="Trackivity — ระบบบันทึกกิจกรรม" />
-	<meta
-		name="description"
-		content="ระบบบันทึกกิจกรรมของมหาวิทยาลัย จัดการ ลงทะเบียน และติดตามกิจกรรมทั้งหมดได้ในที่เดียว"
-	/>
-	<meta property="og:site_name" content="Trackivity" />
-	<meta property="og:type" content="website" />
-	<meta property="og:locale" content="th_TH" />
-	<!-- Note: Specific pages can override title/meta in their own <svelte:head> -->
 </svelte:head>
 
 <ModeWatcher />
