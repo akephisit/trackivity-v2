@@ -14,7 +14,7 @@
 	const {
 		title,
 		description = 'ระบบติดตามกิจกรรมของมหาวิทยาลัย จัดการ ลงทะเบียน และติดตามกิจกรรมทั้งหมดได้ในที่เดียว',
-		image = '/favicon.svg',
+		image = '/pwa-512x512.png',
 		url,
 		type = 'website',
 		siteName = 'Trackivity',
