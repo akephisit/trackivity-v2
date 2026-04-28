@@ -139,9 +139,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/departments/{id}/toggle-status", post(departments::toggle_department_status))
         // ─── Users ────────────────────────────────────────
         .route("/users", get(users::list_users))
-        .route("/users/{id}", get(users::get_user))
         .route("/users/me/profile", put(users::update_profile))
         .route("/users/me/password", post(users::change_password))
+        .route(
+            "/users/{id}",
+            get(users::get_user)
+                .put(users::admin_update_user)
+                .delete(users::admin_delete_user),
+        )
+        .route("/users/{id}/reset-password", post(users::admin_reset_password))
+        .route("/users/{id}/participations", get(users::admin_get_user_participations))
         // ─── QR Code ──────────────────────────────────────────
         .route("/qr/generate", post(qr::handlers::generate_qr_handler))
         .route("/activities/{id}/checkin", post(qr::handlers::checkin_handler))

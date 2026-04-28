@@ -41,3 +41,15 @@ pub struct ChangePasswordInput {
     pub current_password: String,
     pub new_password: String,
 }
+
+/// Admin-side update of a user. All fields optional; only provided ones change.
+#[derive(Debug, Deserialize)]
+pub struct AdminUpdateUserInput {
+    pub email: Option<String>,
+    pub status: Option<UserStatus>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct AdminResetPasswordInput {
+    pub new_password: String,
+}
