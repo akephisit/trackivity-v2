@@ -453,7 +453,57 @@ export const usersApi = {
             method: 'POST',
             body: JSON.stringify({ current_password: currentPassword, new_password: newPassword }),
         }),
+
+    // Admin-only: edit/reset/delete other users
+    adminUpdate: (id: string, data: { email?: string; status?: 'active' | 'inactive' | 'suspended' }) =>
+        request<{ message: string }>(`/users/${id}`, {
+            method: 'PUT',
+            body: JSON.stringify(data),
+        }),
+
+    adminResetPassword: (id: string, newPassword: string) =>
+        request<{ message: string }>(`/users/${id}/reset-password`, {
+            method: 'POST',
+            body: JSON.stringify({ new_password: newPassword }),
+        }),
+
+    adminDelete: (id: string) =>
+        request<{ message: string }>(`/users/${id}`, { method: 'DELETE' }),
+
+    adminParticipations: (id: string) =>
+        request<UserParticipationsResponse>(`/users/${id}/participations`),
 };
+
+export interface UserParticipation {
+    id: string;
+    status: 'registered' | 'checked_in' | 'checked_out' | 'completed' | 'no_show';
+    registered_at: string | null;
+    checked_in_at: string | null;
+    checked_out_at: string | null;
+    notes: string | null;
+    activity: {
+        id: string;
+        title: string;
+        location: string | null;
+        start_date: string;
+        end_date: string;
+        hours: number;
+        organizer_name: string;
+        activity_type: string;
+        activity_level: 'university' | 'faculty' | string | null;
+    };
+}
+
+export interface UserParticipationsResponse {
+    stats: {
+        total: number;
+        completed: number;
+        total_hours: number;
+        faculty_hours: number;
+        university_hours: number;
+    };
+    participations: UserParticipation[];
+}
 
 export interface DashboardStats {
     users_total: number;
