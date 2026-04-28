@@ -809,7 +809,10 @@
 			<!-- Footer for Official Reports -->
 			<Card class="print-break-before border-dashed">
 				<CardContent class="py-4 text-center text-sm text-muted-foreground">
-					<p>รายงานนี้สร้างขึ้นโดยระบบ Trackivity - Activity Tracking System</p>
+					<p>
+						รายงานนี้สร้างขึ้นโดยระบบบันทึกกิจกรรม Trackivity — คณะวิทยาศาสตร์และเทคโนโลยี
+						มหาวิทยาลัยราชภัฏเทพสตรี
+					</p>
 					<p>วันที่สร้างรายงาน: {reportDate}</p>
 					<!-- Removed activity period range per request -->
 				</CardContent>

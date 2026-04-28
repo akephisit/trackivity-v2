@@ -305,7 +305,7 @@ export async function exportSummaryPDF(
             {
                 stack: [
                     { text: 'เอกสารอ้างอิงรายบุคคล', style: 'footerBold' },
-                    { text: 'ระบบจัดการกิจกรรม Trackivity (Activity Tracking System)', style: 'footer' },
+                    { text: 'ระบบบันทึกกิจกรรม Trackivity — คณะวิทยาศาสตร์และเทคโนโลยี มหาวิทยาลัยราชภัฏเทพสตรี', style: 'footer' },
                     { text: `ออกรายงานเมื่อ: ${now}`, style: 'footer' }
                 ],
                 margin: [0, 40, 0, 0],
