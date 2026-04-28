@@ -58,6 +58,10 @@
 	});
 </script>
 
+<svelte:head>
+	<meta name="robots" content="noindex, nofollow" />
+</svelte:head>
+
 {#if isLoginPage}
 	<div class="min-h-screen bg-background">
 		{@render children()}
