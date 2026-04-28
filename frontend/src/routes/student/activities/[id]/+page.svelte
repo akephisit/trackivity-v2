@@ -70,7 +70,7 @@
 
 <MetaTags
 	title={activity ? `${activity.title} — รายละเอียดกิจกรรม` : 'รายละเอียดกิจกรรม'}
-	description={activity?.description || 'รายละเอียดกิจกรรมจากระบบติดตามกิจกรรม'}
+	description={activity?.description || 'รายละเอียดกิจกรรมจากระบบบันทึกกิจกรรม'}
 	type="article"
 />
 

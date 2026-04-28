@@ -20,11 +20,11 @@
 <svelte:head>
 	<link rel="icon" href={favicon} />
 	<!-- Default SEO -->
-	<title>Trackivity — ระบบติดตามกิจกรรม</title>
-	<meta name="title" content="Trackivity — ระบบติดตามกิจกรรม" />
+	<title>Trackivity — ระบบบันทึกกิจกรรม</title>
+	<meta name="title" content="Trackivity — ระบบบันทึกกิจกรรม" />
 	<meta
 		name="description"
-		content="ระบบติดตามกิจกรรมของมหาวิทยาลัย จัดการ ลงทะเบียน และติดตามกิจกรรมทั้งหมดได้ในที่เดียว"
+		content="ระบบบันทึกกิจกรรมของมหาวิทยาลัย จัดการ ลงทะเบียน และติดตามกิจกรรมทั้งหมดได้ในที่เดียว"
 	/>
 	<meta property="og:site_name" content="Trackivity" />
 	<meta property="og:type" content="website" />

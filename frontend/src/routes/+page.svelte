@@ -41,7 +41,7 @@
 </script>
 
 <MetaTags
-	title="ระบบติดตามกิจกรรม"
+	title="ระบบบันทึกกิจกรรม"
 	description="จัดการและติดตามกิจกรรมทั้งหมดของมหาวิทยาลัยในที่เดียว"
 	type="website"
 />
@@ -52,7 +52,7 @@
 		<div class="container mx-auto px-4 py-6">
 			<div class="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
 				<div>
-					<h1 class="text-3xl font-bold text-foreground">ระบบติดตามกิจกรรม</h1>
+					<h1 class="text-3xl font-bold text-foreground">ระบบบันทึกกิจกรรม</h1>
 					<p class="mt-1 text-muted-foreground">
 						จัดการและติดตามกิจกรรมทั้งหมดของมหาวิทยาลัยในที่เดียว
 					</p>
