@@ -7,7 +7,7 @@
 	import { mode, setMode } from 'mode-watcher';
 	import { toast } from 'svelte-sonner';
 	import { goto } from '$app/navigation';
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 	import NotificationBell from './NotificationBell.svelte';
 
 	type IconComponent = Component<IconProps>;
@@ -86,7 +86,7 @@
 	}
 
 	function isActiveRoute(href: string, exact: boolean = false): boolean {
-		const currentPath = $page.url.pathname;
+		const currentPath = page.url.pathname;
 		return exact ? currentPath === href : currentPath.startsWith(href);
 	}
 </script>

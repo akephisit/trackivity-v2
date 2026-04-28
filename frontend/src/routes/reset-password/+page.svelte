@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { ArrowLeft, Check, Eye, EyeOff, Loader, Lock } from '@lucide/svelte';
 	import { auth, ApiError } from '$lib/api';
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
@@ -22,7 +22,7 @@
 	let submitting = $state(false);
 	let success = $state(false);
 
-	let token = $derived($page.url.searchParams.get('token') || '');
+	let token = $derived(page.url.searchParams.get('token') || '');
 
 	async function handleSubmit(e: Event) {
 		e.preventDefault();

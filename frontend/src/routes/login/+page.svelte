@@ -3,7 +3,7 @@
 	import { auth, ApiError } from '$lib/api';
 	import { authStore } from '$lib/stores/auth.svelte';
 	import { goto } from '$app/navigation';
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
@@ -40,7 +40,7 @@
 			authStore.setUser(result.user);
 			toast.success('เข้าสู่ระบบสำเร็จ');
 
-			const redirectTo = $page.url.searchParams.get('redirectTo');
+			const redirectTo = page.url.searchParams.get('redirectTo');
 			const destination = redirectTo || (result.user.admin_role ? '/admin' : '/student');
 			await goto(destination);
 		} catch (err) {
