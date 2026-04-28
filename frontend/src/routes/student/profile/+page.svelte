@@ -280,10 +280,6 @@
 	description="ข้อมูลส่วนตัวและการตั้งค่าบัญชีนักศึกษา"
 />
 
-<svelte:head>
-	<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-</svelte:head>
-
 <div class="max-w-4xl space-y-6">
 	<!-- Header -->
 	<div class="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">

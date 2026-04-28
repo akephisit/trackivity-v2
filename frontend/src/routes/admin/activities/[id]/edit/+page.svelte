@@ -217,10 +217,6 @@
 	description="แก้ไขรายละเอียดและการตั้งค่าของกิจกรรม"
 />
 
-<svelte:head>
-	<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-</svelte:head>
-
 {#if loading}
 	<div class="space-y-6">
 		<div class="flex items-center gap-4">
