@@ -1,15 +1,20 @@
 <script lang="ts">
 	import MetaTags from '$lib/components/seo/MetaTags.svelte';
-	import { CalendarDays, Pencil, Eye, MapPin, Plus, RefreshCw, Search, FileText, CircleAlert } from '@lucide/svelte';
+	import {
+		CalendarDays,
+		Pencil,
+		Eye,
+		MapPin,
+		Plus,
+		RefreshCw,
+		Search,
+		FileText,
+		CircleAlert
+	} from '@lucide/svelte';
 	import { activities as activitiesApi, type Activity } from '$lib/api';
 	import { onMount } from 'svelte';
 	import { Button } from '$lib/components/ui/button';
-	import {
-		Card,
-		CardContent,
-		CardHeader,
-		CardTitle
-	} from '$lib/components/ui/card';
+	import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
 	import * as Table from '$lib/components/ui/table';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Input } from '$lib/components/ui/input';
@@ -17,6 +22,7 @@
 	import { Skeleton } from '$lib/components/ui/skeleton';
 	import { Alert, AlertDescription } from '$lib/components/ui/alert';
 	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 	import { toast } from 'svelte-sonner';
 	import { getActivityTypeDisplayName } from '$lib/utils/activity';
@@ -30,13 +36,24 @@
 		completed: 'เสร็จสิ้น',
 		cancelled: 'ยกเลิกแล้ว'
 	};
-	const STATUS_VARIANT: Record<ActivityStatus, 'default' | 'secondary' | 'destructive' | 'outline'> = {
+	const STATUS_VARIANT: Record<
+		ActivityStatus,
+		'default' | 'secondary' | 'destructive' | 'outline'
+	> = {
 		draft: 'outline',
 		published: 'default',
 		ongoing: 'default',
 		completed: 'secondary',
 		cancelled: 'destructive'
 	};
+	const statCards = [
+		{ label: 'กิจกรรมทั้งหมด', value: () => stats.total, icon: CalendarDays },
+		{ label: 'กำลังดำเนินการ', value: () => stats.ongoing, icon: RefreshCw },
+		{ label: 'เผยแพร่แล้ว', value: () => stats.published, icon: Eye },
+		{ label: 'แบบร่าง', value: () => stats.draft, icon: FileText }
+	];
+	const loadingRows = [0, 1, 2, 3, 4];
+	const loadingCells = [0, 1, 2, 3, 4, 5];
 
 	let allActivities = $state<Activity[]>([]);
 	let loading = $state(true);
@@ -50,8 +67,8 @@
 		error = null;
 		try {
 			allActivities = await activitiesApi.list();
-		} catch (e: any) {
-			error = e?.message ?? 'ไม่สามารถโหลดรายการกิจกรรมได้';
+		} catch (e: unknown) {
+			error = e instanceof Error ? e.message : 'ไม่สามารถโหลดรายการกิจกรรมได้';
 			toast.error('ไม่สามารถโหลดรายการกิจกรรมได้');
 		} finally {
 			loading = false;
@@ -64,7 +81,7 @@
 		const deleted = page.url.searchParams.get('deleted');
 		if (deleted === '1') {
 			toast.success('ลบกิจกรรมสำเร็จ');
-			goto('/admin/activities', { replaceState: true, noScroll: true });
+			goto(resolve('/admin/activities'), { replaceState: true, noScroll: true });
 		}
 	});
 
@@ -96,12 +113,15 @@
 	function formatDate(dateString: string | undefined): string {
 		if (!dateString) return '-';
 		return new Date(dateString).toLocaleDateString('th-TH', {
-			day: 'numeric', month: 'short', year: '2-digit'
+			day: 'numeric',
+			month: 'short',
+			year: '2-digit'
 		});
 	}
 
 	function getActivityStatus(activity: Activity): {
-		label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline';
+		label: string;
+		variant: 'default' | 'secondary' | 'destructive' | 'outline';
 	} {
 		const s = activity.status as ActivityStatus;
 		return {
@@ -111,10 +131,7 @@
 	}
 </script>
 
-<MetaTags
-	title="จัดการกิจกรรม"
-	description="สร้าง แก้ไข และติดตามกิจกรรมทั้งหมดของหน่วยงาน"
-/>
+<MetaTags title="จัดการกิจกรรม" description="สร้าง แก้ไข และติดตามกิจกรรมทั้งหมดของหน่วยงาน" />
 
 <div class="space-y-4 lg:space-y-6">
 	<div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -124,19 +141,17 @@
 			</h1>
 			<p class="text-sm text-muted-foreground">จัดการและติดตามกิจกรรมทั้งหมด</p>
 		</div>
-		<Button onclick={() => goto('/admin/activities/create')} class="flex w-full items-center gap-2 sm:w-auto">
+		<Button
+			onclick={() => goto(resolve('/admin/activities/create'))}
+			class="flex w-full items-center gap-2 sm:w-auto"
+		>
 			<Plus class="h-4 w-4" />สร้างกิจกรรมใหม่
 		</Button>
 	</div>
 
 	<!-- Stats -->
 	<div class="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
-		{#each [
-			{ label: 'กิจกรรมทั้งหมด', value: stats.total, icon: CalendarDays },
-			{ label: 'กำลังดำเนินการ', value: stats.ongoing, icon: RefreshCw },
-			{ label: 'เผยแพร่แล้ว', value: stats.published, icon: Eye },
-			{ label: 'แบบร่าง', value: stats.draft, icon: FileText }
-		] as s}
+		{#each statCards as s (s.label)}
 			<Card>
 				<CardContent class="p-4 lg:p-6">
 					<div class="flex items-center justify-between">
@@ -145,10 +160,12 @@
 							{#if loading}
 								<Skeleton class="mt-1 h-7 w-12" />
 							{:else}
-								<p class="text-lg font-bold lg:text-2xl">{s.value}</p>
+								<p class="text-lg font-bold lg:text-2xl">{s.value()}</p>
 							{/if}
 						</div>
-						<div class="ml-2 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-primary/10 lg:h-10 lg:w-10">
+						<div
+							class="ml-2 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-primary/10 lg:h-10 lg:w-10"
+						>
 							<s.icon class="h-4 w-4 text-primary lg:h-5 lg:w-5" />
 						</div>
 					</div>
@@ -163,7 +180,9 @@
 			<div class="space-y-4 sm:flex sm:flex-row sm:gap-4 sm:space-y-0">
 				<div class="flex-1">
 					<div class="relative">
-						<Search class="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+						<Search
+							class="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+						/>
 						<Input bind:value={searchTerm} placeholder="ค้นหากิจกรรมหรือสถานที่..." class="pl-10" />
 					</div>
 				</div>
@@ -183,7 +202,9 @@
 					</Select.Root>
 					<Select.Root type="single" bind:value={selectedStatus}>
 						<Select.Trigger class="w-full sm:w-48">
-							{selectedStatus === 'all' ? 'ทุกสถานะ' : (STATUS_LABEL[selectedStatus as ActivityStatus] ?? selectedStatus)}
+							{selectedStatus === 'all'
+								? 'ทุกสถานะ'
+								: (STATUS_LABEL[selectedStatus as ActivityStatus] ?? selectedStatus)}
 						</Select.Trigger>
 						<Select.Content>
 							<Select.Item value="all">ทุกสถานะ</Select.Item>
@@ -224,9 +245,9 @@
 							</Table.Row>
 						</Table.Header>
 						<Table.Body>
-							{#each Array(5) as _}
+							{#each loadingRows as row (row)}
 								<Table.Row>
-									{#each Array(6) as _}
+									{#each loadingCells as cell (cell)}
 										<Table.Cell><Skeleton class="h-4 w-full" /></Table.Cell>
 									{/each}
 								</Table.Row>
@@ -238,7 +259,9 @@
 				<div class="p-4">
 					<Alert variant="destructive">
 						<CircleAlert class="size-4" />
-						<AlertDescription class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+						<AlertDescription
+							class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between"
+						>
 							<span>{error}</span>
 							<Button size="sm" variant="outline" onclick={loadActivities}>
 								<RefreshCw class="mr-2 size-4" />ลองใหม่
@@ -260,19 +283,18 @@
 							</Table.Row>
 						</Table.Header>
 						<Table.Body>
-							{#each filteredActivities as activity}
+							{#each filteredActivities as activity (activity.id)}
 								{@const status = getActivityStatus(activity)}
 								<Table.Row class="hover:bg-muted/50">
 									<Table.Cell>
 										<div class="min-w-0 space-y-1">
 											<p class="truncate font-medium">{activity.title || 'ไม่ระบุ'}</p>
-											{#if activity.description}
-												<p class="line-clamp-1 text-sm text-muted-foreground">{activity.description}</p>
-											{/if}
 										</div>
 									</Table.Cell>
 									<Table.Cell>
-										<Badge variant="secondary">{getActivityTypeDisplayName(activity.activity_type)}</Badge>
+										<Badge variant="secondary"
+											>{getActivityTypeDisplayName(activity.activity_type)}</Badge
+										>
 									</Table.Cell>
 									<Table.Cell>
 										<p class="text-sm font-medium">{formatDate(activity.start_date)}</p>
@@ -292,10 +314,18 @@
 									</Table.Cell>
 									<Table.Cell class="text-right">
 										<div class="flex items-center justify-end gap-2">
-											<Button variant="ghost" size="sm" onclick={() => goto(`/admin/activities/${activity.id}`)}>
+											<Button
+												variant="ghost"
+												size="sm"
+												onclick={() => goto(resolve(`/admin/activities/${activity.id}`))}
+											>
 												<Eye class="h-4 w-4" />
 											</Button>
-											<Button variant="ghost" size="sm" onclick={() => goto(`/admin/activities/${activity.id}/edit`)}>
+											<Button
+												variant="ghost"
+												size="sm"
+												onclick={() => goto(resolve(`/admin/activities/${activity.id}/edit`))}
+											>
 												<Pencil class="h-4 w-4" />
 											</Button>
 										</div>
@@ -310,10 +340,12 @@
 					<CalendarDays class="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
 					<h3 class="mb-2 text-lg font-medium">ไม่พบกิจกรรม</h3>
 					<p class="mb-4 text-muted-foreground">
-						{searchTerm || selectedType !== 'all' || selectedStatus !== 'all' ? 'ไม่พบกิจกรรมที่ตรงกับเงื่อนไขการค้นหา' : 'ยังไม่มีกิจกรรมในระบบ'}
+						{searchTerm || selectedType !== 'all' || selectedStatus !== 'all'
+							? 'ไม่พบกิจกรรมที่ตรงกับเงื่อนไขการค้นหา'
+							: 'ยังไม่มีกิจกรรมในระบบ'}
 					</p>
 					{#if !searchTerm && selectedType === 'all' && selectedStatus === 'all'}
-						<Button onclick={() => goto('/admin/activities/create')}>
+						<Button onclick={() => goto(resolve('/admin/activities/create'))}>
 							<Plus class="mr-2 h-4 w-4" />สร้างกิจกรรมแรก
 						</Button>
 					{/if}
