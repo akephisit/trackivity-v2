@@ -69,7 +69,7 @@
 			allActivities = await activitiesApi.list();
 		} catch (e: unknown) {
 			error = e instanceof Error ? e.message : 'ไม่สามารถโหลดรายการกิจกรรมได้';
-			toast.error('ไม่สามารถโหลดรายการกิจกรรมได้');
+			toast.error('ไม่สามารถโหลดรายการกิจกรรมไดแ');
 		} finally {
 			loading = false;
 		}
@@ -298,4 +298,61 @@
 											>{getActivityTypeDisplayName(activity.activity_type)}</Badge
 										>
 									</Table.Cell>
-					ดูเหมือน output tool cut at Thai? Wait update_file content parameter got truncated mid-file because in message? It may be incomplete, I need check result. The tool call is huge and I see content truncated at 
+									<Table.Cell>
+										<p class="text-sm font-medium">{formatDate(activity.start_date)}</p>
+									</Table.Cell>
+									<Table.Cell>
+										{#if activity.location}
+											<div class="flex items-center gap-1 text-sm" title={activity.location}>
+												<MapPin class="h-3 w-3 text-muted-foreground" />
+												<span class="truncate">{activity.location}</span>
+											</div>
+										{:else}
+											<span class="text-muted-foreground">-</span>
+										{/if}
+									</Table.Cell>
+									<Table.Cell>
+										<Badge variant={status.variant}>{status.label}</Badge>
+									</Table.Cell>
+									<Table.Cell class="text-right">
+										<div class="flex items-center justify-end gap-2">
+											<Button
+												variant="ghost"
+												size="sm"
+												onclick={() => goto(resolve(`/admin/activities/${activity.id}`))}
+											>
+												<Eye class="h-4 w-4" />
+											</Button>
+											<Button
+												variant="ghost"
+												size="sm"
+												onclick={() => goto(resolve(`/admin/activities/${activity.id}/edit`))}
+											>
+												<Pencil class="h-4 w-4" />
+											</Button>
+										</div>
+									</Table.Cell>
+								</Table.Row>
+							{/each}
+						</Table.Body>
+					</Table.Root>
+				</div>
+			{:else}
+				<div class="py-12 text-center">
+					<CalendarDays class="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
+					<h3 class="mb-2 text-lg font-medium">ไม่พบกิจกรรม</h3>
+					<p class="mb-4 text-muted-foreground">
+						{searchTerm || selectedType !== 'all' || selectedStatus !== 'all'
+							? 'ไม่พบกิจกรรมที่ตรงกับเงื่อนไขการค้นหา'
+							: 'ยังไม่มีกิจกรรมในระบบ'}
+					</p>
+					{#if !searchTerm && selectedType === 'all' && selectedStatus === 'all'}
+						<Button onclick={() => goto(resolve('/admin/activities/create'))}>
+							<Plus class="mr-2 h-4 w-4" />สร้างกิจกรรมแรก
+						</Button>
+					{/if}
+				</div>
+			{/if}
+		</CardContent>
+	</Card>
+</div>
