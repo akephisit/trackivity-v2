@@ -90,3 +90,41 @@ pub struct ParticipationRecord {
     pub checked_out_at: Option<DateTime<Utc>>,
     pub notes: Option<String>,
 }
+
+#[derive(Debug, Deserialize)]
+pub struct ManualCompleteParticipationsInput {
+    #[serde(default)]
+    pub user_ids: Vec<Uuid>,
+    #[serde(default)]
+    pub student_ids: Vec<String>,
+    pub notes: Option<String>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct ManualCompleteParticipationsResponse {
+    pub summary: ManualCompleteParticipationsSummary,
+    pub results: Vec<ManualCompleteParticipationResult>,
+}
+
+#[derive(Debug, Default, Serialize)]
+pub struct ManualCompleteParticipationsSummary {
+    pub total: usize,
+    pub completed: usize,
+    pub updated: usize,
+    pub already_completed: usize,
+    pub not_found: usize,
+    pub not_allowed: usize,
+    pub inactive: usize,
+    pub duplicate_input: usize,
+    pub failed: usize,
+}
+
+#[derive(Debug, Serialize)]
+pub struct ManualCompleteParticipationResult {
+    pub input: String,
+    pub user_id: Option<Uuid>,
+    pub student_id: Option<String>,
+    pub user_name: Option<String>,
+    pub status: String,
+    pub message: String,
+}

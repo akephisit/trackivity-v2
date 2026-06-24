@@ -125,6 +125,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/activities", get(activities::list_activities).post(activities::create_activity))
         .route("/activities/{id}", get(activities::get_activity).put(activities::update_activity).delete(activities::delete_activity))
         .route("/activities/{id}/join", post(activities::join_activity))
+        .route("/activities/{id}/participations/manual-complete", post(activities::manual_complete_participations))
         .route("/activities/my/participations", get(activities::get_my_participations))
         // ─── Organizations ────────────────────────────────
         .route("/organizations", get(organizations::get_all_organizations))

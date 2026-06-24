@@ -215,6 +215,44 @@ export interface Participation {
     };
 }
 
+export interface ManualCompleteParticipationsInput {
+    user_ids?: string[];
+    student_ids?: string[];
+    notes?: string;
+}
+
+export interface ManualCompleteParticipationResult {
+    input: string;
+    user_id: string | null;
+    student_id: string | null;
+    user_name: string | null;
+    status:
+        | 'completed'
+        | 'updated'
+        | 'already_completed'
+        | 'not_found'
+        | 'not_allowed'
+        | 'inactive'
+        | 'duplicate_input'
+        | string;
+    message: string;
+}
+
+export interface ManualCompleteParticipationsResponse {
+    summary: {
+        total: number;
+        completed: number;
+        updated: number;
+        already_completed: number;
+        not_found: number;
+        not_allowed: number;
+        inactive: number;
+        duplicate_input: number;
+        failed: number;
+    };
+    results: ManualCompleteParticipationResult[];
+}
+
 export const activitiesApi = {
     dashboard: () =>
         request<DashboardResponse>('/activities/dashboard'),
@@ -249,6 +287,12 @@ export const activitiesApi = {
     join: (id: string) =>
         request<{ message: string; participation_id: string }>(`/activities/${id}/join`, {
             method: 'POST',
+        }),
+
+    manualCompleteParticipations: (id: string, data: ManualCompleteParticipationsInput) =>
+        request<ManualCompleteParticipationsResponse>(`/activities/${id}/participations/manual-complete`, {
+            method: 'POST',
+            body: JSON.stringify(data),
         }),
 
     myParticipations: () =>
@@ -524,7 +568,7 @@ export const adminApi = {
 
 export const qrApi = {
     generateQRCode: () =>
-        request<any>('/qr/generate', { method: 'POST' }),
+        request<unknown>('/qr/generate', { method: 'POST' }),
 };
 
 // ─── Notifications ─────────────────────────────────────────────────────────

@@ -1,10 +1,18 @@
 use axum::{Json, extract::{Query, State, Path}, http::{StatusCode, HeaderMap}};
 use serde::Deserialize;
 use sqlx::PgPool;
+use std::collections::{HashMap, HashSet};
 use crate::models::{ActivityStatus, AdminLevel};
 use crate::modules::auth::get_claims_from_headers;
-use super::models::{ActivityPublic, CreateActivityInput, CreateActivityResponse, DashboardResponse, UpdateActivityInput};
+use crate::modules::notifications::service::{NotificationService, NotificationType};
+use super::models::{
+    ActivityPublic, CreateActivityInput, CreateActivityResponse, DashboardResponse,
+    ManualCompleteParticipationResult, ManualCompleteParticipationsInput,
+    ManualCompleteParticipationsResponse, ManualCompleteParticipationsSummary, UpdateActivityInput,
+};
 use uuid::Uuid;
+
+const MANUAL_PARTICIPATION_NOTE: &str = "บันทึกย้อนหลังโดยแอดมิน";
 
 #[derive(Debug, Deserialize)]
 pub struct ListActivitiesQuery {
@@ -520,6 +528,399 @@ pub async fn join_activity(
     })))
 }
 
+fn normalize_manual_student_ids(raw: &[String]) -> Vec<String> {
+    let mut seen = HashSet::new();
+    let mut normalized = Vec::new();
+
+    for value in raw {
+        for part in value.split(|c: char| c.is_whitespace() || c == ',' || c == ';') {
+            let student_id = part.trim();
+            if student_id.is_empty() {
+                continue;
+            }
+            if seen.insert(student_id.to_string()) {
+                normalized.push(student_id.to_string());
+            }
+        }
+    }
+
+    normalized
+}
+
+fn manual_result(
+    input: impl Into<String>,
+    user: Option<&ManualUserRow>,
+    status: &str,
+    message: impl Into<String>,
+) -> ManualCompleteParticipationResult {
+    ManualCompleteParticipationResult {
+        input: input.into(),
+        user_id: user.map(|u| u.id),
+        student_id: user.map(|u| u.student_id.clone()),
+        user_name: user.map(|u| format!("{} {}", u.first_name, u.last_name)),
+        status: status.to_string(),
+        message: message.into(),
+    }
+}
+
+fn summarize_manual_results(
+    results: &[ManualCompleteParticipationResult],
+) -> ManualCompleteParticipationsSummary {
+    let mut summary = ManualCompleteParticipationsSummary {
+        total: results.len(),
+        ..Default::default()
+    };
+
+    for result in results {
+        match result.status.as_str() {
+            "completed" => summary.completed += 1,
+            "updated" => summary.updated += 1,
+            "already_completed" => summary.already_completed += 1,
+            "not_found" => summary.not_found += 1,
+            "not_allowed" => summary.not_allowed += 1,
+            "inactive" => summary.inactive += 1,
+            "duplicate_input" => summary.duplicate_input += 1,
+            _ => summary.failed += 1,
+        }
+    }
+
+    summary
+}
+
+#[derive(Debug, Clone, sqlx::FromRow)]
+struct ManualUserRow {
+    id: Uuid,
+    student_id: String,
+    first_name: String,
+    last_name: String,
+    status: String,
+    organization_id: Option<Uuid>,
+}
+
+#[derive(Debug, Clone, sqlx::FromRow)]
+struct ManualParticipationRow {
+    id: Uuid,
+    user_id: Uuid,
+    status: String,
+}
+
+pub async fn manual_complete_participations(
+    State(pool): State<PgPool>,
+    headers: HeaderMap,
+    Path(activity_id): Path<Uuid>,
+    Json(payload): Json<ManualCompleteParticipationsInput>,
+) -> Result<Json<ManualCompleteParticipationsResponse>, (StatusCode, String)> {
+    let claims = get_claims_from_headers(&headers)?;
+    if !claims.is_admin {
+        return Err((StatusCode::FORBIDDEN, "Admin access required".to_string()));
+    }
+    assert_admin_can_manage_activity(&pool, &claims, activity_id).await?;
+
+    let normalized_student_ids = normalize_manual_student_ids(&payload.student_ids);
+    if payload.user_ids.is_empty() && normalized_student_ids.is_empty() {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            "กรุณาเลือกนักศึกษาหรือกรอกรหัสนักศึกษาอย่างน้อย 1 คน".to_string(),
+        ));
+    }
+
+    let scope_org_id: Option<Uuid> = match claims.admin_level {
+        Some(AdminLevel::SuperAdmin) => None,
+        _ => claims.organization_id,
+    };
+    let note = payload
+        .notes
+        .as_deref()
+        .map(str::trim)
+        .filter(|v| !v.is_empty())
+        .unwrap_or(MANUAL_PARTICIPATION_NOTE)
+        .to_string();
+
+    let mut tx = pool
+        .begin()
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, format!("DB tx error: {}", e)))?;
+
+    #[derive(sqlx::FromRow)]
+    struct ManualActivityRow {
+        title: String,
+        status: String,
+        checked_in_at: chrono::DateTime<chrono::Utc>,
+        checked_out_at: chrono::DateTime<chrono::Utc>,
+    }
+
+    let activity = sqlx::query_as::<_, ManualActivityRow>(
+        r#"
+        SELECT
+            title,
+            status::text AS status,
+            ((start_date + start_time_only) AT TIME ZONE 'Asia/Bangkok') AS checked_in_at,
+            ((end_date + end_time_only) AT TIME ZONE 'Asia/Bangkok') AS checked_out_at
+        FROM activities
+        WHERE id = $1 AND deleted_at IS NULL
+        FOR UPDATE
+        "#,
+    )
+    .bind(activity_id)
+    .fetch_optional(&mut *tx)
+    .await
+    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, format!("DB error: {}", e)))?
+    .ok_or((StatusCode::NOT_FOUND, "Activity not found".to_string()))?;
+
+    if !matches!(activity.status.as_str(), "published" | "ongoing" | "completed") {
+        return Err((
+            StatusCode::CONFLICT,
+            "เพิ่มย้อนหลังได้เฉพาะกิจกรรมที่เผยแพร่ กำลังดำเนินการ หรือเสร็จสิ้นแล้ว".to_string(),
+        ));
+    }
+
+    let user_rows_by_id = if payload.user_ids.is_empty() {
+        HashMap::new()
+    } else {
+        sqlx::query_as::<_, ManualUserRow>(
+            r#"
+            SELECT
+                u.id,
+                u.student_id,
+                u.first_name,
+                u.last_name,
+                u.status::text AS status,
+                d.organization_id
+            FROM users u
+            LEFT JOIN departments d ON u.department_id = d.id
+            WHERE u.deleted_at IS NULL
+              AND u.id = ANY($1)
+            "#,
+        )
+        .bind(&payload.user_ids)
+        .fetch_all(&mut *tx)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, format!("DB error: {}", e)))?
+        .into_iter()
+        .map(|u| (u.id, u))
+        .collect::<HashMap<Uuid, ManualUserRow>>()
+    };
+
+    let user_rows_by_student_id = if normalized_student_ids.is_empty() {
+        HashMap::new()
+    } else {
+        sqlx::query_as::<_, ManualUserRow>(
+            r#"
+            SELECT
+                u.id,
+                u.student_id,
+                u.first_name,
+                u.last_name,
+                u.status::text AS status,
+                d.organization_id
+            FROM users u
+            LEFT JOIN departments d ON u.department_id = d.id
+            WHERE u.deleted_at IS NULL
+              AND u.student_id = ANY($1)
+            "#,
+        )
+        .bind(&normalized_student_ids)
+        .fetch_all(&mut *tx)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, format!("DB error: {}", e)))?
+        .into_iter()
+        .map(|u| (u.student_id.clone(), u))
+        .collect::<HashMap<String, ManualUserRow>>()
+    };
+
+    let mut results = Vec::new();
+    let mut candidate_users: Vec<ManualUserRow> = Vec::new();
+    let mut seen_user_ids = HashSet::new();
+
+    for user_id in payload.user_ids {
+        let input = user_id.to_string();
+        let Some(user) = user_rows_by_id.get(&user_id) else {
+            results.push(manual_result(input, None, "not_found", "ไม่พบผู้ใช้"));
+            continue;
+        };
+        if !seen_user_ids.insert(user.id) {
+            results.push(manual_result(
+                input,
+                Some(user),
+                "duplicate_input",
+                "มีรายชื่อนี้ในชุดข้อมูลแล้ว",
+            ));
+            continue;
+        }
+        if user.status != "active" {
+            results.push(manual_result(
+                input,
+                Some(user),
+                "inactive",
+                "บัญชีผู้ใช้นี้ไม่ได้เปิดใช้งาน",
+            ));
+            continue;
+        }
+        if scope_org_id.is_some() && user.organization_id != scope_org_id {
+            results.push(manual_result(
+                input,
+                Some(user),
+                "not_allowed",
+                "ไม่มีสิทธิ์เพิ่มนักศึกษานอกหน่วยงาน",
+            ));
+            continue;
+        }
+        candidate_users.push(user.clone());
+    }
+
+    for student_id in normalized_student_ids {
+        let Some(user) = user_rows_by_student_id.get(&student_id) else {
+            results.push(manual_result(
+                student_id,
+                None,
+                "not_found",
+                "ไม่พบรหัสนักศึกษา",
+            ));
+            continue;
+        };
+        if !seen_user_ids.insert(user.id) {
+            results.push(manual_result(
+                student_id,
+                Some(user),
+                "duplicate_input",
+                "มีรายชื่อนี้ในชุดข้อมูลแล้ว",
+            ));
+            continue;
+        }
+        if user.status != "active" {
+            results.push(manual_result(
+                student_id,
+                Some(user),
+                "inactive",
+                "บัญชีผู้ใช้นี้ไม่ได้เปิดใช้งาน",
+            ));
+            continue;
+        }
+        if scope_org_id.is_some() && user.organization_id != scope_org_id {
+            results.push(manual_result(
+                student_id,
+                Some(user),
+                "not_allowed",
+                "ไม่มีสิทธิ์เพิ่มนักศึกษานอกหน่วยงาน",
+            ));
+            continue;
+        }
+        candidate_users.push(user.clone());
+    }
+
+    let candidate_user_ids = candidate_users.iter().map(|u| u.id).collect::<Vec<_>>();
+    let existing_participations = if candidate_user_ids.is_empty() {
+        HashMap::new()
+    } else {
+        sqlx::query_as::<_, ManualParticipationRow>(
+            r#"
+            SELECT id, user_id, status::text AS status
+            FROM participations
+            WHERE activity_id = $1
+              AND user_id = ANY($2)
+            FOR UPDATE
+            "#,
+        )
+        .bind(activity_id)
+        .bind(&candidate_user_ids)
+        .fetch_all(&mut *tx)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, format!("DB error: {}", e)))?
+        .into_iter()
+        .map(|p| (p.user_id, p))
+        .collect::<HashMap<Uuid, ManualParticipationRow>>()
+    };
+
+    let mut notify_user_ids = Vec::new();
+    for user in candidate_users {
+        match existing_participations.get(&user.id) {
+            Some(existing) if existing.status == "checked_out" || existing.status == "completed" => {
+                results.push(manual_result(
+                    user.student_id.clone(),
+                    Some(&user),
+                    "already_completed",
+                    "มีประวัติเข้าร่วมเสร็จสิ้นแล้ว",
+                ));
+            }
+            Some(existing) => {
+                sqlx::query(
+                    r#"
+                    UPDATE participations
+                    SET status = 'checked_out'::participation_status,
+                        checked_in_at = COALESCE(checked_in_at, $2),
+                        checked_out_at = COALESCE(checked_out_at, $3),
+                        notes = $4
+                    WHERE id = $1
+                    "#,
+                )
+                .bind(existing.id)
+                .bind(activity.checked_in_at)
+                .bind(activity.checked_out_at)
+                .bind(&note)
+                .execute(&mut *tx)
+                .await
+                .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, format!("DB error: {}", e)))?;
+
+                notify_user_ids.push(user.id);
+                results.push(manual_result(
+                    user.student_id.clone(),
+                    Some(&user),
+                    "updated",
+                    "อัปเดตเป็นเข้าร่วมเสร็จสิ้นแล้ว",
+                ));
+            }
+            None => {
+                sqlx::query(
+                    r#"
+                    INSERT INTO participations (
+                        id, user_id, activity_id, status,
+                        registered_at, checked_in_at, checked_out_at, notes
+                    )
+                    VALUES (
+                        $1, $2, $3, 'checked_out'::participation_status,
+                        NOW(), $4, $5, $6
+                    )
+                    "#,
+                )
+                .bind(Uuid::new_v4())
+                .bind(user.id)
+                .bind(activity_id)
+                .bind(activity.checked_in_at)
+                .bind(activity.checked_out_at)
+                .bind(&note)
+                .execute(&mut *tx)
+                .await
+                .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, format!("DB error: {}", e)))?;
+
+                notify_user_ids.push(user.id);
+                results.push(manual_result(
+                    user.student_id.clone(),
+                    Some(&user),
+                    "completed",
+                    "เพิ่มประวัติเข้าร่วมเสร็จสิ้นแล้ว",
+                ));
+            }
+        }
+    }
+
+    tx.commit()
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, format!("DB commit error: {}", e)))?;
+
+    let _ = NotificationService::send_bulk(
+        &pool,
+        &notify_user_ids,
+        &format!("✅ เพิ่มประวัติกิจกรรมย้อนหลัง: {}", activity.title),
+        &format!("ผู้ดูแลระบบได้เพิ่มประวัติการเข้าร่วมกิจกรรม {} ให้คุณเรียบร้อยแล้ว", activity.title),
+        NotificationType::Success,
+        Some(&format!("/student/activities/{}", activity_id)),
+    )
+    .await;
+
+    let summary = summarize_manual_results(&results);
+    Ok(Json(ManualCompleteParticipationsResponse { summary, results }))
+}
+
 pub async fn get_my_participations(
     State(pool): State<PgPool>,
     headers: HeaderMap,
@@ -596,4 +997,24 @@ pub async fn get_my_participations(
     }).collect();
 
     Ok(Json(result))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn normalize_manual_student_ids_trims_filters_and_deduplicates() {
+        let raw = vec![
+            " 65010001 ".to_string(),
+            "".to_string(),
+            "65010002\n65010003".to_string(),
+            "65010001".to_string(),
+            "  \t ".to_string(),
+        ];
+
+        let normalized = normalize_manual_student_ids(&raw);
+
+        assert_eq!(normalized, vec!["65010001", "65010002", "65010003"]);
+    }
 }
