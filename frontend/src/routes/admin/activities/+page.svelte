@@ -233,15 +233,15 @@
 		<CardContent class="p-0">
 			{#if loading}
 				<div class="overflow-x-auto">
-					<Table.Root>
+					<Table.Root class="min-w-[880px] table-fixed">
 						<Table.Header>
 							<Table.Row>
-								<Table.Head>กิจกรรม</Table.Head>
-								<Table.Head>ประเภท</Table.Head>
-								<Table.Head>วันที่</Table.Head>
-								<Table.Head>สถานที่</Table.Head>
-								<Table.Head>สถานะ</Table.Head>
-								<Table.Head class="text-right">จัดการ</Table.Head>
+								<Table.Head class="w-[34%]">กิจกรรม</Table.Head>
+								<Table.Head class="w-32">ประเภท</Table.Head>
+								<Table.Head class="w-28">วันที่</Table.Head>
+								<Table.Head class="w-48">สถานที่</Table.Head>
+								<Table.Head class="w-28">สถานะ</Table.Head>
+								<Table.Head class="w-24 text-right">จัดการ</Table.Head>
 							</Table.Row>
 						</Table.Header>
 						<Table.Body>
@@ -271,24 +271,26 @@
 				</div>
 			{:else if filteredActivities.length > 0}
 				<div class="overflow-x-auto">
-					<Table.Root>
+					<Table.Root class="min-w-[880px] table-fixed">
 						<Table.Header>
 							<Table.Row>
-								<Table.Head>กิจกรรม</Table.Head>
-								<Table.Head>ประเภท</Table.Head>
-								<Table.Head>วันที่</Table.Head>
-								<Table.Head>สถานที่</Table.Head>
-								<Table.Head>สถานะ</Table.Head>
-								<Table.Head class="text-right">จัดการ</Table.Head>
+								<Table.Head class="w-[34%]">กิจกรรม</Table.Head>
+								<Table.Head class="w-32">ประเภท</Table.Head>
+								<Table.Head class="w-28">วันที่</Table.Head>
+								<Table.Head class="w-48">สถานที่</Table.Head>
+								<Table.Head class="w-28">สถานะ</Table.Head>
+								<Table.Head class="w-24 text-right">จัดการ</Table.Head>
 							</Table.Row>
 						</Table.Header>
 						<Table.Body>
 							{#each filteredActivities as activity (activity.id)}
 								{@const status = getActivityStatus(activity)}
 								<Table.Row class="hover:bg-muted/50">
-									<Table.Cell>
-										<div class="min-w-0 space-y-1">
-											<p class="truncate font-medium">{activity.title || 'ไม่ระบุ'}</p>
+									<Table.Cell class="max-w-0">
+										<div class="max-w-full min-w-0 space-y-1">
+											<p class="block truncate font-medium" title={activity.title || 'ไม่ระบุ'}>
+												{activity.title || 'ไม่ระบุ'}
+											</p>
 										</div>
 									</Table.Cell>
 									<Table.Cell>
@@ -296,61 +298,4 @@
 											>{getActivityTypeDisplayName(activity.activity_type)}</Badge
 										>
 									</Table.Cell>
-									<Table.Cell>
-										<p class="text-sm font-medium">{formatDate(activity.start_date)}</p>
-									</Table.Cell>
-									<Table.Cell>
-										{#if activity.location}
-											<div class="flex items-center gap-1 text-sm" title={activity.location}>
-												<MapPin class="h-3 w-3 text-muted-foreground" />
-												<span class="truncate">{activity.location}</span>
-											</div>
-										{:else}
-											<span class="text-muted-foreground">-</span>
-										{/if}
-									</Table.Cell>
-									<Table.Cell>
-										<Badge variant={status.variant}>{status.label}</Badge>
-									</Table.Cell>
-									<Table.Cell class="text-right">
-										<div class="flex items-center justify-end gap-2">
-											<Button
-												variant="ghost"
-												size="sm"
-												onclick={() => goto(resolve(`/admin/activities/${activity.id}`))}
-											>
-												<Eye class="h-4 w-4" />
-											</Button>
-											<Button
-												variant="ghost"
-												size="sm"
-												onclick={() => goto(resolve(`/admin/activities/${activity.id}/edit`))}
-											>
-												<Pencil class="h-4 w-4" />
-											</Button>
-										</div>
-									</Table.Cell>
-								</Table.Row>
-							{/each}
-						</Table.Body>
-					</Table.Root>
-				</div>
-			{:else}
-				<div class="py-12 text-center">
-					<CalendarDays class="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
-					<h3 class="mb-2 text-lg font-medium">ไม่พบกิจกรรม</h3>
-					<p class="mb-4 text-muted-foreground">
-						{searchTerm || selectedType !== 'all' || selectedStatus !== 'all'
-							? 'ไม่พบกิจกรรมที่ตรงกับเงื่อนไขการค้นหา'
-							: 'ยังไม่มีกิจกรรมในระบบ'}
-					</p>
-					{#if !searchTerm && selectedType === 'all' && selectedStatus === 'all'}
-						<Button onclick={() => goto(resolve('/admin/activities/create'))}>
-							<Plus class="mr-2 h-4 w-4" />สร้างกิจกรรมแรก
-						</Button>
-					{/if}
-				</div>
-			{/if}
-		</CardContent>
-	</Card>
-</div>
+					ดูเหมือน output tool cut at Thai? Wait update_file content parameter got truncated mid-file because in message? It may be incomplete, I need check result. The tool call is huge and I see content truncated at 
